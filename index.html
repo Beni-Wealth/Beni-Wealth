@@ -1,0 +1,118 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beni-Wealth – Play Ludo & Win Cash</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    /* Reset & Base Styles */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Poppins', sans-serif; background: #e6f2ff; color: #003366; }
+    a { text-decoration: none; color: inherit; }/* Header */
+header { background: #005bb5; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+header h1 { color: #fff; font-size: 1.8rem; }
+nav { display: flex; gap: 1.5rem; }
+nav a { padding: 0.75rem 1.2rem; background: #fff; border-radius: 4px; font-weight: 500; display: inline-block; }
+
+/* Hero*/ Section */
+.hero { display: flex; align-items: center; justify-content: space-between; padding: 4rem 2rem; }
+.hero-text { max-width: 50%; }
+.hero-text h2 { font-size: 2.5rem; margin-bottom: 1rem; }
+.hero-text p { font-size: 1rem; margin-bottom: 2rem; }
+.hero-text .btn { display: inline-block; margin: 0 2rem 1rem 0; padding: 0.75rem 1.5rem; background: #003366; color: #fff; border-radius: 4px; transition: background .3s; }
+.hero-text .btn:last-child { margin-right: 0; }
+.hero-text .btn:hover { background: #002244; }
+.hero-img img { max-width: 400px; }
+
+/* How It Works */
+.steps { background: #fff; padding: 3rem 2rem; text-align: center; }
+.steps h3 { font-size: 1.8rem; margin-bottom: 2rem; }
+.step-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; }
+.step { background: #cce0ff; padding: 1.5rem; border-radius: 8px; }
+.step span { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+.step p { font-size: 0.9rem; }
+
+/* Features */
+.features { padding: 3rem 2rem; }
+.features h3 { text-align: center; font-size: 1.8rem; margin-bottom: 2rem; }
+.feature-list { display: flex; justify-content: center; }
+.feature-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2rem; width: 100%; max-width: 1000px; }
+.feature-item { background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+.feature-item h4 { color: #005bb5; margin-bottom: 0.75rem; }
+.feature-item p { font-size: 0.9rem; }
+
+/* Footer */
+footer { background: #005bb5; color: #fff; text-align: center; padding: 1.5rem; font-size: 0.9rem; }
+
+@media (max-width: 768px) {
+  .hero { flex-direction: column; text-align: center; }
+  .hero-text { max-width: 100%; }
+  .hero-img { margin-top: 2rem; }
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Beni-Wealth</h1>
+    <nav>
+      <a href="login.html">Login</a>
+      <a href="register.html">Register</a>
+    </nav>
+  </header>  <section class="hero">
+    <div class="hero-text">
+      <h2>Roll Dice, Race Tokens, Win Cash!</h2>
+      <p>Step into the classic Ludo battlefield—stake your bets, challenge players, and bring your tokens home to claim real cash prizes.</p>
+      <a class="btn" href="register.html">Join the Fun</a>
+      <a class="btn" href="how-it-works.html">Learn How</a>
+    </div>
+    <div class="hero-img">
+      <img src="https://images.unsplash.com/photo-1587613751220-d8bb9a0a8f85?auto=format&fit=crop&w=800&q=80" alt="Ludo board illustration" />
+    </div>
+  </section>  <section class="steps">
+    <h3>How to Play</h3>
+    <div class="step-cards">
+      <div class="step">
+        <span>1️⃣</span>
+        <p>Fund your wallet quickly and securely.</p>
+      </div>
+      <div class="step">
+        <span>2️⃣</span>
+        <p>Choose a stake room (2 or 4 players).</p>
+      </div>
+      <div class="step">
+        <span>3️⃣</span>
+        <p>Roll the dice, move tokens, block opponents.</p>
+      </div>
+      <div class="step">
+        <span>4️⃣</span>
+        <p>First to get all tokens home wins the pot.</p>
+      </div>
+    </div>
+  </section>  <section class="features">
+    <h3>Features Designed for Ludo Fans</h3>
+    <div class="feature-list">
+      <div class="feature-group">
+        <div class="feature-item">
+          <h4>Classic Gameplay</h4>
+          <p>Authentic Ludo rules and board design.</p>
+        </div>
+        <div class="feature-item">
+          <h4>Custom Rooms</h4>
+          <p>Create private tables with friends and set custom stakes.</p>
+        </div>
+        <div class="feature-item">
+          <h4>Fair Dice Rolls</h4>
+          <p>Server-driven RNG ensures transparent, unbiased outcomes.</p>
+        </div>
+        <div class="feature-item">
+          <h4>Live Chat & Emojis</h4>
+          <p>Interact with rivals with real-time chat and reactions.</p>
+        </div>
+      </div>
+    </div>
+  </section>  <footer>
+    &copy; 2025 Beni-Wealth. All rights reserved.
+  </footer>
+</body>
+</html>
