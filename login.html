@@ -1,0 +1,102 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beni-Wealth – Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background: #e6f2ff; color: #003366; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .login-container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2); width: 100%; max-width: 400px; text-align: center; }
+    .login-logo { width: 80px; height: 80px; margin: 0 auto 1.5rem; display: block; }
+    h2 { color: #005bb5; margin-bottom: 1.5rem; }
+    .form-group { margin-bottom: 1rem; text-align: left; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    .form-group input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px; }
+    .btn { width: 100%; padding: 0.7rem; background: #005bb5; color: #fff; border: none; border-radius: 5px; font-weight: 500; cursor: pointer; transition: background .3s; }
+    .btn:disabled { background: #999; cursor: default; }
+    .btn:hover:not(:disabled) { background: #004a99; }
+    .spinner { border: 3px solid #f3f3f3; border-top: 3px solid white; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .footer-text { margin-top: 1rem; font-size: 0.9rem; }
+    .footer-text a { color: #005bb5; text-decoration: none; }
+    .footer-text a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <img src="/mnt/data/file-VuaJLgNnjj8cYu1bw1mb4J" alt="Beni-Wealth Logo" class="login-logo" />
+    <h2>Login to Your Account</h2>
+    <div class="form-group"><label for="email">Email</label><input type="email" id="email" placeholder="you@example.com" required /></div>
+    <div class="form-group"><label for="password">Password</label><input type="password" id="password" placeholder="••••••••" required /></div>
+    <button id="loginBtn" class="btn">Login</button>
+    <div class="footer-text"><p><a href="reset-password.html">Forgot your password?</a></p></div>
+    <div class="footer-text"><p>Don't have an account? <a href="register.html">Register now!</a></p></div>
+  </div>  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyD3G9-BgPhx_yl0f_r7UmbB9abADiEckSY",
+      authDomain: "flexicash-8e00b.firebaseapp.com",
+      projectId: "flexicash-8e00b",
+      storageBucket: "flexicash-8e00b.firebasestorage.app",
+      messagingSenderId: "178042586318",
+      appId: "1:178042586318:web:79a24af6628de0ae02fc9f",
+      measurementId: "G-8RY3Y67BMR"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const loginBtn = document.getElementById('loginBtn');
+    const emailInput = document.getElementById('email');
+    const passInput = document.getElementById('password');
+
+    loginBtn.addEventListener('click', async () => {
+      const email = emailInput.value.trim();
+      const password = passInput.value;
+      if (!email || !password) {
+        alert('Enter both email and password.');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span class="spinner"></span>Logging in...';
+
+      try {
+        const { user } = await signInWithEmailAndPassword(auth, email, password);
+
+        // Email verification check
+        if (!user.emailVerified) {
+          alert('Please verify your email before logging in.');
+          await signOut(auth);
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Login';
+          return;
+        }
+
+        // Check suspension flag
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists() && snap.data().suspended) {
+          alert('Your account is suspended.');
+          await signOut(auth);
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Login';
+          return;
+        }
+
+        // Redirect
+        alert('Successfully logged in!');
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        console.error(err);
+        alert('Login failed: ' + err.message);
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
+      }
+    });
+  </script></body>
+  </html>
