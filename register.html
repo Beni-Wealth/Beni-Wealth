@@ -39,82 +39,83 @@
     <div class="input-group"><label for="referral">Referral Code</label><input type="text" id="referral" placeholder="Optional" /></div>
     <button class="btn" id="registerBtn" onclick="registerUser()">Register</button>
     <div class="footer"><p>Already have an account? <a href="login.html">Login now</a></p></div>
-  </div>  <script>
+  </div>
+  <script>
     // Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyD3G9-BgPhx_yl0f_r7UmbB9abADiEckSY",
       authDomain: "flexicash-8e00b.firebaseapp.com",
       projectId: "flexicash-8e00b",
-      storageBucket: "flexicash-8e00b.firebasestorage.app",
+      storageBucket: "flexicash-8e00b.appspot.com",
       messagingSenderId: "178042586318",
       appId: "1:178042586318:web:79a24af6628de0ae02fc9f",
       measurementId: "G-8RY3Y67BMR"
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-    const db = firebase.firestore();
+    const db = firebase.firestore();// Autofill referral if in URL
+const urlRef = new URLSearchParams(window.location.search).get('ref');
+if (urlRef) document.getElementById('referral').value = urlRef;
 
-    // Autofill referral if in URL
-    const urlRef = new URLSearchParams(window.location.search).get('ref');
-    if (urlRef) document.getElementById('referral').value = urlRef;
+async function registerUser() {
+  const btn = document.getElementById('registerBtn');
+  const username = document.getElementById('username').value.trim();
+  const fullname = document.getElementById('fullname').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const confirmPassword = document.getElementById('confirm-password').value;
+  const referral = document.getElementById('referral').value.trim();
 
-    async function registerUser() {
-      const btn = document.getElementById('registerBtn');
-      const username = document.getElementById('username').value.trim();
-      const fullname = document.getElementById('fullname').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirm-password').value;
-      const referral = document.getElementById('referral').value.trim();
+  if (!username || !fullname || !email || !password || !confirmPassword) {
+    alert('Please fill in all required fields.');
+    return;
+  }
+  if (password !== confirmPassword) {
+    alert('Passwords do not match.');
+    return;
+  }
 
-      if (!username || !fullname || !email || !password || !confirmPassword) {
-        alert('Please fill in all required fields.');
-        return;
-      }
-      if (password !== confirmPassword) {
-        alert('Passwords do not match.');
-        return;
-      }
-
-      // Check username uniqueness
-      try {
-        const userQuery = await db.collection('users')
-          .where('username', '==', username)
-          .limit(1)
-          .get();
-        if (!userQuery.empty) {
-          alert('Username already taken.');
-          return;
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Error checking username.');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span>Registering...';
-
-      try {
-        const userCred = await auth.createUserWithEmailAndPassword(email, password);
-        await userCred.user.sendEmailVerification();
-        await db.collection('users').doc(userCred.user.uid).set({
-          username,
-          fullname,
-          email,
-          referral: referral || null,
-          balance: 0,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          transactions: []
-        });
-        alert('Account created! Check your email for verification.');
-        window.location.href = 'login.html';
-      } catch (error) {
-        console.error(error);
-        alert(error.message);
-        btn.disabled = false;
-        btn.textContent = 'Register';
-      }
+  // Check username uniqueness
+  try {
+    const userQuery = await db.collection('users')
+      .where('username', '==', username)
+      .limit(1)
+      .get();
+    if (!userQuery.empty) {
+      alert('Username already taken.');
+      return;
     }
-  </script></body>
-  </html>
+  } catch (err) {
+    console.error(err);
+    alert('Error checking username.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Registering...';
+
+  try {
+    const userCred = await auth.createUserWithEmailAndPassword(email, password);
+    await userCred.user.sendEmailVerification();
+    await db.collection('users').doc(userCred.user.uid).set({
+      username,
+      fullname,
+      email,
+      referral: referral || null,
+      balance: 0,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      transactions: []
+    });
+    alert('Account created! Check your email for verification.');
+    window.location.href = 'login.html';
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+    btn.disabled = false;
+    btn.textContent = 'Register';
+  }
+}
+
+  </script>
+</body>
+</html>
