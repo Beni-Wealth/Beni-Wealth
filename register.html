@@ -1,0 +1,120 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beni-Wealth – Register</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background: #e6f2ff; color: #003366; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .register-container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2); width: 100%; max-width: 400px; text-align: center; }
+    .register-logo { width: 80px; height: 80px; margin: 0 auto 1rem; display: block; }
+    h2 { color: #005bb5; margin-bottom: 1.5rem; }
+    .input-group { margin-bottom: 1rem; text-align: left; }
+    .input-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; }
+    .input-group input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px; }
+    .btn { background: #005bb5; color: white; border: none; width: 100%; padding: 0.7rem; border-radius: 5px; cursor: pointer; font-weight: 500; transition: background .3s; }
+    .btn:disabled { background: #999; cursor: default; }
+    .btn:hover:not(:disabled) { background: #004a99; }
+    .spinner { border: 3px solid #f3f3f3; border-top: 3px solid white; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .footer { text-align: center; margin-top: 1rem; }
+    .footer a { color: #005bb5; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+  <div class="register-container">
+    <img src="/mnt/data/file-VuaJLgNnjj8cYu1bw1mb4J" alt="Beni-Wealth Logo" class="register-logo" />
+    <h2>Create Your Account</h2>
+    <div class="input-group"><label for="username">Username</label><input type="text" id="username" /></div>
+    <div class="input-group"><label for="fullname">Full Name</label><input type="text" id="fullname" /></div>
+    <div class="input-group"><label for="email">Email</label><input type="email" id="email" /></div>
+    <div class="input-group"><label for="password">Password</label><input type="password" id="password" /></div>
+    <div class="input-group"><label for="confirm-password">Confirm Password</label><input type="password" id="confirm-password" /></div>
+    <div class="input-group"><label for="referral">Referral Code</label><input type="text" id="referral" placeholder="Optional" /></div>
+    <button class="btn" id="registerBtn" onclick="registerUser()">Register</button>
+    <div class="footer"><p>Already have an account? <a href="login.html">Login now</a></p></div>
+  </div>  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyD3G9-BgPhx_yl0f_r7UmbB9abADiEckSY",
+      authDomain: "flexicash-8e00b.firebaseapp.com",
+      projectId: "flexicash-8e00b",
+      storageBucket: "flexicash-8e00b.firebasestorage.app",
+      messagingSenderId: "178042586318",
+      appId: "1:178042586318:web:79a24af6628de0ae02fc9f",
+      measurementId: "G-8RY3Y67BMR"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Autofill referral if in URL
+    const urlRef = new URLSearchParams(window.location.search).get('ref');
+    if (urlRef) document.getElementById('referral').value = urlRef;
+
+    async function registerUser() {
+      const btn = document.getElementById('registerBtn');
+      const username = document.getElementById('username').value.trim();
+      const fullname = document.getElementById('fullname').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const referral = document.getElementById('referral').value.trim();
+
+      if (!username || !fullname || !email || !password || !confirmPassword) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        alert('Passwords do not match.');
+        return;
+      }
+
+      // Check username uniqueness
+      try {
+        const userQuery = await db.collection('users')
+          .where('username', '==', username)
+          .limit(1)
+          .get();
+        if (!userQuery.empty) {
+          alert('Username already taken.');
+          return;
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error checking username.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Registering...';
+
+      try {
+        const userCred = await auth.createUserWithEmailAndPassword(email, password);
+        await userCred.user.sendEmailVerification();
+        await db.collection('users').doc(userCred.user.uid).set({
+          username,
+          fullname,
+          email,
+          referral: referral || null,
+          balance: 0,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          transactions: []
+        });
+        alert('Account created! Check your email for verification.');
+        window.location.href = 'login.html';
+      } catch (error) {
+        console.error(error);
+        alert(error.message);
+        btn.disabled = false;
+        btn.textContent = 'Register';
+      }
+    }
+  </script></body>
+  </html>
