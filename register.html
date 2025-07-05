@@ -8,7 +8,8 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
     body { background: #e6f2ff; color: #003366; display: flex; justify-content: center; align-items: center; height: 100vh; }
     .register-container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2); width: 100%; max-width: 400px; text-align: center; }
-    .register-logo { width: 80px; height: 80px; margin: 0 auto 1rem; display: block; }
+    .logo-dice { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; }
+    .logo-dice svg { width: 50px; height: 50px; }
     h2 { color: #005bb5; margin-bottom: 1.5rem; }
     .input-group { margin-bottom: 1rem; text-align: left; }
     .input-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; }
@@ -29,7 +30,19 @@
 </head>
 <body>
   <div class="register-container">
-    <img src="/mnt/data/file-VuaJLgNnjj8cYu1bw1mb4J" alt="Beni-Wealth Logo" class="register-logo" />
+    <div class="logo-dice">
+      <!-- Dice SVG icons -->
+      <svg viewBox="0 0 24 24" fill="#005bb5" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="22" height="22" rx="4"/>
+        <circle cx="8" cy="8" r="2" fill="#fff"/>
+        <circle cx="16" cy="16" r="2" fill="#fff"/>
+      </svg>
+      <svg viewBox="0 0 24 24" fill="#005bb5" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="22" height="22" rx="4"/>
+        <circle cx="8" cy="16" r="2" fill="#fff"/>
+        <circle cx="16" cy="8" r="2" fill="#fff"/>
+      </svg>
+    </div>
     <h2>Create Your Account</h2>
     <div class="input-group"><label for="username">Username</label><input type="text" id="username" /></div>
     <div class="input-group"><label for="fullname">Full Name</label><input type="text" id="fullname" /></div>
@@ -43,13 +56,13 @@
   <script>
     // Initialize Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyD3G9-BgPhx_yl0f_r7UmbB9abADiEckSY",
-      authDomain: "flexicash-8e00b.firebaseapp.com",
-      projectId: "flexicash-8e00b",
-      storageBucket: "flexicash-8e00b.appspot.com",
-      messagingSenderId: "178042586318",
-      appId: "1:178042586318:web:79a24af6628de0ae02fc9f",
-      measurementId: "G-8RY3Y67BMR"
+      apiKey: "AIzaSyCkvwgV11-AFi-aNmCQqp5zrTjd1Ovb_k4",
+      authDomain: "beni-wealth.firebaseapp.com",
+      projectId: "beni-wealth",
+      storageBucket: "beni-wealth.appspot.com",
+      messagingSenderId: "605047915738",
+      appId: "1:605047915738:web:21826e06b11c34422191e3",
+      measurementId: "G-J875CREK3E"
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
