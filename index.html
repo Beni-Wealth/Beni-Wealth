@@ -17,7 +17,7 @@ nav a:hover { background: #e6f2ff; }
 
 /* Hero Section */
 .hero { display: flex; align-items: center; justify-content: space-between; padding: 4rem 2rem; gap: 2rem; }
-.hero-text { max-width: 50%; position: relative; }
+.hero-text { max-width: 50%; position: relative; display: flex; flex-wrap: wrap; gap: 1rem; }
 .hero-text h2 { font-size: 3rem; margin-bottom: 1rem; position: relative; }
 /* Dice embellishments */
 .hero-text h2::before, .hero-text h2::after {
@@ -32,7 +32,7 @@ nav a:hover { background: #e6f2ff; }
 .hero-text h2::before { top: -20px; left: -60px; }
 .hero-text h2::after { bottom: -20px; right: -60px; transform: rotate(180deg); }
 .hero-text p { font-size: 1.1rem; margin-bottom: 2rem; }
-.hero-text .btn { margin-right: 1rem; padding: 0.8rem 2rem; background: #005bb5; color: #fff; border-radius: 30px; font-weight: 500; transition: transform .3s, background .3s; }
+.hero-text .btn { padding: 0.8rem 2rem; background: #005bb5; color: #fff; border-radius: 30px; font-weight: 500; transition: transform .3s, background .3s; margin: 0; }
 .hero-text .btn:hover { background: #004a99; transform: translateY(-3px); }
 .hero-img img { max-width: 450px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-radius: 10px; }
 
