@@ -1,5 +1,4 @@
-<!DOCTYPE html><html lang="en">
-<head>
+<!DOCTYPE html><html lang="en"><head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Beni-Wealth – Login</title>
@@ -8,8 +7,8 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
     body { background: #e6f2ff; color: #003366; display: flex; justify-content: center; align-items: center; height: 100vh; }
     .login-container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2); width: 100%; max-width: 400px; text-align: center; }
-    .login-logo { width: 80px; height: 80px; margin: 0 auto 1.5rem; display: block; }
-    h2 { color: #005bb5; margin-bottom: 1.5rem; }
+    .login-emoji { font-size: 3rem; margin-bottom: 0.5rem; }
+    h2 { color: #005bb5; margin-bottom: 1.5rem; font-size: 1.5rem; }
     .form-group { margin-bottom: 1rem; text-align: left; }
     .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
     .form-group input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px; }
@@ -25,7 +24,7 @@
 </head>
 <body>
   <div class="login-container">
-    <img src="/mnt/data/file-VuaJLgNnjj8cYu1bw1mb4J" alt="Beni-Wealth Logo" class="login-logo" />
+    <div class="login-emoji">🎲</div>
     <h2>Login to Your Account</h2>
     <div class="form-group"><label for="email">Email</label><input type="email" id="email" placeholder="you@example.com" required /></div>
     <div class="form-group"><label for="password">Password</label><input type="password" id="password" placeholder="••••••••" required /></div>
@@ -35,21 +34,24 @@
   </div>  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, enableNetwork } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-    // Firebase config
+    // Firebase config (Beni-Wealth)
     const firebaseConfig = {
-      apiKey: "AIzaSyD3G9-BgPhx_yl0f_r7UmbB9abADiEckSY",
-      authDomain: "flexicash-8e00b.firebaseapp.com",
-      projectId: "flexicash-8e00b",
-      storageBucket: "flexicash-8e00b.firebasestorage.app",
-      messagingSenderId: "178042586318",
-      appId: "1:178042586318:web:79a24af6628de0ae02fc9f",
-      measurementId: "G-8RY3Y67BMR"
+      apiKey: "AIzaSyCkvwgV11-AFi-aNmCQqp5zrTjd1Ovb_k4",
+      authDomain: "beni-wealth.firebaseapp.com",
+      projectId: "beni-wealth",
+      storageBucket: "beni-wealth.appspot.com",
+      messagingSenderId: "605047915738",
+      appId: "1:605047915738:web:21826e06b11c34422191e3",
+      measurementId: "G-J875CREK3E"
     };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
+    // Re-enable Firestore network
+    enableNetwork(db).catch(console.error);
 
     const loginBtn = document.getElementById('loginBtn');
     const emailInput = document.getElementById('email');
@@ -99,4 +101,4 @@
       }
     });
   </script></body>
-  </html>
+</html>
