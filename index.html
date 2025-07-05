@@ -1,53 +1,58 @@
 <!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Beni-Wealth – Play Ludo & Win Cash</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
     /* Reset & Base Styles */
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Poppins', sans-serif; background: #e6f2ff; color: #003366; }
+    body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg,#e6f2ff 0%,#cce0ff 100%); color: #003366; }
     a { text-decoration: none; color: inherit; }/* Header */
-header { 
-  background: #005bb5; 
-  padding: 1rem 2rem; 
-  margin-bottom: 1rem;
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-}
-header h1 { color: #fff; font-size: 1.8rem; }
-nav { display: flex; flex-direction: column; gap: 0.75rem; }
-nav a { padding: 0.5rem 1rem; background: #fff; border-radius: 4px; font-weight: 500; text-align: center; }
-nav a:hover { background: #cce0ff; }
+header { background: #004a99; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+header h1 { color: #fff; font-size: 1.8rem; letter-spacing: 1px; }
+nav { display: flex; gap: 1rem; }
+nav a { padding: 0.5rem 1rem; background: #fff; border-radius: 20px; font-weight: 500; transition: background .3s; }
+nav a:hover { background: #e6f2ff; }
 
 /* Hero Section */
-.hero { display: flex; align-items: center; justify-content: space-between; padding: 4rem 2rem; }
-.hero-text { max-width: 50%; }
-.hero-text h2 { font-size: 2.5rem; margin-bottom: 1rem; }
-.hero-text p { font-size: 1rem; margin-bottom: 2rem; }
-.hero-text .btn { display: inline-block; margin: 0 2rem 1rem 0; padding: 0.75rem 1.5rem; background: #003366; color: #fff; border-radius: 4px; transition: background .3s; }
-.hero-text .btn:last-child { margin-right: 0; }
-.hero-text .btn:hover { background: #002244; }
-.hero-img img { max-width: 400px; }
+.hero { display: flex; align-items: center; justify-content: space-between; padding: 4rem 2rem; gap: 2rem; }
+.hero-text { max-width: 50%; position: relative; }
+.hero-text h2 { font-size: 3rem; margin-bottom: 1rem; position: relative; }
+/* Dice embellishments */
+.hero-text h2::before, .hero-text h2::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: #005bb5;
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="4"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="16" r="2"/></svg>') center/contain no-repeat;
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="4"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="16" r="2"/></svg>') center/contain no-repeat;
+}
+.hero-text h2::before { top: -20px; left: -60px; }
+.hero-text h2::after { bottom: -20px; right: -60px; transform: rotate(180deg); }
+.hero-text p { font-size: 1.1rem; margin-bottom: 2rem; }
+.hero-text .btn { margin-right: 1rem; padding: 0.8rem 2rem; background: #005bb5; color: #fff; border-radius: 30px; font-weight: 500; transition: transform .3s, background .3s; }
+.hero-text .btn:hover { background: #004a99; transform: translateY(-3px); }
+.hero-img img { max-width: 450px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-radius: 10px; }
 
 /* How It Works */
-.steps { background: #fff; padding: 3rem 2rem; text-align: center; }
-.steps h3 { font-size: 1.8rem; margin-bottom: 2rem; }
-.step-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; }
-.step { background: #cce0ff; padding: 1.5rem; border-radius: 8px; }
-.step span { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
-.step p { font-size: 0.9rem; }
+.steps { background: #fff; margin: 2rem auto; padding: 3rem 2rem; text-align: center; max-width: 800px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.steps h3 { font-size: 2rem; margin-bottom: 2rem; color: #004a99; }
+.step-cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 1.5rem; }
+.step { background: #e6f2ff; padding: 1.5rem; border-radius: 12px; transition: transform .3s, background .3s; }
+.step:hover { background: #cce0ff; transform: translateY(-5px); }
+.step span { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+.step p { font-size: 0.95rem; }
 
 /* Features */
-.features { padding: 3rem 2rem; }
-.features h3 { text-align: center; font-size: 1.8rem; margin-bottom: 2rem; }
-.feature-list { display: flex; justify-content: center; }
-.feature-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2rem; width: 100%; max-width: 1000px; }
-.feature-item { background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-.feature-item h4 { color: #005bb5; margin-bottom: 0.75rem; }
-.feature-item p { font-size: 0.9rem; }
+.features { margin: 2rem auto; padding: 3rem 2rem; max-width: 1000px; }
+.features h3 { text-align: center; font-size: 2rem; margin-bottom: 2rem; color: #004a99; }
+.feature-group { display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 1.5rem; }
+.feature-item { background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); transition: transform .3s; }
+.feature-item:hover { transform: translateY(-5px); }
+.feature-item h4 { margin-bottom: 0.75rem; color: #005bb5; }
+.feature-item p { font-size: 1rem; }
 
 /* Footer */
 footer { background: #005bb5; color: #fff; text-align: center; padding: 1.5rem; font-size: 0.9rem; margin-top: 2rem; }
@@ -56,6 +61,7 @@ footer { background: #005bb5; color: #fff; text-align: center; padding: 1.5rem; 
   .hero { flex-direction: column; text-align: center; }
   .hero-text { max-width: 100%; }
   .hero-img { margin-top: 2rem; }
+  .hero-text .btn { margin-bottom: 1rem; }
 }
 
   </style>
@@ -99,24 +105,22 @@ footer { background: #005bb5; color: #fff; text-align: center; padding: 1.5rem; 
     </div>
   </section>  <section class="features">
     <h3>Features Designed for Ludo Fans</h3>
-    <div class="feature-list">
-      <div class="feature-group">
-        <div class="feature-item">
-          <h4>Classic Gameplay</h4>
-          <p>Authentic Ludo rules and board design.</p>
-        </div>
-        <div class="feature-item">
-          <h4>Custom Rooms</h4>
-          <p>Create private tables with friends and set custom stakes.</p>
-        </div>
-        <div class="feature-item">
-          <h4>Fair Dice Rolls</h4>
-          <p>Server-driven RNG ensures transparent, unbiased outcomes.</p>
-        </div>
-        <div class="feature-item">
-          <h4>Live Chat & Emojis</h4>
-          <p>Interact with rivals with real-time chat and reactions.</p>
-        </div>
+    <div class="feature-group">
+      <div class="feature-item">
+        <h4>Classic Gameplay</h4>
+        <p>Authentic Ludo rules and board design.</p>
+      </div>
+      <div class="feature-item">
+        <h4>Custom Rooms</h4>
+        <p>Create private tables with friends and set custom stakes.</p>
+      </div>
+      <div class="feature-item">
+        <h4>Fair Dice Rolls</h4>
+        <p>Server-driven RNG ensures transparent, unbiased outcomes.</p>
+      </div>
+      <div class="feature-item">
+        <h4>Live Chat & Emojis</h4>
+        <p>Interact with rivals with real-time chat and reactions.</p>
       </div>
     </div>
   </section>  <footer>
