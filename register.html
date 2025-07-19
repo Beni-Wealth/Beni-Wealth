@@ -8,6 +8,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
     body { background: #e6f2ff; color: #003366; display: flex; justify-content: center; align-items: center; height: 100vh; }
     .register-container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2); width: 100%; max-width: 400px; text-align: center; }
+    .logo-img { width: 80px; height: 80px; margin: 0 auto 1rem; display: block; }
     .logo-dice { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; }
     .logo-dice svg { width: 50px; height: 50px; }
     h2 { color: #005bb5; margin-bottom: 1.5rem; }
@@ -30,8 +31,9 @@
 </head>
 <body>
   <div class="register-container">
+    <!-- Beni-Wealth Logo -->
+    <img src="https://i.imgur.com/ZxC07n9.jpg" alt="Beni-Wealth Logo" class="logo-img" />
     <div class="logo-dice">
-      <!-- Dice SVG icons -->
       <svg viewBox="0 0 24 24" fill="#005bb5" xmlns="http://www.w3.org/2000/svg">
         <rect x="1" y="1" width="22" height="22" rx="4"/>
         <circle cx="8" cy="8" r="2" fill="#fff"/>
@@ -66,7 +68,10 @@
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-    const db = firebase.firestore();// Autofill referral if in URL
+    const db = firebase.firestore();// Re-enable Firestore network
+db.enableNetwork().catch(console.error);
+
+// Autofill referral if in URL
 const urlRef = new URLSearchParams(window.location.search).get('ref');
 if (urlRef) document.getElementById('referral').value = urlRef;
 
@@ -88,32 +93,23 @@ async function registerUser() {
     return;
   }
 
-  // Check username uniqueness
-  try {
-    const userQuery = await db.collection('users')
-      .where('username', '==', username)
-      .limit(1)
-      .get();
-    if (!userQuery.empty) {
-      alert('Username already taken.');
-      return;
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Error checking username.');
-    return;
-  }
-
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>Registering...';
 
   try {
+    // Check username uniqueness
+    const userQuery = await db.collection('users').where('username','==',username).limit(1).get();
+    if (!userQuery.empty) {
+      alert('Username already taken.');
+      btn.disabled = false;
+      btn.textContent = 'Register';
+      return;
+    }
+
     const userCred = await auth.createUserWithEmailAndPassword(email, password);
     await userCred.user.sendEmailVerification();
     await db.collection('users').doc(userCred.user.uid).set({
-      username,
-      fullname,
-      email,
+      username, fullname, email,
       referral: referral || null,
       balance: 0,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -123,7 +119,7 @@ async function registerUser() {
     window.location.href = 'login.html';
   } catch (error) {
     console.error(error);
-    alert(error.message);
+    alert(error.message || 'Error checking username.');
     btn.disabled = false;
     btn.textContent = 'Register';
   }
