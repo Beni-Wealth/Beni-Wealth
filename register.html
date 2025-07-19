@@ -4,75 +4,123 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Beni-Wealth – Register</title>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f0f4f8;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+    /* Page-Load Slide + Fade */
+    @keyframes slideFade {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-    .container {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      width: 320px;
-    }
-    h2 {
-      margin-top: 0;
-      text-align: center;
-      color: #1976d2;
-    }
-    input {
-      width: 100%;
-      padding: 0.75rem;
-      margin: 0.5rem 0;
-      border: 1px solid #ccc;
-      border-radius: 0.25rem;
-      box-sizing: border-box;
-    }
-    button {
-      position: relative;
-      width: 100%;
-      padding: 0.75rem;
-      margin-top: 1rem;
-      background: #1976d2;
-      color: #fff;
-      border: none;
-      border-radius: 0.25rem;
-      font-size: 1rem;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border: 3px solid #fff;
-      border-top: 3px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-right: 0.5rem;
-      display: none;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .error {
-      color: #d32f2f;
-      font-size: 0.85rem;
-      height: 1rem;
-      text-align: center;
-    }
+    @keyframes ripple {
+      to { transform: scale(1.5); opacity: 0; }
+    }body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #F7F3E3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.container {
+  background: #FFFFFF;
+  border-radius: 8px;
+  max-width: 360px;
+  margin: auto;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  transform: translateY(20px);
+  opacity: 0;
+  animation: slideFade .5s ease-out forwards;
+  /* Subtle lift on hover */
+  transition: transform .2s ease-out;
+}
+.container:hover {
+  transform: translateY(-4px);
+}
+.logo-wrap {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.logo-wrap img {
+  height: 60px;
+}
+h2 {
+  margin-top: 0;
+  text-align: center;
+  color: #0B2545;
+}
+input {
+  width: 100%;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border: none;
+  border-bottom: 2px solid #CCC;
+  border-radius: 0;
+  box-sizing: border-box;
+  /* Smooth sweep underline */
+  transition: border-bottom-width .3s ease-in-out;
+}
+input:focus {
+  outline: none;
+  border-bottom-width: 3px;
+  border-bottom-color: #1976D2;
+}
+button {
+  position: relative;
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  background: #0B2545;
+  color: #FFF;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+/* Classic ripple */
+button:active::after {
+  content: '';
+  position: absolute;
+  width: 200%; height: 200%;
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  top: -50%; left: -50%;
+  animation: ripple .6s linear;
+}
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #fff;
+  border-top: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+  display: none;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.error {
+  color: #D32F2F;
+  font-size: 0.85rem;
+  height: 1rem;
+  text-align: center;
+}
+
   </style>
 </head>
 <body>
   <div class="container">
+    <div class="logo-wrap">
+      <img src="assets/images/beni-wealth-logo.png" alt="Beni-Wealth Logo">
+    </div>
     <h2>Register</h2>
     <form id="auth-form">
       <input type="text" id="fullName" placeholder="Full Name" required>
@@ -110,7 +158,6 @@
       const confirm  = document.getElementById('confirmPassword').value;
       const referral = document.getElementById('referral').value.trim() || null;
 
-      // Password match
       if (password !== confirm) {
         errorMsg.textContent = 'Passwords do not match.';
         resetButton();
@@ -118,17 +165,12 @@
       }
 
       try {
-        // Check if username exists
         const q = query(collection(db, 'users'), where('username', '==', username));
         const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          throw new Error('Username already taken.');
-        }
-        // Create user auth
+        if (!snapshot.empty) throw new Error('Username already taken.');
+
         const { user } = await createUserWithEmailAndPassword(auth, email, password);
-        // Send verification email
         await sendEmailVerification(user);
-        // Write user doc
         await setDoc(doc(db, 'users', user.uid), {
           fullName,
           username,
@@ -138,7 +180,6 @@
           referredBy: referral,
           createdAt: serverTimestamp()
         });
-        // Redirect to login
         window.location.href = 'login.html';
       } catch (err) {
         errorMsg.textContent = err.message;
@@ -151,4 +192,4 @@
       spinner.style.display = 'none';
     }
   </script></body>
-</html>
+  </html>
