@@ -1,5 +1,4 @@
-<!DOCTYPE html><html lang="en">
-<head>
+<!DOCTYPE html><html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Beni-Wealth – Register</title>
@@ -11,115 +10,125 @@
     }
     @keyframes ripple {
       to { transform: scale(1.5); opacity: 0; }
-    }body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #F7F3E3;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-.container {
-  background: #FFFFFF;
-  border-radius: 8px;
-  max-width: 360px;
-  margin: auto;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  transform: translateY(20px);
-  opacity: 0;
-  animation: slideFade .5s ease-out forwards;
-  /* Subtle lift on hover */
-  transition: transform .2s ease-out;
-}
-.container:hover {
-  transform: translateY(-4px);
-}
-.logo-wrap {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-.logo-wrap img {
-  height: 60px;
-}
-h2 {
-  margin-top: 0;
-  text-align: center;
-  color: #0B2545;
-}
-input {
-  width: 100%;
-  padding: 0.75rem;
-  margin: 0.5rem 0;
-  border: none;
-  border-bottom: 2px solid #CCC;
-  border-radius: 0;
-  box-sizing: border-box;
-  /* Smooth sweep underline */
-  transition: border-bottom-width .3s ease-in-out;
-}
-input:focus {
-  outline: none;
-  border-bottom-width: 3px;
-  border-bottom-color: #1976D2;
-}
-button {
-  position: relative;
-  width: 100%;
-  padding: 0.75rem;
-  margin-top: 1rem;
-  background: #0B2545;
-  color: #FFF;
-  border: none;
-  border-radius: 0.25rem;
-  font-size: 1rem;
-  cursor: pointer;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-/* Classic ripple */
-button:active::after {
-  content: '';
-  position: absolute;
-  width: 200%; height: 200%;
-  background: rgba(255,255,255,0.3);
-  border-radius: 50%;
-  top: -50%; left: -50%;
-  animation: ripple .6s linear;
-}
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 3px solid #fff;
-  border-top: 3px solid rgba(255,255,255,0.3);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-right: 0.5rem;
-  display: none;
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-.error {
-  color: #D32F2F;
-  font-size: 0.85rem;
-  height: 1rem;
-  text-align: center;
-}
-
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #F7F3E3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #FFFFFF;
+      border-radius: 8px;
+      max-width: 360px;
+      margin: auto;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      transform: translateY(20px);
+      opacity: 0;
+      animation: slideFade .5s ease-out forwards;
+      transition: transform .2s ease-out;
+    }
+    .container:hover {
+      transform: translateY(-4px);
+    }
+    .logo-wrap {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .logo-wrap img {
+      height: 60px;
+      border-radius: 50%;
+    }
+    h2 {
+      margin-top: 0;
+      text-align: center;
+      color: #0B2545;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: none;
+      border-bottom: 2px solid #CCC;
+      border-radius: 0;
+      box-sizing: border-box;
+      transition: border-bottom-width .3s ease-in-out;
+    }
+    input:focus {
+      outline: none;
+      border-bottom-width: 3px;
+      border-bottom-color: #1976D2;
+    }
+    button {
+      position: relative;
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 1rem;
+      background: #0B2545;
+      color: #FFF;
+      border: none;
+      border-radius: 0.25rem;
+      font-size: 1rem;
+      cursor: pointer;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    button:active::after {
+      content: '';
+      position: absolute;
+      width: 200%; height: 200%;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      top: -50%; left: -50%;
+      animation: ripple .6s linear;
+    }
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #fff;
+      border-top: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+      display: none;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .error {
+      color: #D32F2F;
+      font-size: 0.85rem;
+      height: 1rem;
+      text-align: center;
+    }
+    .login-link {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+    .login-link a {
+      color: #1976D2;
+      text-decoration: none;
+    }
+    .login-link a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="logo-wrap">
-      <img src="assets/images/beni-wealth-logo.png" alt="Beni-Wealth Logo">
+      <img src="assets/images/file_00000000401861f8bf6acb6d55fcf2bf.png" alt="Beni-Wealth Logo">
     </div>
     <h2>Register</h2>
     <form id="auth-form">
@@ -135,61 +144,65 @@ button:active::after {
         <span id="btn-text">Register</span>
       </button>
     </form>
-  </div>  <script type="module">
+    <div class="login-link">
+      Already have an account? <a href="login.html">Sign in here</a>
+    </div>
+  </div>
+  <script type="module">
     import { auth, db } from './firebase-init.js';
     import { createUserWithEmailAndPassword, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+    import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';const authForm  = document.getElementById('auth-form');
+const submitBtn = document.getElementById('submit-btn');
+const spinner   = document.getElementById('spinner');
+const errorMsg  = document.getElementById('error-msg');
 
-    const authForm  = document.getElementById('auth-form');
-    const submitBtn = document.getElementById('submit-btn');
-    const spinner   = document.getElementById('spinner');
-    const errorMsg  = document.getElementById('error-msg');
+authForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errorMsg.textContent = '';
+  submitBtn.disabled   = true;
+  spinner.style.display= 'block';
 
-    authForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errorMsg.textContent = '';
-      submitBtn.disabled   = true;
-      spinner.style.display= 'block';
+  const fullName = document.getElementById('fullName').value.trim();
+  const username = document.getElementById('username').value.trim();
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const confirm  = document.getElementById('confirmPassword').value;
+  const referral = document.getElementById('referral').value.trim() || null;
 
-      const fullName = document.getElementById('fullName').value.trim();
-      const username = document.getElementById('username').value.trim();
-      const email    = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const confirm  = document.getElementById('confirmPassword').value;
-      const referral = document.getElementById('referral').value.trim() || null;
+  if (password !== confirm) {
+    errorMsg.textContent = 'Passwords do not match.';
+    resetButton();
+    return;
+  }
 
-      if (password !== confirm) {
-        errorMsg.textContent = 'Passwords do not match.';
-        resetButton();
-        return;
-      }
+  try {
+    const q = query(collection(db, 'users'), where('username', '==', username));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) throw new Error('Username already taken.');
 
-      try {
-        const q = query(collection(db, 'users'), where('username', '==', username));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) throw new Error('Username already taken.');
-
-        const { user } = await createUserWithEmailAndPassword(auth, email, password);
-        await sendEmailVerification(user);
-        await setDoc(doc(db, 'users', user.uid), {
-          fullName,
-          username,
-          email: user.email,
-          balance: 0,
-          referralCode: username,
-          referredBy: referral,
-          createdAt: serverTimestamp()
-        });
-        window.location.href = 'login.html';
-      } catch (err) {
-        errorMsg.textContent = err.message;
-        resetButton();
-      }
+    const { user } = await createUserWithEmailAndPassword(auth, email, password);
+    await sendEmailVerification(user);
+    await setDoc(doc(db, 'users', user.uid), {
+      fullName,
+      username,
+      email: user.email,
+      balance: 0,
+      referralCode: username,
+      referredBy: referral,
+      createdAt: serverTimestamp()
     });
+    window.location.href = 'login.html';
+  } catch (err) {
+    errorMsg.textContent = err.message;
+    resetButton();
+  }
+});
 
-    function resetButton() {
-      submitBtn.disabled    = false;
-      spinner.style.display = 'none';
-    }
-  </script></body>
-  </html>
+function resetButton() {
+  submitBtn.disabled    = false;
+  spinner.style.display = 'none';
+}
+
+  </script>
+</body>
+</html>
