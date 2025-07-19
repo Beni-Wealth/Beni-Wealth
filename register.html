@@ -1,134 +1,64 @@
-<!DOCTYPE html><html lang="en"><head>
+<!DOCTYPE html><html lang="en">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Beni-Wealth – Register</title>
   <style>
     /* Page-Load Slide + Fade */
-    @keyframes slideFade {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes ripple {
-      to { transform: scale(1.5); opacity: 0; }
-    }
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #F7F3E3;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+    @keyframes slideFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes ripple { to { transform: scale(1.5); opacity: 0; } }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F7F3E3;
+      display: flex; justify-content: center; align-items: center; height: 100vh; }
     .container {
-      background: #FFFFFF;
-      border-radius: 8px;
-      max-width: 360px;
-      margin: auto;
-      padding: 2rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      transform: translateY(20px);
-      opacity: 0;
-      animation: slideFade .5s ease-out forwards;
+      background: #FFF; border-radius: 8px; max-width: 360px; margin: auto; padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(20px);
+      opacity: 0; animation: slideFade .5s ease-out forwards;
       transition: transform .2s ease-out;
     }
-    .container:hover {
-      transform: translateY(-4px);
-    }
-    .logo-wrap {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .logo-wrap img {
-      height: 60px;
-      border-radius: 50%;
-    }
-    h2 {
-      margin-top: 0;
-      text-align: center;
-      color: #0B2545;
-    }
+    .container:hover { transform: translateY(-4px); }
+    .logo-wrap { text-align: center; margin-bottom: 1rem; }
+    .logo-wrap img { height: 80px; border-radius: 50%; }
+    h2 { margin-top: 0; text-align: center; color: #0B2545; }
     input {
-      width: 100%;
-      padding: 0.75rem;
-      margin: 0.5rem 0;
-      border: none;
-      border-bottom: 2px solid #CCC;
-      border-radius: 0;
-      box-sizing: border-box;
+      width: 100%; padding: .75rem; margin: .5rem 0;
+      border: none; border-bottom: 2px solid #CCC;
       transition: border-bottom-width .3s ease-in-out;
     }
     input:focus {
-      outline: none;
-      border-bottom-width: 3px;
-      border-bottom-color: #1976D2;
+      outline: none; border-bottom-width: 3px; border-bottom-color: #1976D2;
     }
     button {
-      position: relative;
-      width: 100%;
-      padding: 0.75rem;
-      margin-top: 1rem;
-      background: #0B2545;
-      color: #FFF;
-      border: none;
-      border-radius: 0.25rem;
-      font-size: 1rem;
-      cursor: pointer;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      position: relative; width: 100%; padding: .75rem; margin-top: 1rem;
+      background: #0B2545; color: #FFF; border: none; border-radius: .25rem;
+      font-size: 1rem; cursor: pointer; display: flex;
+      justify-content: center; align-items: center; overflow: hidden;
     }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
     button:active::after {
       content: '';
-      position: absolute;
-      width: 200%; height: 200%;
-      background: rgba(255,255,255,0.3);
-      border-radius: 50%;
-      top: -50%; left: -50%;
-      animation: ripple .6s linear;
+      position: absolute; width: 200%; height: 200%;
+      background: rgba(255,255,255,0.3); border-radius: 50%;
+      top: -50%; left: -50%; animation: ripple .6s linear;
     }
     .spinner {
-      width: 20px;
-      height: 20px;
-      border: 3px solid #fff;
-      border-top: 3px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-right: 0.5rem;
+      width: 20px; height: 20px; border: 3px solid #fff;
+      border-top: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
+      animation: spin 1s linear infinite; margin-right: .5rem;
       display: none;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .error {
-      color: #D32F2F;
-      font-size: 0.85rem;
-      height: 1rem;
-      text-align: center;
+      color: #D32F2F; font-size: .85rem; height: 1rem; text-align: center;
     }
-    .login-link {
-      text-align: center;
-      margin-top: 1rem;
-      font-size: 0.9rem;
-    }
-    .login-link a {
-      color: #1976D2;
-      text-decoration: none;
-    }
-    .login-link a:hover {
-      text-decoration: underline;
-    }
+    .login-link { text-align: center; margin-top: 1rem; font-size: .9rem; }
+    .login-link a { color: #1976D2; text-decoration: none; }
+    .login-link a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="logo-wrap">
-      <img src="assets/images/file_00000000401861f8bf6acb6d55fcf2bf.png" alt="Beni-Wealth Logo">
+      <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo">
     </div>
     <h2>Register</h2>
     <form id="auth-form">
@@ -137,7 +67,6 @@
       <input type="email" id="email" placeholder="Email" required>
       <input type="password" id="password" placeholder="Password" required minlength="6">
       <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="6">
-      <input type="text" id="referral" placeholder="Referral Code (optional)">
       <div class="error" id="error-msg"></div>
       <button type="submit" id="submit-btn">
         <div class="spinner" id="spinner"></div>
@@ -150,24 +79,32 @@
   </div>
   <script type="module">
     import { auth, db } from './firebase-init.js';
-    import { createUserWithEmailAndPassword, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';const authForm  = document.getElementById('auth-form');
+    import {
+      createUserWithEmailAndPassword,
+      sendEmailVerification,
+      fetchSignInMethodsForEmail
+    } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+    import {
+      doc, setDoc, serverTimestamp,
+      collection, query, where, getDocs
+    } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';const authForm  = document.getElementById('auth-form');
 const submitBtn = document.getElementById('submit-btn');
 const spinner   = document.getElementById('spinner');
+const btnText   = document.getElementById('btn-text');
 const errorMsg  = document.getElementById('error-msg');
 
-authForm.addEventListener('submit', async (e) => {
+authForm.addEventListener('submit', async e => {
   e.preventDefault();
   errorMsg.textContent = '';
-  submitBtn.disabled   = true;
-  spinner.style.display= 'block';
+  submitBtn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.style.display = 'none';
 
   const fullName = document.getElementById('fullName').value.trim();
   const username = document.getElementById('username').value.trim();
-  const email    = document.getElementById('email').value.trim();
+  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
-  const confirm  = document.getElementById('confirmPassword').value;
-  const referral = document.getElementById('referral').value.trim() || null;
+  const confirm = document.getElementById('confirmPassword').value;
 
   if (password !== confirm) {
     errorMsg.textContent = 'Passwords do not match.';
@@ -176,9 +113,13 @@ authForm.addEventListener('submit', async (e) => {
   }
 
   try {
-    const q = query(collection(db, 'users'), where('username', '==', username));
-    const snapshot = await getDocs(q);
-    if (!snapshot.empty) throw new Error('Username already taken.');
+    // Email uniqueness
+    const methods = await fetchSignInMethodsForEmail(auth, email);
+    if (methods.length) throw new Error('Email already in use.');
+    // Username uniqueness
+    const userQ = query(collection(db, 'users'), where('username', '==', username));
+    const userSnap = await getDocs(userQ);
+    if (!userSnap.empty) throw new Error('Username already taken.');
 
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
     await sendEmailVerification(user);
@@ -188,7 +129,6 @@ authForm.addEventListener('submit', async (e) => {
       email: user.email,
       balance: 0,
       referralCode: username,
-      referredBy: referral,
       createdAt: serverTimestamp()
     });
     window.location.href = 'login.html';
@@ -199,8 +139,9 @@ authForm.addEventListener('submit', async (e) => {
 });
 
 function resetButton() {
-  submitBtn.disabled    = false;
+  submitBtn.disabled = false;
   spinner.style.display = 'none';
+  btnText.style.display = 'block';
 }
 
   </script>
