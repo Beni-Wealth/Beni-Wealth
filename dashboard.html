@@ -1,0 +1,133 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beni-Wealth – Dashboard</title>
+  <style>
+    /* Base Styles */
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F7F3E3; color: #0B2545; }
+    .wrapper { max-width: 480px; margin: auto; padding: 1rem; }
+    header { text-align: center; margin-bottom: 1rem; }
+    h1 { margin: 0; font-size: 1.5rem; }
+    .balance { font-size: 2.5rem; margin: 0.5rem 0; color: #1976D2; }
+    .referral { font-size: 0.9rem; color: #555; }
+    /* Cards */
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .card { background: #FFF; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .card h3 { margin: 0 0 0.5rem 0; font-size: 1rem; color: #0B2545; }
+    .card p { margin: 0; font-size: 1.25rem; color: #1976D2; }
+    /* Transactions */
+    .transactions { background: #FFF; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .transactions h2 { margin-top: 0; font-size: 1.25rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.5rem; text-align: left; }
+    th { border-bottom: 2px solid #CCC; }
+    tr:not(:last-child) td { border-bottom: 1px solid #EEE; }
+    /* Logout */
+    .logout { text-align: center; margin-top: 1rem; }
+    .logout button { background: #D32F2F; color: #FFF; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <h1>Welcome, <span id="user-name">User</span>!</h1>
+      <p class="balance">₦<span id="user-balance">0.00</span></p>
+      <p class="referral">Your referral code: <span id="user-referral">-</span></p>
+    </header>
+    <div class="cards">
+      <div class="card">
+        <h3>Total Referrals</h3>
+        <p id="total-referrals">0</p>
+      </div>
+      <div class="card">
+        <h3>Account Age</h3>
+        <p id="account-age">0 days</p>
+      </div>
+    </div>
+    <section class="transactions">
+      <h2>Recent Transactions</h2>
+      <table>
+        <thead><tr><th>Type</th><th>Date</th><th>Amount (₦)</th></tr></thead>
+        <tbody id="txn-body">
+          <tr><td colspan="3" style="text-align:center; color:#777;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <div class="logout">
+      <button id="logout-btn">Log Out</button>
+    </div>
+  </div>  <script type="module">
+    // Firebase Initialization
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+    import { getFirestore, doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI Elements
+    const userNameEl = document.getElementById('user-name');
+    const userBalanceEl = document.getElementById('user-balance');
+    const userReferralEl = document.getElementById('user-referral');
+    const totalReferralsEl = document.getElementById('total-referrals');
+    const accountAgeEl = document.getElementById('account-age');
+    const txnBody = document.getElementById('txn-body');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    // Helpers
+    function formatDate(ts) {
+      const d = ts.toDate();
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return window.location.href = 'login.html';
+      // Fetch user document
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const data = userDoc.data();
+      userNameEl.textContent = data.fullName;
+      userBalanceEl.textContent = data.balance.toFixed(2);
+      userReferralEl.textContent = data.referralCode;
+
+      // Compute account age
+      const created = data.createdAt;
+      const ageDays = Math.floor((Date.now() - created.toDate()) / (1000*60*60*24));
+      accountAgeEl.textContent = ageDays + ' days';
+
+      // Total referrals: count transactions of type 'referral'
+      const refQ = query(collection(db, 'transactions'), where('userId', '==', user.uid), where('type', '==', 'referral'));
+      const refSnap = await getDocs(refQ);
+      totalReferralsEl.textContent = refSnap.size;
+
+      // Fetch latest 10 transactions
+      const txQ = query(collection(db, 'transactions'), where('userId','==', user.uid), orderBy('timestamp','desc'), limit(10));
+      const txSnap = await getDocs(txQ);
+      txnBody.innerHTML = '';
+      txSnap.forEach(docSnap => {
+        const tx = docSnap.data();
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${tx.type}</td><td>${formatDate(tx.timestamp)}</td><td>₦${tx.amount.toFixed(2)}</td>`;
+        txnBody.appendChild(tr);
+      });
+
+      if (txSnap.empty) {
+        txnBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#777;">No transactions</td></tr>';
+      }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      signOut(auth).then(() => window.location.href = 'login.html');
+    });
+  </script></body>
+</html>
