@@ -121,7 +121,7 @@ authForm.addEventListener('submit', async e => {
       referralCode: username,
       createdAt: serverTimestamp()
     });
-    alert('Registration successful! Please check your email to verify your account.');
+    alert('Registration successful!');
     window.location.href = 'login.html';
   } catch (err) {
     alert(err.message);
