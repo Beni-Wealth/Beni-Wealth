@@ -1,0 +1,113 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beni-Wealth – Login</title>
+  <style>
+    /* Page-Load Slide + Fade */
+    @keyframes slideFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes ripple { to { transform: scale(1.5); opacity: 0; } }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F7F3E3;
+      display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .container {
+      background: #FFF; border-radius: 8px; max-width: 360px; margin: auto; padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(20px);
+      opacity: 0; animation: slideFade .5s ease-out forwards;
+      transition: transform .2s ease-out;
+    }
+    .container:hover { transform: translateY(-4px); }
+    .logo-wrap { text-align: center; margin-bottom: 1rem; }
+    .logo-wrap img { height: 80px; border-radius: 50%; }
+    h2 { margin-top: 0; text-align: center; color: #0B2545; }
+    input {
+      width: 100%; padding: .75rem; margin: .5rem 0;
+      border: none; border-bottom: 2px solid #CCC;
+      transition: border-bottom-width .3s ease-in-out;
+    }
+    input:focus {
+      outline: none; border-bottom-width: 3px; border-bottom-color: #1976D2;
+    }
+    button {
+      position: relative; width: 100%; padding: .75rem; margin-top: 1rem;
+      background: #0B2545; color: #FFF; border: none; border-radius: .25rem;
+      font-size: 1rem; cursor: pointer; display: flex;
+      justify-content: center; align-items: center; overflow: hidden;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    button:active::after {
+      content: ''; position: absolute; width: 200%; height: 200%;
+      background: rgba(255,255,255,0.3); border-radius: 50%;
+      top: -50%; left: -50%; animation: ripple .6s linear;
+    }
+    .spinner { width: 20px; height: 20px; border: 3px solid #fff;
+      border-top: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
+      animation: spin 1s linear infinite; margin-right: .5rem; display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { color: #D32F2F; font-size: .85rem; height: 1rem; text-align: center; }
+    .link-row { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .9rem; }
+    .link-row a { color: #1976D2; text-decoration: none; }
+    .link-row a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-wrap">
+      <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo">
+    </div>
+    <h2>Login</h2>
+    <form id="login-form">
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required minlength="6">
+      <div class="error" id="error-msg"></div>
+      <button type="submit" id="login-btn">
+        <div class="spinner" id="spinner"></div>
+        <span id="btn-text">Log In</span>
+      </button>
+    </form>
+    <div class="link-row">
+      <a href="reset.html">Forgot password?</a>
+      <a href="register.html">Sign up!</a>
+    </div>
+  </div>
+  <script type="module">
+    import { auth } from './firebase-init.js';
+    import { signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';const form      = document.getElementById('login-form');
+const loginBtn  = document.getElementById('login-btn');
+const spinner   = document.getElementById('spinner');
+const btnText   = document.getElementById('btn-text');
+const errorMsg  = document.getElementById('error-msg');
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  errorMsg.textContent = '';
+  loginBtn.disabled   = true;
+  spinner.style.display= 'block';
+  btnText.style.display= 'none';
+
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    // Redirect to dashboard or homepage
+    window.location.href = 'dashboard.html';
+  } catch (err) {
+    errorMsg.textContent = err.message;
+    resetButton();
+  }
+});
+
+function resetButton() {
+  loginBtn.disabled    = false;
+  spinner.style.display = 'none';
+  btnText.style.display = 'block';
+}
+
+// If already logged in, go to dashboard
+onAuthStateChanged(auth, user => {
+  if (user) window.location.href = 'dashboard.html';
+});
+
+  </script>
+</body>
+</html>
