@@ -2,16 +2,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beni-Wealth – Register</title>
+  <title>Beni-Wealth – Login</title>
   <style>
     /* Page-Load Slide + Fade */
     @keyframes slideFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes ripple { to { transform: scale(1.5); opacity: 0; } }
     body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F7F3E3;
       display: flex; justify-content: center; align-items: center; height: 100vh; }
-    .container { background: #FFF; border-radius: 8px; max-width: 360px; margin: auto; padding: 2rem;
+    .container {
+      background: #FFF; border-radius: 8px; max-width: 360px; margin: auto; padding: 2rem;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(20px);
-      opacity: 0; animation: slideFade .5s ease-out forwards; transition: transform .2s ease-out; }
+      opacity: 0; animation: slideFade .5s ease-out forwards;
+      transition: transform .2s ease-out;
+    }
     .container:hover { transform: translateY(-4px); }
     .logo-wrap { text-align: center; margin-bottom: 1rem; }
     .logo-wrap img { height: 80px; border-radius: 50%; }
@@ -19,106 +22,88 @@
     input { width: 100%; padding: .75rem; margin: .5rem 0;
       border: none; border-bottom: 2px solid #CCC; transition: border-bottom-width .3s ease-in-out; }
     input:focus { outline: none; border-bottom-width: 3px; border-bottom-color: #1976D2; }
-    button { position: relative; width: 100%; padding: .75rem; margin-top: 1rem;
+    button {
+      position: relative; width: 100%; padding: .75rem; margin-top: 1rem;
       background: #0B2545; color: #FFF; border: none; border-radius: .25rem;
       font-size: 1rem; cursor: pointer; display: flex; justify-content: center;
-      align-items: center; overflow: hidden; }
+      align-items: center; overflow: hidden;
+    }
     button:disabled { opacity: .6; cursor: not-allowed; }
-    button:active::after { content: ''; position: absolute; width: 200%; height: 200%;
+    button:active::after {
+      content: ''; position: absolute; width: 200%; height: 200%;
       background: rgba(255,255,255,0.3); border-radius: 50%; top: -50%; left: -50%;
-      animation: ripple .6s linear; }
+      animation: ripple .6s linear;
+    }
     .spinner { width: 20px; height: 20px; border: 3px solid #fff;
       border-top: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
       animation: spin 1s linear infinite; margin-right: .5rem; display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .error { color: #D32F2F; font-size: .85rem; height: 1rem; text-align: center; margin-bottom: .5rem; }
-    .login-link { text-align: center; margin-top: 1rem; font-size: .9rem; }
-    .login-link a { color: #1976D2; text-decoration: none; }
-    .login-link a:hover { text-decoration: underline; }
+    .link-row { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .9rem; }
+    .link-row a { color: #1976D2; text-decoration: none; }
+    .link-row a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="logo-wrap">
       <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo">
-    <//div>
-    <h2>Register</h2>
-    <form id="auth-form">
-      <input type="text" id="fullName" placeholder="Full Name" required>
-      <input type="text" id="username" placeholder="Username" required>
+    </div>
+    <h2>Login</h2>
+    <form id="login-form">
       <input type="email" id="email" placeholder="Email" required>
       <input type="password" id="password" placeholder="Password" required minlength="6">
-      <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="6">
       <div class="error" id="error-msg"></div>
-      <button type="submit" id="submit-btn">
+      <button type="submit" id="login-btn">
         <div class="spinner" id="spinner"></div>
-        <span id="btn-text">Register</span>
+        <span id="btn-text">Log In</span>
       </button>
     </form>
-    <div class="login-link">
-      Already have an account? <a href="login.html">Sign in here</a>
+    <div class="link-row">
+      <a href="reset.html">Forgot password?</a>
+      <a href="register.html">Sign up!</a>
     </div>
   </div>
   <script type="module">
-    import { auth, db } from './firebase-init.js';
-    import { createUserWithEmailAndPassword, sendEmailVerification, fetchSignInMethodsForEmail } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';const authForm = document.getElementById('auth-form');
-const submitBtn = document.getElementById('submit-btn');
-const spinner = document.getElementById('spinner');
-const btnText = document.getElementById('btn-text');
-const errorMsg = document.getElementById('error-msg');
+    import { auth } from './firebase-init.js';
+    import { signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';document.addEventListener('DOMContentLoaded', () => {
+  const form     = document.getElementById('login-form');
+  const btn      = document.getElementById('login-btn');
+  const spinner  = document.getElementById('spinner');
+  const btnText  = document.getElementById('btn-text');
+  const errorMsg = document.getElementById('error-msg');
 
-authForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  errorMsg.textContent = '';
-  submitBtn.disabled = true;
-  spinner.style.display = 'block';
-  btnText.style.display = 'none';
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    errorMsg.textContent = '';
+    btn.disabled   = true;
+    spinner.style.display = 'block';
+    btnText.style.display = 'none';
 
-  const fullName = document.getElementById('fullName').value.trim();
-  const username = document.getElementById('username').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const confirm = document.getElementById('confirmPassword').value;
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
 
-  if (password !== confirm) {
-    errorMsg.textContent = 'Passwords do not match.';
-    resetButton();
-    return;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      alert('Login successful!');
+      window.location.href = 'dashboard.html';
+    } catch (err) {
+      alert(err.message);
+      errorMsg.textContent = err.message;
+      reset();
+    }
+  });
+
+  function reset() {
+    btn.disabled    = false;
+    spinner.style.display = 'none';
+    btnText.style.display = 'block';
   }
 
-  try {
-    const methods = await fetchSignInMethodsForEmail(auth, email);
-    if (methods.length) throw new Error('Email already in use.');
-    const userQ = query(collection(db, 'users'), where('username', '==', username));
-    const userSnap = await getDocs(userQ);
-    if (!userSnap.empty) throw new Error('Username already taken.');
-
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
-    await sendEmailVerification(user);
-    await setDoc(doc(db, 'users', user.uid), {
-      fullName,
-      username,
-      email: user.email,
-      balance: 0,
-      referralCode: username,
-      createdAt: serverTimestamp()
-    });
-
-    alert('Registration successful! Please check your email to verify your account.');
-    window.location.href = 'login.html';
-  } catch (err) {
-    alert(err.message);
-    errorMsg.textContent = err.message;
-    resetButton();
-  }
+  onAuthStateChanged(auth, user => {
+    if (user) window.location.href = 'dashboard.html';
+  });
 });
-
-function resetButton() {
-  submitBtn.disabled = false;
-  spinner.style.display = 'none';
-  btnText.style.display = 'block';
-}
 
   </script>
 </body>
