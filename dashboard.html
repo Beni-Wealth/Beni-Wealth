@@ -4,79 +4,111 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Beni-Wealth – Dashboard</title>
   <style>
-    /* Base Styles */
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F7F3E3; color: #0B2545; }
-    .wrapper { max-width: 480px; margin: auto; padding: 1rem; }
-    header { text-align: center; margin-bottom: 1rem; }
+    /* Base */
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #F7F3E3; color: #0B2545; display: flex; height: 100vh; overflow: hidden; }
+    .wrapper { flex: 1; overflow-y: auto; max-width: 480px; margin: auto; padding: 1rem; position: relative; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     h1 { margin: 0; font-size: 1.5rem; }
-    .balance { font-size: 2.5rem; margin: 0.5rem 0; color: #1976D2; }
-    .referral { font-size: 0.9rem; color: #555; }
-    /* Cards */
-    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-    .card { background: #FFF; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .card h3 { margin: 0 0 0.5rem 0; font-size: 1rem; color: #0B2545; }
-    .card p { margin: 0; font-size: 1.25rem; color: #1976D2; }
+    .menu-btn { font-size: 1.5rem; cursor: pointer; color: #1976D2; }
+    .balance { font-size: 2.5rem; margin: .5rem 0; color: #1976D2; }
+    .referral { font-size: .9rem; color: #555; }
+    /* Sidebar */
+    .sidebar { position: fixed; top: 0; right: -30%; width: 30%; height: 100%; background: #FFF; box-shadow: -2px 0 8px rgba(0,0,0,0.1); transition: right .3s ease; padding: 1rem; overflow-y: auto; z-index: 100; }
+    .sidebar.open { right: 0; }
+    .sidebar h2 { margin-top: 0; font-size: 1.2rem; color: #0B2545; }
+    .section { margin-bottom: 1rem; }
+    .section h3 { margin: .5rem 0; font-size: 1rem; cursor: pointer; color: #1976D2; display: flex; justify-content: space-between; align-items: center; }
+    .sub-items { display: none; padding-left: 1rem; }
+    .sub-items a { display: block; margin: .25rem 0; color: #0B2545; text-decoration: none; font-size: .9rem; }
+    /* Stats Cards */
+    .stats { display: flex; gap: 1rem; margin-bottom: 1rem; }
+    .stat { flex: 1; background: #FFF; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
+    .stat h3 { margin: 0; font-size: 1rem; color: #0B2545; }
+    .stat p { margin: .5rem 0 0; font-size: 1.25rem; color: #1976D2; }
     /* Transactions */
-    .transactions { background: #FFF; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .transactions { background: #FFF; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 3.5rem; }
     .transactions h2 { margin-top: 0; font-size: 1.25rem; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 0.5rem; text-align: left; }
+    table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
+    th, td { padding: .5rem; text-align: left; }
     th { border-bottom: 2px solid #CCC; }
     tr:not(:last-child) td { border-bottom: 1px solid #EEE; }
+    /* Bottom Nav */
+    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #FFF; display: flex; justify-content: space-around; padding: .5rem 0; box-shadow: 0 -2px 8px rgba(0,0,0,0.1); }
+    .bottom-nav a { color: #1976D2; text-decoration: none; font-size: .75rem; display: flex; flex-direction: column; align-items: center; }
+    .bottom-nav a span { font-size: 1.25rem; }
     /* Logout */
-    .logout { text-align: center; margin-top: 1rem; }
-    .logout button { background: #D32F2F; color: #FFF; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; }
+    .logout { text-align: center; margin: 1rem 0; }
+    .logout button { background: #D32F2F; color: #FFF; border: none; padding: .75rem 1.5rem; border-radius: 4px; cursor: pointer; }
   </style>
 </head>
 <body>
   <div class="wrapper">
     <header>
       <h1>Welcome, <span id="user-name">User</span>!</h1>
-      <p class="balance">₦<span id="user-balance">0.00</span></p>
-      <p class="referral">Your referral code: <span id="user-referral">-</span></p>
+      <div class="menu-btn" id="menu-btn">☰</div>
     </header>
-    <div class="cards">
-      <div class="card">
-        <h3>Total Referrals</h3>
-        <p id="total-referrals">0</p>
-      </div>
-      <div class="card">
-        <h3>Account Age</h3>
-        <p id="account-age">0 days</p>
+    <p class="balance">$<span id="user-balance">0.00</span></p>
+    <p class="referral">Referral Code: <span id="user-referral">-</span></p><div class="stats">
+  <div class="stat">
+    <h3>🔗 Referrals</h3>
+    <p id="total-referrals">0</p>
+  </div>
+  <div class="stat">
+    <h3>⏳ Account Age</h3>
+    <p id="account-age">0 days</p>
+  </div>
+</div>
+
+<section class="transactions">
+  <h2>Recent Transactions</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Date</th><th>Amount</th></tr></thead>
+    <tbody id="txn-body">
+      <tr><td colspan="3" style="text-align:center; color:#777;">Loading...</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="logout">
+  <button id="logout-btn">Log Out</button>
+</div>
+
+  </div>  <div class="sidebar" id="sidebar">
+    <h2>Menu</h2>
+    <div class="section">
+      <h3 data-target="tasks">▶ Tasks</h3>
+      <div class="sub-items" id="tasks">
+        <a href="tasks.html">Available Tasks</a>
+        <a href="task-history.html">Task History</a>
+        <a href="dispute.html">Dispute Task</a>
       </div>
     </div>
-    <section class="transactions">
-      <h2>Recent Transactions</h2>
-      <table>
-        <thead><tr><th>Type</th><th>Date</th><th>Amount (₦)</th></tr></thead>
-        <tbody id="txn-body">
-          <tr><td colspan="3" style="text-align:center; color:#777;">Loading...</td></tr>
-        </tbody>
-      </table>
-    </section>
-    <div class="logout">
-      <button id="logout-btn">Log Out</button>
+    <div class="section">
+      <h3 data-target="surveys">▶ Surveys</h3>
+      <div class="sub-items" id="surveys">
+        <a href="surveys.html">Take Surveys</a>
+      </div>
     </div>
-  </div>  <script type="module">
-    // Firebase Initialization
+    <div class="section">
+      <h3 data-target="games">▶ Games</h3>
+      <div class="sub-items" id="games">
+        <a href="games.html">Play Games</a>
+      </div>
+    </div>
+  </div>  <nav class="bottom-nav">
+    <a href="profile.html"><span>👤</span>Profile</a>
+    <a href="referrals.html"><span>🔗</span>Referrals</a>
+    <a href="withdraw.html"><span>💰</span>Withdraw</a>
+  </nav>  <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
     import { getFirestore, doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-      authDomain: "beni-wealths.firebaseapp.com",
-      projectId: "beni-wealths",
-      storageBucket: "beni-wealths.firebasestorage.app",
-      messagingSenderId: "807950483822",
-      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-      measurementId: "G-Z2XP3YN6NS"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk", authDomain: "beni-wealths.firebaseapp.com", projectId: "beni-wealths", storageBucket: "beni-wealths.firebasestorage.app", messagingSenderId: "807950483822", appId: "1:807950483822:web:e10fa87307e041c4d8417f", measurementId: "G-Z2XP3YN6NS" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // UI Elements
     const userNameEl = document.getElementById('user-name');
     const userBalanceEl = document.getElementById('user-balance');
     const userReferralEl = document.getElementById('user-referral');
@@ -85,49 +117,42 @@
     const txnBody = document.getElementById('txn-body');
     const logoutBtn = document.getElementById('logout-btn');
 
-    // Helpers
-    function formatDate(ts) {
-      const d = ts.toDate();
-      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
-    }
+    const sidebar = document.getElementById('sidebar');
+    document.getElementById('menu-btn').addEventListener('click', () => sidebar.classList.toggle('open'));
+
+    document.querySelectorAll('.section h3').forEach(h => {
+      h.addEventListener('click', () => {
+        const target = document.getElementById(h.dataset.target);
+        target.style.display = target.style.display === 'block' ? 'none' : 'block';
+      });
+    });
+
+    function formatDate(ts) { const d = ts.toDate(); return d.toLocaleDateString() + ' ' + d.toLocaleTimeString(); }
 
     onAuthStateChanged(auth, async user => {
       if (!user) return window.location.href = 'login.html';
-      // Fetch user document
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       const data = userDoc.data();
       userNameEl.textContent = data.fullName;
       userBalanceEl.textContent = data.balance.toFixed(2);
       userReferralEl.textContent = data.referralCode;
-
-      // Compute account age
-      const created = data.createdAt;
-      const ageDays = Math.floor((Date.now() - created.toDate()) / (1000*60*60*24));
+      const ageDays = Math.floor((Date.now() - data.createdAt.toDate()) / (1000*60*60*24));
       accountAgeEl.textContent = ageDays + ' days';
-
-      // Total referrals: count transactions of type 'referral'
-      const refQ = query(collection(db, 'transactions'), where('userId', '==', user.uid), where('type', '==', 'referral'));
+      const refQ = query(collection(db,'transactions'), where('userId','==',user.uid), where('type','==','referral'));
       const refSnap = await getDocs(refQ);
       totalReferralsEl.textContent = refSnap.size;
-
-      // Fetch latest 10 transactions
-      const txQ = query(collection(db, 'transactions'), where('userId','==', user.uid), orderBy('timestamp','desc'), limit(10));
+      const txQ = query(collection(db,'transactions'), where('userId','==',user.uid), orderBy('timestamp','desc'), limit(10));
       const txSnap = await getDocs(txQ);
       txnBody.innerHTML = '';
-      txSnap.forEach(docSnap => {
-        const tx = docSnap.data();
+      txSnap.forEach(snap => {
+        const tx = snap.data();
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${tx.type}</td><td>${formatDate(tx.timestamp)}</td><td>₦${tx.amount.toFixed(2)}</td>`;
+        tr.innerHTML = `<td>${tx.type}</td><td>${formatDate(tx.timestamp)}</td><td>$${tx.amount.toFixed(2)}</td>`;
         txnBody.appendChild(tr);
       });
-
-      if (txSnap.empty) {
-        txnBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#777;">No transactions</td></tr>';
-      }
+      if (txSnap.empty) txnBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#777;">No transactions</td></tr>';
     });
 
-    logoutBtn.addEventListener('click', () => {
-      signOut(auth).then(() => window.location.href = 'login.html');
-    });
+    logoutBtn.addEventListener('click', () => signOut(auth).then(() => window.location.href='login.html'));
   </script></body>
-</html>
+  </html>
