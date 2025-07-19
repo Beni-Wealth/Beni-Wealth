@@ -1,0 +1,186 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beni-Wealth – Authentication</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 320px;
+    }
+    h2 {
+      margin-top: 0;
+      text-align: center;
+      color: #1976d2;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 0.25rem;
+      box-sizing: border-box;
+    }
+    button {
+      position: relative;
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 1rem;
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      border-radius: 0.25rem;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #fff;
+      border-top: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+      display: none;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .toggle {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+    .toggle a {
+      color: #1976d2;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .error {
+      color: #d32f2f;
+      font-size: 0.85rem;
+      height: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="form-title">Register</h2>
+    <form id="auth-form">
+      <input type="text" id="fullName" placeholder="Full Name" required>
+      <input type="text" id="username" placeholder="Username" required>
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required minlength="6">
+      <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="6">
+      <input type="text" id="referral" placeholder="Referral Code (optional)">
+      <div class="error" id="error-msg"></div>
+      <button type="submit" id="submit-btn">
+        <div class="spinner" id="spinner"></div>
+        <span id="btn-text">Register</span>
+      </button>
+    </form>
+    <div class="toggle">
+      <span>Already have an account? </span><a id="toggle-link">Log In</a>
+    </div>
+  </div>  <script type="module">
+    import { auth, db } from './firebase-init.js';
+    import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+    import { doc, setDoc, serverTimestamp, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+
+    const formTitle      = document.getElementById('form-title');
+    const authForm       = document.getElementById('auth-form');
+    const toggleLink     = document.getElementById('toggle-link');
+    const submitBtn      = document.getElementById('submit-btn');
+    const spinner        = document.getElementById('spinner');
+    const btnText        = document.getElementById('btn-text');
+    const errorMsg       = document.getElementById('error-msg');
+    let isRegistering    = true;
+
+    toggleLink.addEventListener('click', () => {
+      isRegistering = !isRegistering;
+      formTitle.textContent = isRegistering ? 'Register' : 'Log In';
+      btnText.textContent   = isRegistering ? 'Register' : 'Log In';
+      errorMsg.textContent  = '';
+      toggleLink.textContent= isRegistering ? 'Log In' : 'Register';
+      // Show/hide fields
+      ['fullName','username','confirmPassword','referral'].forEach(id => {
+        document.getElementById(id).style.display = isRegistering ? 'block' : 'none';
+      });
+    });
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = '';
+      submitBtn.disabled   = true;
+      spinner.style.display= 'block';
+
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      if (isRegistering) {
+        const fullName = document.getElementById('fullName').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const confirm  = document.getElementById('confirmPassword').value;
+        const referral = document.getElementById('referral').value.trim();
+        if (password !== confirm) {
+          errorMsg.textContent = 'Passwords do not match.';
+          resetButton();
+          return;
+        }
+        try {
+          const { user } = await createUserWithEmailAndPassword(auth, email, password);
+          await sendEmailVerification(user);
+          // Create user doc
+          await setDoc(doc(db, 'users', user.uid), {
+            fullName,
+            username,
+            email: user.email,
+            balance: 0,
+            referralCode: username,
+            referredBy: referral || null,
+            createdAt: serverTimestamp()
+          });
+          alert('Registered! Verification email sent.');
+        } catch (err) {
+          errorMsg.textContent = err.message;
+        }
+      } else {
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+        } catch (err) {
+          errorMsg.textContent = err.message;
+        }
+      }
+      resetButton();
+    });
+
+    function resetButton() {
+      submitBtn.disabled    = false;
+      spinner.style.display = 'none';
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.emailVerified) {
+        window.location.href = 'dashboard.html';
+      }
+    });
+  </script></body>
+</html>
