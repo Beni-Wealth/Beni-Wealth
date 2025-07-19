@@ -90,10 +90,10 @@
     </div>
   </div>
   <script type="module">
-    // Inline Firebase Initialization
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';const firebaseConfig = {
+    import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';// Firebase config & init
+const firebaseConfig = {
   apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
   projectId: "beni-wealths",
@@ -117,28 +117,24 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     errorMsg.textContent = '';
     btn.disabled = true;
-    spinner.style.display = 'block';
+    spinner.style.display = 'inline-block';
     btnText.style.display = 'none';
 
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-
     try {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
       await signInWithEmailAndPassword(auth, email, password);
       alert('Login successful!');
       window.location.href = 'dashboard.html';
     } catch (err) {
-      alert(err.message);
       errorMsg.textContent = err.message;
-      reset();
+      alert(err.message);
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.style.display = 'block';
     }
   });
-
-  function reset() {
-    btn.disabled = false;
-    spinner.style.display = 'none';
-    btnText.style.display = 'block';
-  }
 
   onAuthStateChanged(auth, user => {
     if (user) window.location.href = 'dashboard.html';
