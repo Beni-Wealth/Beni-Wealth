@@ -10,40 +10,60 @@
     body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F7F3E3;
       display: flex; justify-content: center; align-items: center; height: 100vh; }
     .container {
-      background: #FFF; border-radius: 8px; max-width: 360px; margin: auto; padding: 2rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(20px);
-      opacity: 0; animation: slideFade .5s ease-out forwards;
+      background: #FFF;
+      border-radius: 8px;
+      max-width: 360px;
+      margin: auto;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      transform: translateY(20px);
+      opacity: 0;
+      animation: slideFade .5s ease-out forwards;
       transition: transform .2s ease-out;
     }
     .container:hover { transform: translateY(-4px); }
     .logo-wrap { text-align: center; margin-bottom: 1rem; }
     .logo-wrap img { height: 80px; border-radius: 50%; }
     h2 { margin-top: 0; text-align: center; color: #0B2545; }
-    input {
-      width: 100%; padding: .75rem; margin: .5rem 0;
+    input { width: 100%; padding: .75rem; margin: .5rem 0;
       border: none; border-bottom: 2px solid #CCC;
       transition: border-bottom-width .3s ease-in-out;
     }
-    input:focus {
-      outline: none; border-bottom-width: 3px; border-bottom-color: #1976D2;
-    }
+    input:focus { outline: none; border-bottom-width: 3px; border-bottom-color: #1976D2; }
     button {
-      position: relative; width: 100%; padding: .75rem; margin-top: 1rem;
-      background: #0B2545; color: #FFF; border: none; border-radius: .25rem;
-      font-size: 1rem; cursor: pointer; display: flex;
-      justify-content: center; align-items: center; overflow: hidden;
+      position: relative;
+      width: 100%;
+      padding: .75rem;
+      margin-top: 1rem;
+      background: #0B2545;
+      color: #FFF;
+      border: none;
+      border-radius: .25rem;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
     }
     button:disabled { opacity: .6; cursor: not-allowed; }
     button:active::after {
-      content: ''; position: absolute; width: 200%; height: 200%;
-      background: rgba(255,255,255,0.3); border-radius: 50%;
-      top: -50%; left: -50%; animation: ripple .6s linear;
+      content: '';
+      position: absolute;
+      width: 200%; height: 200%;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%; top: -50%; left: -50%;
+      animation: ripple .6s linear;
     }
-    .spinner { width: 20px; height: 20px; border: 3px solid #fff;
-      border-top: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
-      animation: spin 1s linear infinite; margin-right: .5rem; display: none; }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 3px solid #fff;
+      border-top: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%; animation: spin 1s linear infinite;
+      margin-right: .5rem; display: none;
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .error { color: #D32F2F; font-size: .85rem; height: 1rem; text-align: center; }
+    .error { color: #D32F2F; font-size: .85rem; height: 1rem; text-align: center; margin-bottom: .5rem; }
     .link-row { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .9rem; }
     .link-row a { color: #1976D2; text-decoration: none; }
     .link-row a:hover { text-decoration: underline; }
@@ -70,42 +90,59 @@
     </div>
   </div>
   <script type="module">
-    import { auth } from './firebase-init.js';
-    import { signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';const form      = document.getElementById('login-form');
-const loginBtn  = document.getElementById('login-btn');
-const spinner   = document.getElementById('spinner');
-const btnText   = document.getElementById('btn-text');
-const errorMsg  = document.getElementById('error-msg');
+    // Inline Firebase Initialization
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+    import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';const firebaseConfig = {
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  authDomain: "beni-wealths.firebaseapp.com",
+  projectId: "beni-wealths",
+  storageBucket: "beni-wealths.firebasestorage.app",
+  messagingSenderId: "807950483822",
+  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+  measurementId: "G-Z2XP3YN6NS"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-form.addEventListener('submit', async e => {
-  e.preventDefault();
-  errorMsg.textContent = '';
-  loginBtn.disabled   = true;
-  spinner.style.display= 'block';
-  btnText.style.display= 'none';
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('login-form');
+  const btn = document.getElementById('login-btn');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btn-text');
+  const errorMsg = document.getElementById('error-msg');
 
-  const email    = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    errorMsg.textContent = '';
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    btnText.style.display = 'none';
 
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    // Redirect to dashboard or homepage
-    window.location.href = 'dashboard.html';
-  } catch (err) {
-    errorMsg.textContent = err.message;
-    resetButton();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      alert('Login successful!');
+      window.location.href = 'dashboard.html';
+    } catch (err) {
+      alert(err.message);
+      errorMsg.textContent = err.message;
+      reset();
+    }
+  });
+
+  function reset() {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.style.display = 'block';
   }
-});
 
-function resetButton() {
-  loginBtn.disabled    = false;
-  spinner.style.display = 'none';
-  btnText.style.display = 'block';
-}
-
-// If already logged in, go to dashboard
-onAuthStateChanged(auth, user => {
-  if (user) window.location.href = 'dashboard.html';
+  onAuthStateChanged(auth, user => {
+    if (user) window.location.href = 'dashboard.html';
+  });
 });
 
   </script>
