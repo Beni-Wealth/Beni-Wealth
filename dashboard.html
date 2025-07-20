@@ -1,3 +1,4 @@
+
 <!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -15,7 +16,9 @@
     /* Sidebar */
     .sidebar { position: fixed; top: 0; right: -100%; width: 30%; height: 100%; background: #FFF; box-shadow: -2px 0 8px rgba(0,0,0,0.1); transition: right .3s ease; padding: 1rem; overflow-y: auto; z-index: 100; }
     .sidebar.open { right: 0; }
-    .sidebar h2 { margin-top: 0; font-size: 1.2rem; color: #0B2545; }
+    .sidebar header { display: flex; justify-content: space-between; align-items: center; }
+    .sidebar h2 { margin: 0; font-size: 1.2rem; color: #0B2545; }
+    .close-btn { font-size: 1.25rem; cursor: pointer; color: #1976D2; }
     .section { margin-bottom: 1rem; }
     .section h3 { margin: .5rem 0; font-size: 1rem; cursor: pointer; color: #1976D2; display: flex; justify-content: space-between; align-items: center; }
     .sub-items { display: none; padding-left: 1rem; }
@@ -48,7 +51,7 @@
       <div class="menu-btn" id="menu-btn">☰</div>
     </header>
     <p class="balance">$<span id="user-balance">0.00</span></p>
-    <p class="user-code">Your Code: <span id="user-code">------</span></p><div class="stats">
+    <p class="user-code">UID: <span id="user-code">------</span></p><div class="stats">
   <div class="stat">
     <h3>💵 Monthly Earnings</h3>
     <p>$<span id="monthly-earnings">0.00</span></p>
@@ -74,7 +77,7 @@
 </div>
 
   </div>  <div class="sidebar" id="sidebar">
-    <h2>Menu</h2>
+    <header><h2>Menu</h2><div class="close-btn" id="close-btn">×</div></header>
     <div class="section">
       <h3 data-target="tasks">▶ Tasks</h3>
       <div class="sub-items" id="tasks">
@@ -97,8 +100,8 @@
     </div>
   </div>  <nav class="bottom-nav">
     <a href="profile.html"><span class="icon">👤</span>Profile</a>
-    <a href="withdraw.html"><span class="icon">💰</span>Withdraw</a>
     <a href="dashboard.html"><span class="icon"><img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Logo" style="width:24px;height:24px;border-radius:50%;"></span>Home</a>
+    <a href="withdraw.html"><span class="icon">💰</span>Withdraw</a>
   </nav>  <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
@@ -119,6 +122,7 @@
 
     const sidebar = document.getElementById('sidebar');
     document.getElementById('menu-btn').addEventListener('click', () => sidebar.classList.toggle('open'));
+    document.getElementById('close-btn').addEventListener('click', () => sidebar.classList.remove('open'));
     document.querySelectorAll('.section h3').forEach(h => h.addEventListener('click', () => {
       const target = document.getElementById(h.dataset.target);
       target.style.display = target.style.display === 'block' ? 'none' : 'block';
