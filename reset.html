@@ -1,0 +1,118 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beni-Wealth – Reset Password</title>
+  <style>
+    /* Page-Load Slide + Fade */
+    @keyframes slideFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes ripple { to { transform: scale(1.5); opacity: 0; } }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F7F3E3;
+      display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .container {
+      background: #FFF; border-radius: 8px; max-width: 360px; width: 90%; padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(20px);
+      opacity: 0; animation: slideFade .5s ease-out forwards;
+      transition: transform .2s ease-out;
+    }
+    .container:hover { transform: translateY(-4px); }
+    .logo-wrap { text-align: center; margin-bottom: 1rem; }
+    .logo-wrap img { height: 80px; border-radius: 50%; }
+    h2 { margin-top: 0; text-align: center; color: #0B2545; }
+    input {
+      width: 100%; padding: .75rem; margin: .5rem 0;
+      border: none; border-bottom: 2px solid #CCC;
+      transition: border-bottom-width .3s ease-in-out;
+    }
+    input:focus { outline: none; border-bottom-width: 3px; border-bottom-color: #1976D2; }
+    button {
+      position: relative; width: 100%; padding: .75rem; margin-top: 1rem;
+      background: #0B2545; color: #FFF; border: none; border-radius: .25rem;
+      font-size: 1rem; cursor: pointer; display: flex; justify-content: center;
+      align-items: center; overflow: hidden;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    button:active::after {
+      content: ''; position: absolute; width: 200%; height: 200%;
+      background: rgba(255,255,255,0.3); border-radius: 50%; top: -50%; left: -50%;
+      animation: ripple .6s linear;
+    }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 3px solid #fff; border-top: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%; animation: spin 1s linear infinite;
+      margin-right: .5rem; display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { color: #D32F2F; font-size: .85rem; height: 1rem; text-align: center; margin-top: .5rem; }
+    .login-link { text-align: center; margin-top: 1rem; font-size: .9rem; }
+    .login-link a { color: #1976D2; text-decoration: none; }
+    .login-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-wrap">
+      <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo">
+    </div>
+    <h2>Reset Password</h2>
+    <form id="reset-form">
+      <input type="email" id="email" placeholder="Enter your registered email" required>
+      <div class="error" id="error-msg"></div>
+      <button type="submit" id="reset-btn">
+        <div class="spinner" id="spinner"></div>
+        <span id="btn-text">Send Reset Link</span>
+      </button>
+    </form>
+    <div class="login-link">
+      Remembered? <a href="login.html">Log In</a>
+    </div>
+  </div>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
+    import { getAuth, sendPasswordResetEmail, fetchSignInMethodsForEmail } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  authDomain: "beni-wealths.firebaseapp.com",
+  projectId: "beni-wealths",
+  storageBucket: "beni-wealths.firebasestorage.app",
+  messagingSenderId: "807950483822",
+  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+  measurementId: "G-Z2XP3YN6NS"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const form = document.getElementById('reset-form');
+const btn = document.getElementById('reset-btn');
+const spinner = document.getElementById('spinner');
+const btnText = document.getElementById('btn-text');
+const errorMsg = document.getElementById('error-msg');
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  errorMsg.textContent = '';
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  btnText.style.display = 'none';
+
+  const email = document.getElementById('email').value.trim();
+  try {
+    const methods = await fetchSignInMethodsForEmail(auth, email);
+    if (!methods.length) throw new Error('Email not found.');
+    await sendPasswordResetEmail(auth, email);
+    alert('Reset link sent! Check your inbox.');
+    window.location.href = 'login.html';
+  } catch (err) {
+    errorMsg.textContent = err.message;
+    alert(err.message);
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.style.display = 'block';
+  }
+});
+
+  </script>
+</body>
+</html>
