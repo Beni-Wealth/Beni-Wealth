@@ -1,4 +1,3 @@
-
 <!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -13,8 +12,8 @@
     .menu-btn { font-size: 1.5rem; cursor: pointer; color: #1976D2; }
     .balance { font-size: 2.5rem; margin: .5rem 0; color: #1976D2; }
     .user-code { font-size: .9rem; color: #555; margin-bottom: 1rem; }
-    /* Sidebar */
-    .sidebar { position: fixed; top: 0; right: -100%; width: 30%; height: 100%; background: #FFF; box-shadow: -2px 0 8px rgba(0,0,0,0.1); transition: right .3s ease; padding: 1rem; overflow-y: auto; z-index: 100; }
+    /* Sidebar - now 45% width */
+    .sidebar { position: fixed; top: 0; right: -100%; width: 45%; height: 100%; background: #FFF; box-shadow: -2px 0 8px rgba(0,0,0,0.1); transition: right .3s ease; padding: 1rem; overflow-y: auto; z-index: 100; }
     .sidebar.open { right: 0; }
     .sidebar header { display: flex; justify-content: space-between; align-items: center; }
     .sidebar h2 { margin: 0; font-size: 1.2rem; color: #0B2545; }
@@ -51,18 +50,17 @@
       <div class="menu-btn" id="menu-btn">☰</div>
     </header>
     <p class="balance">$<span id="user-balance">0.00</span></p>
-    <p class="user-code">UID: <span id="user-code">------</span></p><div class="stats">
-  <div class="stat">
-    <h3>💵 Monthly Earnings</h3>
-    <p>$<span id="monthly-earnings">0.00</span></p>
-  </div>
-  <div class="stat">
-    <h3>⏳ Account Age</h3>
-    <p><span id="account-age">0 days</span></p>
-  </div>
-</div>
-
-<section class="transactions">
+    <p class="user-code">UID: <span id="user-code">------</span></p>
+    <div class="stats">
+      <div class="stat">
+        <h3>💵 Monthly Earnings</h3>
+        <p>$<span id="monthly-earnings">0.00</span></p>
+      </div>
+      <div class="stat">
+        <h3>⏳ Account Age</h3>
+        <p><span id="account-age">0 days</span></p>
+      </div>
+    </div><section class="transactions">
   <h2>Recent Transactions</h2>
   <table>
     <thead><tr><th>Type</th><th>Date</th><th>Amount</th></tr></thead>
@@ -76,31 +74,29 @@
   <button id="logout-btn">Log Out</button>
 </div>
 
-  </div>  <div class="sidebar" id="sidebar">
+  </div>
+  <div class="sidebar" id="sidebar">
     <header><h2>Menu</h2><div class="close-btn" id="close-btn">×</div></header>
     <div class="section">
       <h3 data-target="tasks">▶ Tasks</h3>
       <div class="sub-items" id="tasks">
         <a href="tasks.html">Available Tasks</a>
         <a href="task-history.html">Task History</a>
-        <a href="dispute.html">Dispute Task</a>
       </div>
     </div>
     <div class="section">
-      <h3 data-target="surveys">▶ Surveys</h3>
-      <div class="sub-items" id="surveys">
-        <a href="surveys.html">Take Surveys</a>
+      <h3 data-target="advertise">▶ Advertise</h3>
+      <div class="sub-items" id="advertise">
+        <a href="post-task.html">Post Task</a>
+        <a href="manage-tasks.html">Manage Tasks</a>
       </div>
     </div>
     <div class="section">
-      <h3 data-target="games">▶ Games</h3>
-      <div class="sub-items" id="games">
-        <a href="games.html">Play Games</a>
-      </div>
+      <h3><a href="shortlinks.html">🔗 Shortlinks</a></h3>
     </div>
   </div>  <nav class="bottom-nav">
     <a href="profile.html"><span class="icon">👤</span>Profile</a>
-    <a href="dashboard.html"><span class="icon"><img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Logo" style="width:24px;height:24px;border-radius:50%;"></span>Home</a>
+    <a href="referrals.html"><span class="icon">🔗</span>Referrals</a>
     <a href="withdraw.html"><span class="icon">💰</span>Withdraw</a>
   </nav>  <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
