@@ -70,7 +70,7 @@
   </div>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-    import { getAuth, sendPasswordResetEmail, fetchSignInMethodsForEmail } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';// Firebase config
+    import { getAuth, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
@@ -98,14 +98,16 @@ form.addEventListener('submit', async e => {
 
   const email = document.getElementById('email').value.trim();
   try {
-    const methods = await fetchSignInMethodsForEmail(auth, email);
-    if (!methods.length) throw new Error('Email not found.');
     await sendPasswordResetEmail(auth, email);
-    alert('Reset link sent! Check your inbox.');
+    alert('A reset link has been sent to your email!');
     window.location.href = 'login.html';
   } catch (err) {
-    errorMsg.textContent = err.message;
-    alert(err.message);
+    if (err.code === 'auth/user-not-found') {
+      errorMsg.textContent = 'No account found with that email.';
+    } else {
+      errorMsg.textContent = err.message;
+    }
+    alert(errorMsg.textContent);
   } finally {
     btn.disabled = false;
     spinner.style.display = 'none';
