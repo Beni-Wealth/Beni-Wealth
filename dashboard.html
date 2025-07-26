@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +13,8 @@
     .menu-btn { font-size: 1.5rem; cursor: pointer; color: #1976D2; }
     .balance { font-size: 2.5rem; margin: .5rem 0; color: #1976D2; }
     .user-code { font-size: .9rem; color: #555; margin-bottom: 1rem; }
-    /* Sidebar - now 45% width */
+
+    /* Sidebar (45%) */
     .sidebar { position: fixed; top: 0; right: -100%; width: 45%; height: 100%; background: #FFF; box-shadow: -2px 0 8px rgba(0,0,0,0.1); transition: right .3s ease; padding: 1rem; overflow-y: auto; z-index: 100; }
     .sidebar.open { right: 0; }
     .sidebar header { display: flex; justify-content: space-between; align-items: center; }
@@ -22,11 +24,13 @@
     .section h3 { margin: .5rem 0; font-size: 1rem; cursor: pointer; color: #1976D2; display: flex; justify-content: space-between; align-items: center; }
     .sub-items { display: none; padding-left: 1rem; }
     .sub-items a { display: block; margin: .25rem 0; color: #0B2545; text-decoration: none; font-size: .9rem; }
+
     /* Stats */
     .stats { display: flex; gap: 1rem; margin-bottom: 1rem; }
     .stat { flex: 1; background: #FFF; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
     .stat h3 { margin: 0; font-size: 1rem; color: #0B2545; }
     .stat p { margin: .5rem 0 0; font-size: 1.25rem; color: #1976D2; }
+
     /* Transactions */
     .transactions { background: #FFF; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 3.5rem; }
     .transactions h2 { margin-top: 0; font-size: 1.25rem; }
@@ -34,23 +38,36 @@
     th, td { padding: .5rem; text-align: left; }
     th { border-bottom: 2px solid #CCC; }
     tr:not(:last-child) td { border-bottom: 1px solid #EEE; }
+
     /* Bottom Nav */
-    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #FFF; display: flex; justify-content: space-around; padding: .5rem 0; box-shadow: 0 -2px 8px rgba(0,0,0,0.1); }
-    .bottom-nav a { color: #1976D2; text-decoration: none; font-size: .75rem; display: flex; flex-direction: column; align-items: center; }
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px; background: #FFF;
+      display: flex; justify-content: space-around; padding: .5rem 0;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    }
+    .bottom-nav a {
+      color: #1976D2; text-decoration: none; font-size: .75rem;
+      display: flex; flex-direction: column; align-items: center;
+    }
     .bottom-nav a span.icon { font-size: 1.25rem; margin-bottom: .25rem; }
+
     /* Logout */
     .logout { text-align: center; margin: 1rem 0; }
     .logout button { background: #D32F2F; color: #FFF; border: none; padding: .75rem 1.5rem; border-radius: 4px; cursor: pointer; }
   </style>
 </head>
 <body>
+
   <div class="wrapper">
     <header>
       <h1>Welcome, <span id="user-name">User</span>!</h1>
       <div class="menu-btn" id="menu-btn">☰</div>
     </header>
+
     <p class="balance">$<span id="user-balance">0.00</span></p>
     <p class="user-code">UID: <span id="user-code">------</span></p>
+
     <div class="stats">
       <div class="stat">
         <h3>💵 Monthly Earnings</h3>
@@ -58,25 +75,30 @@
       </div>
       <div class="stat">
         <h3>⏳ Account Age</h3>
-        <p><span id="account-age">0 days</span></p>
+        <p><span id="account-age">1 day</span></p>
       </div>
-    </div><section class="transactions">
-  <h2>Recent Transactions</h2>
-  <table>
-    <thead><tr><th>Type</th><th>Date</th><th>Amount</th></tr></thead>
-    <tbody id="txn-body">
-      <tr><td colspan="3" style="text-align:center; color:#777;">Loading...</td></tr>
-    </tbody>
-  </table>
-</section>
+    </div>
 
-<div class="logout">
-  <button id="logout-btn">Log Out</button>
-</div>
+    <section class="transactions">
+      <h2>Recent Transactions</h2>
+      <table>
+        <thead><tr><th>Type</th><th>Date</th><th>Amount</th></tr></thead>
+        <tbody id="txn-body">
+          <tr><td colspan="3" style="text-align:center;color:#777;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </section>
 
+    <div class="logout">
+      <button id="logout-btn">Log Out</button>
+    </div>
   </div>
+
   <div class="sidebar" id="sidebar">
-    <header><h2>Menu</h2><div class="close-btn" id="close-btn">×</div></header>
+    <header>
+      <h2>Menu</h2>
+      <div class="close-btn" id="close-btn">×</div>
+    </header>
     <div class="section">
       <h3 data-target="tasks">▶ Tasks</h3>
       <div class="sub-items" id="tasks">
@@ -94,16 +116,29 @@
     <div class="section">
       <h3><a href="shortlinks.html">🔗 Shortlinks</a></h3>
     </div>
-  </div>  <nav class="bottom-nav">
+  </div>
+
+  <nav class="bottom-nav">
     <a href="profile.html"><span class="icon">👤</span>Profile</a>
-    <a href="referrals.html"><span class="icon">🔗</span>Referrals</a>
+    <a href="referrals.html"><span class="icon"><img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Logo" style="width:32px;height:32px;border-radius:50%;"></span></a>
     <a href="withdraw.html"><span class="icon">💰</span>Withdraw</a>
-  </nav>  <script type="module">
+  </nav>
+
+  <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
     import { getFirestore, doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
-    const firebaseConfig = { apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk", authDomain: "beni-wealths.firebaseapp.com", projectId: "beni-wealths", storageBucket: "beni-wealths.firebasestorage.app", messagingSenderId: "807950483822", appId: "1:807950483822:web:e10fa87307e041c4d8417f", measurementId: "G-Z2XP3YN6NS" };
+    // Firebase config inline
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
@@ -115,16 +150,21 @@
     const accountAgeEl = document.getElementById('account-age');
     const txnBody = document.getElementById('txn-body');
     const logoutBtn = document.getElementById('logout-btn');
-
     const sidebar = document.getElementById('sidebar');
+
     document.getElementById('menu-btn').addEventListener('click', () => sidebar.classList.toggle('open'));
     document.getElementById('close-btn').addEventListener('click', () => sidebar.classList.remove('open'));
-    document.querySelectorAll('.section h3').forEach(h => h.addEventListener('click', () => {
-      const target = document.getElementById(h.dataset.target);
-      target.style.display = target.style.display === 'block' ? 'none' : 'block';
-    }));
+    document.querySelectorAll('.section h3').forEach(h => {
+      h.addEventListener('click', () => {
+        const target = document.getElementById(h.dataset.target);
+        target.style.display = target.style.display === 'block' ? 'none' : 'block';
+      });
+    });
 
-    function formatDate(ts) { const d = ts.toDate(); return d.toLocaleDateString() + ' ' + d.toLocaleTimeString(); }
+    function formatDate(ts) {
+      const d = ts.toDate();
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+    }
 
     onAuthStateChanged(auth, async user => {
       if (!user) return window.location.href = 'login.html';
@@ -134,17 +174,24 @@
       userBalanceEl.textContent = data.balance.toFixed(2);
       userCodeEl.textContent = user.uid.slice(0,6).toUpperCase();
 
+      // Monthly earnings
       const now = new Date();
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      const txMonthQ = query(collection(db, 'transactions'), where('userId','==', user.uid), where('timestamp', '>=', start));
-      const txMonthSnap = await getDocs(txMonthQ);
-      const monthSum = txMonthSnap.docs.reduce((sum, d) => sum + d.data().amount, 0);
+      const monthQ = query(collection(db, 'transactions'),
+                           where('userId','==', user.uid),
+                           where('timestamp', '>=', start));
+      const monthSnap = await getDocs(monthQ);
+      const monthSum = monthSnap.docs.reduce((sum, d) => sum + d.data().amount, 0);
       monthlyEarningsEl.textContent = monthSum.toFixed(2);
 
-      const ageDays = Math.floor((Date.now() - data.createdAt.toDate()) / (1000*60*60*24));
+      // Account Age in days (including day 1)
+      const ageDays = Math.floor((Date.now() - data.createdAt.toDate()) / (1000*60*60*24)) + 1;
       accountAgeEl.textContent = ageDays + ' days';
 
-      const txQ = query(collection(db,'transactions'), where('userId','==',user.uid), orderBy('timestamp','desc'), limit(10));
+      // Recent transactions
+      const txQ = query(collection(db, 'transactions'),
+                        where('userId','==',user.uid),
+                        orderBy('timestamp','desc'), limit(10));
       const txSnap = await getDocs(txQ);
       txnBody.innerHTML = '';
       txSnap.forEach(snap => {
@@ -153,9 +200,12 @@
         tr.innerHTML = `<td>${tx.type}</td><td>${formatDate(tx.timestamp)}</td><td>$${tx.amount.toFixed(2)}</td>`;
         txnBody.appendChild(tr);
       });
-      if (txSnap.empty) txnBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#777;">No transactions</td></tr>';
+      if (txSnap.empty) {
+        txnBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#777;">No transactions</td></tr>';
+      }
     });
 
-    logoutBtn.addEventListener('click', () => signOut(auth).then(() => window.location.href='login.html'));
-  </script></body>
+    logoutBtn.addEventListener('click', () => signOut(auth).then(() => window.location.href = 'login.html'));
+  </script>
+</body>
 </html>
