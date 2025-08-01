@@ -5,55 +5,145 @@
   <title>Beni-Wealth – Dashboard</title>
   <style>
     /* Base */
-    body { margin:0; font-family:'Segoe UI',sans-serif; background:#F7F3E3; color:#0B2545; display:flex; height:100vh; overflow:hidden; }
-    .wrapper { flex:1; overflow-y:auto; max-width:480px; margin:auto; padding:1rem; position:relative; animation:fadeIn 0.5s ease; }/* Animations */
-@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-@keyframes slideDown { from { transform:translateY(-20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
-.fade-in { animation:fadeIn 0.6s ease; }
-.slide-down { animation:slideDown 0.4s ease; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #F7F3E3;
+      color: #0B2545;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }/* wrapper */
+.wrapper {
+  flex: 1;
+  overflow-y: auto;
+  max-width: 480px;
+  margin: auto;
+  padding: 1rem;
+  padding-bottom: 4rem; /* space for bottom-nav */
+  animation: fadeIn 0.5s ease;
+}
 
-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
-h1 { margin:0; font-size:1.5rem; }
-.user-id { font-size:0.9rem; color:#777; }
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.fade-in { animation: fadeIn 0.6s ease; }
+.slide-down { animation: slideDown 0.4s ease; }
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+h1 { margin: 0; font-size: 1.5rem; }
+.user-id { font-size: 0.9rem; color: #777; }
 
 /* Balances */
-.balances { display:flex; gap:1rem; margin-bottom:1.5rem; }
-.balance-card { flex:1; background:#FFF; border-radius:8px; padding:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.1); text-align:center; transition:transform 0.3s ease; }
-.balance-card:hover { transform:translateY(-5px); }
-.balance-card h3 { margin:0; font-size:1rem; color:#0B2545; }
-.balance-card p { margin:.5rem 0 0; font-size:2rem; color:#1976D2; }
+.balances { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+.balance-card {
+  flex: 1;
+  background: #FFF;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+.balance-card:hover { transform: translateY(-5px); }
+.balance-card h3 { margin: 0; font-size: 1rem; color: #0B2545; }
+.balance-card p { margin: .5rem 0 0; font-size: 2rem; color: #1976D2; }
 
 /* Referral Code */
-.referral { background:#FFF; border-radius:8px; padding:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-bottom:1.5rem; text-align:center; }
-.referral-code { font-size:1.25rem; font-weight:bold; color:#1976D2; letter-spacing:2px; user-select:text; }
-.referral button { margin-top:.5rem; padding:.5rem 1rem; border:none; border-radius:4px; background:#1976D2; color:#FFF; cursor:pointer; transition:background 0.3s ease; }
-.referral button:hover { background:#115293; }
-
-/* Sidebar (45%) */
-.sidebar { position:fixed; top:0; right:-100%; width:45%; height:100%; background:#FFF; box-shadow:-2px 0 8px rgba(0,0,0,0.1); transition:right .3s ease; padding:1rem; overflow-y:auto; z-index:100; }
-.sidebar.open { right:0; animation:slideInSidebar 0.3s ease forwards; }
-@keyframes slideInSidebar { from { right:-100%; } to { right:0; } }
-.sidebar header { display:flex; justify-content:space-between; align-items:center; }
-.sidebar h2 { margin:0; font-size:1.2rem; color:#0B2545; }
-.close-btn { font-size:1.25rem; cursor:pointer; color:#1976D2; }
-.section { margin-bottom:1rem; }
-.section h3 { margin:.5rem 0; font-size:1rem; cursor:pointer; color:#1976D2; display:flex; justify-content:space-between; align-items:center; }
-.sub-items { display:none; padding-left:1rem; }
-.sub-items a { display:block; margin:.25rem 0; color:#0B2545; text-decoration:none; font-size:.9rem; }
+.referral {
+  background: #FFF;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.referral-code {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #1976D2;
+  letter-spacing: 2px;
+  user-select: text;
+}
+.referral button {
+  margin-top: .5rem;
+  padding: .5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background: #1976D2;
+  color: #FFF;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.referral button:hover { background: #115293; }
 
 /* Transactions */
-.transactions { background:#FFF; border-radius:8px; padding:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-bottom:3.5rem; }
-.transactions h2 { margin-top:0; font-size:1.25rem; }
-table { width:100%; border-collapse:collapse; margin-top:.5rem; }
-th,td { padding:.5rem; text-align:left; }
-th { border-bottom:2px solid #CCC; }
-tr:not(:last-child) td { border-bottom:1px solid #EEE; }
+.transactions {
+  background: #FFF;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 3.5rem;
+}
+table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
+th, td { padding: .5rem; text-align: left; }
+th { border-bottom: 2px solid #CCC; }
+tr:not(:last-child) td { border-bottom: 1px solid #EEE; }
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 45%;
+  height: 100%;
+  background: #FFF;
+  box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+  padding: 1rem;
+  overflow-y: auto;
+  z-index: 150;
+  transition: right .3s ease;
+}
+.sidebar.open { right: 0; animation: slideInSidebar 0.3s ease forwards; }
+@keyframes slideInSidebar { from { right: -100%; } to { right: 0; } }
+.close-btn { font-size: 1.25rem; cursor: pointer; color: #1976D2; }
+.section h3 { cursor: pointer; color: #1976D2; display: flex; justify-content: space-between; }
+.sub-items { display: none; padding-left: 1rem; }
+
+@media (max-width: 480px) {
+  .sidebar { width: 80%; }
+}
 
 /* Bottom Nav */
-.bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:#FFF; display:flex; justify-content:space-around; padding:.5rem 0; box-shadow:0 -2px 8px rgba(0,0,0,0.1); }
-.bottom-nav a, .bottom-nav .logo-item { color:#1976D2; text-decoration:none; font-size:.75rem; display:flex; flex-direction:column; align-items:center; }
-.bottom-nav .logo-item img { width:32px; height:32px; border-radius:50%; }
-.bottom-nav .logo-item span { margin-top:.25rem; }
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background: #FFF;
+  display: flex;
+  justify-content: space-around;
+  padding: .5rem 0;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  z-index: 200;
+}
+.bottom-nav a, .bottom-nav .logo-item {
+  color: #1976D2;
+  text-decoration: none;
+  font-size: .75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
   </style>
 </head>
@@ -63,8 +153,8 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
       <div>
         <h1>Welcome, <span id="user-name">User</span>!</h1>
         <div class="user-id">ID: <span id="user-id">-----</span></div>
-      </div>
-      <div class="menu-btn slide-down" id="menu-btn">☰</div>
+      </**>
+      <div id="menu-btn" class="slide-down">☰</div>
     </header><div class="balances">
   <div class="balance-card slide-down">
     <h3>Main Balance</h3>
@@ -92,30 +182,35 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
   </table>
 </section>
 
-  </div>  <div class="sidebar" id="sidebar">
-    <header><h2>Menu</h2><div class="close-btn" id="close-btn">×</div></header>
+  </div>  <div id="sidebar" class="sidebar">
+    <header>
+      <h2>Menu</h2>
+      <div id="close-btn" class="close-btn">×</div>
+    </header>
     <div class="section">
       <h3 data-target="tasks">▶ Tasks</h3>
-      <div class="sub-items" id="tasks">
+      <div id="tasks" class="sub-items">
         <a href="tasks.html">Available Tasks</a>
         <a href="task-history.html">Task History</a>
       </div>
     </div>
     <div class="section">
       <h3 data-target="advertise">▶ Advertise</h3>
-      <div class="sub-items" id="advertise">
+      <div id="advertise" class="sub-items">
         <a href="post-task.html">Post Task</a>
         <a href="manage-tasks.html">Manage Tasks</a>
       </div>
     </div>
-    <div class="section">
-      <h3>🔗 Shortlinks</h3>
-    </div>
+    <div class="section"><h3>🔗 Shortlinks</h3></div>
   </div>  <nav class="bottom-nav">
-    <a href="profile.html"><span class="icon">👤</span>Profile</a>
-    <div class="logo-item"><img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Logo"><span>Home</span></div>
-    <a href="withdraw.html"><span class="icon">💰</span>Withdraw</a>
+    <a href="profile.html"><span>👤</span><small>Profile</small></a>
+    <div class="logo-item">
+      <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Logo" width="32" height="32">
+      <small>Home</small>
+    </div>
+    <a href="withdraw.html"><span>💰</span><small>Withdraw</small></a>
   </nav>  <script type="module">
+    // Firebase initialization
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
     import { getFirestore, doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
@@ -133,6 +228,7 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // DOM Elements
     const userNameEl = document.getElementById('user-name');
     const userIdEl = document.getElementById('user-id');
     const mainBalanceEl = document.getElementById('main-balance');
@@ -142,27 +238,36 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
     const copyRefBtn = document.getElementById('copy-ref');
     const sidebar = document.getElementById('sidebar');
 
-    document.getElementById('menu-btn').addEventListener('click', () => sidebar.classList.toggle('open'));
-    document.getElementById('close-btn').addEventListener('click', () => sidebar.classList.remove('open'));
-    document.querySelectorAll('.section h3').forEach(h => h.addEventListener('click', () => {
-      const target = document.getElementById(h.dataset.target);
-      if (target) target.style.display = target.style.display === 'block' ? 'none' : 'block';
-    }));
+    // Menu toggles
+    document.getElementById('menu-btn').onclick = () => sidebar.classList.toggle('open');
+    document.getElementById('close-btn').onclick = () => sidebar.classList.remove('open');
+    document.querySelectorAll('.section h3').forEach(h => {
+      h.onclick = () => {
+        const tgt = document.getElementById(h.dataset.target);
+        if (tgt) tgt.style.display = tgt.style.display === 'block' ? 'none' : 'block';
+      };
+    });
 
-    copyRefBtn.addEventListener('click', async () => {
+    // Copy referral code
+    copyRefBtn.onclick = async () => {
       await navigator.clipboard.writeText(refCodeEl.textContent);
       copyRefBtn.textContent = 'Copied!';
       setTimeout(() => copyRefBtn.textContent = 'Copy Code', 2000);
-    });
+    };
 
     function formatDate(ts) {
       const d = ts.toDate();
       return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
     }
 
+    // Auth state listener
     onAuthStateChanged(auth, async user => {
-      if (!user) return window.location.href = 'login.html';
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
       userIdEl.textContent = user.uid.slice(0,5);
+
       const uDoc = await getDoc(doc(db, 'users', user.uid));
       const data = uDoc.data();
       userNameEl.textContent = data.fullName;
@@ -172,93 +277,25 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
       // Referral code
       refCodeEl.textContent = data.referralCode;
 
-      // Transactions
-      const txQ = query(collection(db,'transactions'), where('userId','==',user.uid), orderBy('timestamp','desc'), limit(10));
+      // Load latest 10 transactions
+      const txQ = query(
+        collection(db, 'transactions'),
+        where('userId','==',user.uid),
+        orderBy('timestamp','desc'),
+        limit(10)
+      );
       const txSnap = await getDocs(txQ);
       txnBody.innerHTML = '';
-      txSnap.forEach(snap => {
-        const tx = snap.data();
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${tx.type}</td><td>${formatDate(tx.timestamp)}</td><td>$${tx.amount.toFixed(2)}</td>`;
-        txnBody.appendChild(tr);
-      });
-      if (txSnap.empty) txnBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#777;">No transactions</td></tr>';
-    });
-  </script></body>
-</html>    <div class="section">
-      <h3 data-target="advertise">▶ Advertise</h3>
-      <div class="sub-items" id="advertise">
-        <a href="post-task.html">Post Task</a>
-        <a href="manage-tasks.html">Manage Tasks</a>
-      </div>
-    </div>
-    <div class="section">
-      <h3>🔗 Shortlinks</h3>
-    </div>
-  </div>  <nav class="bottom-nav">
-    <a href="profile.html"><span class="icon">👤</span>Profile</a>
-    <div class="logo-item"><img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Logo"><span>Home</span></div>
-    <a href="withdraw.html"><span class="icon">💰</span>Withdraw</a>
-  </nav>  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import { getFirestore, doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
-
-    const firebaseConfig = { /* ... */ };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    const userNameEl = document.getElementById('user-name');
-    const userIdEl = document.getElementById('user-id');
-    const mainBalanceEl = document.getElementById('main-balance');
-    const depositBalanceEl = document.getElementById('deposit-balance');
-    const txnBody = document.getElementById('txn-body');
-    const refCodeEl = document.getElementById('ref-code');
-    const copyRefBtn = document.getElementById('copy-ref');
-    const sidebar = document.getElementById('sidebar');
-
-    document.getElementById('menu-btn').addEventListener('click', () => sidebar.classList.toggle('open'));
-    document.getElementById('close-btn').addEventListener('click', () => sidebar.classList.remove('open'));
-    document.querySelectorAll('.section h3').forEach(h => h.addEventListener('click', () => {
-      const target = document.getElementById(h.dataset.target);
-      if (target) target.style.display = target.style.display === 'block' ? 'none' : 'block';
-    }));
-
-    copyRefBtn.addEventListener('click', async () => {
-      await navigator.clipboard.writeText(refCodeEl.textContent);
-      copyRefBtn.textContent = 'Copied!';
-      setTimeout(() => copyRefBtn.textContent = 'Copy Code', 2000);
-    });
-
-    function formatDate(ts) {
-      const d = ts.toDate();
-      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
-    }
-
-    onAuthStateChanged(auth, async user => {
-      if (!user) return window.location.href = 'login.html';
-      userIdEl.textContent = user.uid.slice(0,5);
-      const uDoc = await getDoc(doc(db, 'users', user.uid));
-      const data = uDoc.data();
-      userNameEl.textContent = data.fullName;
-      mainBalanceEl.textContent = data.balance.toFixed(2);
-      depositBalanceEl.textContent = (data.depositBalance || 0).toFixed(2);
-
-      // Referral code
-      refCodeEl.textContent = data.referralCode;
-
-      // Transactions
-      const txQ = query(collection(db,'transactions'), where('userId','==',user.uid), orderBy('timestamp','desc'), limit(10));
-      const txSnap = await getDocs(txQ);
-      txnBody.innerHTML = '';
-      txSnap.forEach(snap => {
-        const tx = snap.data();
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${tx.type}</td><td>${formatDate(tx.timestamp)}</td><td>$${tx.amount.toFixed(2)}</td>`;
-        txnBody.appendChild(tr);
-      });
-      if (txSnap.empty) txnBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#777;">No transactions</td></tr>';
+      if (txSnap.empty) {
+        txnBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#777;">No transactions</td></tr>';
+      } else {
+        txSnap.forEach(s => {
+          const tx = s.data();
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${tx.type}</td><td>${formatDate(tx.timestamp)}</td><td>$${tx.amount.toFixed(2)}</td>`;
+          txnBody.appendChild(tr);
+        });
+      }
     });
   </script></body>
 </html>
