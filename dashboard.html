@@ -6,18 +6,33 @@
   <style>
     /* Base */
     body { margin:0; font-family:'Segoe UI',sans-serif; background:#F7F3E3; color:#0B2545; display:flex; height:100vh; overflow:hidden; }
-    .wrapper { flex:1; overflow-y:auto; max-width:480px; margin:auto; padding:1rem; position:relative; }
-    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
-    h1 { margin:0; font-size:1.5rem; }
-    .menu-btn { font-size:1.5rem; cursor:pointer; color:#1976D2; }/* Balances */
+    .wrapper { flex:1; overflow-y:auto; max-width:480px; margin:auto; padding:1rem; position:relative; animation:fadeIn 0.5s ease; }/* Animations */
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes slideDown { from { transform:translateY(-20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+.fade-in { animation:fadeIn 0.6s ease; }
+.slide-down { animation:slideDown 0.4s ease; }
+
+header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+h1 { margin:0; font-size:1.5rem; }
+.user-id { font-size:0.9rem; color:#777; }
+
+/* Balances */
 .balances { display:flex; gap:1rem; margin-bottom:1.5rem; }
-.balance-card { flex:1; background:#FFF; border-radius:8px; padding:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.1); text-align:center; }
+.balance-card { flex:1; background:#FFF; border-radius:8px; padding:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.1); text-align:center; transition:transform 0.3s ease; }
+.balance-card:hover { transform:translateY(-5px); }
 .balance-card h3 { margin:0; font-size:1rem; color:#0B2545; }
 .balance-card p { margin:.5rem 0 0; font-size:2rem; color:#1976D2; }
 
+/* Referral Code */
+.referral { background:#FFF; border-radius:8px; padding:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-bottom:1.5rem; text-align:center; }
+.referral-code { font-size:1.25rem; font-weight:bold; color:#1976D2; letter-spacing:2px; user-select:text; }
+.referral button { margin-top:.5rem; padding:.5rem 1rem; border:none; border-radius:4px; background:#1976D2; color:#FFF; cursor:pointer; transition:background 0.3s ease; }
+.referral button:hover { background:#115293; }
+
 /* Sidebar (45%) */
 .sidebar { position:fixed; top:0; right:-100%; width:45%; height:100%; background:#FFF; box-shadow:-2px 0 8px rgba(0,0,0,0.1); transition:right .3s ease; padding:1rem; overflow-y:auto; z-index:100; }
-.sidebar.open { right:0; }
+.sidebar.open { right:0; animation:slideInSidebar 0.3s ease forwards; }
+@keyframes slideInSidebar { from { right:-100%; } to { right:0; } }
 .sidebar header { display:flex; justify-content:space-between; align-items:center; }
 .sidebar h2 { margin:0; font-size:1.2rem; color:#0B2545; }
 .close-btn { font-size:1.25rem; cursor:pointer; color:#1976D2; }
@@ -40,29 +55,34 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
 .bottom-nav .logo-item img { width:32px; height:32px; border-radius:50%; }
 .bottom-nav .logo-item span { margin-top:.25rem; }
 
-/* Logout */
-.logout { text-align:center; margin:1rem 0; }
-.logout button { background:#D32F2F; color:#FFF; border:none; padding:.75rem 1.5rem; border-radius:4px; cursor:pointer; }
-
   </style>
 </head>
 <body>
-  <div class="wrapper">
+  <div class="wrapper fade-in">
     <header>
-      <h1>Welcome, <span id="user-name">User</span>!</h1>
-      <div class="menu-btn" id="menu-btn">☰</div>
+      <div>
+        <h1>Welcome, <span id="user-name">User</span>!</h1>
+        <div class="user-id">ID: <span id="user-id">-----</span></div>
+      </div>
+      <div class="menu-btn slide-down" id="menu-btn">☰</div>
     </header><div class="balances">
-  <div class="balance-card">
+  <div class="balance-card slide-down">
     <h3>Main Balance</h3>
     <p>$<span id="main-balance">0.00</span></p>
   </div>
-  <div class="balance-card">
+  <div class="balance-card slide-down" style="animation-delay:0.1s;">
     <h3>Deposit Balance</h3>
     <p>$<span id="deposit-balance">0.00</span></p>
   </div>
 </div>
 
-<section class="transactions">
+<section class="referral slide-down" style="animation-delay:0.2s;">
+  <h2>Your Referral Code</h2>
+  <div class="referral-code" id="ref-code">-----</div>
+  <button id="copy-ref">Copy Code</button>
+</section>
+
+<section class="transactions slide-down" style="animation-delay:0.3s;">
   <h2>Recent Transactions</h2>
   <table>
     <thead><tr><th>Type</th><th>Date</th><th>Amount</th></tr></thead>
@@ -71,10 +91,6 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
     </tbody>
   </table>
 </section>
-
-<div class="logout">
-  <button id="logout-btn">Log Out</button>
-</div>
 
   </div>  <div class="sidebar" id="sidebar">
     <header><h2>Menu</h2><div class="close-btn" id="close-btn">×</div></header>
@@ -101,27 +117,21 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
     <a href="withdraw.html"><span class="icon">💰</span>Withdraw</a>
   </nav>  <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
     import { getFirestore, doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-      authDomain: "beni-wealths.firebaseapp.com",
-      projectId: "beni-wealths",
-      storageBucket: "beni-wealths.firebasestorage.app",
-      messagingSenderId: "807950483822",
-      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-      measurementId: "G-Z2XP3YN6NS"
-    };
+    const firebaseConfig = { /* ... */ };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
     const userNameEl = document.getElementById('user-name');
+    const userIdEl = document.getElementById('user-id');
     const mainBalanceEl = document.getElementById('main-balance');
     const depositBalanceEl = document.getElementById('deposit-balance');
     const txnBody = document.getElementById('txn-body');
-    const logoutBtn = document.getElementById('logout-btn');
+    const refCodeEl = document.getElementById('ref-code');
+    const copyRefBtn = document.getElementById('copy-ref');
     const sidebar = document.getElementById('sidebar');
 
     document.getElementById('menu-btn').addEventListener('click', () => sidebar.classList.toggle('open'));
@@ -131,6 +141,12 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
       if (target) target.style.display = target.style.display === 'block' ? 'none' : 'block';
     }));
 
+    copyRefBtn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(refCodeEl.textContent);
+      copyRefBtn.textContent = 'Copied!';
+      setTimeout(() => copyRefBtn.textContent = 'Copy Code', 2000);
+    });
+
     function formatDate(ts) {
       const d = ts.toDate();
       return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
@@ -138,13 +154,17 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
 
     onAuthStateChanged(auth, async user => {
       if (!user) return window.location.href = 'login.html';
+      userIdEl.textContent = user.uid.slice(0,5);
       const uDoc = await getDoc(doc(db, 'users', user.uid));
       const data = uDoc.data();
       userNameEl.textContent = data.fullName;
       mainBalanceEl.textContent = data.balance.toFixed(2);
       depositBalanceEl.textContent = (data.depositBalance || 0).toFixed(2);
 
-      // Recent transactions
+      // Referral code
+      refCodeEl.textContent = data.referralCode;
+
+      // Transactions
       const txQ = query(collection(db,'transactions'), where('userId','==',user.uid), orderBy('timestamp','desc'), limit(10));
       const txSnap = await getDocs(txQ);
       txnBody.innerHTML = '';
@@ -156,7 +176,5 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
       });
       if (txSnap.empty) txnBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#777;">No transactions</td></tr>';
     });
-
-    logoutBtn.addEventListener('click', () => signOut(auth).then(() => window.location.href = 'login.html'));
   </script></body>
 </html>
