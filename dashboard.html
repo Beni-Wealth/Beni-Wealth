@@ -5,46 +5,44 @@
   <title>Beni-Wealth – Dashboard</title>
   <style>
     /* Base */
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #F7F3E3; color: #0B2545; display: flex; height: 100vh; overflow: hidden; }
-    .wrapper { flex: 1; overflow-y: auto; max-width: 480px; margin: auto; padding: 1rem; position: relative; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    h1 { margin: 0; font-size: 1.5rem; }
-    .menu-btn { font-size: 1.5rem; cursor: pointer; color: #1976D2; }
-    .balance { font-size: 2.5rem; margin: .5rem 0; color: #1976D2; }
-    .user-code { font-size: .9rem; color: #555; margin-bottom: 1rem; }/* Sidebar (45%) */
-.sidebar { position: fixed; top: 0; right: -100%; width: 45%; height: 100%; background: #FFF; box-shadow: -2px 0 8px rgba(0,0,0,0.1); transition: right .3s ease; padding: 1rem; overflow-y: auto; z-index: 100; }
-.sidebar.open { right: 0; }
-.sidebar header { display: flex; justify-content: space-between; align-items: center; }
-.sidebar h2 { margin: 0; font-size: 1.2rem; color: #0B2545; }
-.close-btn { font-size: 1.25rem; cursor: pointer; color: #1976D2; }
-.section { margin-bottom: 1rem; }
-.section h3 { margin: .5rem 0; font-size: 1rem; cursor: pointer; color: #1976D2; display: flex; justify-content: space-between; align-items: center; }
-.sub-items { display: none; padding-left: 1rem; }
-.sub-items a { display: block; margin: .25rem 0; color: #0B2545; text-decoration: none; font-size: .9rem; }
+    body { margin:0; font-family:'Segoe UI',sans-serif; background:#F7F3E3; color:#0B2545; display:flex; height:100vh; overflow:hidden; }
+    .wrapper { flex:1; overflow-y:auto; max-width:480px; margin:auto; padding:1rem; position:relative; }
+    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+    h1 { margin:0; font-size:1.5rem; }
+    .menu-btn { font-size:1.5rem; cursor:pointer; color:#1976D2; }/* Balances */
+.balances { display:flex; gap:1rem; margin-bottom:1.5rem; }
+.balance-card { flex:1; background:#FFF; border-radius:8px; padding:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.1); text-align:center; }
+.balance-card h3 { margin:0; font-size:1rem; color:#0B2545; }
+.balance-card p { margin:.5rem 0 0; font-size:2rem; color:#1976D2; }
 
-/* Stats */
-.stats { display: flex; gap: 1rem; margin-bottom: 1rem; }
-.stat { flex: 1; background: #FFF; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
-.stat h3 { margin: 0; font-size: 1rem; color: #0B2545; }
-.stat p { margin: .5rem 0 0; font-size: 1.25rem; color: #1976D2; }
+/* Sidebar (45%) */
+.sidebar { position:fixed; top:0; right:-100%; width:45%; height:100%; background:#FFF; box-shadow:-2px 0 8px rgba(0,0,0,0.1); transition:right .3s ease; padding:1rem; overflow-y:auto; z-index:100; }
+.sidebar.open { right:0; }
+.sidebar header { display:flex; justify-content:space-between; align-items:center; }
+.sidebar h2 { margin:0; font-size:1.2rem; color:#0B2545; }
+.close-btn { font-size:1.25rem; cursor:pointer; color:#1976D2; }
+.section { margin-bottom:1rem; }
+.section h3 { margin:.5rem 0; font-size:1rem; cursor:pointer; color:#1976D2; display:flex; justify-content:space-between; align-items:center; }
+.sub-items { display:none; padding-left:1rem; }
+.sub-items a { display:block; margin:.25rem 0; color:#0B2545; text-decoration:none; font-size:.9rem; }
 
 /* Transactions */
-.transactions { background: #FFF; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 3.5rem; }
-.transactions h2 { margin-top: 0; font-size: 1.25rem; }
-table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
-th, td { padding: .5rem; text-align: left; }
-th { border-bottom: 2px solid #CCC; }
-tr:not(:last-child) td { border-bottom: 1px solid #EEE; }
+.transactions { background:#FFF; border-radius:8px; padding:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-bottom:3.5rem; }
+.transactions h2 { margin-top:0; font-size:1.25rem; }
+table { width:100%; border-collapse:collapse; margin-top:.5rem; }
+th,td { padding:.5rem; text-align:left; }
+th { border-bottom:2px solid #CCC; }
+tr:not(:last-child) td { border-bottom:1px solid #EEE; }
 
 /* Bottom Nav */
-.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #FFF; display: flex; justify-content: space-around; padding: .5rem 0; box-shadow: 0 -2px 8px rgba(0,0,0,0.1); }
-.bottom-nav a, .bottom-nav .logo-item { color: #1976D2; text-decoration: none; font-size: .75rem; display: flex; flex-direction: column; align-items: center; }
-.bottom-nav .logo-item img { width: 32px; height: 32px; border-radius: 50%; }
-.bottom-nav .logo-item span { margin-top: .25rem; }
+.bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:#FFF; display:flex; justify-content:space-around; padding:.5rem 0; box-shadow:0 -2px 8px rgba(0,0,0,0.1); }
+.bottom-nav a, .bottom-nav .logo-item { color:#1976D2; text-decoration:none; font-size:.75rem; display:flex; flex-direction:column; align-items:center; }
+.bottom-nav .logo-item img { width:32px; height:32px; border-radius:50%; }
+.bottom-nav .logo-item span { margin-top:.25rem; }
 
 /* Logout */
-.logout { text-align: center; margin: 1rem 0; }
-.logout button { background: #D32F2F; color: #FFF; border: none; padding: .75rem 1.5rem; border-radius: 4px; cursor: pointer; }
+.logout { text-align:center; margin:1rem 0; }
+.logout button { background:#D32F2F; color:#FFF; border:none; padding:.75rem 1.5rem; border-radius:4px; cursor:pointer; }
 
   </style>
 </head>
@@ -53,31 +51,31 @@ tr:not(:last-child) td { border-bottom: 1px solid #EEE; }
     <header>
       <h1>Welcome, <span id="user-name">User</span>!</h1>
       <div class="menu-btn" id="menu-btn">☰</div>
-    </header>
-    <p class="balance">$<span id="user-balance">0.00</span></p>
-    <p class="user-code">UID: <span id="user-code">------</span></p>
-    <div class="stats">
-      <div class="stat">
-        <h3>💵 Monthly Earnings</h3>
-        <p>$<span id="monthly-earnings">0.00</span></p>
-      </div>
-      <div class="stat">
-        <h3>⏳ Account Age</h3>
-        <p><span id="account-age">1 day</span></p>
-      </div>
-    </div>
-    <section class="transactions">
-      <h2>Recent Transactions</h2>
-      <table>
-        <thead><tr><th>Type</th><th>Date</th><th>Amount</th></tr></thead>
-        <tbody id="txn-body">
-          <tr><td colspan="3" style="text-align:center;color:#777;">Loading...</td></tr>
-        </tbody>
-      </table>
-    </section>
-    <div class="logout">
-      <button id="logout-btn">Log Out</button>
-    </div>
+    </header><div class="balances">
+  <div class="balance-card">
+    <h3>Main Balance</h3>
+    <p>$<span id="main-balance">0.00</span></p>
+  </div>
+  <div class="balance-card">
+    <h3>Deposit Balance</h3>
+    <p>$<span id="deposit-balance">0.00</span></p>
+  </div>
+</div>
+
+<section class="transactions">
+  <h2>Recent Transactions</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Date</th><th>Amount</th></tr></thead>
+    <tbody id="txn-body">
+      <tr><td colspan="3" style="text-align:center;color:#777;">Loading...</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="logout">
+  <button id="logout-btn">Log Out</button>
+</div>
+
   </div>  <div class="sidebar" id="sidebar">
     <header><h2>Menu</h2><div class="close-btn" id="close-btn">×</div></header>
     <div class="section">
@@ -120,10 +118,8 @@ tr:not(:last-child) td { border-bottom: 1px solid #EEE; }
     const db = getFirestore(app);
 
     const userNameEl = document.getElementById('user-name');
-    const userBalanceEl = document.getElementById('user-balance');
-    const userCodeEl = document.getElementById('user-code');
-    const monthlyEarningsEl = document.getElementById('monthly-earnings');
-    const accountAgeEl = document.getElementById('account-age');
+    const mainBalanceEl = document.getElementById('main-balance');
+    const depositBalanceEl = document.getElementById('deposit-balance');
     const txnBody = document.getElementById('txn-body');
     const logoutBtn = document.getElementById('logout-btn');
     const sidebar = document.getElementById('sidebar');
@@ -142,22 +138,13 @@ tr:not(:last-child) td { border-bottom: 1px solid #EEE; }
 
     onAuthStateChanged(auth, async user => {
       if (!user) return window.location.href = 'login.html';
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const data = userDoc.data();
+      const uDoc = await getDoc(doc(db, 'users', user.uid));
+      const data = uDoc.data();
       userNameEl.textContent = data.fullName;
-      userBalanceEl.textContent = data.balance.toFixed(2);
-      userCodeEl.textContent = user.uid.slice(0,6).toUpperCase();
+      mainBalanceEl.textContent = data.balance.toFixed(2);
+      depositBalanceEl.textContent = (data.depositBalance || 0).toFixed(2);
 
-      const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      const monthQ = query(collection(db, 'transactions'), where('userId','==', user.uid), where('timestamp','>=', start));
-      const monthSnap = await getDocs(monthQ);
-      const monthSum = monthSnap.docs.reduce((sum, d) => sum + d.data().amount, 0);
-      monthlyEarningsEl.textContent = monthSum.toFixed(2);
-
-      const ageDays = Math.floor((Date.now() - data.createdAt.toDate()) / (1000*60*60*24)) + 1;
-      accountAgeEl.textContent = ageDays + ' days';
-
+      // Recent transactions
       const txQ = query(collection(db,'transactions'), where('userId','==',user.uid), orderBy('timestamp','desc'), limit(10));
       const txSnap = await getDocs(txQ);
       txnBody.innerHTML = '';
