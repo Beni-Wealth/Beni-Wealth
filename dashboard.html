@@ -120,6 +120,90 @@ tr:not(:last-child) td { border-bottom:1px solid #EEE; }
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
     import { getFirestore, doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const userNameEl = document.getElementById('user-name');
+    const userIdEl = document.getElementById('user-id');
+    const mainBalanceEl = document.getElementById('main-balance');
+    const depositBalanceEl = document.getElementById('deposit-balance');
+    const txnBody = document.getElementById('txn-body');
+    const refCodeEl = document.getElementById('ref-code');
+    const copyRefBtn = document.getElementById('copy-ref');
+    const sidebar = document.getElementById('sidebar');
+
+    document.getElementById('menu-btn').addEventListener('click', () => sidebar.classList.toggle('open'));
+    document.getElementById('close-btn').addEventListener('click', () => sidebar.classList.remove('open'));
+    document.querySelectorAll('.section h3').forEach(h => h.addEventListener('click', () => {
+      const target = document.getElementById(h.dataset.target);
+      if (target) target.style.display = target.style.display === 'block' ? 'none' : 'block';
+    }));
+
+    copyRefBtn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(refCodeEl.textContent);
+      copyRefBtn.textContent = 'Copied!';
+      setTimeout(() => copyRefBtn.textContent = 'Copy Code', 2000);
+    });
+
+    function formatDate(ts) {
+      const d = ts.toDate();
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return window.location.href = 'login.html';
+      userIdEl.textContent = user.uid.slice(0,5);
+      const uDoc = await getDoc(doc(db, 'users', user.uid));
+      const data = uDoc.data();
+      userNameEl.textContent = data.fullName;
+      mainBalanceEl.textContent = data.balance.toFixed(2);
+      depositBalanceEl.textContent = (data.depositBalance || 0).toFixed(2);
+
+      // Referral code
+      refCodeEl.textContent = data.referralCode;
+
+      // Transactions
+      const txQ = query(collection(db,'transactions'), where('userId','==',user.uid), orderBy('timestamp','desc'), limit(10));
+      const txSnap = await getDocs(txQ);
+      txnBody.innerHTML = '';
+      txSnap.forEach(snap => {
+        const tx = snap.data();
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${tx.type}</td><td>${formatDate(tx.timestamp)}</td><td>$${tx.amount.toFixed(2)}</td>`;
+        txnBody.appendChild(tr);
+      });
+      if (txSnap.empty) txnBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#777;">No transactions</td></tr>';
+    });
+  </script></body>
+</html>    <div class="section">
+      <h3 data-target="advertise">▶ Advertise</h3>
+      <div class="sub-items" id="advertise">
+        <a href="post-task.html">Post Task</a>
+        <a href="manage-tasks.html">Manage Tasks</a>
+      </div>
+    </div>
+    <div class="section">
+      <h3>🔗 Shortlinks</h3>
+    </div>
+  </div>  <nav class="bottom-nav">
+    <a href="profile.html"><span class="icon">👤</span>Profile</a>
+    <div class="logo-item"><img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Logo"><span>Home</span></div>
+    <a href="withdraw.html"><span class="icon">💰</span>Withdraw</a>
+  </nav>  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+    import { getFirestore, doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+
     const firebaseConfig = { /* ... */ };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
