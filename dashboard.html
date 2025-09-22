@@ -226,10 +226,10 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <!-- Module script: Firebase wiring (keeps the same firebase config you provided) -->
+  <!-- Updated module script (drop-in replacement) -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
     import {
       getFirestore, doc, onSnapshot, collection, query, where, orderBy, limit, getDocs
     } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
@@ -249,9 +249,13 @@
     function logOnPage(msg){
       try {
         const p = document.getElementById('__dev_errors');
-        if (p) { p.style.display='block'; p.textContent += (new Date()).toLocaleTimeString() + ' — ' + String(msg) + '\n'; p.scrollTop = p.scrollHeight; }
+        if (p) {
+          p.style.display = 'block';
+          p.textContent += (new Date()).toLocaleTimeString() + ' — ' + String(msg) + '\n';
+          p.scrollTop = p.scrollHeight;
+        }
         console.log(msg);
-      } catch(e){ console.log('logOnPage err', e); }
+      } catch (e) { console.log('logOnPage err', e); }
     }
 
     // Init Firebase (best-effort)
@@ -266,7 +270,7 @@
       logOnPage('Firebase init failed: ' + (err && err.message ? err.message : String(err)));
     }
 
-    // Show user info in sidebar
+    // Main logic: show user info in sidebar, subscribe to transactions, counts, wire links
     document.addEventListener('DOMContentLoaded', () => {
       const sbName = document.getElementById('sb-name');
       const sbUid = document.getElementById('sb-uid');
@@ -275,33 +279,65 @@
       const txnBody = document.getElementById('txn-body');
       const completedCountEl = document.getElementById('completed-count');
       const ordersCountEl = document.getElementById('orders-count');
+      const mainBalanceEl = document.getElementById('main-balance');
       const signoutBtn = document.getElementById('signout-btn');
+      const topNotif = document.getElementById('top-notif');
+      const topProfile = document.getElementById('top-profile');
+      const sideNavItems = document.querySelectorAll('#side-nav .nav-item');
+
+      function safeText(node, txt){
+        if (!node) return;
+        try { node.textContent = txt; } catch(e){ /* ignore */ }
+      }
+
+      function formatCurrency(val) {
+        try {
+          if (val == null) return '₦0.00';
+          const n = Number(val);
+          if (Number.isNaN(n)) return String(val);
+          return '₦' + n.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } catch(e){ return '₦0.00'; }
+      }
 
       // clean helper to set sidebar display safely
       function setSidebarUser(data) {
         try {
           const displayName = data?.displayName || data?.username || data?.name || 'User';
-          sbName && (sbName.textContent = displayName);
-          sbUid && (sbUid.textContent = `UID: ${data?.uid || '-'}`);
-          refCodeEl && (refCodeEl.textContent = data?.referralCode || data?.username || '-');
+          safeText(sbName, displayName);
+          safeText(sbUid, `UID: ${data?.uid || '-'}`);
+          safeText(refCodeEl, data?.referralCode || data?.username || '-');
+
           if (data?.photoURL) {
-            avatarEl.innerHTML = `<img src="${data.photoURL}" alt="avatar" style="width:72px;height:72px;object-fit:cover;border-radius:14px">`;
+            if (avatarEl) avatarEl.innerHTML = `<img src="${data.photoURL}" alt="avatar" style="width:72px;height:72px;object-fit:cover;border-radius:14px">`;
           } else {
             const initial = (displayName || 'U').charAt(0).toUpperCase();
-            avatarEl.textContent = initial;
+            safeText(avatarEl, initial);
           }
-        } catch(err) { console.warn('setSidebarUser error', err); }
+
+          // show balance if present in user doc
+          if (mainBalanceEl) {
+            if (typeof data?.balance !== 'undefined' && data?.balance !== null) {
+              mainBalanceEl.textContent = formatCurrency(data.balance);
+            } else if (data?.walletBalance || data?.balanceInNaira) {
+              mainBalanceEl.textContent = formatCurrency(data.walletBalance || data.balanceInNaira);
+            }
+          }
+        } catch (err) { console.warn('setSidebarUser error', err); }
       }
 
-      // load user document and transactions + counts
+      // subscriptions
       let userUnsub = null;
       let txUnsub = null;
+
       async function subscribeUser(uid) {
         if (!db) { logOnPage('Firestore not ready'); return; }
-        // unsubscribe old
-        if (userUnsub) userUnsub();
-        if (txUnsub) txUnsub();
 
+        // unsubscribe old safely
+        try { if (typeof userUnsub === 'function') userUnsub(); } catch(e){}
+        try { if (typeof txUnsub === 'function') txUnsub(); } catch(e){}
+        userUnsub = null; txUnsub = null;
+
+        // users doc live
         try {
           const userRef = doc(db, 'users', uid);
           userUnsub = onSnapshot(userRef, snap => {
@@ -310,63 +346,37 @@
               return;
             }
             const d = snap.data();
-            d.uid = uid; // add uid for convenience
+            d.uid = uid; // convenience
             setSidebarUser(d);
             logOnPage('User doc loaded');
           }, err => {
             console.error('user snapshot error', err);
-            logOnPage('user snapshot error: ' + err.message);
+            logOnPage('user snapshot error: ' + (err && err.message ? err.message : String(err)));
           });
-        } catch(e) {
+        } catch (e) {
           console.warn('subscribeUser error', e);
-          logOnPage('subscribeUser error: ' + e.message);
+          logOnPage('subscribeUser error: ' + (e && e.message ? e.message : String(e)));
         }
 
-        // transactions subscription
+        // transactions subscription (last 10)
         try {
           const txnCol = collection(db, 'transactions');
           const q = query(txnCol, where('uid','==',uid), orderBy('createdAt','desc'), limit(10));
           txUnsub = onSnapshot(q, snap => {
             if (!snap || snap.empty) {
-              txnBody && (txnBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No transactions</td></tr>`);
+              if (txnBody) txnBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No transactions</td></tr>`;
               return;
             }
             const rows = [];
             snap.docs.forEach(docSnap => {
-              const t = docSnap.data();
-              const date = (t.createdAt && t.createdAt.toDate) ? t.createdAt.toDate().toLocaleString() : (t.createdAt || '-');
-              const amount = (typeof t.amount === 'number') ? `₦${t.amount.toLocaleString()}` : (t.amount || '-');
-              rows.push(`<tr><td>${t.type || 'Txn'}</td><td>${date}</td><td style="text-align:right">${amount}</td></tr>`);
-            });
-            txnBody && (txnBody.innerHTML = rows.join(''));
-          }, err => {
-            console.error('txn snapshot error', err);
-            logOnPage('txn snapshot error: ' + err.message);
-            txnBody && (txnBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">Unable to load transactions</td></tr>`);
-          });
-        } catch(e) {
-          console.warn('txn subscribe error', e);
-          txnBody && (txnBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">Transactions unavailable</td></tr>`);
-        }
+              const t = docSnap.data() || {};
+              // createdAt can be Firestore Timestamp, number, or ISO string
+              let date = '-';
+              try {
+                if (t.createdAt && typeof t.createdAt.toDate === 'function') date = t.createdAt.toDate().toLocaleString();
+                else if (typeof t.createdAt === 'number') date = new Date(t.createdAt).toLocaleString();
+                else if (typeof t.createdAt === 'string') date = new Date(t.createdAt).toLocaleString();
+              } catch(e) { date = String(t.createdAt || '-'); }
 
-        // one-time counts
-        try {
-          const tasksQ = query(collection(db,'tasks'), where('uid','==',uid));
-          const tasksSnap = await getDocs(tasksQ);
-          completedCountEl && (completedCountEl.textContent = tasksSnap.size);
-        } catch(e) { completedCountEl && (completedCountEl.textContent = '0'); }
-
-        try {
-          const ordersQ = query(collection(db,'orders'), where('uid','==',uid));
-          const ordersSnap = await getDocs(ordersQ);
-          ordersCountEl && (ordersCountEl.textContent = ordersSnap.size);
-        } catch(e) { ordersCountEl && (ordersCountEl.textContent = '0'); }
-      }
-
-      // Auth observer: update sidebar when user signs in/out
-      if (auth) {
-        onAuthStateChanged(auth, user => {
-          if (user) {
-            // show simple immediate info from auth object while we subscribe to doc
-            setSidebarUser({ uid: user.uid, displayName: user.displayName || user.email || 'User', photoURL: user.photoURL });
-            subscribeUser(user.uid).catch(err => logOnPage('subscribeUser failure: ' + err.me
+              const amount = (typeof t.amount === 'number') ? `₦${t.amount.toLocaleString()}` : (t.amount ? String(t.amount) : '-');
+              rows.push(`<tr><td>${t
