@@ -102,7 +102,7 @@
         <p>Total Users</p>
       </div>
       <div class="stat-box">
-        <h3 id="paidCount">$0</h3>
+        <h3 id="paidCount">₦0</h3>
         <p>Total Paid Out</p>
       </div>
     </div>
@@ -122,9 +122,10 @@
         el.innerText = prefix + start.toLocaleString() + suffix;
       }, duration / (end / step));
     }
-    window.onload = () => {
-      animateCount('usersCount', 400);
-      animateCount('paidCount', 120, '$');
+    // only change: set both counters to 0 and use naira symbol
+    window.onload = function() {
+      animateCount('usersCount', 0);
+      animateCount('paidCount', 0, '₦');
     };
   </script></body>
 </html>
