@@ -7,15 +7,15 @@
     /* Page-Load Slide + Fade */
     @keyframes slideFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes ripple { to { transform: scale(1.5); opacity: 0; } }
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F7F3E3;
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F3F7FF;
       display: flex; justify-content: center; align-items: center; height: 100vh; }
     .container {
-      background: #FFF;
+      background: #FFFFFF;
       border-radius: 8px;
       max-width: 360px;
       margin: auto;
       padding: 2rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 20px rgba(8,40,90,0.06);
       transform: translateY(20px);
       opacity: 0;
       animation: slideFade .5s ease-out forwards;
@@ -24,18 +24,18 @@
     .container:hover { transform: translateY(-4px); }
     .logo-wrap { text-align: center; margin-bottom: 1rem; }
     .logo-wrap img { height: 80px; border-radius: 50%; }
-    h2 { margin-top: 0; text-align: center; color: #0B2545; }
+    h2 { margin-top: 0; text-align: center; color: #0B63D6; }
     input { width: 100%; padding: .75rem; margin: .5rem 0;
-      border: none; border-bottom: 2px solid #CCC;
+      border: none; border-bottom: 2px solid #D6E6FF;
       transition: border-bottom-width .3s ease-in-out;
-    }
-    input:focus { outline: none; border-bottom-width: 3px; border-bottom-color: #1976D2; }
+      background: transparent; }
+    input:focus { outline: none; border-bottom-width: 3px; border-bottom-color: #0B63D6; }
     button {
       position: relative;
       width: 100%;
       padding: .75rem;
       margin-top: 1rem;
-      background: #0B2545;
+      background: #0B63D6;
       color: #FFF;
       border: none;
       border-radius: .25rem;
@@ -51,21 +51,21 @@
       content: '';
       position: absolute;
       width: 200%; height: 200%;
-      background: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.25);
       border-radius: 50%; top: -50%; left: -50%;
       animation: ripple .6s linear;
     }
     .spinner {
       width: 20px; height: 20px;
       border: 3px solid #fff;
-      border-top: 3px solid rgba(255,255,255,0.3);
+      border-top: 3px solid rgba(255,255,255,0.5);
       border-radius: 50%; animation: spin 1s linear infinite;
       margin-right: .5rem; display: none;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .error { color: #D32F2F; font-size: .85rem; height: 1rem; text-align: center; margin-bottom: .5rem; }
     .link-row { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .9rem; }
-    .link-row a { color: #1976D2; text-decoration: none; }
+    .link-row a { color: #0B63D6; text-decoration: none; }
     .link-row a:hover { text-decoration: underline; }
   </style>
 </head>
@@ -134,7 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
       spinner.style.display = 'none';
       btnText.style.display = 'block';
     }
-  });
+  
+});
 
   onAuthStateChanged(auth, user => {
     if (user) window.location.href = 'dashboard.html';
