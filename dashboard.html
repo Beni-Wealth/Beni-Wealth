@@ -16,14 +16,12 @@
     a{color:inherit;text-decoration:none}
     .wrap{max-width:var(--maxw);margin:18px auto;padding:0 16px}
 
-    /* small visible error banner */
+    /* small visible banners & logger */
     .error-banner{position:fixed;left:50%;transform:translateX(-50%);top:92px;background:#FFF2F0;border:1px solid #FFB3A7;color:#6B0B00;padding:10px 14px;border-radius:10px;z-index:4000;display:none;max-width:90%}
     .info-banner{position:fixed;left:50%;transform:translateX(-50%);top:92px;background:#F0F9FF;border:1px solid #BEE3F8;color:#0B4D6A;padding:10px 14px;border-radius:10px;z-index:4000;display:none;max-width:90%}
-
-    /* On-page logger */
     #__dev_errors{position:fixed;left:8px;right:8px;bottom:8px;max-height:36vh;overflow:auto;background:rgba(0,0,0,0.78);color:#fff;padding:10px;border-radius:8px;font-family:monospace;font-size:12px;z-index:999999;display:none}
 
-    /* rest of your styles (kept unchanged) */
+    /* Header / layout (kept from your design) */
     #nav-toggle{position:fixed;left:-9999px;top:auto;opacity:0}
     header.app-header{position:fixed;left:50%;transform:translateX(-50%);top:14px;width:100%;max-width:var(--maxw);height:68px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;z-index:1400;background:rgba(255,255,255,0.7);backdrop-filter: blur(6px);border-radius:12px;box-shadow:var(--shadow);}
     .header-inner{display:flex;align-items:center;gap:12px;width:100%;justify-content:space-between}
@@ -189,85 +187,54 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <!-- Defensive module script: dynamic imports + better errors + small mock fallback -->
+  <!-- Module script: Firebase wiring + merged auth fallback + "No transactions yet" -->
   <script type="module">
-    (async function(){
-      const devLog = (m) => {
-        try {
-          const p = document.getElementById('__dev_errors');
-          if (p) { p.style.display='block'; p.textContent += (new Date()).toLocaleTimeString() + ' — ' + String(m) + '\\n'; p.scrollTop = p.scrollHeight; }
-          console.log(m);
-        } catch(e){ console.log('devLog error', e); }
-      };
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+    import {
+      getFirestore, doc, onSnapshot, collection, query, where, orderBy, limit, getDocs
+    } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
-      const showError = (msg) => {
-        const el = document.getElementById('errorBanner');
-        if (el) { el.style.display='block'; el.textContent = msg; }
-        devLog('ERROR: ' + msg);
-      };
-      const showInfo = (msg) => {
-        const el = document.getElementById('infoBanner');
-        if (el) { el.style.display='block'; el.textContent = msg; setTimeout(()=>{ el.style.display='none'; }, 3500); }
-        devLog('INFO: ' + msg);
-      };
+    // === Your Firebase config (unchanged) ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
 
-      // Quick runtime checks
-      if (location.protocol === 'file:') {
-        showError('Files served via file:// will block module imports. Please serve over http(s). Example: run `npx http-server` or `python -m http.server` in the project folder.');
-      }
-
-      // dynamic import so we can catch network/import failures
-      let firebaseAppModule, firebaseAuthModule, firebaseFsModule;
+    // on-page logger helper
+    function logOnPage(msg){
       try {
-        firebaseAppModule = await import('https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js');
-        firebaseAuthModule = await import('https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js');
-        firebaseFsModule = await import('https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js');
-        devLog('Firebase modules imported.');
-      } catch (err) {
-        showError('Unable to load Firebase modules. Network or CDN blocked. See console for details.');
-        devLog(err && err.stack ? err.stack : String(err));
-        // Put a small interactive mock so page isn't completely dead
-        fillMockUI();
-        return;
-      }
+        const p = document.getElementById('__dev_errors');
+        if (p) {
+          p.style.display = 'block';
+          p.textContent += (new Date()).toLocaleTimeString() + ' — ' + String(msg) + '\n';
+          p.scrollTop = p.scrollHeight;
+        }
+        console.log(msg);
+      } catch(e){ console.log('logOnPage err', e); }
+    }
 
-      // Firebase config (unchanged)
-      const firebaseConfig = {
-        apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-        authDomain: "beni-wealths.firebaseapp.com",
-        projectId: "beni-wealths",
-        storageBucket: "beni-wealths.firebasestorage.app",
-        messagingSenderId: "807950483822",
-        appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-        measurementId: "G-Z2XP3YN6NS"
-      };
+    // Init Firebase (best-effort)
+    let app, auth, db;
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+      logOnPage('Firebase initialized');
+    } catch (err) {
+      console.error('Firebase init failed', err);
+      logOnPage('Firebase init failed: ' + (err && err.message ? err.message : String(err)));
+      document.getElementById('errorBanner').style.display = 'block';
+      document.getElementById('errorBanner').textContent = 'Firebase initialization failed (check network / config). See console for details.';
+    }
 
-      // init
-      let app, auth, db;
-      try {
-        app = firebaseAppModule.initializeApp(firebaseConfig);
-        auth = firebaseAuthModule.getAuth(app);
-        db = firebaseFsModule.getFirestore(app);
-        devLog('Firebase initialized.');
-      } catch (err) {
-        showError('Firebase initialization failed. Check config or network.');
-        devLog(err && err.stack ? err.stack : String(err));
-        fillMockUI();
-        return;
-      }
-
-      // helper utilities
-      const safeText = (node, txt) => { if (!node) return; try { node.textContent = txt; } catch(e){} };
-      const formatCurrency = (v) => {
-        try {
-          if (v == null) return '₦0.00';
-          const n = Number(v);
-          if (Number.isNaN(n)) return String(v);
-          return '₦' + n.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
-        } catch(e){ return '₦0.00'; }
-      };
-
-      // DOM elements
+    // DOM-ready wiring
+    document.addEventListener('DOMContentLoaded', () => {
       const sbName = document.getElementById('sb-name');
       const sbUid = document.getElementById('sb-uid');
       const avatarEl = document.getElementById('avatar');
@@ -280,45 +247,81 @@
       const topNotif = document.getElementById('top-notif');
       const topProfile = document.getElementById('top-profile');
 
-      function setSidebarUser(data){
+      // small helpers
+      function safeText(node, txt){ if (!node) return; try { node.textContent = txt; } catch(e){} }
+      function formatCurrency(val) {
         try {
-          const displayName = data?.displayName || data?.username || data?.name || 'User';
-          safeText(sbName, displayName);
-          safeText(sbUid, `UID: ${data?.uid || '-'}`);
-          safeText(refCodeEl, data?.referralCode || data?.username || '-');
-          if (data?.photoURL && avatarEl) avatarEl.innerHTML = `<img src="${data.photoURL}" alt="avatar" style="width:72px;height:72px;object-fit:cover;border-radius:14px">`;
-          else if (avatarEl) avatarEl.textContent = (displayName || 'U').charAt(0).toUpperCase();
-          if (mainBalanceEl) {
-            if (typeof data?.balance !== 'undefined' && data?.balance !== null) mainBalanceEl.textContent = formatCurrency(data.balance);
-            else if (data?.walletBalance) mainBalanceEl.textContent = formatCurrency(data.walletBalance);
-          }
-        } catch(e){ devLog('setSidebarUser err '+String(e)); }
+          if (val == null) return '₦0.00';
+          const n = Number(val);
+          if (Number.isNaN(n)) return String(val);
+          return '₦' + n.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } catch(e){ return '₦0.00'; }
       }
 
-      // subscription management
-      let userUnsub = null, txUnsub = null;
-      async function subscribeUser(uid){
-        if (!db) { devLog('Firestore not ready'); return; }
+      // --- setSidebarUser (merged behavior) ---
+      function setSidebarUser(data = {}) {
+        try {
+          const displayName = data.displayName || data.username || data.name || 'User';
+          safeText(sbName, displayName);
+          safeText(sbUid, `UID: ${data.uid || '-'}`);
+          safeText(refCodeEl, data.referralCode || data.username || '-');
+
+          if (data.photoURL) {
+            avatarEl && (avatarEl.innerHTML = `<img src="${data.photoURL}" alt="avatar" style="width:72px;height:72px;object-fit:cover;border-radius:14px">`);
+          } else if (avatarEl) {
+            avatarEl.textContent = (displayName || 'U').charAt(0).toUpperCase();
+          }
+
+          if (mainBalanceEl) {
+            if (typeof data.balance !== 'undefined' && data.balance !== null) mainBalanceEl.textContent = formatCurrency(data.balance);
+            else if (typeof data.walletBalance !== 'undefined' && data.walletBalance !== null) mainBalanceEl.textContent = formatCurrency(data.walletBalance);
+          }
+        } catch (err) { console.warn('setSidebarUser error', err); }
+      }
+
+      // subscription handles
+      let userUnsub = null;
+      let txUnsub = null;
+
+      // --- subscribeUser with authFallback and "No transactions yet" message ---
+      async function subscribeUser(uid, authFallback = {}) {
+        if (!db) { logOnPage('Firestore not ready'); return; }
+        // unsubscribe old
         try { if (typeof userUnsub === 'function') userUnsub(); } catch(e){}
         try { if (typeof txUnsub === 'function') txUnsub(); } catch(e){}
         userUnsub = null; txUnsub = null;
 
-        // users doc
+        // users doc (merge with authFallback so uid/displayName persist if doc missing)
         try {
-          const userRef = firebaseFsModule.doc(db, 'users', uid);
-          userUnsub = firebaseFsModule.onSnapshot(userRef, snap => {
-            if (!snap.exists()) { setSidebarUser({ uid, displayName: 'User' }); return; }
-            const d = snap.data(); d.uid = uid; setSidebarUser(d);
-            devLog('User doc loaded.');
-          }, err => { devLog('user snapshot err: '+String(err)); showError('Error reading user document (check Firestore rules).'); });
-        } catch(e){ devLog('usersub err: '+String(e)); }
+          const userRef = doc(db, 'users', uid);
+          userUnsub = onSnapshot(userRef, snap => {
+            if (!snap.exists()) {
+              const merged = Object.assign({}, authFallback, { uid });
+              setSidebarUser(merged);
+              return;
+            }
+            const d = snap.data() || {};
+            const merged = Object.assign({}, authFallback, d, { uid });
+            setSidebarUser(merged);
+            logOnPage('User doc loaded');
+          }, err => {
+            console.error('user snapshot error', err);
+            logOnPage('user snapshot error: ' + (err && err.message ? err.message : String(err)));
+          });
+        } catch(e) {
+          console.warn('subscribeUser error', e);
+          logOnPage('subscribeUser error: ' + (e && e.message ? e.message : String(e)));
+        }
 
         // transactions last 10
         try {
-          const txnCol = firebaseFsModule.collection(db, 'transactions');
-          const q = firebaseFsModule.query(txnCol, firebaseFsModule.where('uid','==',uid), firebaseFsModule.orderBy('createdAt','desc'), firebaseFsModule.limit(10));
-          txUnsub = firebaseFsModule.onSnapshot(q, snap => {
-            if (!snap || snap.empty) { if (txnBody) txnBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No transactions</td></tr>`; return; }
+          const txnCol = collection(db, 'transactions');
+          const q = query(txnCol, where('uid','==',uid), orderBy('createdAt','desc'), limit(10));
+          txUnsub = onSnapshot(q, snap => {
+            if (!snap || snap.empty) {
+              txnBody && (txnBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No transactions yet</td></tr>`);
+              return;
+            }
             const rows = [];
             snap.docs.forEach(docSnap => {
               const t = docSnap.data() || {};
@@ -327,4 +330,8 @@
                 if (t.createdAt && typeof t.createdAt.toDate === 'function') date = t.createdAt.toDate().toLocaleString();
                 else if (typeof t.createdAt === 'number') date = new Date(t.createdAt).toLocaleString();
                 else if (typeof t.createdAt === 'string') date = new Date(t.createdAt).toLocaleString();
-              } c
+              } catch(e) { date = String(t.createdAt || '-'); }
+              const amount = (typeof t.amount === 'number') ? `₦${t.amount.toLocaleString()}` : (t.amount ? String(t.amount) : '-');
+              rows.push(`<tr><td>${t.type || 'Txn'}</td><td>${date}</td><td style="text-align:right">${amount}</td></tr>`);
+            });
+       
