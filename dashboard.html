@@ -1,337 +1,349 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Dashboard (Profile in Sidebar)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Dashboard</title>
   <style>
-    :root{
-      --bg:#F6F8FB; --panel:#fff; --ink:#0B2545; --muted:#6B7A8A;
-      --accent:#1976D2; --accent-2:#3AA0FF; --radius:12px; --maxw:1200px;
-      --shadow:0 12px 36px rgba(11,37,69,0.06);
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f8;
+      color: #333;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:'Poppins',Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
-    a{color:inherit;text-decoration:none}
-    .wrap{max-width:var(--maxw);margin:18px auto;padding:0 16px}
-
-    /* small visible banners & logger */
-    .error-banner{position:fixed;left:50%;transform:translateX(-50%);top:92px;background:#FFF2F0;border:1px solid #FFB3A7;color:#6B0B00;padding:10px 14px;border-radius:10px;z-index:4000;display:none;max-width:90%}
-    .info-banner{position:fixed;left:50%;transform:translateX(-50%);top:92px;background:#F0F9FF;border:1px solid #BEE3F8;color:#0B4D6A;padding:10px 14px;border-radius:10px;z-index:4000;display:none;max-width:90%}
-    #__dev_errors{position:fixed;left:8px;right:8px;bottom:8px;max-height:36vh;overflow:auto;background:rgba(0,0,0,0.78);color:#fff;padding:10px;border-radius:8px;font-family:monospace;font-size:12px;z-index:999999;display:none}
-
-    /* Header / layout (kept from your design) */
-    #nav-toggle{position:fixed;left:-9999px;top:auto;opacity:0}
-    header.app-header{position:fixed;left:50%;transform:translateX(-50%);top:14px;width:100%;max-width:var(--maxw);height:68px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;z-index:1400;background:rgba(255,255,255,0.7);backdrop-filter: blur(6px);border-radius:12px;box-shadow:var(--shadow);}
-    .header-inner{display:flex;align-items:center;gap:12px;width:100%;justify-content:space-between}
-    .left-controls{display:flex;align-items:center;gap:12px}
-    label.hamburger{display:inline-grid;place-items:center;width:56px;height:56px;border-radius:12px;background:var(--panel);cursor:pointer;box-shadow:0 8px 26px rgba(11,37,69,0.06);border:1px solid rgba(11,37,69,0.04);}
-    .bars{display:flex;flex-direction:column;gap:6px;align-items:center}
-    .bars span{width:22px;height:2px;background:var(--ink);border-radius:2px;transition:transform .18s,opacity .12s}
-    #nav-toggle:checked + label.hamburger .bars span:nth-child(1){ transform: translateY(6px) rotate(45deg) }
-    #nav-toggle:checked + label.hamburger .bars span:nth-child(2){ opacity:0; transform:scale(0) }
-    #nav-toggle:checked + label.hamburger .bars span:nth-child(3){ transform: translateY(-6px) rotate(-45deg) }
-    .brand img{height:44px;border-radius:10px}
-    .icon-btn{width:44px;height:44px;border-radius:10px;background:var(--panel);display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(11,37,69,0.03)}
-    main.stage{width:100%;margin-top:96px;padding-bottom:40px}
-    .container{display:grid;grid-template-columns:1fr 360px;gap:22px;max-width:980px;margin:0 auto}
-    .left-col{display:flex;flex-direction:column;gap:16px}
-    .right-col{display:flex;flex-direction:column;gap:12px}
-    .card{background:var(--panel);border-radius:12px;padding:18px;box-shadow:var(--shadow)}
-    .big-balance{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px;border-radius:12px}
-    .label{font-weight:700;color:var(--muted)}
-    .amount{font-size:34px;color:var(--accent);font-weight:800}
-    aside.sidebar{position:fixed;left:0;top:0;height:100vh;width:100%;transform:translateX(-110%);background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.96));z-index:2200;padding:18px;display:flex;flex-direction:column;gap:12px;transition:transform .36s cubic-bezier(.2,.9,.3,1);box-shadow:2px 0 36px rgba(11,37,69,0.08)}
-    #nav-toggle:checked ~ aside.sidebar{ transform: translateX(0) }
-    @media(min-width:1100px){ aside.sidebar{width:clamp(420px,36vw,520px);left:calc(50% - 260px);top:28px;height:calc(100vh - 56px);border-radius:14px} #nav-toggle:checked ~ aside.sidebar{ transform:translateX(0); left: calc(50% - 260px) } }
-    .side-head{display:flex;align-items:center;gap:12px;justify-content:space-between}
-    #avatar{width:72px;height:72px;border-radius:14px;background:linear-gradient(180deg,#1976D2,#115293);color:#fff;font-weight:700;font-size:28px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-    .user-meta{display:flex;flex-direction:column;gap:6px}
-    .nav-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px}
-    .nav-emoji{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;background:rgba(25,118,210,0.08)}
-    .side-footer{margin-top:auto;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px}
-    label.overlay{position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(11,37,69,0.28);opacity:0;pointer-events:none;z-index:2100;transition:opacity .22s;}
-    #nav-toggle:checked ~ label.overlay{ opacity:1; pointer-events:auto }
-    @media(max-width:1000px){ .container{grid-template-columns:1fr;gap:16px} .right-col{order:2} main.stage{margin-top:86px} }
-    .nav-item:hover{background:linear-gradient(90deg, rgba(25,118,210,0.04), rgba(25,118,210,0.02));transform:translateY(-4px)}
-    .ref-row button{padding:6px 8px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer}
-    .toast{position:fixed;right:20px;bottom:20px;background:var(--panel);padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(11,37,69,0.08);border-left:4px solid var(--accent);display:none;z-index:2400}
-    .toast.show{display:block}
+    .dashboard-container {
+      padding: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .dashboard-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .dashboard-header h1 {
+      font-size: 28px;
+      margin: 0;
+    }
+    .dashboard-header p {
+      font-size: 16px;
+      color: #666;
+    }
+    .dashboard-content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .dashboard-card,
+    .referral-container,
+    .total-referrals-container {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 20px;
+      flex: 1;
+      min-width: 250px;
+    }
+    .dashboard-card h2,
+    .total-referrals-container h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+    .dashboard-card p,
+    .total-referrals-container p {
+      font-size: 18px;
+      font-weight: bold;
+      color: #27ae60;
+    }
+    .referral-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .copy-btn {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .copy-btn:hover {
+      background: #219150;
+    }
+    .transaction-history {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .transaction-history h2 {
+      margin-top: 0;
+    }
+    .transaction-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .transaction-table th,
+    .transaction-table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      background: #fff;
+      padding: 15px;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
+    }
+    .nav-item {
+      text-align: center;
+      font-size: 14px;
+      color: #333;
+    }
+    .nav-item span {
+      display: block;
+      font-size: 24px;
+    }
+    .whatsapp-icon {
+      position: fixed;
+      bottom: 120px;
+      right: 20px;
+      background-color: #25D366;
+      color: white;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 30px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      cursor: pointer;
+      z-index: 1000;
+    }
+    .small-muted { color: #888; font-size: 13px; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div id="errorBanner" class="error-banner" role="alert"></div>
-    <div id="infoBanner" class="info-banner" role="status"></div>
-
-    <!-- on-page logger for debugging -->
-    <pre id="__dev_errors" aria-live="polite" style="display:none"></pre>
-
-    <!-- Hidden checkbox controls sidebar -->
-    <input id="nav-toggle" type="checkbox" aria-hidden="true">
-    <label for="nav-toggle" class="overlay" aria-hidden="true"></label>
-
-    <!-- Header -->
-    <header class="app-header" role="banner">
-      <div class="header-inner">
-        <div class="left-controls">
-          <label for="nav-toggle" class="hamburger" role="button" aria-label="Open menu" title="Menu">
-            <span class="bars" aria-hidden="true">
-              <span></span><span></span><span></span>
-            </span>
-          </label>
-
-          <div class="brand" aria-hidden="true">
-            <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
-          </div>
-        </div>
-
-        <div style="display:flex;align-items:center;gap:12px">
-          <button id="top-notif" class="icon-btn" title="Notifications">🔔</button>
-          <button id="top-profile" class="icon-btn" title="Profile"><span id="top-profile-placeholder">👤</span></button>
-        </div>
+  <div class="dashboard-container">
+    <div class="dashboard-header">
+      <h1 id="greeting">Welcome back, User 💼</h1>
+      <p>User Dashboard</p>
+    </div>
+    <div class="dashboard-content">
+      <div class="dashboard-card">
+        <h2>Balance</h2>
+        <p id="balance">Loading...</p>
       </div>
-    </header>
-
-    <!-- Sidebar -->
-    <aside class="sidebar" role="dialog" aria-modal="true" aria-hidden="true">
-      <div class="side-head">
-        <div style="display:flex;align-items:center;gap:12px">
-          <div id="avatar" aria-hidden="true">U</div>
-          <div class="user-meta">
-            <div id="sb-name" style="font-weight:700">Guest</div>
-            <div id="sb-uid" style="font-size:13px;color:var(--muted)">UID: -</div>
-            <div class="ref-row" style="font-size:13px;color:var(--muted)">Referral: <strong id="ref-code">-</strong></div>
-          </div>
+      <div class="dashboard-card">
+        <div class="referral-container">
+          <p id="referral-code">Referral Code: —</p>
+          <button class="copy-btn" id="copy-btn">Copy Link</button>
         </div>
-        <label for="nav-toggle" style="font-size:22px;color:var(--accent);cursor:pointer" aria-label="Close menu">×</label>
+        <p class="small-muted" style="margin-top:10px;">Share this link to earn referrals.</p>
       </div>
-
-      <nav id="side-nav" aria-label="Sidebar navigation" style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
-        <a class="nav-item" href="tasks.html"><div class="nav-emoji">🧾</div><div style="font-weight:600">Completed Tasks</div></a>
-        <a class="nav-item" href="orders.html"><div class="nav-emoji">📦</div><div style="font-weight:600">Orders</div></a>
-        <a class="nav-item" href="shortlinks.html"><div class="nav-emoji">🔗</div><div style="font-weight:600">Shortlinks</div></a>
-        <a class="nav-item" href="terms.html"><div class="nav-emoji">📜</div><div style="font-weight:600">Terms</div></a>
-        <a class="nav-item" href="contact.html"><div class="nav-emoji">✉️</div><div style="font-weight:600">Contact Us</div></a>
-        <a id="signout-btn" class="nav-item" href="#"><div class="nav-emoji">⛔</div><div style="font-weight:600">Sign out</div></a>
-      </nav>
-
-      <div class="side-footer" style="margin-top:auto">
-        <div style="font-size:13px;color:var(--muted)">Beni-Wealth • v1.0</div>
-        <a href="profile.html" style="text-decoration:none;color:var(--accent);font-weight:600">View profile</a>
+      <div class="total-referrals-container">
+        <h2>Total Referrals</h2>
+        <p id="total-referrals">—</p>
       </div>
-    </aside>
+    </div>
 
-    <!-- Page content -->
-    <main class="stage" role="main">
-      <div class="container">
-        <div class="left-col">
-          <div class="card big-balance">
-            <div>
-              <div class="label">Main Balance</div>
-              <div id="main-balance" class="amount">₦0.00</div>
-              <div style="color:var(--muted);font-size:13px;margin-top:6px">Welcome back — nice to see you.</div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-              <button id="withdraw-btn" style="background:var(--accent);border:none;color:#fff;padding:10px 14px;border-radius:8px;cursor:pointer">Withdraw</button>
-              <button id="tasks-btn" style="border:1px solid rgba(11,37,69,0.06);background:transparent;padding:8px 12px;border-radius:8px;cursor:pointer">View Tasks</button>
-            </div>
-          </div>
-
-          <div style="display:flex;gap:12px">
-            <div class="card" style="flex:1">
-              <div style="font-weight:800;font-size:18px" id="completed-count">0</div>
-              <div style="color:var(--muted);font-size:13px;margin-top:6px">Completed Tasks</div>
-            </div>
-            <div class="card" style="flex:1">
-              <div style="font-weight:800;font-size:18px" id="orders-count">0</div>
-              <div style="color:var(--muted);font-size:13px;margin-top:6px">Orders</div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div style="font-weight:700">Quick Actions</div>
-              <div style="color:var(--muted);font-size:13px">Shortcuts</div>
-            </div>
-            <div style="display:flex;gap:10px;margin-top:12px">
-              <button id="start-task" style="background:var(--accent);color:#fff;padding:10px;border-radius:8px;border:none;cursor:pointer">Start Task</button>
-              <button id="complete-shortlink" style="border:1px solid rgba(11,37,69,0.06);padding:10px;border-radius:8px;background:transparent;cursor:pointer">Complete Shortlink</button>
-              <button id="invite" style="border:1px solid rgba(11,37,69,0.06);padding:10px;border-radius:8px;background:transparent;cursor:pointer">Invite</button>
-            </div>
-          </div>
-        </div>
-
-        <aside class="right-col" aria-label="Right column">
-          <div class="card tx-list">
-            <h3 style="margin-top:0">Recent Transactions</h3>
-            <table style="width:100%;border-collapse:collapse">
-              <thead><tr><th style="text-align:left;color:var(--muted);font-weight:700">Type</th><th style="text-align:left;color:var(--muted);font-weight:700">Date</th><th style="text-align:right;color:var(--muted);font-weight:700">Amount</th></tr></thead>
-              <tbody id="txn-body"><tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">Loading...</td></tr></tbody>
-            </table>
-          </div>
-
-          <div class="card leaderboard">
-            <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700">Leaderboard</div><div style="color:var(--muted);font-size:13px">Top referrers</div></div>
-            <ol style="margin:12px 0 0 18px;color:var(--ink)">
-              <li style="margin-bottom:8px">Blamo — ₦12,000</li>
-              <li style="margin-bottom:8px">Ada — ₦10,200</li>
-              <li style="margin-bottom:8px">Chike — ₦8,400</li>
-            </ol>
-          </div>
-        </aside>
-      </div>
-    </main>
-
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div class="transaction-history">
+      <h2>Recent Transactions</h2>
+      <table class="transaction-table">
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Time</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody id="transaction-body">
+          <tr id="loading-row"><td colspan="3">Loading transactions…</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- Module script: Firebase wiring + merged auth fallback + "No transactions yet" -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import {
-      getFirestore, doc, onSnapshot, collection, query, where, orderBy, limit, getDocs
-    } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="window.open('https://sites.google.com/view/easypay-ng/menu', '_blank')">
+      <span>📋</span>Menu
+    </div>
+    <div class="nav-item" onclick="window.open('https://sites.google.com/view/easypay-ng/post-job', '_blank')">
+      <span>📢</span>Advertise
+    </div>
+    <div class="nav-item" onclick="window.open('https://sites.google.com/view/easypay-ng/earm', '_blank')">
+      <span>💸</span>Earn
+    </div>
+    <div class="nav-item" onclick="window.open('https://sites.google.com/view/easypay-ng/leaderboard', '_blank')">
+      <span>🏆</span>Leaderboard
+    </div>
+  </div>
 
-    // === Your Firebase config (unchanged) ===
+  <div class="whatsapp-icon" onclick="window.open('https://wa.me/2348037402826', '_blank')">
+    💬
+  </div>
+
+  <!-- Firebase (compat) SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ----- IMPORTANT -----
+    // I used the Firebase config available in your project context (EasyPay).
+    // If you want to use a different Firebase project for Beni-Wealth, replace the config below with your Beni-Wealth config.
     const firebaseConfig = {
-      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-      authDomain: "beni-wealths.firebaseapp.com",
-      projectId: "beni-wealths",
-      storageBucket: "beni-wealths.firebasestorage.app",
-      messagingSenderId: "807950483822",
-      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-      measurementId: "G-Z2XP3YN6NS"
+      apiKey: "AIzaSyDRkip46Ql5KhNfuatWAcAxQzgP5tQ8UY",
+      authDomain: "easypay-6bce8.firebaseapp.com",
+      projectId: "easypay-6bce8",
+      storageBucket: "easypay-6bce8.firebasestorage.app",
+      messagingSenderId: "862671358267",
+      appId: "1:862671358267:web:b243c7b69840ef918c8f1e",
+      measurementId: "G-2FZKDQ47FZ"
     };
 
-    // on-page logger helper
-    function logOnPage(msg){
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Utility: format Firestore timestamp to readable string
+    function formatTimestamp(ts) {
+      if (!ts) return '-';
+      let date;
+      if (ts.toDate) date = ts.toDate();
+      else if (ts.seconds) date = new Date(ts.seconds * 1000);
+      else date = new Date(ts);
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      let hr = date.getHours();
+      const min = String(date.getMinutes()).padStart(2, '0');
+      const ampm = hr >= 12 ? 'PM' : 'AM';
+      hr = hr % 12;
+      if (hr === 0) hr = 12;
+      return `${y}-${m}-${d} ${hr}:${min} ${ampm}`;
+    }
+
+    // When auth state changes, load user data
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        // Not signed in — redirect to register/login page (adjust path if you use another)
+        window.location.href = 'https://beni-wealth.github.io/Beni-Wealth/register.html';
+        return;
+      }
+
       try {
-        const p = document.getElementById('__dev_errors');
-        if (p) {
-          p.style.display = 'block';
-          p.textContent += (new Date()).toLocaleTimeString() + ' — ' + String(msg) + '\n';
-          p.scrollTop = p.scrollHeight;
+        const uid = user.uid;
+        // Attempt to read user document from 'users' collection
+        const userDocRef = db.collection('users').doc(uid);
+        const userSnap = await userDocRef.get();
+
+        let username = null;
+        let balance = 0;
+        let referralCount = 0;
+
+        if (userSnap.exists) {
+          const data = userSnap.data();
+          username = data.username || data.name || user.displayName || null;
+          balance = (typeof data.balance === 'number') ? data.balance : (data.balance ? Number(data.balance) : 0);
+          referralCount = (typeof data.referralCount === 'number') ? data.referralCount : (data.referralCount ? Number(data.referralCount) : 0);
+        } else {
+          // If users collection not populated, try displayName or email
+          username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
         }
-        console.log(msg);
-      } catch(e){ console.log('logOnPage err', e); }
-    }
 
-    // Init Firebase (best-effort)
-    let app, auth, db;
-    try {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getFirestore(app);
-      logOnPage('Firebase initialized');
-    } catch (err) {
-      console.error('Firebase init failed', err);
-      logOnPage('Firebase init failed: ' + (err && err.message ? err.message : String(err)));
-      document.getElementById('errorBanner').style.display = 'block';
-      document.getElementById('errorBanner').textContent = 'Firebase initialization failed (check network / config). See console for details.';
-    }
+        // Update UI
+        const greetingEl = document.getElementById('greeting');
+        greetingEl.textContent = `Welcome back, ${username} 💼`;
 
-    // DOM-ready wiring
-    document.addEventListener('DOMContentLoaded', () => {
-      const sbName = document.getElementById('sb-name');
-      const sbUid = document.getElementById('sb-uid');
-      const avatarEl = document.getElementById('avatar');
-      const refCodeEl = document.getElementById('ref-code');
-      const txnBody = document.getElementById('txn-body');
-      const completedCountEl = document.getElementById('completed-count');
-      const ordersCountEl = document.getElementById('orders-count');
-      const mainBalanceEl = document.getElementById('main-balance');
-      const signoutBtn = document.getElementById('signout-btn');
-      const topNotif = document.getElementById('top-notif');
-      const topProfile = document.getElementById('top-profile');
+        document.getElementById('balance').textContent = `₦${balance.toFixed(2)}`;
+        document.getElementById('total-referrals').textContent = referralCount;
 
-      // small helpers
-      function safeText(node, txt){ if (!node) return; try { node.textContent = txt; } catch(e){} }
-      function formatCurrency(val) {
-        try {
-          if (val == null) return '₦0.00';
-          const n = Number(val);
-          if (Number.isNaN(n)) return String(val);
-          return '₦' + n.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        } catch(e){ return '₦0.00'; }
-      }
+        // Build referral link using the username field (as requested)
+        const referralLink = `https://beni-wealth.github.io/Beni-Wealth/register.html?ref=${encodeURIComponent(username)}`;
+        document.getElementById('referral-code').textContent = `Referral Code: ${username}`;
+        // attach copy handler (safe closure)
+        document.getElementById('copy-btn').onclick = () => {
+          copyToClipboard(referralLink);
+        };
 
-      // --- setSidebarUser (merged behavior) ---
-      function setSidebarUser(data = {}) {
-        try {
-          const displayName = data.displayName || data.username || data.name || 'User';
-          safeText(sbName, displayName);
-          safeText(sbUid, `UID: ${data.uid || '-'}`);
-          safeText(refCodeEl, data.referralCode || data.username || '-');
+        // Load transactions: assume a 'transactions' collection with userId field
+        const txBody = document.getElementById('transaction-body');
+        txBody.innerHTML = '<tr id="loading-row"><td colspan="3">Loading transactions…</td></tr>';
 
-          if (data.photoURL) {
-            avatarEl && (avatarEl.innerHTML = `<img src="${data.photoURL}" alt="avatar" style="width:72px;height:72px;object-fit:cover;border-radius:14px">`);
-          } else if (avatarEl) {
-            avatarEl.textContent = (displayName || 'U').charAt(0).toUpperCase();
-          }
+        const txQuery = db.collection('transactions')
+                         .where('userId', '==', uid)
+                         .orderBy('timestamp', 'desc')
+                         .limit(10);
 
-          if (mainBalanceEl) {
-            if (typeof data.balance !== 'undefined' && data.balance !== null) mainBalanceEl.textContent = formatCurrency(data.balance);
-            else if (typeof data.walletBalance !== 'undefined' && data.walletBalance !== null) mainBalanceEl.textContent = formatCurrency(data.walletBalance);
-          }
-        } catch (err) { console.warn('setSidebarUser error', err); }
-      }
+        const txSnap = await txQuery.get();
+        txBody.innerHTML = ''; // clear loading row
 
-      // subscription handles
-      let userUnsub = null;
-      let txUnsub = null;
-
-      // --- subscribeUser with authFallback and "No transactions yet" message ---
-      async function subscribeUser(uid, authFallback = {}) {
-        if (!db) { logOnPage('Firestore not ready'); return; }
-        // unsubscribe old
-        try { if (typeof userUnsub === 'function') userUnsub(); } catch(e){}
-        try { if (typeof txUnsub === 'function') txUnsub(); } catch(e){}
-        userUnsub = null; txUnsub = null;
-
-        // users doc (merge with authFallback so uid/displayName persist if doc missing)
-        try {
-          const userRef = doc(db, 'users', uid);
-          userUnsub = onSnapshot(userRef, snap => {
-            if (!snap.exists()) {
-              const merged = Object.assign({}, authFallback, { uid });
-              setSidebarUser(merged);
-              return;
-            }
-            const d = snap.data() || {};
-            const merged = Object.assign({}, authFallback, d, { uid });
-            setSidebarUser(merged);
-            logOnPage('User doc loaded');
-          }, err => {
-            console.error('user snapshot error', err);
-            logOnPage('user snapshot error: ' + (err && err.message ? err.message : String(err)));
+        if (txSnap.empty) {
+          txBody.innerHTML = '<tr><td colspan="3">No transactions yet.</td></tr>';
+        } else {
+          txSnap.forEach(doc => {
+            const tx = doc.data();
+            const source = tx.source || '—';
+            const amount = (typeof tx.amount === 'number') ? tx.amount : (tx.amount ? Number(tx.amount) : 0);
+            const time = formatTimestamp(tx.timestamp);
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${escapeHtml(source)}</td><td>${time}</td><td>₦${amount}</td>`;
+            txBody.appendChild(row);
           });
-        } catch(e) {
-          console.warn('subscribeUser error', e);
-          logOnPage('subscribeUser error: ' + (e && e.message ? e.message : String(e)));
         }
 
-        // transactions last 10
-        try {
-          const txnCol = collection(db, 'transactions');
-          const q = query(txnCol, where('uid','==',uid), orderBy('createdAt','desc'), limit(10));
-          txUnsub = onSnapshot(q, snap => {
-            if (!snap || snap.empty) {
-              txnBody && (txnBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No transactions yet</td></tr>`);
-              return;
-            }
-            const rows = [];
-            snap.docs.forEach(docSnap => {
-              const t = docSnap.data() || {};
-              let date = '-';
-              try {
-                if (t.createdAt && typeof t.createdAt.toDate === 'function') date = t.createdAt.toDate().toLocaleString();
-                else if (typeof t.createdAt === 'number') date = new Date(t.createdAt).toLocaleString();
-                else if (typeof t.createdAt === 'string') date = new Date(t.createdAt).toLocaleString();
-              } catch(e) { date = String(t.createdAt || '-'); }
-              const amount = (typeof t.amount === 'number') ? `₦${t.amount.toLocaleString()}` : (t.amount ? String(t.amount) : '-');
-              rows.push(`<tr><td>${t.type || 'Txn'}</td><td>${date}</td><td style="text-align:right">${amount}</td></tr>`);
-            });
-       
+      } catch (err) {
+        console.error('Error fetching user data or transactions:', err);
+        alert('Error loading dashboard data. Open console for details.');
+      }
+    });
+
+    // clipboard helper
+    function copyToClipboard(text) {
+      // modern approach
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert('Referral link copied to clipboard!');
+        }).catch(() => {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    }
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        alert('Referral link copied to clipboard!');
+      } catch (e) {
+        prompt('Copy this link:', text);
+      }
+      document.body.removeChild(ta);
+    }
+
+    // basic html-escape for safety
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>
