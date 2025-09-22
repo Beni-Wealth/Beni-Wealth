@@ -171,16 +171,16 @@
   </div>
 
   <div class="bottom-nav">
-    <div class="nav-item" onclick="window.open('https://sites.google.com/view/easypay-ng/menu', '_blank')">
+    <div class="nav-item" onclick="window.open('https://beni-wealth.github.io/Beni-Wealth/menu', '_blank')">
       <span>📋</span>Menu
     </div>
-    <div class="nav-item" onclick="window.open('https://sites.google.com/view/easypay-ng/post-job', '_blank')">
+    <div class="nav-item" onclick="window.open('https://beni-wealth.github.io/Beni-Wealth/post-job', '_blank')">
       <span>📢</span>Advertise
     </div>
-    <div class="nav-item" onclick="window.open('https://sites.google.com/view/easypay-ng/earm', '_blank')">
+    <div class="nav-item" onclick="window.open('https://beni-wealth.github.io/Beni-Wealth/earn', '_blank')">
       <span>💸</span>Earn
     </div>
-    <div class="nav-item" onclick="window.open('https://sites.google.com/view/easypay-ng/leaderboard', '_blank')">
+    <div class="nav-item" onclick="window.open('https://beni-wealth.github.io/Beni-Wealth/leaderboard', '_blank')">
       <span>🏆</span>Leaderboard
     </div>
   </div>
@@ -195,17 +195,15 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // ----- IMPORTANT -----
-    // I used the Firebase config available in your project context (EasyPay).
-    // If you want to use a different Firebase project for Beni-Wealth, replace the config below with your Beni-Wealth config.
+    // --- Beni-Wealth Firebase config (used now) ---
     const firebaseConfig = {
-      apiKey: "AIzaSyDRkip46Ql5KhNfuatWAcAxQzgP5tQ8UY",
-      authDomain: "easypay-6bce8.firebaseapp.com",
-      projectId: "easypay-6bce8",
-      storageBucket: "easypay-6bce8.firebasestorage.app",
-      messagingSenderId: "862671358267",
-      appId: "1:862671358267:web:b243c7b69840ef918c8f1e",
-      measurementId: "G-2FZKDQ47FZ"
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -233,7 +231,7 @@
     // When auth state changes, load user data
     auth.onAuthStateChanged(async (user) => {
       if (!user) {
-        // Not signed in — redirect to register/login page (adjust path if you use another)
+        // Not signed in — redirect to Beni-Wealth register/login
         window.location.href = 'https://beni-wealth.github.io/Beni-Wealth/register.html';
         return;
       }
@@ -252,7 +250,8 @@
           const data = userSnap.data();
           username = data.username || data.name || user.displayName || null;
           balance = (typeof data.balance === 'number') ? data.balance : (data.balance ? Number(data.balance) : 0);
-          referralCount = (typeof data.referralCount === 'number') ? data.referralCount : (data.referralCount ? Number(data.referralCount) : 0);
+          // try both referralCount and referralCount-like fields
+          referralCount = (typeof data.referralCount === 'number') ? data.referralCount : ((typeof data.referrals === 'number') ? data.referrals : (data.referralCount ? Number(data.referralCount) : 0));
         } else {
           // If users collection not populated, try displayName or email
           username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
@@ -262,7 +261,7 @@
         const greetingEl = document.getElementById('greeting');
         greetingEl.textContent = `Welcome back, ${username} 💼`;
 
-        document.getElementById('balance').textContent = `₦${balance.toFixed(2)}`;
+        document.getElementById('balance').textContent = `₦${Number(balance).toFixed(2)}`;
         document.getElementById('total-referrals').textContent = referralCount;
 
         // Build referral link using the username field (as requested)
@@ -273,13 +272,13 @@
           copyToClipboard(referralLink);
         };
 
-        // Load transactions: assume a 'transactions' collection with userId field
+        // Load transactions: use 'transactions' collection with field 'uid' and 'createdAt'
         const txBody = document.getElementById('transaction-body');
         txBody.innerHTML = '<tr id="loading-row"><td colspan="3">Loading transactions…</td></tr>';
 
         const txQuery = db.collection('transactions')
-                         .where('userId', '==', uid)
-                         .orderBy('timestamp', 'desc')
+                         .where('uid', '==', uid)
+                         .orderBy('createdAt', 'desc')
                          .limit(10);
 
         const txSnap = await txQuery.get();
@@ -290,9 +289,9 @@
         } else {
           txSnap.forEach(doc => {
             const tx = doc.data();
-            const source = tx.source || '—';
+            const source = tx.source || tx.type || '—';
             const amount = (typeof tx.amount === 'number') ? tx.amount : (tx.amount ? Number(tx.amount) : 0);
-            const time = formatTimestamp(tx.timestamp);
+            const time = formatTimestamp(tx.createdAt || tx.timestamp || tx.time);
             const row = document.createElement('tr');
             row.innerHTML = `<td>${escapeHtml(source)}</td><td>${time}</td><td>₦${amount}</td>`;
             txBody.appendChild(row);
@@ -346,4 +345,5 @@
     }
   </script>
 </body>
-</html>
+               </html>
+  
