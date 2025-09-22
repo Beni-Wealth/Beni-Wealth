@@ -7,33 +7,35 @@
     /* Page-Load Slide + Fade */
     @keyframes slideFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes ripple { to { transform: scale(1.5); opacity: 0; } }
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F7F3E3;
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Blue & white theme (keeps your original layout) */
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F3F7FF;
       display: flex; justify-content: center; align-items: center; height: 100vh; }
     .container { background: #FFF; border-radius: 8px; max-width: 360px; margin: auto; padding: 2rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(20px);
+      box-shadow: 0 4px 20px rgba(8,40,90,0.06); transform: translateY(20px);
       opacity: 0; animation: slideFade .5s ease-out forwards; transition: transform .2s ease-out; }
     .container:hover { transform: translateY(-4px); }
     .logo-wrap { text-align: center; margin-bottom: 1rem; }
     .logo-wrap img { height: 80px; border-radius: 50%; }
-    h2 { margin-top: 0; text-align: center; color: #0B2545; }
+    h2 { margin-top: 0; text-align: center; color: #0B63D6; }
     input { width: 100%; padding: .75rem; margin: .5rem 0;
-      border: none; border-bottom: 2px solid #CCC; transition: border-bottom-width .3s ease-in-out; }
-    input:focus { outline: none; border-bottom-width: 3px; border-bottom-color: #1976D2; }
+      border: none; border-bottom: 2px solid #D6E6FF; transition: border-bottom-width .3s ease-in-out; background: transparent; }
+    input:focus { outline: none; border-bottom-width: 3px; border-bottom-color: #0B63D6; }
     button { position: relative; width: 100%; padding: .75rem; margin-top: 1rem;
-      background: #0B2545; color: #FFF; border: none; border-radius: .25rem;
+      background: #0B63D6; color: #FFF; border: none; border-radius: .25rem;
       font-size: 1rem; cursor: pointer; display: flex; justify-content: center;
       align-items: center; overflow: hidden; }
     button:disabled { opacity: .6; cursor: not-allowed; }
     button:active::after { content: ''; position: absolute; width: 200%; height: 200%;
-      background: rgba(255,255,255,0.3); border-radius: 50%; top: -50%; left: -50%;
+      background: rgba(255,255,255,0.25); border-radius: 50%; top: -50%; left: -50%;
       animation: ripple .6s linear; }
     .spinner { width: 20px; height: 20px; border: 3px solid #fff;
       border-top: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
       animation: spin 1s linear infinite; margin-right: .5rem; display: none; }
-    @keyframes spin { to { transform: rotate(360deg); } }
     .error { color: #D32F2F; font-size: .85rem; height: 1rem; text-align: center; margin-bottom: .5rem; }
     .login-link { text-align: center; margin-top: 1rem; font-size: .9rem; }
-    .login-link a { color: #1976D2; text-decoration: none; }
+    .login-link a { color: #0B63D6; text-decoration: none; }
     .login-link a:hover { text-decoration: underline; }
   </style>
 </head>
@@ -46,6 +48,8 @@
     <form id="auth-form">
       <input type="text" id="fullName" placeholder="Full Name" required>
       <input type="text" id="username" placeholder="Username" required>
+      <!-- optional referral field (keeps your original flow but lets users paste a code) -->
+      <input type="text" id="referral" placeholder="Referral code (optional)">
       <input type="email" id="email" placeholder="Email" required>
       <input type="password" id="password" placeholder="Password" required minlength="6">
       <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="6">
@@ -65,76 +69,86 @@
     import { getAuth }            from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
     import { getFirestore }       from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
     import { createUserWithEmailAndPassword, sendEmailVerification, fetchSignInMethodsForEmail } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-  authDomain: "beni-wealths.firebaseapp.com",
-  projectId: "beni-wealths",
-  storageBucket: "beni-wealths.firebasestorage.app",
-  messagingSenderId: "807950483822",
-  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-  measurementId: "G-Z2XP3YN6NS"
-};
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+    import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
-// Form handling
-const authForm = document.getElementById('auth-form');
-const submitBtn = document.getElementById('submit-btn');
-const spinner = document.getElementById('spinner');
-const btnText = document.getElementById('btn-text');
-const errorMsg = document.getElementById('error-msg');
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
 
-authForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  errorMsg.textContent = '';
-  submitBtn.disabled = true;
-  spinner.style.display = 'block';
-  btnText.style.display = 'none';
+    // Form handling
+    const authForm = document.getElementById('auth-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btn-text');
+    const errorMsg = document.getElementById('error-msg');
 
-  const fullName = document.getElementById('fullName').value.trim();
-  const username = document.getElementById('username').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const confirm = document.getElementById('confirmPassword').value;
+    authForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      errorMsg.textContent = '';
+      submitBtn.disabled = true;
+      spinner.style.display = 'block';
+      btnText.style.display = 'none';
 
-  if (password !== confirm) {
-    errorMsg.textContent = 'Passwords do not match.';
-    resetButton();
-    return;
-  }
+      const fullName = document.getElementById('fullName').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const referralInput = document.getElementById('referral');
+      const referral = referralInput && referralInput.value.trim() ? referralInput.value.trim() : null;
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirm = document.getElementById('confirmPassword').value;
 
-  try {
-    const methods = await fetchSignInMethodsForEmail(auth, email);
-    if (methods.length) throw new Error('Email already in use.');
-    const userQ = query(collection(db, 'users'), where('username', '==', username));
-    const userSnap = await getDocs(userQ);
-    if (!userSnap.empty) throw new Error('Username already taken.');
+      if (password !== confirm) {
+        errorMsg.textContent = 'Passwords do not match.';
+        resetButton();
+        return;
+      }
 
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
-    await sendEmailVerification(user);
-    await setDoc(doc(db, 'users', user.uid), {
-      fullName,
-      username,
-      email: user.email,
-      balance: 0,
-      referralCode: username,
-      createdAt: serverTimestamp()
+      try {
+        const methods = await fetchSignInMethodsForEmail(auth, email);
+        if (methods.length) throw new Error('Email already in use.');
+        const userQ = query(collection(db, 'users'), where('username', '==', username));
+        const userSnap = await getDocs(userQ);
+        if (!userSnap.empty) throw new Error('Username already taken.');
+
+        const { user } = await createUserWithEmailAndPassword(auth, email, password);
+        // send verification (best practice)
+        await sendEmailVerification(user);
+
+        // use provided referral code if present, otherwise default to username as referralCode
+        const referralCodeToStore = referral || username;
+
+        await setDoc(doc(db, 'users', user.uid), {
+          fullName,
+          username,
+          email: user.email,
+          balance: 0,
+          referralCode: referralCodeToStore,
+          createdAt: serverTimestamp()
+        });
+
+        alert('Registration successful!');
+        window.location.href = 'login.html';
+      } catch (err) {
+        alert(err.message);
+        errorMsg.textContent = err.message;
+        resetButton();
+      }
     });
-    alert('Registration successful!');
-    window.location.href = 'login.html';
-  } catch (err) {
-    alert(err.message);
-    errorMsg.textContent = err.message;
-    resetButton();
-  }
-});
 
-function resetButton() {
-  submitBtn.disabled = false;
-  spinner.style.display = 'none';
-  btnText.style.display = 'block';
-}
+    function resetButton() {
+      submitBtn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.style.display = 'block';
+    }
 
   </script>
 </body>
