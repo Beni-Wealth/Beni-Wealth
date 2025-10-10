@@ -159,29 +159,13 @@
     const avatarEl = document.getElementById('avatar');
     const balanceEl = document.getElementById('balance');
     const approxEl = document.getElementById('approx');
-    const referralEl = document.getElementById('referralCode');
-    const copyBtn = document.getElementById('copyRef');
-    const debugStatus = document.getElementById('debugStatus');
-    const debugMsg = document.getElementById('debugMsg');
 
     // nav & action buttons
-    document.getElementById('navHome').addEventListener('click', ()=>window.location.href='home.html');
-    document.getElementById('navConvert').addEventListener('click', ()=>window.location.href='convert.html');
-    document.getElementById('navCenter').addEventListener('click', ()=>window.location.href='center.html');
-    document.getElementById('navNews').addEventListener('click', ()=>window.location.href='news.html');
-    document.getElementById('navAssets').addEventListener('click', ()=>window.location.href='assets.html');
-    document.getElementById('rechargeBtn').addEventListener('click', ()=>window.location.href='recharge.html');
-    document.getElementById('withdrawBtn').addEventListener('click', ()=>window.location.href='withdraw.html');
-    document.getElementById('ordersItem').addEventListener('click', ()=>window.location.href='orders.html');
-    document.getElementById('tasksItem').addEventListener('click', ()=>window.location.href='tasks.html');
-    document.getElementById('earningsItem').addEventListener('click', ()=>window.location.href='earnings.html');
-    document.getElementById('settingsBtn').addEventListener('click', ()=>window.location.href='settings.html');
-    document.getElementById('chatBtn').addEventListener('click', ()=>window.location.href='chat.html');
-
-    copyBtn.addEventListener('click', async ()=>{
-      const txt = referralEl.textContent || '';
-      try{ await navigator.clipboard.writeText(window.location.origin + '/?ref=' + txt); alert('Referral link copied'); }catch(e){ alert('Could not copy'); }
-    });
+    const navMap = {
+      navHome: 'home.html', navConvert: 'convert.html', navCenter: 'center.html', navNews: 'news.html', navAssets: 'assets.html'
+    };
+    Object.keys(navMap).forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener('click', ()=> window.location.href = navMap[id]); });
+    ['rechargeBtn','withdrawBtn','ordersItem','tasksItem','earningsItem','settingsBtn','chatBtn'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('click', ()=> window.location.href = id.replace(/Item|Btn/,'') + '.html'); });
 
     document.getElementById('eyeToggle').addEventListener('click', ()=>{
       const showing = balanceEl.dataset.showing !== 'false';
@@ -189,10 +173,9 @@
       balanceEl.textContent = showing ? '₦••••' : (balanceEl.dataset.realText || '₦0.00');
     });
 
-    // Debug / state
-    let firebaseLoaded = false;
-    let modules = null; // will hold imported firebase modules
-    let currentUser = null;
+    // helper: format naira using toLocaleString to avoid regex
+    function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+    function gen5(){ return Math.floor(10000 + Math.random()*90000).toString(); }
 
     // helper: dynamic import with timeout
     function importWithTimeout(url, ms = 10000) {
@@ -202,80 +185,97 @@
       ]);
     }
 
-    // utility: generate a 5-digit id (string)
-    function gen5(){ return Math.floor(10000 + Math.random()*90000).toString(); }
+    // load firebase modules
+    let firebaseLoaded = false;
+    let modules = null;
 
-    async function loadFirebase() {
-      debugStatus.textContent = 'Attempting to load Firebase modules...';
-      debugMsg.textContent = '';
+    async function loadFirebase(){
       try{
-        const [appMod, analyticsMod, authMod, fsMod] = await Promise.all([
+        const [appMod, authMod, fsMod] = await Promise.all([
           importWithTimeout('https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js', 10000),
-          importWithTimeout('https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js', 10000).catch(()=>null),
           importWithTimeout('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js', 10000),
           importWithTimeout('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js', 10000)
         ]);
-
-        if(!appMod || !authMod || !fsMod) throw new Error('Could not load all firebase modules');
+        if(!appMod || !authMod || !fsMod) throw new Error('Missing firebase modules');
 
         modules = {
           initializeApp: appMod.initializeApp,
-          getAnalytics: analyticsMod ? analyticsMod.getAnalytics : null,
           getAuth: authMod.getAuth,
           onAuthStateChanged: authMod.onAuthStateChanged,
           getFirestore: fsMod.getFirestore,
           doc: fsMod.doc,
-          getDoc: fsMod.getDoc,
-          collection: fsMod.collection,
-          query: fsMod.query,
-          where: fsMod.where,
-          orderBy: fsMod.orderBy,
-          limit: fsMod.limit,
-          getDocs: fsMod.getDocs,
-          onSnapshot: fsMod.onSnapshot
+          getDoc: fsMod.getDoc
         };
 
         const app = modules.initializeApp(firebaseConfig);
-        try{ if(modules.getAnalytics) modules.getAnalytics(app); }catch(e){}
-        modules.app = app; modules.auth = modules.getAuth(app); modules.db = modules.getFirestore(app);
-
-        firebaseLoaded = true; debugStatus.textContent = 'Firebase loaded successfully.'; console.info('Firebase modules loaded.', modules);
+        modules.auth = modules.getAuth(app);
+        modules.db = modules.getFirestore(app);
+        firebaseLoaded = true;
         return true;
-      }catch(err){ firebaseLoaded = false; modules = null; debugStatus.textContent = 'Firebase NOT available (falling back to offline demo).'; debugMsg.textContent = String(err.message || err); console.warn('Firebase load failed:', err); return false; }
+      }catch(err){
+        console.warn('Firebase load failed:', err);
+        firebaseLoaded = false;
+        return false;
+      }
     }
 
-    async function fetchUserProfile(uid){ if(!firebaseLoaded || !modules) throw new Error('Firebase not loaded'); try{ const udocRef = modules.doc(modules.db, 'users', uid); const udocSnap = await modules.getDoc(udocRef); return udocSnap.exists() ? udocSnap.data() : null; }catch(err){ console.error('fetchUserProfile error', err); throw err; } }
-    async function fetchTransactions(uid){ if(!firebaseLoaded || !modules) throw new Error('Firebase not loaded'); try{ const txCol = modules.collection(modules.db, 'transactions'); const q = modules.query(txCol, modules.where('userId','==',uid), modules.orderBy('date','desc'), modules.limit(10)); const snap = await modules.getDocs(q); const out = []; snap.forEach(d=> out.push(d.data())); return out; }catch(err){ console.error('fetchTransactions error', err); throw err; } }
+    async function populateBalanceFromFirebase(uid){
+      if(!firebaseLoaded || !modules) throw new Error('Firebase not loaded');
+      try{
+        const userRef = modules.doc(modules.db, 'users', uid);
+        const snap = await modules.getDoc(userRef);
+        if(snap && typeof snap.exists === 'function' ? snap.exists() : !!snap.exists){
+          const data = snap.data();
+          const bal = Number(data.balance || 0);
+          balanceEl.dataset.realText = formatN(bal);
+          balanceEl.textContent = balanceEl.dataset.realText;
+          approxEl.textContent = `≈ ${balanceEl.dataset.realText}`;
+        } else {
+          balanceEl.dataset.realText = formatN(0);
+          balanceEl.textContent = balanceEl.dataset.realText;
+          approxEl.textContent = `≈ ${balanceEl.dataset.realText}`;
+        }
+      }catch(err){
+        console.error('populateBalanceFromFirebase error', err);
+        throw err;
+      }
+    }
 
-    async function setupWithFirebase(){ if(!firebaseLoaded || !modules) return setupOffline('Firebase not ready'); debugStatus.textContent = 'Using Firebase auth.'; modules.onAuthStateChanged(modules.auth, async (user)=>{ if(!user){ debugMsg.textContent = 'No authenticated user — redirecting to login.html'; setTimeout(()=>{ window.location.href = 'login.html' }, 900); return; } currentUser = user; // greet generally
+    async function init(){
+      const ok = await loadFirebase();
+      if(!ok){
+        // fallback demo
+        const demo = { uid: gen5(), balance: 0 };
+        uidLine.textContent = `UID: ${demo.uid}`;
+        balanceEl.dataset.realText = formatN(demo.balance);
+        balanceEl.textContent = balanceEl.dataset.realText;
+        approxEl.textContent = `≈ ${balanceEl.dataset.realText}`;
+        return;
+      }
+
+      // Firebase available: listen for auth state
+      modules.onAuthStateChanged(modules.auth, async (user)=>{
+        if(!user){
+          // if not signed in, redirect to login
+          window.location.href = 'login.html';
+          return;
+        }
+        // show only first 5 digits of uid
+        const first5 = user.uid ? user.uid.slice(0,5) : gen5();
+        uidLine.textContent = `UID: ${first5}`;
         greetingEl.textContent = 'Hello, User';
-        // show first 5 chars of uid if available, else generate
-        const displayUid = user.uid ? (user.uid.slice(0,5)) : gen5();
-        uidLine.textContent = `UID: ${displayUid}`;
-        try{
-          const profile = await fetchUserProfile(user.uid);
-          if(profile){
-            // keep greeting general but set referral to username if available
-            const username = profile.username || (profile.email ? profile.email.split('@')[0] : null);
-            if(username) referralEl.textContent = username; else referralEl.textContent = displayUid;
-            const balance = Number(profile.balance || 0);
-            balanceEl.dataset.realText = `₦${balance.toFixed(2)}`; balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`;
-            try{ const tx = await fetchTransactions(user.uid); debugMsg.textContent = `Loaded ${tx.length} transactions (last 10)`; }catch(e){ debugMsg.textContent = 'Could not load transactions: ' + e.message; }
-          } else {
-            referralEl.textContent = displayUid; balanceEl.dataset.realText = '₦0.00'; balanceEl.textContent = '₦0.00';
-          }
-        }catch(err){ console.error('Error populating profile', err); debugMsg.textContent = 'Error loading profile: ' + (err.message || err); }
-      }); }
 
-    function setupOffline(reason){ debugStatus.textContent = 'Offline demo mode'; if(reason) debugMsg.textContent = reason; const demo = { uid: gen5(), username: 'demoUser', balance: 12.5 }; currentUser = demo; uidLine.textContent = `UID: ${demo.uid}`; greetingEl.textContent = 'Hello, User'; avatarEl.textContent = (demo.username[0] || 'D').toUpperCase(); referralEl.textContent = demo.username; balanceEl.dataset.realText = `₦${demo.balance.toFixed(2)}`; balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; }
+        // populate balance
+        try{ await populateBalanceFromFirebase(user.uid); }catch(e){
+          // if fetch fails, show 0.00 but don't crash
+          balanceEl.dataset.realText = formatN(0);
+          balanceEl.textContent = balanceEl.dataset.realText;
+          approxEl.textContent = `≈ ${balanceEl.dataset.realText}`;
+        }
+      });
+    }
 
-    (async function init(){ const ok = await loadFirebase(); if(ok){ await setupWithFirebase(); } else { setupOffline('Firebase modules could not be loaded. This often means no network access or blocked requests to googleapis/gstatic domain.'); } })();
-
-    document.getElementById('tryLoadFirebase').addEventListener('click', async ()=>{ debugStatus.textContent = 'Retrying Firebase load...'; debugMsg.textContent = ''; const ok = await loadFirebase(); if(ok) await setupWithFirebase(); });
-    document.getElementById('useOffline').addEventListener('click', ()=> setupOffline('User requested offline demo'));
-    document.getElementById('showTests').addEventListener('click', ()=>{ const results = []; try{ results.push(['Referral present', !!referralEl.textContent]); }catch(e){ results.push(['Referral present', false]); } try{ results.push(['Copy works (clipboard API available)', !!navigator.clipboard]); }catch(e){ results.push(['Copy works (clipboard API available)', false]); } try{ results.push(['Nav buttons wired', true]); }catch(e){ results.push(['Nav buttons wired', false]); } debugMsg.innerHTML = results.map(r=>`<div>${r[0]}: <strong>${r[1] ? 'OK' : 'FAIL'}</strong></div>`).join(''); });
-
-    console.info('Dashboard adjusted: bottom nav reduced and more opaque; greeting generalized; UID uses first 5 chars or auto-generated 5-digit code if unavailable.');
+    init();
   </script>
 </body>
 </html>
