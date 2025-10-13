@@ -3,222 +3,222 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Dashboard (Live Balance)</title>
+  <title>Beni-Wealth — Dashboard (Balance wired, referral removed)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.62);
-      --accent-start:#2fe0b8; --accent-end:#7a5fff; --glass:rgba(255,255,255,0.03); --text:#e9f0ff;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:'Poppins',system-ui;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text);padding:20px}
-    .card{background:rgba(255,255,255,0.02);border-radius:16px;padding:18px;max-width:720px;margin:12px auto}
-    .header{display:flex;align-items:center;gap:12px}
-    .avatar{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:800}
-    .greet h1{margin:0;font-size:20px} .greet p{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .big-balance{font-size:44px;font-weight:800}
-    .muted{color:var(--muted)}
-    .btn{padding:10px 14px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);cursor:pointer}
-    .spinner{width:24px;height:24px;border-radius:50%;border:3px solid rgba(255,255,255,0.06);border-top-color:var(--accent-start);animation:spin 1s linear infinite;display:inline-block;vertical-align:middle}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .notice{margin-top:10px;color:var(--muted);font-size:13px}
-    .bottom-nav{position:fixed;left:20px;right:20px;bottom:18px;background:rgba(0,0,0,0.18);padding:12px;border-radius:28px;display:flex;justify-content:space-between;align-items:center}
+    :root{--bg-1:#0f0b1a;--bg-2:#110c21;--muted:rgba(255,255,255,0.6);--accent-start:#2fe0b8;--accent-end:#6ea8ff;--glass:rgba(255,255,255,0.02);--text:#e6eef8}
+    *{box-sizing:border-box}body{font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text);margin:0;padding:22px}
+    .header{display:flex;align-items:center;gap:14px}.avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:flex;align-items:center;justify-content:center;font-weight:700;color:#04101a}.greeting{flex:1}.greeting h3{margin:0;font-size:20px}.greeting p{margin:4px 0 0;color:var(--muted);font-size:13px}.icon-btn{width:40px;height:40px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;border:0}
+    .card{margin-top:18px;background:linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.015));padding:22px;border-radius:18px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    .small{color:var(--muted);font-size:13px}.big-balance{font-size:36px;font-weight:700;margin:8px 0}.balance-row{display:flex;gap:10px;align-items:center}
+    .btn{padding:10px 18px;border-radius:999px;border:0;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#04101a;font-weight:600;cursor:pointer}
+    .btn-outline{padding:10px 18px;border-radius:999px;border:1px solid rgba(255,255,255,0.05);background:transparent;color:#fff;cursor:pointer}
+    .eye{width:40px;height:40px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .list{margin-top:20px;display:grid;gap:14px}
+    .list-item{display:flex;gap:12px;align-items:center;padding:14px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);cursor:pointer}
+    .list-item h4{margin:0;color:var(--accent-end);text-decoration:underline}.list-item p{margin:3px 0 0;color:var(--muted);font-size:13px}
+    .txs{margin-top:18px}.tx{display:flex;justify-content:space-between;padding:10px;border-radius:10px;background:rgba(255,255,255,0.01);font-size:14px}.tx .left{display:flex;flex-direction:column}.tx .right{color:var(--muted)}
+    .error{color:#ffb3b3}
+    .bottom-nav{position:fixed;left:18px;right:18px;bottom:18px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:40px;display:flex;gap:22px;align-items:center;justify-content:space-between;box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+    @media(min-width:900px){body{padding:40px}}
   </style>
 </head>
 <body>
-  <div class="card header" style="justify-content:space-between">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div class="avatar" id="avatar">U</div>
-      <div class="greet">
-        <h1 id="greeting">Hello, User</h1>
-        <p id="uidline">UID: -</p>
+  <div class="header">
+    <div class="avatar" id="avatar">U</div>
+    <div class="greeting">
+      <h3 id="greet">Hi, User</h3>
+      <p id="uid">UID: -</p>
+    </div>
+    <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+    <button class="icon-btn" id="chatBtn" title="Chat">💬</button>
+  </div>
+
+  <div class="card" id="assetsCard">
+    <div class="head">
+      <div>
+        <div class="small">Total Assets (NGN)</div>
+        <div class="big-balance balance-row"><div id="balance">₦0.00</div><div class="eye" id="toggleEye" title="Toggle balance">👁️</div></div>
+        <div class="small" id="approx">≈ ₦0.00</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+        <button class="btn" id="rechargeBtn">Recharge</button>
+        <button class="btn-outline" id="withdrawBtn">Withdraw</button>
       </div>
     </div>
-    <div style="text-align:right">
-      <div><button id="loginBtn" class="btn" style="display:none">Login</button></div>
-    </div>
+
+    <!-- Referral removed as requested -->
   </div>
 
-  <div class="card" id="balanceCard">
-    <div class="muted">Total Assets (NGN)</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
-      <div class="big-balance" id="balance">₦0.00</div>
-      <div style="margin-left:auto">
-        <div id="loading" style="display:none"><span class="spinner"></span> Loading</div>
+  <div class="list">
+    <div class="list-item" id="ordersItem">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.02);display:grid;place-items:center">📄</div>
+      <div>
+        <h4>My Orders</h4>
+        <p>orders overview</p>
       </div>
     </div>
-    <div class="muted" id="approx">≈ ₦0.00</div>
 
-    <div class="notice" id="notice">Connecting to Firebase...</div>
+    <div class="list-item" id="tasksItem">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.02);display:grid;place-items:center">🔎</div>
+      <div>
+        <h4>available tasks</h4>
+        <p>Market & promotions</p>
+      </div>
+    </div>
+
+    <div class="list-item" id="earningsItem">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.02);display:grid;place-items:center">📈</div>
+      <div>
+        <h4>Earnings Report</h4>
+        <p>Performance</p>
+      </div>
+    </div>
   </div>
 
-  <div class="bottom-nav">
-    <div>Home</div><div>Convert</div><div style="width:56px;height:56px;border-radius:28px;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));"></div><div>News</div><div>Assets</div>
+  <div class="txs card" id="txsCard" style="max-width:720px;margin:18px auto 120px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="small">Transaction History (last 10)</div><a href="transactions.html" class="small" target="_blank">See all</a></div>
+    <div id="txList">
+      <div class="tx"><div class="left"><strong>—</strong><span class="small">No transactions yet</span></div><div class="right">₦0</div></div>
+    </div>
   </div>
+
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <div class="nav-item" id="navHome"><div class="icon">🏠</div><span>Home</span></div>
+    <div class="nav-item" id="navConvert"><div class="icon">🔁</div><span>Convert</span></div>
+    <div class="nav-item active" id="navCenter"><div class="icon">⚖️</div><span>Center</span></div>
+    <div class="nav-item" id="navNews"><div class="icon">💬</div><span>News</span></div>
+    <div class="nav-item" id="navAssets"><div class="icon">👤</div><span>Assets</span></div>
+  </nav>
 
 <script type="module">
-  // --------- CONFIG: Beni-Wealth Firebase (already provided by you) ----------
-  const firebaseConfig = {
-    apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-    authDomain: "beni-wealths.firebaseapp.com",
-    projectId: "beni-wealths",
-    storageBucket: "beni-wealths.firebasestorage.app",
-    messagingSenderId: "807950483822",
-    appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-    measurementId: "G-Z2XP3YN6NS"
-  };
+/* ---------- Firebase config (Beni-Wealth) ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  authDomain: "beni-wealths.firebaseapp.com",
+  projectId: "beni-wealths",
+  storageBucket: "beni-wealths.firebasestorage.app",
+  messagingSenderId: "807950483822",
+  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+  measurementId: "G-Z2XP3YN6NS"
+};
 
-  // ---------- static imports (modular SDK) ----------
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-  import {
-    getFirestore, doc, getDoc, onSnapshot, collection, query, where, orderBy, limit, getDocs
-  } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+/* ---------- Static imports (modular SDK) ---------- */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, onSnapshot, collection, query, where, orderBy, limit, getDocs
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-  // UI refs
-  const greetingEl = document.getElementById('greeting');
-  const uidLine = document.getElementById('uidline');
-  const avatarEl = document.getElementById('avatar');
-  const balanceEl = document.getElementById('balance');
-  const approxEl = document.getElementById('approx');
-  const noticeEl = document.getElementById('notice');
-  const loadingEl = document.getElementById('loading');
-  const loginBtn = document.getElementById('loginBtn');
+/* ---------- UI elements ---------- */
+const avatarEl = document.getElementById('avatar');
+const greetEl = document.getElementById('greet');
+const uidEl = document.getElementById('uid');
+const balanceEl = document.getElementById('balance');
+const approxEl = document.getElementById('approx');
+const txListEl = document.getElementById('txList');
+const toggleEye = document.getElementById('toggleEye');
 
-  /** Helpers **/
-  function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
-  function gen5(){ return Math.floor(10000 + Math.random()*90000).toString(); }
-  function showLoading(on){ loadingEl.style.display = on ? 'inline-block' : 'none'; }
-  function renderBalanceNumber(n){ const formatted = formatN(n); balanceEl.textContent = formatted; approxEl.textContent = `≈ ${formatted}`; balanceEl.dataset.realText = formatted; }
+/* ---------- helpers ---------- */
+function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function gen5(){ return Math.floor(10000 + Math.random()*90000).toString(); }
 
-  /** Fallback reads if users/{uid}.balance not present **/
-  async function readBalanceFallbacks(uid){
-    console.info('Attempting fallback balance reads for uid=', uid);
+/* Toggle eye */
+let showing = true;
+toggleEye.addEventListener('click', ()=>{ showing = !showing; balanceEl.textContent = showing ? (balanceEl.dataset.realText || '₦0.00') : '₦••••'; });
 
-    // 1) users/{uid}.balance (one-time)
-    try{
-      const uRef = doc(db, 'users', uid);
-      const uSnap = await getDoc(uRef);
-      console.info('users/{uid} snapshot exists:', uSnap.exists());
-      if(uSnap.exists()){
-        const d = uSnap.data();
-        if(d && (d.balance !== undefined && d.balance !== null)){
-          console.info('Found balance on users/{uid}:', d.balance);
-          return Number(d.balance);
-        }
-      }
-    }catch(e){ console.warn('read users/{uid} failed', e); }
+/* Page navigation wiring */
+document.getElementById('settingsBtn').addEventListener('click', ()=> window.location.href='profile.html');
+document.getElementById('chatBtn').addEventListener('click', ()=> window.location.href='chat.html');
+document.getElementById('rechargeBtn').addEventListener('click', ()=> window.location.href='recharge.html');
+document.getElementById('withdrawBtn').addEventListener('click', ()=> window.location.href='withdraw.html');
+document.getElementById('ordersItem').addEventListener('click', ()=> window.location.href='orders.html');
+document.getElementById('tasksItem').addEventListener('click', ()=> window.location.href='tasks.html');
+document.getElementById('earningsItem').addEventListener('click', ()=> window.location.href='earnings.html');
+document.getElementById('navHome').addEventListener('click', ()=> window.location.href='index.html');
+document.getElementById('navConvert').addEventListener('click', ()=> window.location.href='convert.html');
+document.getElementById('navCenter').addEventListener('click', ()=> window.location.href='center.html');
+document.getElementById('navNews').addEventListener('click', ()=> window.location.href='news.html');
+document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='assets.html');
 
-    // 2) balances/{uid}
-    try{
-      const bRef = doc(db, 'balances', uid);
-      const bSnap = await getDoc(bRef);
-      if(bSnap && (typeof bSnap.exists === 'function' ? bSnap.exists() : !!bSnap.exists)){
-        const bd = bSnap.data();
-        if(bd && (bd.balance !== undefined || bd.amount !== undefined)){
-          console.info('Found balance on balances/{uid}:', bd);
-          return Number(bd.balance ?? bd.amount ?? 0);
-        }
-      }
-    }catch(e){ console.warn('read balances/{uid} failed', e); }
+/* ---------- Read transactions (optional) ---------- */
+async function loadTransactions(uid){
+  try{
+    const txCol = collection(db, 'transactions');
+    const q = query(txCol, where('userId','==', uid), orderBy('date','desc'), limit(10));
+    const snap = await getDocs(q);
+    txListEl.innerHTML = '';
+    if(snap.empty){ txListEl.innerHTML = `<div class="tx"><div class="left"><strong>—</strong><span class="small">No transactions yet</span></div><div class="right">₦0</div></div>`; return; }
+    snap.forEach(docu=>{ const d = docu.data(); const when = d.date && d.date.toDate ? d.date.toDate().toLocaleString() : ''; const amount = Number(d.amount||0); const source = d.source || d.note || 'Tx'; const html = `<div class="tx"><div class="left"><strong>${source}</strong><span class="small">${when}</span></div><div class="right">${formatN(amount)}</div></div>`; txListEl.insertAdjacentHTML('beforeend', html); });
+  }catch(e){ console.error('loadTransactions error', e); }
+}
 
-    // 3) balances collection: newest entry for userId
-    try{
-      const col = collection(db, 'balances');
-      const q = query(col, where('userId','==', uid), orderBy('date','desc'), limit(1));
-      const snap = await getDocs(q);
-      console.info('balances collection query size:', snap.size ?? (snap.docs ? snap.docs.length : 0));
-      if(!snap.empty){
-        const d = snap.docs[0].data();
-        console.info('latest balances doc:', d);
-        return Number(d.balance ?? d.amount ?? 0);
-      }
-    }catch(e){ console.warn('query balances collection failed', e); }
-
-    return null;
+/* ---------- Primary: wire to Firebase and populate user info ---------- */
+onAuthStateChanged(auth, async user => {
+  if(!user){
+    // Not signed in: show placeholders but do not auto-redirect
+    greetEl.textContent = 'Hi, User';
+    uidEl.textContent = `UID: ${gen5()}`;
+    balanceEl.textContent = '₦0.00';
+    approxEl.textContent = '≈ ₦0.00';
+    txListEl.innerHTML = `<div class="tx"><div class="left"><strong>—</strong><span class="small">Not signed in</span></div><div class="right">₦0</div></div>`;
+    return;
   }
 
-  // Main: onAuthStateChanged — listens for a logged-in user and pulls balance real-time
-  onAuthStateChanged(auth, async (user) => {
-    showLoading(true);
-    if(!user){
-      // Not signed in — show Login button (helps testing)
-      loginBtn.style.display = 'inline-block';
-      noticeEl.textContent = 'You are not signed in. Click Login to sign in (or open your login page in another tab).';
-      showLoading(false);
-      renderBalanceNumber(0);
-      uidLine.textContent = `UID: ${gen5()}`;
-      greetingEl.textContent = 'Hello, User';
-      loginBtn.onclick = ()=> window.location.href = 'login.html';
-      return;
-    }
+  // Try to use auth.displayName immediately
+  const quickName = user.displayName || (user.email ? user.email.split('@')[0] : null);
+  if(quickName){ greetEl.textContent = `Hi, ${quickName}`; avatarEl.textContent = quickName.charAt(0).toUpperCase(); }
 
-    // Signed in
-    loginBtn.style.display = 'none';
-    const displayUid = user.uid ? user.uid.slice(0,5) : gen5();
-    uidLine.textContent = `UID: ${displayUid}`;
-    greetingEl.textContent = 'Hello, User';
-    noticeEl.textContent = 'Fetching balance...';
-    console.info('Signed in:', user.uid);
+  // show first 5 of uid in the header line
+  uidEl.textContent = `UID: ${user.uid.slice(0,5)}`;
 
-    // Real-time listener on users/{uid}
-    const userRef = doc(db, 'users', user.uid);
-    let seenFirst = false;
-    const unsub = onSnapshot(userRef, async (snap) => {
-      try{
-        if(snap && snap.exists()){
-          const data = snap.data();
-          console.info('users/{uid} onSnapshot data=', data);
-          if(data && (data.balance !== undefined && data.balance !== null)){
-            renderBalanceNumber(Number(data.balance));
-            noticeEl.textContent = 'Balance pulled from users/{uid}.';
-            seenFirst = true;
-            showLoading(false);
-            return;
-          }
-        }
-        // fallback reads if no balance field
-        const fallback = await readBalanceFallbacks(user.uid);
-        if(fallback !== null){
-          renderBalanceNumber(fallback);
-          noticeEl.textContent = 'Balance pulled from fallback location.';
-        } else {
-          renderBalanceNumber(0);
-          noticeEl.textContent = 'No balance found — showing ₦0.00. Check Firestore docs / rules.';
-        }
-      }catch(err){
-        console.error('onSnapshot handler error', err);
-        noticeEl.textContent = 'Error reading balance. See console for details.';
-        renderBalanceNumber(0);
-      }finally{
-        if(!seenFirst) showLoading(false);
+  // subscribe to users/{uid} to get username and balance (real-time)
+  const uRef = doc(db, 'users', user.uid);
+  let unsub = onSnapshot(uRef, async snap => {
+    try{
+      if(snap && snap.exists()){
+        const data = snap.data();
+        // username -> greeting (users/{uid}.username authoritative)
+        const username = data.username || user.displayName || (user.email ? user.email.split('@')[0] : null);
+        if(username){ greetEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); }
+
+        // balance -> Total Assets
+        if(data.balance !== undefined && data.balance !== null){ const bal = Number(data.balance || 0); balanceEl.dataset.realText = formatN(bal); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; }
+        else { const fb = await tryBalanceFallback(user.uid); const val = fb !== null ? fb : 0; balanceEl.dataset.realText = formatN(val); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; }
+      } else {
+        // no user doc — fallback reads
+        const fb = await tryBalanceFallback(user.uid); const val = fb !== null ? fb : 0; balanceEl.dataset.realText = formatN(val); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; const username = user.displayName || (user.email ? user.email.split('@')[0] : null); if(username){ greetEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); }
       }
-    }, (err) => {
-      console.warn('onSnapshot error', err);
-      // If snapshot fails (rules/network), do one-time fallback reads
-      (async ()=>{
-        try{
-          const fallback = await readBalanceFallbacks(user.uid);
-          if(fallback !== null) renderBalanceNumber(fallback);
-          else renderBalanceNumber(0);
-          noticeEl.textContent = 'onSnapshot failed; used fallback reads (check console).';
-        }catch(e){
-          console.error('fallback read after onSnapshot error failed', e);
-          noticeEl.textContent = 'Failed to read balance (check console).';
-          renderBalanceNumber(0);
-        } finally { showLoading(false); }
-      })();
-    });
 
-    // (optional) store unsub globally if you want to stop listening later:
-    // window._beni_unsub = unsub;
+      // load transactions one-time for display
+      try{ await loadTransactions(user.uid); }catch(e){ console.warn(e); }
+    }catch(err){
+      console.error('onSnapshot handler error', err);
+      // show an error message visibly if permission denied
+      if(err && err.code === 'permission-denied'){
+        // visible error
+        const el = document.createElement('div'); el.className = 'error'; el.textContent = 'Permission denied: check Firestore rules for users/{uid} read access.'; document.getElementById('assetsCard').prepend(el);
+      }
+    }
+  }, err => {
+    console.warn('users/{uid} onSnapshot error', err);
+    (async ()=>{
+      try{ const uSnap = await getDoc(uRef); if(uSnap.exists()){ const data = uSnap.data(); const username = data.username || user.displayName || (user.email ? user.email.split('@')[0] : null); if(username){ greetEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); } if(data.balance !== undefined && data.balance !== null){ const bal = Number(data.balance||0); balanceEl.dataset.realText = formatN(bal); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; } else { const fb = await tryBalanceFallback(user.uid); const val = fb !== null ? fb : 0; balanceEl.dataset.realText = formatN(val); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; } } else { const fb = await tryBalanceFallback(user.uid); const val = fb !== null ? fb : 0; balanceEl.dataset.realText = formatN(val); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; } await loadTransactions(user.uid); } catch(e){ console.error('fallback read failed', e); if(e && e.code === 'permission-denied'){ const el = document.createElement('div'); el.className='error'; el.textContent='Permission denied: check Firestore rules for users/{uid} read access.'; document.getElementById('assetsCard').prepend(el);} }
+    })();
   });
 
-  console.info('Dashboard loaded. If balance still shows 0.00: (1) check browser console for permission-denied or other errors, (2) make sure you are signed into the same Firebase project, (3) confirm balance is stored at users/{uid}.balance or balances/{uid} or balances collection.');
+});
+
+/* ---------- fallback balance read helper ---------- */
+async function tryBalanceFallback(uid){
+  try{ const bRef = doc(db, 'balances', uid); const bSnap = await getDoc(bRef); if(bSnap && bSnap.exists()){ const bd = bSnap.data(); if(bd && (bd.balance !== undefined || bd.amount !== undefined)) return Number(bd.balance ?? bd.amount ?? 0); } }catch(e){ console.warn('balances/{uid} lookup failed', e); }
+  try{ const col = collection(db, 'balances'); const q = query(col, where('userId','==', uid), orderBy('date','desc'), limit(1)); const snap = await getDocs(q); if(!snap.empty){ const d = snap.docs[0].data(); return Number(d.balance ?? d.amount ?? 0); } }catch(e){ console.warn('balances collection query failed', e); }
+  return null;
+}
 </script>
 </body>
 </html>
