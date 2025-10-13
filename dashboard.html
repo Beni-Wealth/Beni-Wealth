@@ -3,48 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Dashboard (Balance Fix)</title>
+  <title>Beni-Wealth — Dashboard (Fixed Balance Pull)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    /* Theme & layout */
-    :root{
-      --bg-1: #0b0613;
-      --bg-2: #0f0820;
-      --muted: rgba(255,255,255,0.62);
-      --accent-start: #2fe0b8;
-      --accent-end: #7a5fff;
-      --glass: rgba(255,255,255,0.03);
-      --text: #e9f0ff;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;padding:20px 18px 120px;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text)}
-
-    .header{display:flex;align-items:center;gap:14px;padding:6px 4px 18px}
-    .avatar{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:800;font-size:20px}
-    .greet{flex:1}
-    .greet h1{margin:0;font-size:20px}
-    .greet p{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .icons{display:flex;gap:12px;align-items:center}
-    .icon-btn{width:40px;height:40px;border-radius:10px;background:var(--glass);display:grid;place-items:center;color:var(--text);cursor:pointer}
-
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;padding:20px;margin:8px 0;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
-    .small{font-size:13px;color:var(--muted)}
-    .big-balance{font-size:44px;font-weight:800;margin:8px 0}
-    .buttons{display:flex;gap:12px;margin-top:14px}
-    .btn{flex:1;padding:12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;text-align:center}
-    .btn.primary{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
-
-    .list-item{background:rgba(255,255,255,0.02);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;margin:14px 0}
-    .list-item h3{margin:0;color:var(--accent-end);text-decoration:underline}
-    .list-item p{margin:4px 0 0;color:var(--muted);font-size:13px}
-
-    .bottom-nav{position:fixed;left:20px;right:20px;bottom:18px;background:linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.06));padding:12px;border-radius:34px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 12px 40px rgba(2,6,23,0.6)}
-    .nav-btn{flex:1;text-align:center;color:var(--muted);font-size:12px}
-    .nav-btn .icon-wrap{display:block;margin:0 auto 6px;width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,0.04);display:grid;place-items:center;font-size:18px}
-    .nav-center{flex:0 0 84px;display:flex;justify-content:center}
-    .nav-center .center-btn{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-size:24px;box-shadow:0 12px 36px rgba(61,46,111,0.35);transform:translateY(-18px)}
-
+    :root{--bg-1:#0b0613;--bg-2:#0f0820;--muted:rgba(255,255,255,0.62);--accent-start:#2fe0b8;--accent-end:#7a5fff;--glass:rgba(255,255,255,0.03);--text:#e9f0ff}
+    *{box-sizing:border-box}body{margin:0;padding:20px 18px 120px;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text)}
+    .header{display:flex;align-items:center;gap:14px;padding:6px 4px 18px}.avatar{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:800;font-size:20px}.greet{flex:1}.greet h1{margin:0;font-size:20px}.greet p{margin:6px 0 0;color:var(--muted);font-size:13px}.icons{display:flex;gap:12px;align-items:center}.icon-btn{width:40px;height:40px;border-radius:10px;background:var(--glass);display:grid;place-items:center;color:var(--text);cursor:pointer}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;padding:20px;margin:8px 0;box-shadow:0 10px 30px rgba(0,0,0,0.6)}.small{font-size:13px;color:var(--muted)}.big-balance{font-size:44px;font-weight:800;margin:8px 0}.buttons{display:flex;gap:12px;margin-top:14px}.btn{flex:1;padding:12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;text-align:center}.btn.primary{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+    .list-item{background:rgba(255,255,255,0.02);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;margin:14px 0}.list-item h3{margin:0;color:var(--accent-end);text-decoration:underline}.list-item p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .bottom-nav{position:fixed;left:20px;right:20px;bottom:18px;background:linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.06));padding:12px;border-radius:34px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 12px 40px rgba(2,6,23,0.6)}.nav-btn{flex:1;text-align:center;color:var(--muted);font-size:12px}.nav-btn .icon-wrap{display:block;margin:0 auto 6px;width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,0.04);display:grid;place-items:center;font-size:18px}.nav-center{flex:0 0 84px;display:flex;justify-content:center}.nav-center .center-btn{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-size:24px;box-shadow:0 12px 36px rgba(61,46,111,0.35);transform:translateY(-18px)}
     @media(min-width:900px){body{padding:40px 80px}}
   </style>
 </head>
@@ -113,7 +80,13 @@
   </div>
 
   <script type="module">
-    // --- Config (Beni-Wealth) ---
+    // Direct (static) imports: clearer and reliable when network is available
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, onSnapshot, collection, query, where, orderBy, limit, getDocs
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -124,6 +97,10 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
     // UI refs
     const greetingEl = document.getElementById('greeting');
     const uidLine = document.getElementById('uidline');
@@ -131,158 +108,92 @@
     const balanceEl = document.getElementById('balance');
     const approxEl = document.getElementById('approx');
 
-    // nav & action buttons
-    const navMap = {
-      navHome: 'home.html', navConvert: 'convert.html', navCenter: 'center.html', navNews: 'news.html', navAssets: 'assets.html'
-    };
-    Object.keys(navMap).forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener('click', ()=> window.location.href = navMap[id]); });
-    ['rechargeBtn','withdrawBtn','ordersItem','tasksItem','earningsItem','settingsBtn','chatBtn'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('click', ()=> window.location.href = id.replace(/Item|Btn/,'') + '.html'); });
+    // helpers
+    function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+    function gen5(){ return Math.floor(10000 + Math.random()*90000).toString(); }
 
+    // update UI from a numeric balance
+    function renderBalanceNumber(n){ const formatted = formatN(n); balanceEl.dataset.realText = formatted; balanceEl.textContent = formatted; approxEl.textContent = `≈ ${formatted}`; }
+
+    // Try multiple places for user's balance. Return numeric or null.
+    async function readBalanceFallbacks(uid){
+      // 1) users/{uid}.balance
+      try{
+        const uRef = doc(db, 'users', uid);
+        const uSnap = await getDoc(uRef);
+        if(uSnap.exists()){
+          const d = uSnap.data();
+          if(d && (d.balance !== undefined && d.balance !== null)) return Number(d.balance);
+        }
+      }catch(e){ console.warn('read users/{uid} failed', e); }
+
+      // 2) balances/{uid}
+      try{
+        const bRef = doc(db, 'balances', uid);
+        const bSnap = await getDoc(bRef);
+        if(bSnap.exists()){
+          const bd = bSnap.data();
+          if(bd && (bd.balance !== undefined || bd.amount !== undefined)) return Number(bd.balance ?? bd.amount ?? 0);
+        }
+      }catch(e){ console.warn('read balances/{uid} failed', e); }
+
+      // 3) balances collection - latest entry for this user
+      try{
+        const col = collection(db, 'balances');
+        const q = query(col, where('userId','==', uid), orderBy('date','desc'), limit(1));
+        const snap = await getDocs(q);
+        if(!snap.empty){
+          const d = snap.docs[0].data();
+          return Number(d.balance ?? d.amount ?? 0);
+        }
+      }catch(e){ console.warn('query balances collection failed', e); }
+
+      return null;
+    }
+
+    // main: on auth change, set UID (first5) and wire realtime listener on users/{uid}
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){
+        // redirect to login (assumes you have login.html)
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const displayUid = user.uid ? user.uid.slice(0,5) : gen5();
+      uidLine.textContent = `UID: ${displayUid}`;
+      greetingEl.textContent = 'Hello, User';
+
+      // Primary: listen to users/{uid} doc realtime and use its balance field when present
+      const uRef = doc(db, 'users', user.uid);
+      const unsub = onSnapshot(uRef, async (snap) => {
+        if(snap && snap.exists()){
+          const data = snap.data();
+          if(data && (data.balance !== undefined && data.balance !== null)){
+            renderBalanceNumber(Number(data.balance));
+            return; // done
+          }
+        }
+        // fallback to reading other balance locations once
+        const fallback = await readBalanceFallbacks(user.uid);
+        if(fallback !== null){ renderBalanceNumber(fallback); }
+        else { renderBalanceNumber(0); }
+      }, (err)=>{
+        console.warn('onSnapshot users/{uid} error', err);
+        // on error fallback to one-time reads
+        (async ()=>{ const fallback = await readBalanceFallbacks(user.uid); renderBalanceNumber(fallback ?? 0); })();
+      });
+
+      // Optionally keep unsub reference if you want to stop listening later
+      // window._beni_unsub = unsub;
+    });
+
+    // simple eye toggle
     document.getElementById('eyeToggle').addEventListener('click', ()=>{
       const showing = balanceEl.dataset.showing !== 'false';
       balanceEl.dataset.showing = showing ? 'false' : 'true';
       balanceEl.textContent = showing ? '₦••••' : (balanceEl.dataset.realText || '₦0.00');
     });
 
-    // helper: format naira using toLocaleString to avoid regex
-    function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
-    function gen5(){ return Math.floor(10000 + Math.random()*90000).toString(); }
-
-    // helper: dynamic import with timeout
-    function importWithTimeout(url, ms = 10000) {
-      return Promise.race([
-        import(url),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Import timeout')), ms))
-      ]);
-    }
-
-    // load firebase modules
-    let firebaseLoaded = false;
-    let modules = null;
-
-    async function loadFirebase(){
-      try{
-        const [appMod, authMod, fsMod] = await Promise.all([
-          importWithTimeout('https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js', 10000),
-          importWithTimeout('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js', 10000),
-          importWithTimeout('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js', 10000)
-        ]);
-        if(!appMod || !authMod || !fsMod) throw new Error('Missing firebase modules');
-
-        modules = {
-          initializeApp: appMod.initializeApp,
-          getAuth: authMod.getAuth,
-          onAuthStateChanged: authMod.onAuthStateChanged,
-          getFirestore: fsMod.getFirestore,
-          doc: fsMod.doc,
-          getDoc: fsMod.getDoc
-        };
-
-        const app = modules.initializeApp(firebaseConfig);
-        modules.auth = modules.getAuth(app);
-        modules.db = modules.getFirestore(app);
-        firebaseLoaded = true;
-        return true;
-      }catch(err){
-        console.warn('Firebase load failed:', err);
-        firebaseLoaded = false;
-        return false;
-      }
-    }
-
-    async function populateBalanceFromFirebase(uid){
-      if(!firebaseLoaded || !modules) throw new Error('Firebase not loaded');
-      try{
-        // First try user doc
-        const userRef = modules.doc(modules.db, 'users', uid);
-        const snap = await modules.getDoc(userRef);
-        if(snap && typeof snap.exists === 'function' ? snap.exists() : !!snap.exists){
-          const data = snap.data();
-          if(data && (data.balance !== undefined && data.balance !== null)){
-            const bal = Number(data.balance || 0);
-            balanceEl.dataset.realText = formatN(bal);
-            balanceEl.textContent = balanceEl.dataset.realText;
-            approxEl.textContent = `≈ ${balanceEl.dataset.realText}`;
-            return;
-          }
-        }
-
-        // If not found on the user doc, try balances/{uid} doc
-        try{
-          const balDocRef = modules.doc(modules.db, 'balances', uid);
-          const balSnap = await modules.getDoc(balDocRef);
-          if(balSnap && typeof balSnap.exists === 'function' ? balSnap.exists() : !!balSnap.exists){
-            const b = balSnap.data();
-            const bal = Number(b.balance ?? b.amount ?? 0);
-            balanceEl.dataset.realText = formatN(bal);
-            balanceEl.textContent = balanceEl.dataset.realText;
-            approxEl.textContent = `≈ ${balanceEl.dataset.realText}`;
-            return;
-          }
-        }catch(e){ console.warn('balances/{uid} lookup failed', e); }
-
-        // Lastly, try a balances collection where entries may be per-transaction: query latest record for this user
-        try{
-          // ensure modules has collection/query/getDocs
-          if(modules.collection && modules.query && modules.where && modules.orderBy && modules.limit && modules.getDocs){
-            const col = modules.collection(modules.db, 'balances');
-            const q = modules.query(col, modules.where('userId', '==', uid), modules.orderBy('date', 'desc'), modules.limit(1));
-            const snap2 = await modules.getDocs(q);
-            if(snap2 && snap2.docs && snap2.docs.length){
-              const d = snap2.docs[0].data();
-              const bal = Number(d.balance ?? d.amount ?? 0);
-              balanceEl.dataset.realText = formatN(bal);
-              balanceEl.textContent = balanceEl.dataset.realText;
-              approxEl.textContent = `≈ ${balanceEl.dataset.realText}`;
-              return;
-            }
-          }
-        }catch(e){ console.warn('balances collection query failed', e); }
-
-        // nothing found
-        balanceEl.dataset.realText = formatN(0);
-        balanceEl.textContent = balanceEl.dataset.realText;
-        approxEl.textContent = `≈ ${balanceEl.dataset.realText}`;
-      }catch(err){
-        console.error('populateBalanceFromFirebase error', err);
-        throw err;
-      }
-    }
-
-    async function init(){
-      // load firebase and extend modules (getDocs/collection/query helpers) if available
-      const ok = await loadFirebase();
-      if(!ok){
-        const demo = { uid: gen5(), balance: 0 };
-        uidLine.textContent = `UID: ${demo.uid}`;
-        balanceEl.dataset.realText = formatN(demo.balance);
-        balanceEl.textContent = balanceEl.dataset.realText;
-        approxEl.textContent = `≈ ${balanceEl.dataset.realText}`;
-        return;
-      }
-
-      // augment modules with optional firestore helpers (may already exist on fsMod)
-      try{
-        const fsMod = (await importWithTimeout('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js', 10000));
-        modules.collection = fsMod.collection; modules.query = fsMod.query; modules.where = fsMod.where; modules.orderBy = fsMod.orderBy; modules.limit = fsMod.limit; modules.getDocs = fsMod.getDocs;
-      }catch(e){ /* non-fatal */ }
-
-      modules.onAuthStateChanged(modules.auth, async (user)=>{
-        if(!user){ window.location.href = 'login.html'; return; }
-        const first5 = user.uid ? user.uid.slice(0,5) : gen5();
-        uidLine.textContent = `UID: ${first5}`;
-        greetingEl.textContent = 'Hello, User';
-
-        try{
-          await populateBalanceFromFirebase(user.uid);
-        }catch(e){
-          console.warn('Could not populate balance from Firebase', e);
-          balanceEl.dataset.realText = formatN(0); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`;
-        }
-      });
-    }
-
-    init();
   </script>
 </body>
 </html>
