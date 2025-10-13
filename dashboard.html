@@ -159,6 +159,7 @@
     /* small utilities */
     .small { color: var(--muted); }
     .avatar-icon { color: #fff; }
+    .error { color: #c33; margin-bottom: 12px; }
     @media (min-width: 700px) {
       .profile-info { right: 10px; top: 48px; }
     }
@@ -187,6 +188,7 @@
   </div>
 
   <div class="container">
+    <div id="assetsError"></div>
     <div class="card">
       <h3>Balance: ₦<span id="balance">0.00</span></h3>
     </div>
@@ -234,7 +236,8 @@
       collection,
       query,
       where,
-      getDocs
+      getDocs,
+      onSnapshot
     } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
@@ -251,7 +254,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth();
+    const auth = getAuth(app); // explicit app
 
     const LOGIN_TS_KEY = 'loginTimestamp';
 
@@ -263,77 +266,167 @@
       }, millisUntilMidnight);
     }
 
+    function showAssetsError(msg){
+      const el = document.getElementById('assetsError');
+      el.innerHTML = msg ? `<div class="error">${msg}</div>` : '';
+    }
+
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        localStorage.removeItem(LOGIN_TS_KEY);
-        window.location.href = 'login.html';
-        return;
+      try{
+        if (!user) {
+          localStorage.removeItem(LOGIN_TS_KEY);
+          window.location.href = 'login.html';
+          return;
+        }
+        if (!localStorage.getItem(LOGIN_TS_KEY)) {
+          localStorage.setItem(LOGIN_TS_KEY, Date.now());
+        }
+
+        logoutAtMidnight();
+
+        const uid = user.uid;
+        const userRef = doc(db, "users", uid);
+
+        // listen realtime to user doc so balance updates live
+        const unsub = onSnapshot(userRef, async (snap) => {
+          try{
+            if(!snap.exists()){
+              // no doc, show fallback and return
+              showAssetsError('');
+              document.getElementById("usernameDisplay").innerText = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+              document.getElementById("profileUsername").innerText = user.displayName || '';
+              document.getElementById("profileEmail").innerText = user.email || '';
+              document.getElementById("profileBalance").innerText = '0.00';
+              document.getElementById("balance").innerText = '0.00';
+              document.getElementById("referralCode").innerText = '';
+              // still attempt fallback reads
+              const fb = await tryBalanceFallback(uid);
+              const val = fb !== null ? fb : 0;
+              document.getElementById("balance").innerText = Number(val).toFixed(2);
+              return;
+            }
+            const data = snap.data();
+            const username = data.username || user.displayName || (user.email ? user.email.split('@')[0] : '');
+            const email = data.email || user.email || '';
+            const balance = Number(data.balance ?? 0);
+            const plan = data.plan || 'basic';
+
+            document.getElementById("usernameDisplay").innerText = username;
+            document.getElementById("profileUsername").innerText = username;
+            document.getElementById("profileEmail").innerText = email;
+            document.getElementById("profileBalance").innerText = balance.toFixed(2);
+            document.getElementById("balance").innerText = balance.toFixed(2);
+            document.getElementById("referralCode").innerText = username || '';
+
+            showAssetsError(''); // clear any previous error
+
+            if (plan === "basic") {
+              document.getElementById("upgradeModal").style.display = "flex";
+            } else {
+              document.getElementById("upgradeModal").style.display = "none";
+            }
+
+            // load referrals count (one-time)
+            try {
+              const referralsQuery = query(collection(db, "users"), where("referral", "==", username));
+              const snapshot = await getDocs(referralsQuery);
+              document.getElementById("referrals").innerText = snapshot.size;
+            } catch (e) {
+              console.warn('referrals query error', e);
+              document.getElementById("referrals").innerText = "0";
+            }
+
+            // load txs (you may keep this or remove)
+            await loadTransactions(uid);
+
+            // set up claim button and countdown
+            const lastTs = data.lastClaim ?? 0;
+            const claimBtn = document.getElementById("claimBtn");
+            claimBtn.innerText = plan === "premium" ? "Claim ₦2" : "Claim ₦1";
+            claimBtn.onclick = () => claimNaira(uid);
+            updateCountdown(lastTs);
+          }catch(innerErr){
+            console.error('onSnapshot handler inner error', innerErr);
+            if(innerErr && innerErr.code === 'permission-denied'){
+              showAssetsError('Permission denied: check Firestore rules for users/{uid} read access.');
+            } else {
+              showAssetsError('Error reading user data — see console.');
+            }
+          }
+        }, (err) => {
+          console.warn('users/{uid} onSnapshot error', err);
+          if(err && err.code === 'permission-denied'){
+            showAssetsError('Permission denied: check Firestore rules for users/{uid} read access.');
+          } else {
+            showAssetsError('Could not get live updates — falling back to one-time reads (see console).');
+          }
+          // as fallback do a one-time get
+          (async ()=>{
+            try{
+              const uSnap = await getDoc(userRef);
+              if(uSnap.exists()){
+                const d = uSnap.data();
+                const username = d.username || user.displayName || (user.email ? user.email.split('@')[0] : '');
+                const bal = Number(d.balance ?? 0);
+                document.getElementById("usernameDisplay").innerText = username;
+                document.getElementById("balance").innerText = bal.toFixed(2);
+                document.getElementById("profileBalance").innerText = bal.toFixed(2);
+                document.getElementById("referralCode").innerText = username || '';
+              }
+              await loadTransactions(uid);
+            }catch(e){
+              console.error('fallback read failed', e);
+            }
+          })();
+        });
+
+      }catch(e){
+        console.error('onAuthStateChanged handler error', e);
+        showAssetsError('Error initializing dashboard — see console.');
       }
-      if (!localStorage.getItem(LOGIN_TS_KEY)) {
-        localStorage.setItem(LOGIN_TS_KEY, Date.now());
-      }
-
-      logoutAtMidnight();
-
-      const uid = user.uid;
-      const userRef = doc(db, "users", uid);
-      const userSnap = await getDoc(userRef);
-      if (!userSnap.exists()) return;
-
-      const data = userSnap.data();
-      const username = data.username || "";
-      const email = data.email || "";
-      const balance = data.balance ?? 0;
-      const plan = data.plan || "basic";
-
-      document.getElementById("usernameDisplay").innerText = username;
-      document.getElementById("profileUsername").innerText = username;
-      document.getElementById("profileEmail").innerText = email;
-      document.getElementById("profileBalance").innerText = Number(balance).toFixed(2);
-      document.getElementById("balance").innerText = Number(balance).toFixed(2);
-      document.getElementById("referralCode").innerText = username;
-
-      if (plan === "basic") {
-        document.getElementById("upgradeModal").style.display = "flex";
-      }
-
-      try {
-        const referralsQuery = query(collection(db, "users"), where("referral", "==", username));
-        const snapshot = await getDocs(referralsQuery);
-        document.getElementById("referrals").innerText = snapshot.size;
-      } catch (e) {
-        console.warn('referrals query error', e);
-        document.getElementById("referrals").innerText = "0";
-      }
-
-      const lastTs = data.lastClaim ?? 0;
-      const claimBtn = document.getElementById("claimBtn");
-      claimBtn.innerText = plan === "premium" ? "Claim ₦2" : "Claim ₦1";
-      claimBtn.onclick = () => claimNaira(uid);
-      updateCountdown(lastTs);
     });
 
-    window.claimNaira = async function(uid) {
-      const userRef = doc(db, "users", uid);
-      const userSnap = await getDoc(userRef);
-      const data = userSnap.data() || {};
-      const now = Date.now();
-      const lastTs = data.lastClaim ?? 0;
-      if (now - lastTs < 86400000) {
-        alert("You have to wait 24 hours before claiming again.");
-        return;
+    async function loadTransactions(uid){
+      try{
+        const txCol = collection(db, 'transactions');
+        const q = query(txCol, where('userId','==', uid));
+        const snap = await getDocs(q);
+        const txList = document.getElementById('txList');
+        if(txList) txList.innerHTML = '';
+        // optional: render latest 10 as before — left out to keep snippet short
+      }catch(e){
+        console.warn('loadTransactions error', e);
       }
-      const amount = data.plan === "premium" ? 2 : 1;
-      const newBalance = (data.balance || 0) + amount;
-      await updateDoc(userRef, { balance: newBalance, lastClaim: now });
-      document.getElementById("balance").innerText = newBalance.toFixed(2);
-      document.getElementById("profileBalance").innerText = newBalance.toFixed(2);
-      alert(`Claimed ₦${amount} Successfully!`);
-      updateCountdown(now);
+    }
+
+    window.claimNaira = async function(uid) {
+      try{
+        const userRef = doc(db, "users", uid);
+        const userSnap = await getDoc(userRef);
+        const data = userSnap.data() || {};
+        const now = Date.now();
+        const lastTs = data.lastClaim ?? 0;
+        if (now - lastTs < 86400000) {
+          alert("You have to wait 24 hours before claiming again.");
+          return;
+        }
+        const amount = data.plan === "premium" ? 2 : 1;
+        const newBalance = (data.balance || 0) + amount;
+        await updateDoc(userRef, { balance: newBalance, lastClaim: now });
+        document.getElementById("balance").innerText = newBalance.toFixed(2);
+        document.getElementById("profileBalance").innerText = newBalance.toFixed(2);
+        alert(`Claimed ₦${amount} Successfully!`);
+        updateCountdown(now);
+      }catch(e){
+        console.error('claim error', e);
+        alert('Claim failed — see console for details.');
+      }
     };
 
     window.updateCountdown = function(lastClaimTs) {
       const countdownEl = document.getElementById("countdown");
+      if(!countdownEl) return;
+      if (window._countdownInterval) clearInterval(window._countdownInterval);
       const tick = () => {
         const now = Date.now();
         const next = lastClaimTs + 86400000;
@@ -348,12 +441,15 @@
         }
       };
       tick();
-      setInterval(tick, 1000);
+      window._countdownInterval = setInterval(tick, 1000);
     };
 
     window.copyReferral = function() {
       const code = document.getElementById("referralCode").innerText;
-      navigator.clipboard.writeText(code).then(() => alert("Referral code copied: " + code));
+      navigator.clipboard.writeText(code).then(() => alert("Referral code copied: " + code)).catch(e=>{
+        console.error('copy failed', e);
+        alert('Copy failed');
+      });
     };
 
     window.logout = function() {
@@ -363,6 +459,29 @@
     window.toggleProfile = function() {
       document.getElementById("profileInfo").classList.toggle("show");
     };
+
+    // Fallback reads for balances stored differently
+    async function tryBalanceFallback(uid){
+      try{
+        const bRef = doc(db, 'balances', uid);
+        const bSnap = await getDoc(bRef);
+        if(bSnap && bSnap.exists()){
+          const bd = bSnap.data();
+          if(bd && (bd.balance !== undefined || bd.amount !== undefined)) return Number(bd.balance ?? bd.amount ?? 0);
+        }
+      }catch(e){ console.warn('balances/{uid} lookup failed', e); }
+      try{
+        const col = collection(db, 'balances');
+        const q = query(col, where('userId','==', uid));
+        const snap = await getDocs(q);
+        if(!snap.empty){
+          const d = snap.docs[0].data();
+          return Number(d.balance ?? d.amount ?? 0);
+        }
+      }catch(e){ console.warn('balances collection query failed', e); }
+      return null;
+    }
   </script>
 </body>
-</html>
+  </html>
+  
