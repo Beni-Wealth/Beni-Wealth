@@ -1,224 +1,368 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Dashboard (Balance wired, referral removed)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Beni-Wealth Dashboard</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+  />
   <style>
-    :root{--bg-1:#0f0b1a;--bg-2:#110c21;--muted:rgba(255,255,255,0.6);--accent-start:#2fe0b8;--accent-end:#6ea8ff;--glass:rgba(255,255,255,0.02);--text:#e6eef8}
-    *{box-sizing:border-box}body{font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text);margin:0;padding:22px}
-    .header{display:flex;align-items:center;gap:14px}.avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:flex;align-items:center;justify-content:center;font-weight:700;color:#04101a}.greeting{flex:1}.greeting h3{margin:0;font-size:20px}.greeting p{margin:4px 0 0;color:var(--muted);font-size:13px}.icon-btn{width:40px;height:40px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;border:0}
-    .card{margin-top:18px;background:linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.015));padding:22px;border-radius:18px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
-    .small{color:var(--muted);font-size:13px}.big-balance{font-size:36px;font-weight:700;margin:8px 0}.balance-row{display:flex;gap:10px;align-items:center}
-    .btn{padding:10px 18px;border-radius:999px;border:0;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#04101a;font-weight:600;cursor:pointer}
-    .btn-outline{padding:10px 18px;border-radius:999px;border:1px solid rgba(255,255,255,0.05);background:transparent;color:#fff;cursor:pointer}
-    .eye{width:40px;height:40px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:center;cursor:pointer}
-    .list{margin-top:20px;display:grid;gap:14px}
-    .list-item{display:flex;gap:12px;align-items:center;padding:14px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);cursor:pointer}
-    .list-item h4{margin:0;color:var(--accent-end);text-decoration:underline}.list-item p{margin:3px 0 0;color:var(--muted);font-size:13px}
-    .txs{margin-top:18px}.tx{display:flex;justify-content:space-between;padding:10px;border-radius:10px;background:rgba(255,255,255,0.01);font-size:14px}.tx .left{display:flex;flex-direction:column}.tx .right{color:var(--muted)}
-    .error{color:#ffb3b3}
-    .bottom-nav{position:fixed;left:18px;right:18px;bottom:18px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:40px;display:flex;gap:22px;align-items:center;justify-content:space-between;box-shadow:0 10px 30px rgba(2,6,23,0.6)}
-    @media(min-width:900px){body{padding:40px}}
+    /* Blue & white theme */
+    :root{
+      --brand-blue: #0b63d6; /* primary blue */
+      --brand-blue-dark: #074bb0;
+      --bg: #f8fbff;
+      --card-bg: #ffffff;
+      --text: #0b2140;
+      --muted: #4b5b76;
+      --accent: var(--brand-blue);
+      --btn-text: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background-color: var(--brand-blue);
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .profile {
+      position: relative;
+      cursor: pointer;
+    }
+    .profile-info {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 40px;
+      background: var(--card-bg);
+      color: var(--text);
+      box-shadow: 0 2px 6px rgba(11, 34, 64, 0.12);
+      border-radius: 8px;
+      width: 260px;
+      padding: 12px;
+      z-index: 1;
+    }
+    .profile-info.show {
+      display: block;
+    }
+    .profile-info p {
+      margin: 8px 0;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+    .profile-info button {
+      margin-top: 10px;
+      width: 100%;
+      padding: 8px;
+      background-color: var(--brand-blue);
+      color: var(--btn-text);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .container {
+      padding: 20px;
+      flex-grow: 1;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(11, 34, 64, 0.06);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card h3 {
+      margin-top: 0;
+      color: var(--brand-blue-dark);
+    }
+    .copy-btn {
+      background: var(--brand-blue);
+      color: var(--btn-text);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+    .nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: var(--brand-blue);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      box-shadow: 0 -4px 12px rgba(11, 34, 64, 0.08);
+    }
+    .nav a {
+      color: white;
+      text-decoration: none;
+      text-align: center;
+      font-size: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .nav a i {
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(11, 34, 64, 0.55);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 90%;
+    }
+    .modal-content h2 {
+      margin-top: 0;
+      color: var(--brand-blue);
+    }
+    .modal-content a {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: var(--brand-blue);
+      color: #fff;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    /* small utilities */
+    .small { color: var(--muted); }
+    .avatar-icon { color: #fff; }
+    @media (min-width: 700px) {
+      .profile-info { right: 10px; top: 48px; }
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="avatar" id="avatar">U</div>
-    <div class="greeting">
-      <h3 id="greet">Hi, User</h3>
-      <p id="uid">UID: -</p>
-    </div>
-    <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
-    <button class="icon-btn" id="chatBtn" title="Chat">💬</button>
-  </div>
-
-  <div class="card" id="assetsCard">
-    <div class="head">
-      <div>
-        <div class="small">Total Assets (NGN)</div>
-        <div class="big-balance balance-row"><div id="balance">₦0.00</div><div class="eye" id="toggleEye" title="Toggle balance">👁️</div></div>
-        <div class="small" id="approx">≈ ₦0.00</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
-        <button class="btn" id="rechargeBtn">Recharge</button>
-        <button class="btn-outline" id="withdrawBtn">Withdraw</button>
+  <header>
+    <h2>Welcome back, <span id="usernameDisplay"></span></h2>
+    <div class="profile" onclick="toggleProfile()">
+      <i class="fas fa-user-circle fa-2x avatar-icon"></i>
+      <div id="profileInfo" class="profile-info">
+        <p><strong>Username:</strong> <span id="profileUsername"></span></p>
+        <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+        <p><strong>Balance:</strong> ₦<span id="profileBalance"></span></p>
+        <button onclick="logout()">Logout</button>
       </div>
     </div>
+  </header>
 
-    <!-- Referral removed as requested -->
-  </div>
-
-  <div class="list">
-    <div class="list-item" id="ordersItem">
-      <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.02);display:grid;place-items:center">📄</div>
-      <div>
-        <h4>My Orders</h4>
-        <p>orders overview</p>
-      </div>
-    </div>
-
-    <div class="list-item" id="tasksItem">
-      <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.02);display:grid;place-items:center">🔎</div>
-      <div>
-        <h4>available tasks</h4>
-        <p>Market & promotions</p>
-      </div>
-    </div>
-
-    <div class="list-item" id="earningsItem">
-      <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.02);display:grid;place-items:center">📈</div>
-      <div>
-        <h4>Earnings Report</h4>
-        <p>Performance</p>
-      </div>
+  <div id="upgradeModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h2>Account Not Activated</h2>
+      <p>You need to upgrade your account to access earnings.</p>
+      <a href="upgrade.html">Upgrade</a>
     </div>
   </div>
 
-  <div class="txs card" id="txsCard" style="max-width:720px;margin:18px auto 120px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="small">Transaction History (last 10)</div><a href="transactions.html" class="small" target="_blank">See all</a></div>
-    <div id="txList">
-      <div class="tx"><div class="left"><strong>—</strong><span class="small">No transactions yet</span></div><div class="right">₦0</div></div>
+  <div class="container">
+    <div class="card">
+      <h3>Balance: ₦<span id="balance">0.00</span></h3>
+    </div>
+    <div class="card">
+      <h3>Total Referrals: <span id="referrals">0</span></h3>
+    </div>
+    <div class="card">
+      <h3>Referral Code:</h3>
+      <p id="referralCode" style="word-break: break-all;"></p>
+      <button class="copy-btn" onclick="copyReferral()">Copy Code</button>
+    </div>
+    <div class="card">
+      <h3>Daily Bonus</h3>
+      <p id="countdown">Loading...</p>
+      <button class="copy-btn" id="claimBtn">Claim</button>
     </div>
   </div>
 
-  <nav class="bottom-nav" aria-label="Main navigation">
-    <div class="nav-item" id="navHome"><div class="icon">🏠</div><span>Home</span></div>
-    <div class="nav-item" id="navConvert"><div class="icon">🔁</div><span>Convert</span></div>
-    <div class="nav-item active" id="navCenter"><div class="icon">⚖️</div><span>Center</span></div>
-    <div class="nav-item" id="navNews"><div class="icon">💬</div><span>News</span></div>
-    <div class="nav-item" id="navAssets"><div class="icon">👤</div><span>Assets</span></div>
-  </nav>
+  <div class="nav">
+    <a href="menu.html">
+      <i class="fas fa-home"></i>
+      Menu
+    </a>
+    <a href="advertise.html">
+      <i class="fas fa-bullhorn"></i>
+      Advertise
+    </a>
+    <a href="earn.html">
+      <i class="fas fa-money-bill-wave"></i>
+      Earn
+    </a>
+    <a href="leaderboard.html">
+      <i class="fas fa-trophy"></i>
+      Leaderboard
+    </a>
+  </div>
 
-<script type="module">
-/* ---------- Firebase config (Beni-Wealth) ---------- */
-const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-  authDomain: "beni-wealths.firebaseapp.com",
-  projectId: "beni-wealths",
-  storageBucket: "beni-wealths.firebasestorage.app",
-  messagingSenderId: "807950483822",
-  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-  measurementId: "G-Z2XP3YN6NS"
-};
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      updateDoc,
+      collection,
+      query,
+      where,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
-/* ---------- Static imports (modular SDK) ---------- */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import {
-  getFirestore, doc, getDoc, onSnapshot, collection, query, where, orderBy, limit, getDocs
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    // --- Beni-Wealth Firebase details (replaced as requested) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
 
-/* ---------- UI elements ---------- */
-const avatarEl = document.getElementById('avatar');
-const greetEl = document.getElementById('greet');
-const uidEl = document.getElementById('uid');
-const balanceEl = document.getElementById('balance');
-const approxEl = document.getElementById('approx');
-const txListEl = document.getElementById('txList');
-const toggleEye = document.getElementById('toggleEye');
+    const LOGIN_TS_KEY = 'loginTimestamp';
 
-/* ---------- helpers ---------- */
-function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
-function gen5(){ return Math.floor(10000 + Math.random()*90000).toString(); }
-
-/* Toggle eye */
-let showing = true;
-toggleEye.addEventListener('click', ()=>{ showing = !showing; balanceEl.textContent = showing ? (balanceEl.dataset.realText || '₦0.00') : '₦••••'; });
-
-/* Page navigation wiring */
-document.getElementById('settingsBtn').addEventListener('click', ()=> window.location.href='profile.html');
-document.getElementById('chatBtn').addEventListener('click', ()=> window.location.href='chat.html');
-document.getElementById('rechargeBtn').addEventListener('click', ()=> window.location.href='recharge.html');
-document.getElementById('withdrawBtn').addEventListener('click', ()=> window.location.href='withdraw.html');
-document.getElementById('ordersItem').addEventListener('click', ()=> window.location.href='orders.html');
-document.getElementById('tasksItem').addEventListener('click', ()=> window.location.href='tasks.html');
-document.getElementById('earningsItem').addEventListener('click', ()=> window.location.href='earnings.html');
-document.getElementById('navHome').addEventListener('click', ()=> window.location.href='index.html');
-document.getElementById('navConvert').addEventListener('click', ()=> window.location.href='convert.html');
-document.getElementById('navCenter').addEventListener('click', ()=> window.location.href='center.html');
-document.getElementById('navNews').addEventListener('click', ()=> window.location.href='news.html');
-document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='assets.html');
-
-/* ---------- Read transactions (optional) ---------- */
-async function loadTransactions(uid){
-  try{
-    const txCol = collection(db, 'transactions');
-    const q = query(txCol, where('userId','==', uid), orderBy('date','desc'), limit(10));
-    const snap = await getDocs(q);
-    txListEl.innerHTML = '';
-    if(snap.empty){ txListEl.innerHTML = `<div class="tx"><div class="left"><strong>—</strong><span class="small">No transactions yet</span></div><div class="right">₦0</div></div>`; return; }
-    snap.forEach(docu=>{ const d = docu.data(); const when = d.date && d.date.toDate ? d.date.toDate().toLocaleString() : ''; const amount = Number(d.amount||0); const source = d.source || d.note || 'Tx'; const html = `<div class="tx"><div class="left"><strong>${source}</strong><span class="small">${when}</span></div><div class="right">${formatN(amount)}</div></div>`; txListEl.insertAdjacentHTML('beforeend', html); });
-  }catch(e){ console.error('loadTransactions error', e); }
-}
-
-/* ---------- Primary: wire to Firebase and populate user info ---------- */
-onAuthStateChanged(auth, async user => {
-  if(!user){
-    // Not signed in: show placeholders but do not auto-redirect
-    greetEl.textContent = 'Hi, User';
-    uidEl.textContent = `UID: ${gen5()}`;
-    balanceEl.textContent = '₦0.00';
-    approxEl.textContent = '≈ ₦0.00';
-    txListEl.innerHTML = `<div class="tx"><div class="left"><strong>—</strong><span class="small">Not signed in</span></div><div class="right">₦0</div></div>`;
-    return;
-  }
-
-  // Try to use auth.displayName immediately
-  const quickName = user.displayName || (user.email ? user.email.split('@')[0] : null);
-  if(quickName){ greetEl.textContent = `Hi, ${quickName}`; avatarEl.textContent = quickName.charAt(0).toUpperCase(); }
-
-  // show first 5 of uid in the header line
-  uidEl.textContent = `UID: ${user.uid.slice(0,5)}`;
-
-  // subscribe to users/{uid} to get username and balance (real-time)
-  const uRef = doc(db, 'users', user.uid);
-  let unsub = onSnapshot(uRef, async snap => {
-    try{
-      if(snap && snap.exists()){
-        const data = snap.data();
-        // username -> greeting (users/{uid}.username authoritative)
-        const username = data.username || user.displayName || (user.email ? user.email.split('@')[0] : null);
-        if(username){ greetEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); }
-
-        // balance -> Total Assets
-        if(data.balance !== undefined && data.balance !== null){ const bal = Number(data.balance || 0); balanceEl.dataset.realText = formatN(bal); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; }
-        else { const fb = await tryBalanceFallback(user.uid); const val = fb !== null ? fb : 0; balanceEl.dataset.realText = formatN(val); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; }
-      } else {
-        // no user doc — fallback reads
-        const fb = await tryBalanceFallback(user.uid); const val = fb !== null ? fb : 0; balanceEl.dataset.realText = formatN(val); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; const username = user.displayName || (user.email ? user.email.split('@')[0] : null); if(username){ greetEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); }
-      }
-
-      // load transactions one-time for display
-      try{ await loadTransactions(user.uid); }catch(e){ console.warn(e); }
-    }catch(err){
-      console.error('onSnapshot handler error', err);
-      // show an error message visibly if permission denied
-      if(err && err.code === 'permission-denied'){
-        // visible error
-        const el = document.createElement('div'); el.className = 'error'; el.textContent = 'Permission denied: check Firestore rules for users/{uid} read access.'; document.getElementById('assetsCard').prepend(el);
-      }
+    function logoutAtMidnight() {
+      const now = new Date();
+      const millisUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
+      setTimeout(() => {
+        signOut(auth);
+      }, millisUntilMidnight);
     }
-  }, err => {
-    console.warn('users/{uid} onSnapshot error', err);
-    (async ()=>{
-      try{ const uSnap = await getDoc(uRef); if(uSnap.exists()){ const data = uSnap.data(); const username = data.username || user.displayName || (user.email ? user.email.split('@')[0] : null); if(username){ greetEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); } if(data.balance !== undefined && data.balance !== null){ const bal = Number(data.balance||0); balanceEl.dataset.realText = formatN(bal); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; } else { const fb = await tryBalanceFallback(user.uid); const val = fb !== null ? fb : 0; balanceEl.dataset.realText = formatN(val); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; } } else { const fb = await tryBalanceFallback(user.uid); const val = fb !== null ? fb : 0; balanceEl.dataset.realText = formatN(val); balanceEl.textContent = balanceEl.dataset.realText; approxEl.textContent = `≈ ${balanceEl.dataset.realText}`; } await loadTransactions(user.uid); } catch(e){ console.error('fallback read failed', e); if(e && e.code === 'permission-denied'){ const el = document.createElement('div'); el.className='error'; el.textContent='Permission denied: check Firestore rules for users/{uid} read access.'; document.getElementById('assetsCard').prepend(el);} }
-    })();
-  });
 
-});
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        localStorage.removeItem(LOGIN_TS_KEY);
+        window.location.href = 'login.html';
+        return;
+      }
+      if (!localStorage.getItem(LOGIN_TS_KEY)) {
+        localStorage.setItem(LOGIN_TS_KEY, Date.now());
+      }
 
-/* ---------- fallback balance read helper ---------- */
-async function tryBalanceFallback(uid){
-  try{ const bRef = doc(db, 'balances', uid); const bSnap = await getDoc(bRef); if(bSnap && bSnap.exists()){ const bd = bSnap.data(); if(bd && (bd.balance !== undefined || bd.amount !== undefined)) return Number(bd.balance ?? bd.amount ?? 0); } }catch(e){ console.warn('balances/{uid} lookup failed', e); }
-  try{ const col = collection(db, 'balances'); const q = query(col, where('userId','==', uid), orderBy('date','desc'), limit(1)); const snap = await getDocs(q); if(!snap.empty){ const d = snap.docs[0].data(); return Number(d.balance ?? d.amount ?? 0); } }catch(e){ console.warn('balances collection query failed', e); }
-  return null;
-}
-</script>
+      logoutAtMidnight();
+
+      const uid = user.uid;
+      const userRef = doc(db, "users", uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) return;
+
+      const data = userSnap.data();
+      const username = data.username || "";
+      const email = data.email || "";
+      const balance = data.balance ?? 0;
+      const plan = data.plan || "basic";
+
+      document.getElementById("usernameDisplay").innerText = username;
+      document.getElementById("profileUsername").innerText = username;
+      document.getElementById("profileEmail").innerText = email;
+      document.getElementById("profileBalance").innerText = Number(balance).toFixed(2);
+      document.getElementById("balance").innerText = Number(balance).toFixed(2);
+      document.getElementById("referralCode").innerText = username;
+
+      if (plan === "basic") {
+        document.getElementById("upgradeModal").style.display = "flex";
+      }
+
+      try {
+        const referralsQuery = query(collection(db, "users"), where("referral", "==", username));
+        const snapshot = await getDocs(referralsQuery);
+        document.getElementById("referrals").innerText = snapshot.size;
+      } catch (e) {
+        console.warn('referrals query error', e);
+        document.getElementById("referrals").innerText = "0";
+      }
+
+      const lastTs = data.lastClaim ?? 0;
+      const claimBtn = document.getElementById("claimBtn");
+      claimBtn.innerText = plan === "premium" ? "Claim ₦2" : "Claim ₦1";
+      claimBtn.onclick = () => claimNaira(uid);
+      updateCountdown(lastTs);
+    });
+
+    window.claimNaira = async function(uid) {
+      const userRef = doc(db, "users", uid);
+      const userSnap = await getDoc(userRef);
+      const data = userSnap.data() || {};
+      const now = Date.now();
+      const lastTs = data.lastClaim ?? 0;
+      if (now - lastTs < 86400000) {
+        alert("You have to wait 24 hours before claiming again.");
+        return;
+      }
+      const amount = data.plan === "premium" ? 2 : 1;
+      const newBalance = (data.balance || 0) + amount;
+      await updateDoc(userRef, { balance: newBalance, lastClaim: now });
+      document.getElementById("balance").innerText = newBalance.toFixed(2);
+      document.getElementById("profileBalance").innerText = newBalance.toFixed(2);
+      alert(`Claimed ₦${amount} Successfully!`);
+      updateCountdown(now);
+    };
+
+    window.updateCountdown = function(lastClaimTs) {
+      const countdownEl = document.getElementById("countdown");
+      const tick = () => {
+        const now = Date.now();
+        const next = lastClaimTs + 86400000;
+        const diff = next - now;
+        if (diff <= 0) {
+          countdownEl.innerText = "You can now claim!";
+        } else {
+          const hrs = Math.floor(diff / 3600000);
+          const mins = Math.floor((diff % 3600000) / 60000);
+          const secs = Math.floor((diff % 60000) / 1000);
+          countdownEl.innerText = `Next claim in: ${hrs}h ${mins}m ${secs}s`;
+        }
+      };
+      tick();
+      setInterval(tick, 1000);
+    };
+
+    window.copyReferral = function() {
+      const code = document.getElementById("referralCode").innerText;
+      navigator.clipboard.writeText(code).then(() => alert("Referral code copied: " + code));
+    };
+
+    window.logout = function() {
+      signOut(auth);
+    };
+
+    window.toggleProfile = function() {
+      document.getElementById("profileInfo").classList.toggle("show");
+    };
+  </script>
 </body>
 </html>
