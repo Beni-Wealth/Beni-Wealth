@@ -1,131 +1,218 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Beni-Wealth – Earn & Advertise</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
-    /* Theme Colors */
-    :root {
-      --primary: #0B2545; /* Dark navy */
-      --dark: #051226;
-      --light: #F7F3E3;
-      --white: #FFF;
-      --accent: #1976D2; /* Peak blue accent */
+    /* Dashboard dark theme */
+    :root{
+      --bg-1: #0b0613;
+      --bg-2: #0f0820;
+      --card-glass: rgba(255,255,255,0.02);
+      --muted: rgba(233,240,255,0.62);
+      --text: #e9f0ff;
+      --accent-start: #2fe0b8;
+      --accent-end: #7a5fff;
+      --glass-strong: rgba(255,255,255,0.03);
+      --accent: linear-gradient(90deg,var(--accent-start),var(--accent-end));
     }
-    /* Reset + Global */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Poppins', sans-serif; background: var(--light); color: var(--dark); overflow-x: hidden; }
-    a { text-decoration: none; color: inherit; }
-    ul { list-style: none; }
-    button { border: none; background: none; cursor: pointer; }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:'Poppins',sans-serif;
+      background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow-x:hidden;
+    }
+
+    a{color:inherit;text-decoration:none}
+    ul{list-style:none}
+    button{border:0;background:none;cursor:pointer}
+
     /* Header */
-    header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    .logo { display: flex; align-items: center; }
-    .logo img { height: 60px; width: 60px; border-radius: 50%; margin-right: 1rem; border: 2px solid var(--accent); }
-    .logo h1 { font-size: 2rem; color: var(--white); letter-spacing: 1px; }
-    .nav-buttons button { margin-left: 1rem; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 500; transition: background .3s, transform .3s; }
-    .signin { background: transparent; color: var(--white); border: 1px solid var(--white); }
-    .signup { background: var(--accent); color: var(--white); }
-    .nav-buttons button:hover { transform: translateY(-2px); background: var(--white); color: var(--primary); }
-    /* Hero */
-    .hero { position: relative; padding: 6rem 2rem 8rem; background: url('https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1280&q=80') center/cover no-repeat; text-align: center; }
-    .hero::before { content: ''; position: absolute; inset: 0; background: rgba(11,37,69,0.8); }
-    .hero-content { position: relative; z-index: 1; max-width: 800px; margin: auto; color: var(--white); animation: fadeIn 1s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .hero-content h2 { font-size: 2.5rem; margin-bottom: 1rem; }
-    .hero-content p { font-size: 1.1rem; margin-bottom: 2rem; }
-    .cta-buttons { display: inline-flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-    .cta-buttons a { background: var(--accent); color: var(--primary); padding: 0.75rem 1.5rem; border-radius: 30px; font-weight: 500; transition: transform .3s, background .3s; }
-    .cta-buttons a:hover { transform: translateY(-3px); background: var(--white); color: var(--primary); }
-    /* Feature Cards */
-    .sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 2rem; max-width: 1200px; margin: 3rem auto; padding: 0 1rem; }
-    .card { background: var(--white); border-radius: 12px; padding: 2rem 1.5rem; box-shadow: 0 6px 18px rgba(0,0,0,0.05); transition: transform .3s, box-shadow .3s; }
-    .card:hover { transform: translateY(-8px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-    .card .emoji { font-size: 2rem; display: block; margin-bottom: 0.8rem; }
-    .card h3 { margin-bottom: 1rem; font-size: 1.4rem; color: var(--primary); }
-    .card p { font-size: 0.95rem; color: #444; }
-    /* Stats Section */
-    .stats-section { text-align: center; margin-top: 4rem; padding: 3rem 1rem; background: var(--white); }
-    .stats-section h2 { font-size: 1.8rem; margin-bottom: 2rem; color: var(--primary); }
-    .stat-boxes { display: flex; justify-content: center; flex-wrap: wrap; gap: 3rem; }
-    .stat-box { background: var(--white); padding: 2rem; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.05); min-width: 200px; }
-    .stat-box h3 { font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem; }
-    .stat-box p { font-size: 1rem; color: #333; }
-    /* Footer */
-    footer { background: var(--primary); color: var(--white); text-align: center; padding: 2rem 1rem; margin-top: 4rem; }
-    footer a { color: var(--white); margin: 0 10px; text-decoration: underline; transition: color .3s; }
-    footer a:hover { color: var(--accent); }
-    @media(max-width: 600px) {
-      .hero-content h2 { font-size: 2rem; }
-      header { flex-direction: column; gap: 1rem; }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:18px 28px;
+      backdrop-filter: blur(6px);
+      background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      position:sticky;
+      top:0;
+      z-index:50;
     }
+    .logo{display:flex;align-items:center;gap:14px}
+    .logo img{height:56px;width:56px;border-radius:12px;object-fit:cover;box-shadow:0 6px 20px rgba(122,95,255,0.14)}
+    .logo h1{font-size:20px;color:var(--text);margin:0;font-weight:700}
+    .nav-buttons{display:flex;gap:12px;align-items:center}
+    .nav-buttons button{padding:8px 12px;border-radius:10px;font-weight:600;color:var(--text);background:transparent;border:1px solid rgba(255,255,255,0.04)}
+    .signup{background:var(--accent);color:#041219;border:0}
+
+    /* Hero */
+    .hero{
+      position:relative;
+      padding:56px 20px 80px;
+      text-align:center;
+      overflow:hidden;
+    }
+    .hero::before{
+      content:'';
+      position:absolute;inset:0;
+      background:
+        radial-gradient(800px 400px at 10% 20%, rgba(47,224,184,0.07), transparent 8%),
+        radial-gradient(600px 300px at 90% 80%, rgba(122,95,255,0.06), transparent 10%);
+      pointer-events:none;
+    }
+    .hero-content{
+      position:relative;
+      z-index:2;
+      max-width:980px;margin:0 auto;color:var(--text);
+      padding:6px 16px;
+    }
+    .hero-content h2{font-size:28px;margin-bottom:12px}
+    .hero-content p{color:var(--muted);font-size:15px;margin-bottom:18px}
+
+    .cta-buttons{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
+    .cta-buttons a{padding:10px 18px;border-radius:28px;font-weight:700;background:var(--accent);color:#041219;display:inline-block;transition:transform .18s}
+    .cta-buttons a.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
+    .cta-buttons a:hover{transform:translateY(-4px)}
+
+    /* Section container */
+    .container{
+      max-width:1150px;margin:32px auto;padding:0 18px;
+    }
+
+    /* Cards grid */
+    .sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+    .card{background:var(--card-glass);border-radius:14px;padding:18px;box-shadow:0 12px 36px rgba(2,6,23,0.6);transition:transform .18s}
+    .card:hover{transform:translateY(-6px)}
+    .card .emoji{font-size:22px;display:block;margin-bottom:8px}
+    .card h3{margin:0 0 8px;color:var(--text);font-size:18px}
+    .card p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+
+    /* Stats section */
+    .stats-section{margin-top:30px;padding:22px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 12px 36px rgba(0,0,0,0.6)}
+    .stats-section h2{margin:0 0 18px;font-size:20px;color:var(--text)}
+    .stat-boxes{display:flex;flex-wrap:wrap;gap:18px;align-items:stretch}
+    .stat-box{flex:1;min-width:180px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015));padding:18px;border-radius:12px;text-align:center}
+    .stat-box h3{margin:0;font-size:20px;color:var(--text)}
+    .stat-box p{margin:8px 0 0;color:var(--muted)}
+
+    /* Footer */
+    footer{margin-top:36px;padding:24px;border-radius:10px;text-align:center;background:transparent;color:var(--muted)}
+    footer a{color:var(--muted);text-decoration:underline;margin:0 8px}
+
+    /* Responsive tweaks */
+    @media(max-width:720px){
+      .hero-content h2{font-size:22px}
+      header{padding:12px 14px}
+      .logo img{height:48px;width:48px}
+    }
+
   </style>
 </head>
 <body>
   <header>
-    <div class="logo"><img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo"><h1>Beni-Wealth</h1></div>
+    <div class="logo">
+      <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo">
+      <h1>Beni-Wealth</h1>
+    </div>
     <div class="nav-buttons">
       <button class="signin" onclick="location.href='login.html'">Sign In</button>
       <button class="signup" onclick="location.href='register.html'">Sign Up</button>
     </div>
-  </header>  <section class="hero">
-    <div class="hero-content">
-      <h2>Building Wealth, One Click at a Time</h2>
-      <p>Discover tasks and shortlinks that pay you instantly. Advertise to our engaged community and grow your brand!</p>
+  </header>
+
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="hero-content container">
+      <h2 id="hero-heading">Building Wealth, One Click at a Time</h2>
+      <p>Discover tasks and shortlinks that pay you instantly. Advertise to our engaged community and grow your brand — secure, fast and transparent.</p>
       <div class="cta-buttons">
         <a href="register.html">✍️ Get Started</a>
-        <a href="login.html">📝 Sign In</a>
+        <a class="secondary" href="login.html">📝 Sign In</a>
       </div>
     </div>
-  </section>  <div class="sections">
-    <div class="card">
-      <span class="emoji">📣</span>
-      <h3>Advertisers: Amplify Your Reach</h3>
-      <p>Tap into a network of active users. Launch targeted campaigns, track real-time results, and optimize for maximum ROI.</p>
-    </div>
-    <div class="card">
-      <span class="emoji">💼</span>
-      <h3>Earners: Task & Shortlink</h3>
-      <p>Complete simple micro-tasks and share shortlinks to earn instantly. Your time is valuable—get paid for every click!</p>
-    </div>
-    <div class="card">
-      <span class="emoji">🤝</span>
-      <h3>Why Beni-Wealth?</h3>
-      <p>Trusted by thousands, we combine security, transparency, and speed to deliver a top-tier earning and advertising experience.</p>
-    </div>
-  </div>  <section class="stats-section">
-    <h2>Our Impact</h2>
-    <div class="stat-boxes">
-      <div class="stat-box">
-        <h3 id="usersCount">0</h3>
-        <p>Total Users</p>
+  </section>
+
+  <main class="container">
+    <div class="sections" aria-live="polite">
+      <div class="card">
+        <span class="emoji">📣</span>
+        <h3>Advertisers: Amplify Your Reach</h3>
+        <p>Tap into a network of active users. Launch campaigns, track real-time results, and optimize for maximum ROI with clear metrics.</p>
       </div>
-      <div class="stat-box">
-        <h3 id="paidCount">₦0</h3>
-        <p>Total Paid Out</p>
+
+      <div class="card">
+        <span class="emoji">💼</span>
+        <h3>Earners: Tasks & Shortlinks</h3>
+        <p>Complete simple micro-tasks and share shortlinks to earn instantly. Your time is valuable—get paid for every click.</p>
+      </div>
+
+      <div class="card">
+        <span class="emoji">🤝</span>
+        <h3>Why Beni-Wealth?</h3>
+        <p>Trusted by thousands, we combine security, transparency and speed to deliver a top-tier earning and advertising experience.</p>
       </div>
     </div>
-  </section>  <footer>
-    <a href="mailto:support@beni-wealth.com">Contact Support</a>|
-    <a href="privacy.html">Privacy Policy</a>|
+
+    <section class="stats-section" aria-labelledby="stats-heading">
+      <h2 id="stats-heading">Our Impact</h2>
+      <div class="stat-boxes">
+        <div class="stat-box" role="region" aria-label="Total users">
+          <h3 id="usersCount">0</h3>
+          <p>Total Users</p>
+        </div>
+        <div class="stat-box" role="region" aria-label="Total paid">
+          <h3 id="paidCount">₦0</h3>
+          <p>Total Paid Out</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <a href="mailto:support@beni-wealth.com">Contact Support</a> |
+    <a href="privacy.html">Privacy Policy</a> |
     <a href="terms.html">Terms of Use</a>
-    <div>&copy; 2025 Beni-Wealth. All rights reserved.</div>
-  </footer>  <script>
-    function animateCount(id, end, prefix='', suffix='', duration=2000) {
+    <div style="margin-top:8px; color:var(--muted)">&copy; 2025 Beni-Wealth. All rights reserved.</div>
+  </footer>
+
+  <script>
+    // Smooth numeric animation helper
+    function animateCount(id, end, prefix='', suffix='', duration=1200) {
       const el = document.getElementById(id);
-      let start = 0;
-      const step = Math.ceil(end / (duration / 20));
+      if (!el) return;
+      const start = 0;
+      const range = Math.max(0, end - start);
+      if (range === 0) {
+        el.innerText = prefix + (end).toLocaleString() + suffix;
+        return;
+      }
+      const stepTime = Math.max(20, Math.floor(duration / (range / Math.ceil(range / 10))));
+      let current = start;
+      const increment = Math.max(1, Math.ceil(range / (duration / stepTime)));
       const timer = setInterval(() => {
-        start += step;
-        if (start >= end) { start = end; clearInterval(timer); }
-        el.innerText = prefix + start.toLocaleString() + suffix;
-      }, duration / (end / step));
+        current += increment;
+        if (current >= end) {
+          current = end;
+          clearInterval(timer);
+        }
+        el.innerText = prefix + current.toLocaleString() + suffix;
+      }, stepTime);
     }
-    // only change: set both counters to 0 and use naira symbol
+
+    // Fixed the broken onload call (it was split accidentally)
     window.onload = function() {
+      // currently using zeros as your original file did; replace with live data if desired
       animateCount('usersCount', 0);
       animateCount('paidCount', 0, '₦');
     };
-  </script></body>
+  </script>
+</body>
 </html>
