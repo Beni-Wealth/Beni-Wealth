@@ -1,76 +1,154 @@
-<!DOCTYPE html><html lang="en">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beni-Wealth – Register</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Register</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    /* Page-Load Slide + Fade */
-    @keyframes slideFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes ripple { to { transform: scale(1.5); opacity: 0; } }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    :root{
+      --bg-1:#0b0613;
+      --bg-2:#0f0820;
+      --muted:rgba(233,240,255,0.62);
+      --card: rgba(255,255,255,0.02);
+      --accent-start:#2fe0b8;
+      --accent-end:#7a5fff;
+      --glass: rgba(255,255,255,0.03);
+      --text: #e9f0ff;
+      --danger: #ff6b6b;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:'Poppins',system-ui,Segoe UI,Arial, sans-serif;
+      background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color: var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+    }
 
-    /* Blue & white theme (keeps your original layout) */
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F3F7FF;
-      display: flex; justify-content: center; align-items: center; height: 100vh; }
-    .container { background: #FFF; border-radius: 8px; max-width: 360px; margin: auto; padding: 2rem;
-      box-shadow: 0 4px 20px rgba(8,40,90,0.06); transform: translateY(20px);
-      opacity: 0; animation: slideFade .5s ease-out forwards; transition: transform .2s ease-out; }
-    .container:hover { transform: translateY(-4px); }
-    .logo-wrap { text-align: center; margin-bottom: 1rem; }
-    .logo-wrap img { height: 80px; border-radius: 50%; }
-    h2 { margin-top: 0; text-align: center; color: #0B63D6; }
-    input { width: 100%; padding: .75rem; margin: .5rem 0;
-      border: none; border-bottom: 2px solid #D6E6FF; transition: border-bottom-width .3s ease-in-out; background: transparent; }
-    input:focus { outline: none; border-bottom-width: 3px; border-bottom-color: #0B63D6; }
-    button { position: relative; width: 100%; padding: .75rem; margin-top: 1rem;
-      background: #0B63D6; color: #FFF; border: none; border-radius: .25rem;
-      font-size: 1rem; cursor: pointer; display: flex; justify-content: center;
-      align-items: center; overflow: hidden; }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    button:active::after { content: ''; position: absolute; width: 200%; height: 200%;
-      background: rgba(255,255,255,0.25); border-radius: 50%; top: -50%; left: -50%;
-      animation: ripple .6s linear; }
-    .spinner { width: 20px; height: 20px; border: 3px solid #fff;
-      border-top: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
-      animation: spin 1s linear infinite; margin-right: .5rem; display: none; }
-    .error { color: #D32F2F; font-size: .85rem; height: 1rem; text-align: center; margin-bottom: .5rem; }
-    .login-link { text-align: center; margin-top: 1rem; font-size: .9rem; }
-    .login-link a { color: #0B63D6; text-decoration: none; }
-    .login-link a:hover { text-decoration: underline; }
+    .card {
+      width:100%;
+      max-width:420px;
+      border-radius:14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      padding:28px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+      animation: enter .28s ease;
+    }
+    @keyframes enter { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform:none } }
+
+    .logo {
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    .logo img{ width:56px; height:56px; border-radius:12px; object-fit:cover; box-shadow:0 8px 28px rgba(122,95,255,0.12) }
+    h1 { margin:0; font-size:20px; }
+    p.lead{ margin:8px 0 18px; color:var(--muted); font-size:14px }
+
+    form { display:flex; flex-direction:column; gap:12px; }
+    label{ font-size:13px; color:var(--muted); }
+    input[type="text"], input[type="email"], input[type="password"] {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.04);
+      padding:12px 14px;
+      border-radius:10px;
+      color:var(--text);
+      font-size:14px;
+      outline: none;
+      transition: box-shadow .12s, border-color .12s;
+    }
+    input::placeholder{ color: rgba(233,240,255,0.28) }
+    input:focus{ box-shadow: 0 6px 20px rgba(47,224,184,0.06); border-color: rgba(127,90,255,0.14) }
+
+    .row { display:flex; gap:10px; }
+    .row .col { flex:1; }
+
+    .error { color: var(--danger); font-size:13px; height:18px; margin-top:6px; }
+    .actions { display:flex; gap:12px; margin-top:6px; align-items:center; }
+    .btn {
+      padding:12px 14px;
+      border-radius:12px;
+      background: linear-gradient(90deg,var(--accent-start),var(--accent-end));
+      color:#041219;
+      font-weight:700;
+      border:0;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+    }
+    .btn[disabled]{ opacity:0.6; cursor:not-allowed }
+    .btn.secondary{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.04);
+      color:var(--text);
+    }
+
+    .spinner {
+      width:18px; height:18px;
+      border-radius:50%;
+      border:3px solid rgba(4,6,9,0.08);
+      border-top-color: rgba(4,6,9,0.18);
+      animation: spin 1s linear infinite;
+      display:none;
+    }
+    .spinner.show{ display:inline-block }
+
+    .muted { color:var(--muted); font-size:13px; margin-top:10px; text-align:center }
+
+    @media (max-width:420px){
+      .card{ padding:18px; }
+      .logo img{ width:48px; height:48px }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="logo-wrap">
-      <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo">
+  <main class="card" role="main" aria-labelledby="registerTitle">
+    <div class="logo">
+      <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
+      <div>
+        <h1 id="registerTitle">Create your Beni-Wealth account</h1>
+        <p class="lead">Quick signup — receive notifications and earn instantly.</p>
+      </div>
     </div>
-    <h2>Register</h2>
-    <form id="auth-form">
-      <input type="text" id="fullName" placeholder="Full Name" required>
-      <input type="text" id="username" placeholder="Username" required>
-      <!-- optional referral field (keeps your original flow but lets users paste a code) -->
-      <input type="text" id="referral" placeholder="Referral code (optional)">
-      <input type="email" id="email" placeholder="Email" required>
-      <input type="password" id="password" placeholder="Password" required minlength="6">
-      <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="6">
-      <div class="error" id="error-msg"></div>
-      <button type="submit" id="submit-btn">
-        <div class="spinner" id="spinner"></div>
-        <span id="btn-text">Register</span>
-      </button>
-    </form>
-    <div class="login-link">
-      Already have an account? <a href="login.html">Sign in here</a>
-    </div>
-  </div>
-  <script type="module">
-    // Inline Firebase Initialization
-    import { initializeApp }      from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-    import { getAuth }            from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import { getFirestore }       from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
-    import { createUserWithEmailAndPassword, sendEmailVerification, fetchSignInMethodsForEmail } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
+    <form id="registerForm" novalidate>
+      <input id="fullName" name="fullName" type="text" placeholder="Full name" required autocomplete="name" />
+      <input id="username" name="username" type="text" placeholder="Username" required autocomplete="username" />
+      <input id="referral" name="referral" type="text" placeholder="Referral code (optional)" />
+      <input id="email" name="email" type="email" placeholder="Email address" required autocomplete="email" />
+      <div class="row">
+        <div class="col"><input id="password" name="password" type="password" placeholder="Password (min 6)" minlength="6" required autocomplete="new-password" /></div>
+        <div class="col"><input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirm password" minlength="6" required autocomplete="new-password" /></div>
+      </div>
+
+      <div id="errorText" class="error" role="alert" aria-live="assertive"></div>
+
+      <div class="actions">
+        <button id="submitBtn" class="btn" type="submit" aria-live="polite">
+          <span class="spinner" id="spinner"></span>
+          <span id="btnText">Register</span>
+        </button>
+        <button type="button" id="signinBtn" class="btn secondary" onclick="location.href='login.html'">Sign in</button>
+      </div>
+
+      <div class="muted">By creating an account you agree to our <a href="terms.html" style="color:rgba(233,240,255,0.9)">terms</a>.</div>
+    </form>
+  </main>
+
+  <script type="module">
+    // Modular Firebase (v9 style - static imports)
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, fetchSignInMethodsForEmail, updateProfile } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import { getFirestore, doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+    // Beni-Wealth Firebase config (your project)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -80,76 +158,125 @@
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
-    const app  = initializeApp(firebaseConfig);
+
+    // init
+    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db   = getFirestore(app);
+    const db = getFirestore(app);
 
-    // Form handling
-    const authForm = document.getElementById('auth-form');
-    const submitBtn = document.getElementById('submit-btn');
+    // DOM
+    const form = document.getElementById('registerForm');
+    const submitBtn = document.getElementById('submitBtn');
     const spinner = document.getElementById('spinner');
-    const btnText = document.getElementById('btn-text');
-    const errorMsg = document.getElementById('error-msg');
+    const btnText = document.getElementById('btnText');
+    const errorText = document.getElementById('errorText');
 
-    authForm.addEventListener('submit', async e => {
+    function showError(msg){
+      errorText.textContent = msg || '';
+    }
+    function setLoading(isLoading){
+      submitBtn.disabled = isLoading;
+      spinner.classList.toggle('show', isLoading);
+      btnText.textContent = isLoading ? 'Please wait…' : 'Register';
+    }
+
+    // helper: check username uniqueness
+    async function isUsernameTaken(name){
+      try{
+        const q = query(collection(db, 'users'), where('username', '==', name));
+        const snap = await getDocs(q);
+        return !snap.empty;
+      }catch(e){
+        console.error('username check failed', e);
+        // if check fails, assume not taken to avoid blocking — but still log
+        return false;
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      errorMsg.textContent = '';
-      submitBtn.disabled = true;
-      spinner.style.display = 'block';
-      btnText.style.display = 'none';
+      showError('');
+      setLoading(true);
 
       const fullName = document.getElementById('fullName').value.trim();
       const username = document.getElementById('username').value.trim();
-      const referralInput = document.getElementById('referral');
-      const referral = referralInput && referralInput.value.trim() ? referralInput.value.trim() : null;
+      const referral = document.getElementById('referral').value.trim() || null;
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const confirm = document.getElementById('confirmPassword').value;
 
-      if (password !== confirm) {
-        errorMsg.textContent = 'Passwords do not match.';
-        resetButton();
+      // simple client validation
+      if(!fullName || !username || !email || !password || !confirm){
+        showError('Please fill all required fields.');
+        setLoading(false);
+        return;
+      }
+      if(password !== confirm){
+        showError('Passwords do not match.');
+        setLoading(false);
+        return;
+      }
+      if(password.length < 6){
+        showError('Password must be at least 6 characters.');
+        setLoading(false);
         return;
       }
 
-      try {
+      try{
+        // check if email already used
         const methods = await fetchSignInMethodsForEmail(auth, email);
-        if (methods.length) throw new Error('Email already in use.');
-        const userQ = query(collection(db, 'users'), where('username', '==', username));
-        const userSnap = await getDocs(userQ);
-        if (!userSnap.empty) throw new Error('Username already taken.');
+        if(methods && methods.length > 0){
+          throw new Error('Email already in use.');
+        }
 
-        const { user } = await createUserWithEmailAndPassword(auth, email, password);
-        // send verification (best practice)
-        await sendEmailVerification(user);
+        // check username
+        const taken = await isUsernameTaken(username);
+        if(taken){
+          throw new Error('Username is already taken. Choose another.');
+        }
 
-        // use provided referral code if present, otherwise default to username as referralCode
-        const referralCodeToStore = referral || username;
+        // create user
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const user = cred.user;
 
-        await setDoc(doc(db, 'users', user.uid), {
-          fullName,
-          username,
-          email: user.email,
+        // update displayName (optional)
+        try{
+          await updateProfile(user, { displayName: username });
+        }catch(upErr){
+          console.warn('updateProfile failed', upErr);
+        }
+
+        // send email verification (non-blocking if it fails; but try)
+        try{
+          await sendEmailVerification(user);
+        }catch(verr){
+          console.warn('sendEmailVerification failed', verr);
+        }
+
+        // prepare doc payload (store username as authoritative field)
+        const payload = {
+          fullName: fullName || '',
+          username: username,
+          email: user.email || email,
           balance: 0,
-          referralCode: referralCodeToStore,
+          plan: 'basic',
+          referralCode: referral || username,
           createdAt: serverTimestamp()
-        });
+        };
 
-        alert('Registration successful!');
+        // write user doc users/{uid}
+        await setDoc(doc(db, 'users', user.uid), payload);
+
+        // success
+        setLoading(false);
+        alert('Account created — verification email sent (check your inbox). Redirecting to login.');
         window.location.href = 'login.html';
-      } catch (err) {
-        alert(err.message);
-        errorMsg.textContent = err.message;
-        resetButton();
+      }catch(err){
+        console.error('Registration error', err);
+        showError(err.message || 'Registration failed. Try again.');
+        setLoading(false);
       }
     });
-
-    function resetButton() {
-      submitBtn.disabled = false;
-      spinner.style.display = 'none';
-      btnText.style.display = 'block';
-    }
-
   </script>
 </body>
 </html>
