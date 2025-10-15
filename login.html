@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Login</title>
+  <title>Beni-Wealth — Login (with Email Verified Guard)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -45,6 +45,16 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     .links{display:flex;justify-content:space-between;margin-top:12px;font-size:13px;color:var(--muted)}
     .links a{color:var(--muted);text-decoration:underline}
+
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;z-index:120}
+    .modal{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:12px;max-width:420px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.6);color:var(--text)}
+    .modal h3{margin:0 0 10px}
+    .modal p{color:var(--muted);margin-bottom:12px}
+    .modal .modal-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .modal .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
+    .note{font-size:13px;color:var(--muted);margin-top:8px}
+    .success{color:#7AF0C8}
     @media(max-width:420px){.card{padding:18px}.logo img{width:48px;height:48px}}
   </style>
 </head>
@@ -80,12 +90,25 @@
     </main>
   </div>
 
+  <!-- Email verification modal -->
+  <div id="verifyBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document" aria-labelledby="verifyTitle">
+      <h3 id="verifyTitle">Please verify your email</h3>
+      <p id="verifyMsg">We've sent a verification email to your address. You must verify your email before accessing the dashboard.</p>
+      <div class="modal-actions">
+        <button id="resendBtn" class="btn ghost">Resend verification</button>
+        <button id="iVerifiedBtn" class="btn">I verified — Continue</button>
+        <button id="signOutBtn" class="btn ghost">Sign out</button>
+      </div>
+      <div id="verifyNote" class="note" aria-live="polite"></div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, reload, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Beni-Wealth Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -100,12 +123,19 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // DOM refs
+    // DOM
     const form = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
     const spinner = document.getElementById('spinner');
     const btnText = document.getElementById('btnText');
     const errorText = document.getElementById('errorText');
+
+    const verifyBackdrop = document.getElementById('verifyBackdrop');
+    const resendBtn = document.getElementById('resendBtn');
+    const iVerifiedBtn = document.getElementById('iVerifiedBtn');
+    const signOutBtn = document.getElementById('signOutBtn');
+    const verifyNote = document.getElementById('verifyNote');
+    const verifyMsg = document.getElementById('verifyMsg');
 
     function setLoading(isLoading){
       loginBtn.disabled = isLoading;
@@ -113,14 +143,33 @@
       btnText.style.display = isLoading ? 'none' : 'inline';
     }
 
-    // If already signed in, send to dashboard
+    function showVerifyModal(show, currentUser, message){
+      if(show){
+        verifyBackdrop.style.display = 'flex';
+        verifyBackdrop.setAttribute('aria-hidden','false');
+        verifyNote.textContent = message || '';
+        // store user for modal actions
+        verifyBackdrop._user = currentUser || null;
+      } else {
+        verifyBackdrop.style.display = 'none';
+        verifyBackdrop.setAttribute('aria-hidden','true');
+        verifyBackdrop._user = null;
+        verifyNote.textContent = '';
+      }
+    }
+
+    // onAuthStateChanged: only redirect if emailVerified === true
     onAuthStateChanged(auth, user => {
-      if(user){
-        // user is signed in — redirect
+      if(user && user.emailVerified){
+        // safe redirect
         window.location.href = 'dashboard.html';
+      } else {
+        // if user present but unverified, keep them signed in but do not redirect
+        // we don't auto-show modal here — show it after an explicit login attempt
       }
     });
 
+    // login flow
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorText.textContent = '';
@@ -136,13 +185,21 @@
       }
 
       try{
-        await signInWithEmailAndPassword(auth, email, password);
-        // success — auth state listener will redirect, but keep UX snappy:
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        const user = cred.user;
+        // if verified, onAuthStateChanged handler will redirect — do immediate check as well
+        if(user.emailVerified){
+          // redirect now
+          setLoading(false);
+          window.location.href = 'dashboard.html';
+          return;
+        }
+        // not verified: show verification modal and instructions
+        showVerifyModal(true, user, 'A verification email was sent when you registered. Use the button below to resend.');
         setLoading(false);
-        window.location.href = 'dashboard.html';
       }catch(err){
         console.error('Login failed', err);
-        // Friendly error messages
+        // friendly messages:
         if(err.code === 'auth/wrong-password') errorText.textContent = 'Wrong password.';
         else if(err.code === 'auth/user-not-found') errorText.textContent = 'No account found for this email.';
         else if(err.code === 'auth/invalid-email') errorText.textContent = 'Invalid email address.';
@@ -150,6 +207,65 @@
         setLoading(false);
       }
     });
+
+    // Modal actions:
+
+    resendBtn.addEventListener('click', async ()=>{
+      const user = verifyBackdrop._user || auth.currentUser;
+      if(!user){
+        verifyNote.textContent = 'No user found (sign in again).';
+        return;
+      }
+      try{
+        await sendEmailVerification(user);
+        verifyNote.textContent = 'Verification email resent — check your inbox (and spam).';
+        verifyNote.classList.add('success');
+      }catch(e){
+        console.error('resend failed', e);
+        verifyNote.textContent = 'Could not resend verification. Try again later.';
+      }
+    });
+
+    iVerifiedBtn.addEventListener('click', async ()=>{
+      const user = verifyBackdrop._user || auth.currentUser;
+      if(!user){
+        verifyNote.textContent = 'No user found (sign in again).';
+        return;
+      }
+      verifyNote.textContent = 'Checking...';
+      try{
+        await reload(user);                // refresh user data from server
+        if(user.emailVerified){
+          // hide modal and redirect
+          showVerifyModal(false, null);
+          window.location.href = 'dashboard.html';
+        } else {
+          verifyNote.textContent = 'Email still not verified — please check your inbox and click the verification link.';
+        }
+      }catch(e){
+        console.error('verify check failed', e);
+        verifyNote.textContent = 'Could not check verification status — try again.';
+      }
+    });
+
+    signOutBtn.addEventListener('click', async ()=>{
+      try{
+        await signOut(auth);
+      }catch(e){
+        console.error('signout failed', e);
+      } finally {
+        showVerifyModal(false, null);
+        // stay on login page; fields remain
+      }
+    });
+
+    // Accessibility: close modal on backdrop click (but not when clicking inside modal)
+    verifyBackdrop.addEventListener('click', (ev)=>{
+      if(ev.target === verifyBackdrop){
+        // do not close automatically — keep explicit actions
+      }
+    });
+
   </script>
 </body>
 </html>
