@@ -1,147 +1,155 @@
-<!DOCTYPE html><html lang="en">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beni-Wealth – Login</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    /* Page-Load Slide + Fade */
-    @keyframes slideFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes ripple { to { transform: scale(1.5); opacity: 0; } }
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F3F7FF;
-      display: flex; justify-content: center; align-items: center; height: 100vh; }
-    .container {
-      background: #FFFFFF;
-      border-radius: 8px;
-      max-width: 360px;
-      margin: auto;
-      padding: 2rem;
-      box-shadow: 0 4px 20px rgba(8,40,90,0.06);
-      transform: translateY(20px);
-      opacity: 0;
-      animation: slideFade .5s ease-out forwards;
-      transition: transform .2s ease-out;
+    :root{
+      --bg-1:#0b0613; --bg-2:#0f0820;
+      --card: rgba(255,255,255,0.02);
+      --muted: rgba(233,240,255,0.62);
+      --text:#e9f0ff;
+      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --danger:#ff6b6b;
     }
-    .container:hover { transform: translateY(-4px); }
-    .logo-wrap { text-align: center; margin-bottom: 1rem; }
-    .logo-wrap img { height: 80px; border-radius: 50%; }
-    h2 { margin-top: 0; text-align: center; color: #0B63D6; }
-    input { width: 100%; padding: .75rem; margin: .5rem 0;
-      border: none; border-bottom: 2px solid #D6E6FF;
-      transition: border-bottom-width .3s ease-in-out;
-      background: transparent; }
-    input:focus { outline: none; border-bottom-width: 3px; border-bottom-color: #0B63D6; }
-    button {
-      position: relative;
-      width: 100%;
-      padding: .75rem;
-      margin-top: 1rem;
-      background: #0B63D6;
-      color: #FFF;
-      border: none;
-      border-radius: .25rem;
-      font-size: 1rem;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; font-family:'Poppins',system-ui,Segoe UI,Arial, sans-serif; background:linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text); -webkit-font-smoothing:antialiased}
+    .wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:28px;}
+    .card{
+      width:100%; max-width:420px; border-radius:14px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      padding:28px; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      animation: enter .28s ease;
     }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    button:active::after {
-      content: '';
-      position: absolute;
-      width: 200%; height: 200%;
-      background: rgba(255,255,255,0.25);
-      border-radius: 50%; top: -50%; left: -50%;
-      animation: ripple .6s linear;
+    @keyframes enter{from{opacity:0; transform:translateY(12px)}to{opacity:1; transform:none}}
+    .logo{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+    .logo img{width:56px;height:56px;border-radius:12px;object-fit:cover;box-shadow:0 8px 28px rgba(122,95,255,0.12)}
+    h1{margin:0;font-size:20px}
+    p.lead{margin:6px 0 16px;color:var(--muted);font-size:14px}
+    form{display:flex;flex-direction:column;gap:12px}
+    input[type="email"], input[type="password"]{
+      background:transparent;border:1px solid rgba(255,255,255,0.04);padding:12px 14px;border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:box-shadow .12s,border-color .12s
     }
-    .spinner {
-      width: 20px; height: 20px;
-      border: 3px solid #fff;
-      border-top: 3px solid rgba(255,255,255,0.5);
-      border-radius: 50%; animation: spin 1s linear infinite;
-      margin-right: .5rem; display: none;
+    input::placeholder{color:rgba(233,240,255,0.28)}
+    input:focus{box-shadow:0 8px 28px rgba(47,224,184,0.05);border-color:rgba(127,90,255,0.14)}
+    .error{color:var(--danger);font-size:13px;min-height:18px}
+    .actions{display:flex;gap:12px;align-items:center;margin-top:6px}
+    .btn{
+      flex:1;padding:12px 14px;border-radius:12px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .error { color: #D32F2F; font-size: .85rem; height: 1rem; text-align: center; margin-bottom: .5rem; }
-    .link-row { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .9rem; }
-    .link-row a { color: #0B63D6; text-decoration: none; }
-    .link-row a:hover { text-decoration: underline; }
+    .btn[disabled]{opacity:0.6;cursor:not-allowed}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
+    .spinner{width:18px;height:18px;border-radius:50%;border:3px solid rgba(4,6,9,0.08);border-top-color:rgba(4,6,9,0.18);animation:spin 1s linear infinite;display:none}
+    .spinner.show{display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .links{display:flex;justify-content:space-between;margin-top:12px;font-size:13px;color:var(--muted)}
+    .links a{color:var(--muted);text-decoration:underline}
+    @media(max-width:420px){.card{padding:18px}.logo img{width:48px;height:48px}}
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="logo-wrap">
-      <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo">
-    </div>
-    <h2>Login</h2>
-    <form id="login-form">
-      <input type="email" id="email" placeholder="Email" required>
-      <input type="password" id="password" placeholder="Password" required minlength="6">
-      <div class="error" id="error-msg"></div>
-      <button type="submit" id="login-btn">
-        <div class="spinner" id="spinner"></div>
-        <span id="btn-text">Log In</span>
-      </button>
-    </form>
-    <div class="link-row">
-      <a href="reset.html">Forgot password?</a>
-      <a href="register.html">Sign up!</a>
-    </div>
+  <div class="wrap">
+    <main class="card" role="main" aria-labelledby="loginTitle">
+      <div class="logo">
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
+        <div>
+          <h1 id="loginTitle">Welcome back</h1>
+          <p class="lead">Sign in to access your Beni-Wealth dashboard</p>
+        </div>
+      </div>
+
+      <form id="loginForm" novalidate>
+        <input id="email" type="email" placeholder="Email" required autocomplete="email" />
+        <input id="password" type="password" placeholder="Password" required minlength="6" autocomplete="current-password" />
+        <div id="errorText" class="error" role="alert" aria-live="assertive"></div>
+
+        <div class="actions">
+          <button id="loginBtn" type="submit" class="btn" aria-live="polite">
+            <span class="spinner" id="spinner"></span>
+            <span id="btnText">Log in</span>
+          </button>
+          <button type="button" class="btn secondary" onclick="location.href='register.html'">Sign up</button>
+        </div>
+
+        <div class="links">
+          <a href="reset.html">Forgot password?</a>
+          <a href="register.html">Create account</a>
+        </div>
+      </form>
+    </main>
   </div>
+
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';// Firebase config & init
-const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-  authDomain: "beni-wealths.firebaseapp.com",
-  projectId: "beni-wealths",
-  storageBucket: "beni-wealths.firebasestorage.app",
-  messagingSenderId: "807950483822",
-  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-  measurementId: "G-Z2XP3YN6NS"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('login-form');
-  const btn = document.getElementById('login-btn');
-  const spinner = document.getElementById('spinner');
-  const btnText = document.getElementById('btn-text');
-  const errorMsg = document.getElementById('error-msg');
+    // Beni-Wealth Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
 
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    errorMsg.textContent = '';
-    btn.disabled = true;
-    spinner.style.display = 'inline-block';
-    btnText.style.display = 'none';
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    try {
+    // DOM refs
+    const form = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+    const errorText = document.getElementById('errorText');
+
+    function setLoading(isLoading){
+      loginBtn.disabled = isLoading;
+      spinner.classList.toggle('show', isLoading);
+      btnText.style.display = isLoading ? 'none' : 'inline';
+    }
+
+    // If already signed in, send to dashboard
+    onAuthStateChanged(auth, user => {
+      if(user){
+        // user is signed in — redirect
+        window.location.href = 'dashboard.html';
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorText.textContent = '';
+      setLoading(true);
+
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      await signInWithEmailAndPassword(auth, email, password);
-      alert('Login successful!');
-      window.location.href = 'dashboard.html';
-    } catch (err) {
-      errorMsg.textContent = err.message;
-      alert(err.message);
-    } finally {
-      btn.disabled = false;
-      spinner.style.display = 'none';
-      btnText.style.display = 'block';
-    }
-  
-});
 
-  onAuthStateChanged(auth, user => {
-    if (user) window.location.href = 'dashboard.html';
-  });
-});
+      if(!email || !password){
+        errorText.textContent = 'Provide both email and password.';
+        setLoading(false);
+        return;
+      }
 
+      try{
+        await signInWithEmailAndPassword(auth, email, password);
+        // success — auth state listener will redirect, but keep UX snappy:
+        setLoading(false);
+        window.location.href = 'dashboard.html';
+      }catch(err){
+        console.error('Login failed', err);
+        // Friendly error messages
+        if(err.code === 'auth/wrong-password') errorText.textContent = 'Wrong password.';
+        else if(err.code === 'auth/user-not-found') errorText.textContent = 'No account found for this email.';
+        else if(err.code === 'auth/invalid-email') errorText.textContent = 'Invalid email address.';
+        else errorText.textContent = err.message || 'Login failed.';
+        setLoading(false);
+      }
+    });
   </script>
 </body>
 </html>
