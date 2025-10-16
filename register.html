@@ -53,6 +53,8 @@
 
     form { display:flex; flex-direction:column; gap:12px; }
     label{ font-size:13px; color:var(--muted); }
+
+    /* unified input styles */
     input[type="text"], input[type="email"], input[type="password"] {
       background: transparent;
       border: 1px solid rgba(255,255,255,0.04);
@@ -62,12 +64,15 @@
       font-size:14px;
       outline: none;
       transition: box-shadow .12s, border-color .12s;
+      box-sizing: border-box;
+      height:48px;               /* fixed height for consistent alignment */
+      line-height:1.2;
     }
     input::placeholder{ color: rgba(233,240,255,0.28) }
     input:focus{ box-shadow: 0 6px 20px rgba(47,224,184,0.06); border-color: rgba(127,90,255,0.14) }
 
-    .row { display:flex; gap:10px; }
-    .row .col { flex:1; }
+    /* use grid for the two-column row so columns match exactly */
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap:12px; }
 
     .error { color: var(--danger); font-size:13px; height:18px; margin-top:6px; }
     .actions { display:flex; gap:12px; margin-top:6px; align-items:center; }
@@ -105,6 +110,8 @@
     @media (max-width:420px){
       .card{ padding:18px; }
       .logo img{ width:48px; height:48px }
+      .row { grid-template-columns: 1fr; } /* stack on small screens */
+      input[type="text"], input[type="email"], input[type="password"] { height:46px; }
     }
   </style>
 </head>
@@ -123,9 +130,9 @@
       <input id="username" name="username" type="text" placeholder="Username" required autocomplete="username" />
       <input id="referral" name="referral" type="text" placeholder="Referral code (optional)" />
       <input id="email" name="email" type="email" placeholder="Email address" required autocomplete="email" />
-      <div class="row">
-        <div class="col"><input id="password" name="password" type="password" placeholder="Password (min 6)" minlength="6" required autocomplete="new-password" /></div>
-        <div class="col"><input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirm password" minlength="6" required autocomplete="new-password" /></div>
+      <div class="row" aria-hidden="false">
+        <div><input id="password" name="password" type="password" placeholder="Password (min 6)" minlength="6" required autocomplete="new-password" /></div>
+        <div><input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirm password" minlength="6" required autocomplete="new-password" /></div>
       </div>
 
       <div id="errorText" class="error" role="alert" aria-live="assertive"></div>
