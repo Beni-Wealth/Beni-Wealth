@@ -1,167 +1,152 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Reset Password</title>
+  <title>Beni-Wealth — Reset password</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --bg: #F3F7FF;
-      --nav: #0B2545;      /* dark navy */
-      --accent: #0b63d6;   /* bright blue */
-      --card: #ffffff;
-      --muted: #64748b;
-      --radius: 12px;
-      --shadow: 0 10px 30px rgba(11,34,69,0.06);
+      --bg1: #0b0613;
+      --bg2: #120521;
+      --card-bg: rgba(255,255,255,0.03);
+      --glass: rgba(255,255,255,0.02);
+      --muted: rgba(255,255,255,0.6);
+      --text: #f3f6ff;
+      --accent-start: #2fe0b8;
+      --accent-end: #7a5fff;
+      --btn-shadow: 0 12px 36px rgba(122,95,255,0.12);
+      --radius: 18px;
     }
 
     *{box-sizing:border-box}
-    html,body{height:100%; margin:0; font-family:'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, Arial; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+    html,body{height:100%; margin:0; font-family:'Poppins',system-ui,Segoe UI,Arial; -webkit-font-smoothing:antialiased;}
     body{
-      background: linear-gradient(180deg, #f6f9ff 0%, var(--bg) 100%);
+      background: linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:var(--text);
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:center;
-      padding:28px;
+      padding:36px 16px;
     }
 
-    /* page container */
-    .wrap {
-      width:100%;
-      max-width:760px;
-      display:grid;
-      grid-template-columns: 1fr 420px;
-      gap:30px;
-      align-items:center;
-      padding:20px;
-    }
+    /* Page container (centered vertically similar to screenshot) */
+    .shell{ width:100%; max-width:420px; margin-top:80px; }
 
-    /* left hero */
-    .hero {
-      padding:28px;
-      border-radius:14px;
-      background: linear-gradient(180deg, rgba(11,38,85,0.06), rgba(11,38,85,0.02));
-      min-height:320px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      gap:18px;
-    }
-    .hero h1{ margin:0; color:var(--nav); font-size:clamp(20px,2.6vw,28px); }
-    .hero p{ margin:0; color:var(--muted); font-size:clamp(14px,1.4vw,16px); line-height:1.45; }
-
-    /* card (form) */
     .card {
-      background: var(--card);
-      border-radius:14px;
-      padding:28px;
-      box-shadow: var(--shadow);
-      width:100%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      border-radius: 20px;
+      padding: 26px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.65);
+      border: 1px solid rgba(255,255,255,0.03);
+      backdrop-filter: blur(6px);
     }
-    .logo-row { display:flex; gap:14px; align-items:center; margin-bottom:6px; }
-    .logo-row img { width:64px; height:64px; border-radius:12px; object-fit:cover; }
-    .card h2 { margin:0 0 8px 0; color:var(--nav); font-size:20px; }
-    .card p.lead { margin:0 0 16px 0; color:var(--muted); font-size:14px; }
 
-    form { display:flex; flex-direction:column; gap:12px; }
-    label { font-size:13px; color:var(--muted); }
-    input[type="email"]{
-      width:100%;
-      padding:12px 14px;
-      border-radius:10px;
-      border:1px solid rgba(11,34,69,0.06);
-      font-size:14px;
-      outline:none;
-      transition:box-shadow .12s, border-color .12s;
+    .header {
+      display:flex; gap:14px; align-items:center; margin-bottom:12px;
     }
-    input[type="email"]::placeholder { color:#a9b7d6; }
-    input[type="email"]:focus { box-shadow: 0 8px 20px rgba(11,99,214,0.06); border-color: rgba(11,99,214,0.18); }
+    .logo {
+      width:64px; height:64px; border-radius:14px; display:grid; place-items:center;
+      background: linear-gradient(135deg,var(--accent-start),var(--accent-end));
+      color:#071022; font-weight:800; font-size:20px;
+      flex-shrink:0;
+    }
+    .title {
+      line-height:1; display:flex; flex-direction:column;
+    }
+    .title h1{ margin:0; font-size:20px; font-weight:700; color:var(--text); }
+    .title p{ margin:6px 0 0; color:var(--muted); font-size:13px; }
 
-    .error { color:#D23A3A; font-size:13px; min-height:18px; }
-    .actions { display:flex; gap:12px; margin-top:6px; align-items:center; }
-
-    button.primary {
-      background: linear-gradient(90deg, var(--accent), #0b54c0);
-      color: #fff;
-      padding:12px 14px;
-      border-radius:10px;
-      border:0;
-      font-weight:700;
-      cursor:pointer;
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      justify-content:center;
+    form { display:flex; flex-direction:column; gap:12px; margin-top:8px; }
+    .input {
       width:100%;
-      box-shadow: 0 10px 30px rgba(11,99,214,0.12);
+      padding:14px;
+      border-radius:12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.03);
+      color: var(--text);
       font-size:15px;
+      outline:none;
     }
-    button.primary:disabled { opacity:0.6; cursor:not-allowed; }
+    .input::placeholder { color: rgba(255,255,255,0.28); }
+    .input:focus { box-shadow: 0 8px 30px rgba(122,95,255,0.06); border-color: rgba(122,95,255,0.14); }
 
-    .spinner { width:18px; height:18px; border-radius:50%; border:3px solid rgba(255,255,255,0.25); border-top-color:rgba(255,255,255,0.6); display:none; animation:spin 1s linear infinite; }
-    @keyframes spin{ to { transform:rotate(360deg); } }
+    .controls { display:flex; gap:12px; margin-top:8px; align-items:center; }
+    .btn-primary {
+      flex:1;
+      display:inline-flex; align-items:center; justify-content:center; gap:10px;
+      padding:12px 16px; border-radius:40px; border:none; cursor:pointer;
+      background: linear-gradient(90deg,var(--accent-start),var(--accent-end));
+      color:#041219; font-weight:700; font-size:16px;
+      box-shadow: var(--btn-shadow);
+    }
+    .btn-ghost {
+      padding:12px 16px; border-radius:40px; background:transparent;
+      color:var(--muted); border:1px solid rgba(255,255,255,0.03);
+      cursor:pointer; font-weight:600;
+    }
+    .btn-primary:disabled { opacity:0.6; cursor:not-allowed; box-shadow:none; }
+
+    .spinner { width:18px; height:18px; border-radius:50%; border:3px solid rgba(4,6,9,0.06); border-top-color:rgba(4,6,9,0.18); display:none; animation:spin 1s linear infinite; }
     .spinner.show { display:inline-block; }
+    @keyframes spin { to { transform:rotate(360deg); } }
 
-    .login-link { text-align:center; margin-top:14px; font-size:14px; color:var(--muted); }
-    .login-link a { color:var(--accent); text-decoration:none; font-weight:600; }
-    .login-link a:hover { text-decoration:underline; }
+    .error { color:#ff7b7b; font-size:13px; min-height:18px; margin-top:6px; }
+    .success { background:linear-gradient(90deg, rgba(47,224,184,0.08), rgba(122,95,255,0.08)); color:var(--text); padding:12px; border-radius:12px; font-weight:600; display:none; margin-top:12px; }
+    .success.show { display:block; }
 
-    /* small footer hint */
-    .note-small { margin-top:12px; font-size:13px; color:var(--muted); }
+    .links { display:flex; justify-content:space-between; margin-top:14px; gap:12px; font-size:14px; color:var(--muted); }
+    .links a { color:var(--muted); text-decoration:underline; text-underline-offset:6px; cursor:pointer; }
+    .footer-note { color: rgba(255,255,255,0.28); font-size:12px; margin-top:14px; text-align:center; }
 
-    /* responsive */
-    @media (max-width:920px) {
-      .wrap { grid-template-columns: 1fr; max-width:520px; gap:18px; padding:12px; }
-      .hero { min-height:140px; padding:18px; }
-      .card { padding:18px; }
-      .logo-row img { width:52px; height:52px; }
+    @media (max-width:480px){
+      .shell { margin-top:36px; padding:0 6px; }
+      .logo { width:56px; height:56px; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap" role="main" aria-labelledby="resetTitle">
-    <aside class="hero" aria-hidden="false">
-      <h1 id="resetTitle">Reset your password</h1>
-      <p>Enter the email address you used to register. We'll send a secure link so you can create a new password. If you don't see the email, check your spam or promotions folder.</p>
-      <div class="note-small">If you need further help contact <a href="mailto:support@beni-wealth.com">support@beni-wealth.com</a></div>
-    </aside>
-
-    <section class="card" aria-label="Reset password form">
-      <div class="logo-row" style="align-items:center;">
-        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
-        <div>
-          <div style="font-weight:700; color:var(--nav); font-size:16px;">Beni-Wealth</div>
-          <div style="font-size:13px; color:var(--muted);">Secure password reset</div>
+  <main class="shell" aria-labelledby="reset-title">
+    <section class="card" role="region" aria-label="Reset password panel">
+      <div class="header">
+        <div class="logo" aria-hidden="true">B<i style="font-size:14px; margin-left:2px">W</i></div>
+        <div class="title">
+          <h1 id="reset-title">Reset your password</h1>
+          <p>Enter your registered email and we'll send a secure reset link.</p>
         </div>
       </div>
 
-      <h2>Send reset link</h2>
-      <p class="lead">We'll email a link that lets you reset your password.</p>
-
       <form id="reset-form" novalidate>
-        <div>
-          <label for="email">Registered email</label>
-          <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required />
-        </div>
+        <input id="email" class="input" type="email" inputmode="email" autocomplete="email" placeholder="your@email.com" required />
 
         <div class="error" id="error-msg" aria-live="assertive"></div>
 
-        <div class="actions">
-          <button id="reset-btn" class="primary" type="submit" aria-live="polite">
+        <div class="controls">
+          <button id="reset-btn" class="btn-primary" type="submit" aria-live="polite">
             <span class="spinner" id="spinner" role="status" aria-hidden="true"></span>
-            <span id="btn-text">Send Reset Link</span>
+            <span id="btn-text">Send reset link</span>
           </button>
+          <button type="button" class="btn-ghost" id="cancelBtn">Cancel</button>
         </div>
 
-        <div class="login-link">
-          Remembered your password? <a href="login.html">Log in</a>
+        <div class="success" id="successBox" role="status" aria-live="polite">
+          <div id="successMsg">A password reset link has been sent. Check your inbox.</div>
+          <div style="margin-top:8px;">
+            <button id="toLogin" class="btn-primary" style="width:100%; padding:10px 12px; border-radius:10px;">Go to login</button>
+          </div>
         </div>
+
+        <div class="links">
+          <a id="forgotLink" href="forgot.html">Need help?</a>
+          <a id="signupLink" href="register.html">Create account</a>
+        </div>
+
+        <div class="footer-note">If you don't receive the email, check spam or try again after a few minutes.</div>
       </form>
     </section>
-  </div>
+  </main>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
@@ -178,73 +163,67 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    // initialize firebase
+    // init firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
     // DOM refs
     const form = document.getElementById('reset-form');
+    const emailInput = document.getElementById('email');
     const btn = document.getElementById('reset-btn');
     const spinner = document.getElementById('spinner');
     const btnText = document.getElementById('btn-text');
     const errorMsg = document.getElementById('error-msg');
+    const successBox = document.getElementById('successBox');
+    const toLogin = document.getElementById('toLogin');
+    const cancelBtn = document.getElementById('cancelBtn');
 
-    function setLoading(isLoading) {
-      btn.disabled = isLoading;
-      spinner.classList.toggle('show', isLoading);
-      btnText.textContent = isLoading ? 'Sending…' : 'Send Reset Link';
+    function setLoading(loading){
+      btn.disabled = loading;
+      emailInput.disabled = loading;
+      spinner.classList.toggle('show', loading);
+      btnText.textContent = loading ? 'Sending…' : 'Send reset link';
     }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorMsg.textContent = '';
-      const email = (document.getElementById('email').value || '').trim();
+      successBox.classList.remove('show');
 
-      if (!email) {
-        errorMsg.textContent = 'Please enter your registered email.';
-        return;
-      }
-
-      // basic email format check
+      const email = (emailInput.value || '').trim();
+      if (!email) { errorMsg.textContent = 'Please enter your registered email.'; return; }
+      // simple regex check
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!re.test(email)) {
-        errorMsg.textContent = 'Please enter a valid email address.';
-        return;
-      }
+      if (!re.test(email)) { errorMsg.textContent = 'Please enter a valid email address.'; return; }
 
       setLoading(true);
       try {
         await sendPasswordResetEmail(auth, email);
-        // success
-        alert('A password reset link has been sent to your email. Check your inbox (or spam folder).');
-        // redirect to login after short delay
-        window.location.href = 'login.html';
+        // show success inline (no immediate redirect)
+        successBox.classList.add('show');
+        errorMsg.textContent = '';
       } catch (err) {
-        // map common auth errors to friendly messages
+        // friendly messages
         let msg = 'Unable to send reset link. Try again later.';
         if (err && err.code) {
           switch (err.code) {
-            case 'auth/user-not-found':
-              msg = 'No account found with that email.';
-              break;
-            case 'auth/invalid-email':
-              msg = 'That email address is not valid.';
-              break;
-            case 'auth/too-many-requests':
-              msg = 'Too many attempts — try again later.';
-              break;
-            default:
-              msg = err.message || msg;
+            case 'auth/user-not-found': msg = 'No account found with that email.'; break;
+            case 'auth/invalid-email': msg = 'That email address is not valid.'; break;
+            case 'auth/too-many-requests': msg = 'Too many attempts — try again later.'; break;
+            default: msg = err.message || msg;
           }
         } else if (err && err.message) {
           msg = err.message;
         }
         errorMsg.textContent = msg;
-        console.warn('sendPasswordResetEmail error:', err);
+        console.warn('reset error', err);
       } finally {
         setLoading(false);
       }
     });
+
+    toLogin.addEventListener('click', () => window.location.href = 'login.html');
+    cancelBtn.addEventListener('click', () => window.history.back());
   </script>
 </body>
 </html>
