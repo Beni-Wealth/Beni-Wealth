@@ -1,120 +1,250 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beni-Wealth – Reset Password</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Reset Password</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
   <style>
-    /* Page-Load Slide + Fade */
-    @keyframes slideFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes ripple { to { transform: scale(1.5); opacity: 0; } }
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #F7F3E3;
-      display: flex; justify-content: center; align-items: center; height: 100vh; }
-    .container {
-      background: #FFF; border-radius: 8px; max-width: 360px; width: 90%; padding: 2rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(20px);
-      opacity: 0; animation: slideFade .5s ease-out forwards;
-      transition: transform .2s ease-out;
+    :root{
+      --bg: #F3F7FF;
+      --nav: #0B2545;      /* dark navy */
+      --accent: #0b63d6;   /* bright blue */
+      --card: #ffffff;
+      --muted: #64748b;
+      --radius: 12px;
+      --shadow: 0 10px 30px rgba(11,34,69,0.06);
     }
-    .container:hover { transform: translateY(-4px); }
-    .logo-wrap { text-align: center; margin-bottom: 1rem; }
-    .logo-wrap img { height: 80px; border-radius: 50%; }
-    h2 { margin-top: 0; text-align: center; color: #0B2545; }
-    input {
-      width: 100%; padding: .75rem; margin: .5rem 0;
-      border: none; border-bottom: 2px solid #CCC;
-      transition: border-bottom-width .3s ease-in-out;
+
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; font-family:'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, Arial; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+    body{
+      background: linear-gradient(180deg, #f6f9ff 0%, var(--bg) 100%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
     }
-    input:focus { outline: none; border-bottom-width: 3px; border-bottom-color: #1976D2; }
-    button {
-      position: relative; width: 100%; padding: .75rem; margin-top: 1rem;
-      background: #0B2545; color: #FFF; border: none; border-radius: .25rem;
-      font-size: 1rem; cursor: pointer; display: flex; justify-content: center;
-      align-items: center; overflow: hidden;
+
+    /* page container */
+    .wrap {
+      width:100%;
+      max-width:760px;
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:30px;
+      align-items:center;
+      padding:20px;
     }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    button:active::after {
-      content: ''; position: absolute; width: 200%; height: 200%;
-      background: rgba(255,255,255,0.3); border-radius: 50%; top: -50%; left: -50%;
-      animation: ripple .6s linear;
+
+    /* left hero */
+    .hero {
+      padding:28px;
+      border-radius:14px;
+      background: linear-gradient(180deg, rgba(11,38,85,0.06), rgba(11,38,85,0.02));
+      min-height:320px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:18px;
     }
-    .spinner {
-      width: 20px; height: 20px;
-      border: 3px solid #fff; border-top: 3px solid rgba(255,255,255,0.3);
-      border-radius: 50%; animation: spin 1s linear infinite;
-      margin-right: .5rem; display: none;
+    .hero h1{ margin:0; color:var(--nav); font-size:clamp(20px,2.6vw,28px); }
+    .hero p{ margin:0; color:var(--muted); font-size:clamp(14px,1.4vw,16px); line-height:1.45; }
+
+    /* card (form) */
+    .card {
+      background: var(--card);
+      border-radius:14px;
+      padding:28px;
+      box-shadow: var(--shadow);
+      width:100%;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .error { color: #D32F2F; font-size: .85rem; height: 1rem; text-align: center; margin-top: .5rem; }
-    .login-link { text-align: center; margin-top: 1rem; font-size: .9rem; }
-    .login-link a { color: #1976D2; text-decoration: none; }
-    .login-link a:hover { text-decoration: underline; }
+    .logo-row { display:flex; gap:14px; align-items:center; margin-bottom:6px; }
+    .logo-row img { width:64px; height:64px; border-radius:12px; object-fit:cover; }
+    .card h2 { margin:0 0 8px 0; color:var(--nav); font-size:20px; }
+    .card p.lead { margin:0 0 16px 0; color:var(--muted); font-size:14px; }
+
+    form { display:flex; flex-direction:column; gap:12px; }
+    label { font-size:13px; color:var(--muted); }
+    input[type="email"]{
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid rgba(11,34,69,0.06);
+      font-size:14px;
+      outline:none;
+      transition:box-shadow .12s, border-color .12s;
+    }
+    input[type="email"]::placeholder { color:#a9b7d6; }
+    input[type="email"]:focus { box-shadow: 0 8px 20px rgba(11,99,214,0.06); border-color: rgba(11,99,214,0.18); }
+
+    .error { color:#D23A3A; font-size:13px; min-height:18px; }
+    .actions { display:flex; gap:12px; margin-top:6px; align-items:center; }
+
+    button.primary {
+      background: linear-gradient(90deg, var(--accent), #0b54c0);
+      color: #fff;
+      padding:12px 14px;
+      border-radius:10px;
+      border:0;
+      font-weight:700;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      justify-content:center;
+      width:100%;
+      box-shadow: 0 10px 30px rgba(11,99,214,0.12);
+      font-size:15px;
+    }
+    button.primary:disabled { opacity:0.6; cursor:not-allowed; }
+
+    .spinner { width:18px; height:18px; border-radius:50%; border:3px solid rgba(255,255,255,0.25); border-top-color:rgba(255,255,255,0.6); display:none; animation:spin 1s linear infinite; }
+    @keyframes spin{ to { transform:rotate(360deg); } }
+    .spinner.show { display:inline-block; }
+
+    .login-link { text-align:center; margin-top:14px; font-size:14px; color:var(--muted); }
+    .login-link a { color:var(--accent); text-decoration:none; font-weight:600; }
+    .login-link a:hover { text-decoration:underline; }
+
+    /* small footer hint */
+    .note-small { margin-top:12px; font-size:13px; color:var(--muted); }
+
+    /* responsive */
+    @media (max-width:920px) {
+      .wrap { grid-template-columns: 1fr; max-width:520px; gap:18px; padding:12px; }
+      .hero { min-height:140px; padding:18px; }
+      .card { padding:18px; }
+      .logo-row img { width:52px; height:52px; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="logo-wrap">
-      <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo">
-    </div>
-    <h2>Reset Password</h2>
-    <form id="reset-form">
-      <input type="email" id="email" placeholder="Enter your registered email" required>
-      <div class="error" id="error-msg"></div>
-      <button type="submit" id="reset-btn">
-        <div class="spinner" id="spinner"></div>
-        <span id="btn-text">Send Reset Link</span>
-      </button>
-    </form>
-    <div class="login-link">
-      Remembered? <a href="login.html">Log In</a>
-    </div>
+  <div class="wrap" role="main" aria-labelledby="resetTitle">
+    <aside class="hero" aria-hidden="false">
+      <h1 id="resetTitle">Reset your password</h1>
+      <p>Enter the email address you used to register. We'll send a secure link so you can create a new password. If you don't see the email, check your spam or promotions folder.</p>
+      <div class="note-small">If you need further help contact <a href="mailto:support@beni-wealth.com">support@beni-wealth.com</a></div>
+    </aside>
+
+    <section class="card" aria-label="Reset password form">
+      <div class="logo-row" style="align-items:center;">
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
+        <div>
+          <div style="font-weight:700; color:var(--nav); font-size:16px;">Beni-Wealth</div>
+          <div style="font-size:13px; color:var(--muted);">Secure password reset</div>
+        </div>
+      </div>
+
+      <h2>Send reset link</h2>
+      <p class="lead">We'll email a link that lets you reset your password.</p>
+
+      <form id="reset-form" novalidate>
+        <div>
+          <label for="email">Registered email</label>
+          <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required />
+        </div>
+
+        <div class="error" id="error-msg" aria-live="assertive"></div>
+
+        <div class="actions">
+          <button id="reset-btn" class="primary" type="submit" aria-live="polite">
+            <span class="spinner" id="spinner" role="status" aria-hidden="true"></span>
+            <span id="btn-text">Send Reset Link</span>
+          </button>
+        </div>
+
+        <div class="login-link">
+          Remembered your password? <a href="login.html">Log in</a>
+        </div>
+      </form>
+    </section>
   </div>
+
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-    import { getAuth, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-  authDomain: "beni-wealths.firebaseapp.com",
-  projectId: "beni-wealths",
-  storageBucket: "beni-wealths.firebasestorage.app",
-  messagingSenderId: "807950483822",
-  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-  measurementId: "G-Z2XP3YN6NS"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+    import { getAuth, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
 
-const form = document.getElementById('reset-form');
-const btn = document.getElementById('reset-btn');
-const spinner = document.getElementById('spinner');
-const btnText = document.getElementById('btn-text');
-const errorMsg = document.getElementById('error-msg');
+    // Beni-Wealth Firebase config (your project)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
 
-form.addEventListener('submit', async e => {
-  e.preventDefault();
-  errorMsg.textContent = '';
-  btn.disabled = true;
-  spinner.style.display = 'inline-block';
-  btnText.style.display = 'none';
+    // initialize firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-  const email = document.getElementById('email').value.trim();
-  try {
-    await sendPasswordResetEmail(auth, email);
-    alert('A reset link has been sent to your email!');
-    window.location.href = 'login.html';
-  } catch (err) {
-    if (err.code === 'auth/user-not-found') {
-      errorMsg.textContent = 'No account found with that email.';
-    } else {
-      errorMsg.textContent = err.message;
+    // DOM refs
+    const form = document.getElementById('reset-form');
+    const btn = document.getElementById('reset-btn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btn-text');
+    const errorMsg = document.getElementById('error-msg');
+
+    function setLoading(isLoading) {
+      btn.disabled = isLoading;
+      spinner.classList.toggle('show', isLoading);
+      btnText.textContent = isLoading ? 'Sending…' : 'Send Reset Link';
     }
-    alert(errorMsg.textContent);
-  } finally {
-    btn.disabled = false;
-    spinner.style.display = 'none';
-    btnText.style.display = 'block';
-  }
-});
 
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = '';
+      const email = (document.getElementById('email').value || '').trim();
+
+      if (!email) {
+        errorMsg.textContent = 'Please enter your registered email.';
+        return;
+      }
+
+      // basic email format check
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!re.test(email)) {
+        errorMsg.textContent = 'Please enter a valid email address.';
+        return;
+      }
+
+      setLoading(true);
+      try {
+        await sendPasswordResetEmail(auth, email);
+        // success
+        alert('A password reset link has been sent to your email. Check your inbox (or spam folder).');
+        // redirect to login after short delay
+        window.location.href = 'login.html';
+      } catch (err) {
+        // map common auth errors to friendly messages
+        let msg = 'Unable to send reset link. Try again later.';
+        if (err && err.code) {
+          switch (err.code) {
+            case 'auth/user-not-found':
+              msg = 'No account found with that email.';
+              break;
+            case 'auth/invalid-email':
+              msg = 'That email address is not valid.';
+              break;
+            case 'auth/too-many-requests':
+              msg = 'Too many attempts — try again later.';
+              break;
+            default:
+              msg = err.message || msg;
+          }
+        } else if (err && err.message) {
+          msg = err.message;
+        }
+        errorMsg.textContent = msg;
+        console.warn('sendPasswordResetEmail error:', err);
+      } finally {
+        setLoading(false);
+      }
+    });
   </script>
 </body>
 </html>
