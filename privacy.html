@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Beni-Wealth — Privacy Policy</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#0b0613; --bg2:#120521;
+    --card-bg: rgba(255,255,255,0.03);
+    --glass: rgba(255,255,255,0.02);
+    --muted: rgba(255,255,255,0.6);
+    --text: #f3f6ff;
+    --accent-start:#2fe0b8; --accent-end:#7a5fff;
+    --accent:#0b63d6;
+    --radius:18px;
+    --card-pad:26px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:'Poppins',system-ui,Segoe UI,Arial;}
+  body{
+    background: linear-gradient(180deg,var(--bg1),var(--bg2));
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    padding:36px 16px;
+    display:flex;
+    justify-content:center;
+  }
+
+  .shell { width:100%; max-width:1100px; }
+  header.appbar {
+    display:flex; align-items:center; gap:18px; margin-bottom:18px;
+  }
+  .logo {
+    width:72px; height:72px; border-radius:14px; display:grid; place-items:center;
+    background: linear-gradient(135deg,var(--accent-start),var(--accent-end));
+    color:#041219; font-weight:800; font-size:22px;
+  }
+  .app-title { font-size:20px; font-weight:700; color:var(--text); }
+  .app-sub { color:var(--muted); font-size:13px; margin-top:4px; }
+
+  .grid {
+    display:grid;
+    grid-template-columns: 1fr 420px;
+    gap:24px;
+    align-items:start;
+  }
+
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius: var(--radius);
+    padding: var(--card-pad);
+    box-shadow: 0 18px 60px rgba(0,0,0,0.65);
+    border: 1px solid rgba(255,255,255,0.03);
+    backdrop-filter: blur(6px);
+  }
+
+  .content { max-height: 78vh; overflow:auto; padding-right:8px; }
+  h1 { margin:0 0 12px 0; font-size:22px; color:var(--text); }
+  h2 { margin-top:18px; color:var(--accent); font-size:16px; }
+  p, li { color: rgba(255,255,255,0.86); line-height:1.45; font-size:14px; }
+  ul { margin:8px 0 0 18px; }
+  .muted { color:var(--muted); font-size:13px; margin-top:6px; }
+
+  /* right column styles */
+  .side-card {
+    position:sticky; top:24px; align-self:start;
+  }
+  .side-card .block { margin-bottom:14px; padding:16px; border-radius:12px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); }
+  .label { font-weight:700; color:var(--muted); font-size:13px; margin-bottom:8px; display:block; }
+
+  /* appeal form */
+  form { display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+  input[type="text"], input[type="email"], textarea {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.03);
+    color:var(--text);
+    padding:10px 12px; border-radius:10px; font-size:14px;
+  }
+  textarea { min-height:100px; resize:vertical; }
+  .row { display:flex; gap:10px; }
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+    padding:10px 14px; border-radius:12px; border:none; cursor:pointer; font-weight:700;
+    background: linear-gradient(90deg,var(--accent-start),var(--accent-end)); color:#041219;
+  }
+  .btn.ghost { background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.03); }
+  .note { font-size:13px; color:var(--muted); }
+
+  footer { margin-top:22px; color:rgba(255,255,255,0.38); font-size:13px; text-align:center; }
+
+  @media(max-width:980px){
+    .grid { grid-template-columns: 1fr; }
+    .side-card { position:relative; top:auto; }
+  }
+</style>
+</head>
+<body>
+  <main class="shell" role="main" aria-labelledby="policyTitle">
+    <header class="appbar">
+      <div class="logo" aria-hidden="true">B<i style="font-size:14px;margin-left:3px">W</i></div>
+      <div>
+        <div class="app-title">Beni-Wealth</div>
+        <div class="app-sub">Privacy Policy & Appeals</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- left: policy content -->
+      <section class="card" aria-label="Privacy policy">
+        <div class="content">
+          <h1 id="policyTitle">Privacy Policy — Beni-Wealth</h1>
+          <p class="muted">Effective date: (replace with date) — Last updated: October 20, 2025</p>
+
+          <h2>1. Introduction</h2>
+          <p>Welcome to <strong>Beni-Wealth</strong>. Your privacy and the integrity of our platform are important to us. This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our website or mobile apps. By accessing or using Beni-Wealth you agree to the terms described here.</p>
+
+          <h2>2. Information We Collect</h2>
+          <p>We may collect the following information to operate effectively and provide you with a smooth experience:</p>
+          <ul>
+            <li><strong>Personal Information:</strong> Full name, email address, phone number, username, and password.</li>
+            <li><strong>Financial Details:</strong> Bank name, account number, withdrawal-related data, and transaction references.</li>
+            <li><strong>Usage & Technical Data:</strong> Device type, IP address, browser info, OS, device identifiers, and activity logs.</li>
+            <li><strong>Referral & Task Data:</strong> Referral codes, referral relationships, tasks completed, proof submissions, and timestamps.</li>
+            <li><strong>Support & Communications:</strong> Messages you send to support and related correspondence.</li>
+            <li><strong>Third-party data:</strong> Limited information from payment processors, analytics providers, or other integrations necessary to provide our service.</li>
+          </ul>
+
+          <h2>3. How We Use Your Information</h2>
+          <p>We use personal data to:</p>
+          <ul>
+            <li>Create, manage and authenticate your account.</li>
+            <li>Credit rewards, process deposits and withdrawals, and maintain transaction history.</li>
+            <li>Deliver tasks, shortlinks, and task payouts.</li>
+            <li>Detect and prevent fraud, abuse, or other prohibited behavior.</li>
+            <li>Communicate important account and service information.</li>
+            <li>Improve the service through analytics and diagnostics.</li>
+          </ul>
+
+          <h2>4. Account Rules & Device Policy (Important)</h2>
+          <p>To protect fairness and prevent abuse on Beni-Wealth, the following account rules apply:</p>
+          <h3>One account per device — mandatory</h3>
+          <p>Each physical device (phone, tablet, PC) may be used for only one Beni-Wealth account. We use device identifiers, cookies, IP analysis and other signals to enforce this rule. Creating or using multiple accounts from the same device to manipulate rewards, referrals, or tasks is strictly prohibited.</p>
+
+          <h3>Consequences for violating the one-device rule</h3>
+          <p>Accounts found to be sharing a device or created to manipulate the system will be subject to sanctions including fines, temporary suspension, or permanent termination.</p>
+
+          <h3>Task submission rules</h3>
+          <p>Task proofs must be complete, accurate, and directly relevant to the task instructions. Submitting incomplete, unrelated, forged, or duplicate proofs is a violation.</p>
+
+          <h3>Fines for incorrect or abusive submissions</h3>
+          <p>Incorrect, fraudulent, or abusive task submissions may attract a fine. Fines will normally be deducted from the user’s account balance and will be applied at the platform’s discretion. The specific fine amount may vary depending on the severity and frequency of the violation. Repeated offences can lead to higher fines, temporary suspension, or permanent account deactivation.</p>
+
+          <h3>Disabled accounts & reactivation</h3>
+          <p>Disabled or suspended accounts can be re-enabled following review and resolution of the underlying issue. To request reactivation, contact Support (see Contact section) or use the appeal form on this page. We may require identity verification, completion of corrective actions, payment of outstanding fines, or other remedial steps before reactivating the account. Beni-Wealth reserves the right to refuse reactivation in cases of severe or repeated abuse.</p>
+
+          <h2>5. Data Security</h2>
+          <p>We use technical and organizational measures to protect your personal data, including encryption in transit, access controls, and secure hosting. You should keep your login credentials private. While we aim to secure data, no system is 100% secure; we will follow applicable laws and notify users if a breach affects personal data.</p>
+
+          <h2>6. Sharing & Disclosure</h2>
+          <p>We do not sell your personal data. We may share information with:</p>
+          <ul>
+            <li>Trusted service providers (e.g., Firebase for auth & database, payment processors, analytics, email providers) who process data on our behalf.</li>
+            <li>Payment processors to complete deposits and withdrawals.</li>
+            <li>Law enforcement, regulators, or legal requesters when required.</li>
+            <li>Successors in the event of a merger or sale (we’ll notify users if required).</li>
+          </ul>
+
+          <h2>7. Cookies & Tracking</h2>
+          <p>We use cookies and similar technologies to maintain session state, provide analytics, and help detect fraud or suspicious activity. You can disable cookies via your browser, but doing so may limit functionality.</p>
+
+          <h2>8. Data Retention</h2>
+          <p>We retain data only as long as necessary to provide services, meet legal obligations, and prevent abuse. Examples:</p>
+          <ul>
+            <li>Account data: retained while the account is active and for a reasonable period after deletion (for fraud prevention and compliance).</li>
+            <li>Financial/transaction records: retained for financial reporting and compliance (timeframes may vary by jurisdiction).</li>
+            <li>Logs/analytics: kept in aggregated or pseudonymized form for product improvement.</li>
+          </ul>
+
+          <h2>9. Your Rights</h2>
+          <p>Depending on your jurisdiction, you may have rights to access, correct, delete, or port your data, object to certain processing, withdraw consent, and lodge complaints with a supervisory authority. Contact Support to exercise any rights; we'll verify identity before responding.</p>
+
+          <h2>10. Children & Eligibility</h2>
+          <p>Beni-Wealth is open to all users. Users are expected to act responsibly and follow task guidelines. Accounts created by minors should be supervised by a parent or guardian. If you believe a minor has an account, contact Support so we may address it.</p>
+
+          <h2>11. Enforcement, Appeals & Refunds</h2>
+          <p><strong>Enforcement:</strong> We will investigate suspected breaches of policy (device rule, task fraud). If we find a violation, we may deduct fines, temporarily suspend access, permanently disable accounts, reverse suspect rewards, and block devices or IPs.</p>
+          <p><strong>Appeals:</strong> If you disagree with a decision (fine, suspension, deactivation), you may appeal by contacting Support or using the appeal form below. Include relevant evidence. We will review appeals and respond within a reasonable time.</p>
+          <p><strong>Refunds:</strong> Refunds for fines or balances will be handled case-by-case. Funds deducted as fines are typically final unless an appeal reverses the decision.</p>
+
+          <h2>12. International Transfers</h2>
+          <p>We and our service providers may process data in multiple countries. Where data is transferred internationally we use appropriate safeguards such as standard contractual clauses and secure vendor agreements.</p>
+
+          <h2>13. Changes to This Policy</h2>
+          <p>We may update this Privacy Policy when our services or legal obligations change. Material updates will be posted with a new “Last updated” date and, where required, we’ll notify you (e.g., in-app or by email). Continued use after changes means you accept the updated policy.</p>
+
+          <h2>14. Contact Us</h2>
+          <p><strong>Beni-Wealth Support</strong><br>
+            📧 <a href="mailto:beniwealth70@gmail.com" style="color:var(--accent-start)">beniwealth70@gmail.com</a><br>
+            📞 08037402826 (WhatsApp available)</a>
+
+      <!-- right: appeals & quick info -->
+      <aside class="side-card">
+        <div class="card">
+          <div class="block">
+            <div class="label">Policy summary</div>
+            <div><strong>One device = one account</strong><br><span class="note">Violations may be fined or suspended. Appeals below.</span></div>
+          </div>
+
+          <div class="block">
+            <div class="label">Appeal / Reactivation</div>
+            <p class="note">If your account was disabled or you were fined, submit an appeal. We will review and respond.</p>
+
+            <!-- Appeal form -->
+            <form id="appealForm" aria-label="Appeal and reactivation form">
+              <input id="appealUid" type="text" placeholder="Your UID (auto-filled if signed in)" />
+              <input id="appealEmail" type="email" placeholder="Your email (auto-filled if signed in)" />
+              <input id="appealName" type="text" placeholder="Full name" />
+              <label class="label" style="margin-top:6px;">Reason (describe issue / attach evidence links)</label>
+              <textarea id="appealMessage" placeholder="Explain why your account should be reactivated or why a fine should be reversed..."></textarea>
+              <input id="appealTxn" type="text" placeholder="Transaction ID (optional)" />
+              <div style="display:flex; gap:8px; margin-top:6px;">
+                <button id="appealBtn" class="btn" type="button">Submit Appeal</button>
+                <button id="clearBtn" type="button" class="btn ghost">Clear</button>
+              </div>
+              <div id="appealStatus" class="note" style="margin-top:8px"></div>
+            </form>
+          </div>
+
+          <div class="block" style="margin-top:12px">
+            <div class="label">Policy quick links</div>
+            <div><a href="terms.html" style="color:var(--accent-start)">Terms of Use</a></div>
+            <div style="margin-top:8px"><a href="contact.html" style="color:var(--accent-start)">Support Center</a></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      © <span id="year"></span> Beni-Wealth — All rights reserved.
+    </footer>
+  </main>
+
+  <!-- Firebase + appeal submission script -->
+  <script type="module">
+    // Firebase modular imports (v9)
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+    // Beni-Wealth Firebase config (your project)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    // init firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // DOM
+    const yearEl = document.getElementById('year'); yearEl.textContent = new Date().getFullYear();
+    const uidInput = document.getElementById('appealUid');
+    const emailInput = document.getElementById('appealEmail');
+    const nameInput = document.getElementById('appealName');
+    const msgInput = document.getElementById('appealMessage');
+    const txnInput = document.getElementById('appealTxn');
+    const appealBtn = document.getElementById('appealBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const appealStatus = document.getElementById('appealStatus');
+
+    // Fill email & uid if user is signed in
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        // prefer user.uid and email - but allow manual override
+        uidInput.value = user.uid || '';
+        emailInput.value = user.email || '';
+      }
+    });
+
+    // Submit appeal
+    appealBtn.addEventListener('click', async () => {
+      appealStatus.textContent = '';
+      const uid = (uidInput.value || '').trim();
+      const email = (emailInput.value || '').trim();
+      const name = (nameInput.value || '').trim();
+      const message = (msgInput.value || '').trim();
+      const txn = (txnInput.value || '').trim();
+
+      if (!email || !message) {
+        appealStatus.textContent = 'Please provide at least your email and a description of the issue.';
+        return;
+      }
+
+      appealBtn.disabled = true;
+      appealBtn.textContent = 'Submitting...';
+
+      try {
+        // Save to Firestore collection "appeals"
+        await addDoc(collection(db, 'appeals'), {
+          uid: uid || null,
+          email,
+          name: name || null,
+          message,
+          transactionId: txn || null,
+          createdAt: serverTimestamp(),
+          status: 'pending' // pending | reviewed | resolved
+        });
+
+        appealStatus.textContent = 'Appeal submitted. Our support team will review and contact you.';
+        // Reset form (keep email/uid prefilled)
+        nameInput.value = '';
+        msgInput.value = '';
+        txnInput.value = '';
+      } catch (err) {
+        console.error('appeal submit error', err);
+        appealStatus.textContent = 'Unable to submit appeal right now. Try again later.';
+      } finally {
+        appealBtn.disabled = false;
+        appealBtn.textContent = 'Submit Appeal';
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      nameInput.value = '';
+      msgInput.value = '';
+      txnInput.value = '';
+      appealStatus.textContent = '';
+    });
+
+    // Note for implementer: Ensure Firestore rules allow authenticated users to write appeals,
+    // or adjust rules to allow unauthenticated writes with proper validation.
+    //
+    // Example minimal rule for collection "appeals" (NOT for production; refine before use):
+    //
+    // service cloud.firestore {
+    //   match /databases/{database}/documents {
+    //     match /appeals/{doc} {
+    //       allow create: if request.auth != null; // require auth
+    //       allow read, update, delete: if false;
+    //     }
+    //   }
+    // }
+  </script>
+</body>
+  </html>
+  
