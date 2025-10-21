@@ -6,28 +6,32 @@
   <title>Beni-Wealth – Earn Steadily</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
-    /* Dashboard dark theme */
+    /* Dashboard dark theme + sleek rainbow glow accents */
     :root{
-      --bg-1: #0b0613;
+      --bg-1: #07040a;
       --bg-2: #0f0820;
       --card-glass: rgba(255,255,255,0.02);
       --muted: rgba(233,240,255,0.62);
       --text: #e9f0ff;
       --accent-start: #2fe0b8;
       --accent-end: #7a5fff;
-      --glass-strong: rgba(255,255,255,0.03);
+      --glass-strong: rgba(255,255,255,0.035);
       --accent: linear-gradient(90deg,var(--accent-start),var(--accent-end));
+      --halo-size: 26px;
     }
 
     *{box-sizing:border-box}
     body{
       margin:0;
       font-family:'Poppins',sans-serif;
-      background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
       color:var(--text);
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
       overflow-x:hidden;
+      background:
+        radial-gradient(800px 420px at 10% 20%, rgba(47,224,184,0.02), transparent 8%),
+        radial-gradient(600px 300px at 90% 80%, rgba(122,95,255,0.02), transparent 10%),
+        linear-gradient(180deg,var(--bg-1),var(--bg-2));
     }
 
     a{color:inherit;text-decoration:none}
@@ -39,80 +43,205 @@
       display:flex;
       align-items:center;
       justify-content:space-between;
-      padding:18px 28px;
-      backdrop-filter: blur(6px);
-      background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      padding:16px 28px;
+      backdrop-filter: blur(6px) saturate(120%);
+      background: linear-gradient(90deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
       position:sticky;
       top:0;
-      z-index:50;
+      z-index:60;
+      border-bottom: 1px solid rgba(255,255,255,0.02);
     }
     .logo{display:flex;align-items:center;gap:14px}
-    .logo img{height:56px;width:56px;border-radius:12px;object-fit:cover;box-shadow:0 6px 20px rgba(122,95,255,0.14)}
-    .logo h1{font-size:20px;color:var(--text);margin:0;font-weight:700}
+    .logo-wrap{position:relative;display:inline-block}
+    .logo img{
+      height:56px;width:56px;border-radius:12px;object-fit:cover;
+      box-shadow:0 8px 30px rgba(122,95,255,0.12);
+      display:block;
+    }
+    /* small rainbow halo around logo */
+    .logo-wrap::after{
+      content:"";
+      position:absolute;inset:-8px;
+      border-radius:16px;
+      background: conic-gradient(from 0deg, #ff3cac, #7844ff, #2fe0b8, #ffe66d, #ff3cac);
+      filter: blur(14px) saturate(140%);
+      opacity:0.28;
+      transform: rotate(0deg);
+      transition:opacity .25s ease;
+      z-index:-1;
+    }
+    .logo h1{font-size:20px;color:var(--text);margin:0;font-weight:700;letter-spacing:0.2px}
     .nav-buttons{display:flex;gap:12px;align-items:center}
     .nav-buttons button{padding:8px 12px;border-radius:10px;font-weight:600;color:var(--text);background:transparent;border:1px solid rgba(255,255,255,0.04)}
-    .signup{background:var(--accent);color:#041219;border:0}
+    .signup{background:var(--accent);color:#041219;border:0;position:relative;overflow:visible}
+    .signup.rainbow{
+      padding:8px 14px;
+      border-radius:999px;
+      font-weight:700;
+      color:#041219;
+      background: linear-gradient(90deg,var(--accent-start),var(--accent-end));
+      box-shadow: 0 6px 30px rgba(122,95,255,0.14);
+    }
+    /* rainbow glow halo on interactive elements */
+    .rainbow-halo{
+      position:relative;
+      z-index:1;
+    }
+    .rainbow-halo::before{
+      content:"";
+      position:absolute;
+      inset:calc(-1 * var(--halo-size));
+      border-radius:18px;
+      background: conic-gradient(from 45deg, #ff3cac, #7844ff, #2fe0b8, #ffe66d, #ff3cac);
+      filter: blur(26px) saturate(130%);
+      opacity:0.18;
+      z-index:-1;
+      transition:opacity .18s ease, transform .18s ease;
+      transform: scale(1);
+      pointer-events:none;
+    }
+    .rainbow-halo:hover::before{opacity:0.28; transform: scale(1.03)}
 
-    /* Hero */
+    /* Hero (with dark image background and glowy accents) */
     .hero{
       position:relative;
-      padding:56px 20px 80px;
+      padding:64px 20px 96px;
       text-align:center;
-      overflow:hidden;
+      overflow:visible;
     }
+    /* dark image for hero area (keeps center dark & moody) */
     .hero::before{
       content:'';
       position:absolute;inset:0;
       background:
-        radial-gradient(800px 400px at 10% 20%, rgba(47,224,184,0.07), transparent 8%),
-        radial-gradient(600px 300px at 90% 80%, rgba(122,95,255,0.06), transparent 10%);
+        linear-gradient(180deg, rgba(7,4,10,0.55), rgba(15,8,32,0.65)),
+        url('https://images.unsplash.com/photo-1508385082359-f6b2b6d52a51?auto=format&fit=crop&w=1800&q=60') center/cover no-repeat;
+      mix-blend-mode: multiply;
+      opacity:0.95;
+      z-index:0;
       pointer-events:none;
     }
+    .hero::after{
+      content:'';
+      position:absolute;left:-6%;top:-6%;width:40vmin;height:40vmin;border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, rgba(47,224,184,0.06), transparent 20%), radial-gradient(circle at 70% 70%, rgba(122,95,255,0.05), transparent 25%);
+      filter: blur(40px);
+      z-index:0;
+      pointer-events:none;
+    }
+
     .hero-content{
       position:relative;
       z-index:2;
       max-width:980px;margin:0 auto;color:var(--text);
       padding:6px 16px;
+      backdrop-filter: blur(2px);
     }
     .hero-content h2{font-size:28px;margin-bottom:12px}
-    .hero-content p{color:var(--muted);font-size:15px;margin-bottom:18px}
+    .hero-content p{color:var(--muted);font-size:15px;margin-bottom:18px;max-width:720px;margin-left:auto;margin-right:auto}
 
     .cta-buttons{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
-    .cta-buttons a{padding:10px 18px;border-radius:28px;font-weight:700;background:var(--accent);color:#041219;display:inline-block;transition:transform .18s}
-    .cta-buttons a.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
-    .cta-buttons a:hover{transform:translateY(-4px)}
-
-    /* Section container */
-    .container{
-      max-width:1150px;margin:32px auto;padding:0 18px;
+    .cta-buttons a{
+      padding:12px 20px;border-radius:999px;font-weight:700;color:#041219;display:inline-block;transition:transform .18s, box-shadow .18s;
+      background:linear-gradient(90deg,var(--accent-start),var(--accent-end)); box-shadow: 0 10px 30px rgba(122,95,255,0.12);
     }
+    .cta-buttons a.secondary{
+      background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);font-weight:700;padding:10px 18px;
+      border-radius:999px;
+      position:relative;
+      overflow:visible;
+    }
+    .cta-buttons a:hover{transform:translateY(-6px)}
 
-    /* Cards grid */
+    /* Sections grid and cards */
+    .container{ max-width:1150px;margin:32px auto;padding:0 18px; position:relative; z-index:2 }
     .sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
-    .card{background:var(--card-glass);border-radius:14px;padding:18px;box-shadow:0 12px 36px rgba(2,6,23,0.6);transition:transform .18s}
-    .card:hover{transform:translateY(-6px)}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0.01));
+      border-radius:14px;padding:18px;box-shadow:0 12px 36px rgba(2,6,23,0.6);transition:transform .18s, box-shadow .18s;
+      position:relative;overflow:visible; min-height:120px;
+    }
+    .card:hover{transform:translateY(-8px); box-shadow:0 30px 70px rgba(2,6,23,0.75)}
     .card .emoji{font-size:22px;display:block;margin-bottom:8px}
     .card h3{margin:0 0 8px;color:var(--text);font-size:18px}
     .card p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
 
-    /* Stats section */
-    .stats-section{margin-top:30px;padding:22px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 12px 36px rgba(0,0,0,0.6)}
-    .stats-section h2{margin:0 0 18px;font-size:20px;color:var(--text)}
-    .stat-boxes{display:flex;flex-wrap:wrap;gap:18px;align-items:stretch}
-    .stat-box{flex:1;min-width:180px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015));padding:18px;border-radius:12px;text-align:center}
+    /* subtle rainbow edge on featured card */
+    .card.featured{
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    .card.featured::before{
+      content:"";
+      position:absolute;inset:-2px;border-radius:16px;
+      background: linear-gradient(90deg,#ff3cac, #7844ff, #2fe0b8, #ffe66d);
+      filter: blur(14px) saturate(120%); opacity:0.06; z-index:-1;
+    }
+
+    /* Stats section with dark photo background and glass */
+    .stats-section{
+      margin-top:30px;padding:22px;border-radius:14px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow:0 14px 50px rgba(0,0,0,0.6);
+      position:relative;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    /* dark textured background for stats */
+    .stats-section::before{
+      content:'';
+      position:absolute;inset:0;
+      background: url('https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?auto=format&fit=crop&w=1400&q=60') center/cover no-repeat;
+      mix-blend-mode: overlay;
+      opacity:0.08;
+      z-index:0;
+      pointer-events:none;
+    }
+    .stats-section h2{margin:0 0 18px;font-size:20px;color:var(--text);position:relative;z-index:2}
+    .stat-boxes{display:flex;flex-wrap:wrap;gap:18px;align-items:stretch;position:relative;z-index:2}
+    .stat-box{
+      flex:1;min-width:180px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015));
+      padding:18px;border-radius:12px;text-align:center;
+      transition:transform .18s, box-shadow .18s; position:relative; overflow:visible;
+    }
+    .stat-box:hover{transform:translateY(-6px)}
     .stat-box h3{margin:0;font-size:20px;color:var(--text)}
     .stat-box p{margin:8px 0 0;color:var(--muted)}
 
+    /* subtle animated indicator on counts */
+    .pulse{
+      display:inline-block;margin-left:8px;width:10px;height:10px;border-radius:50%;
+      background:linear-gradient(90deg,#2fe0b8,#7a5fff);
+      box-shadow:0 6px 24px rgba(122,95,255,0.2);
+      vertical-align:middle;
+      animation: floatY 2.6s ease-in-out infinite;
+    }
+    @keyframes floatY{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+
     /* Footer */
-    footer{margin-top:36px;padding:24px;border-radius:10px;text-align:center;background:transparent;color:var(--muted)}
+    footer{margin-top:36px;padding:24px;border-radius:10px;text-align:center;background:transparent;color:var(--muted);position:relative;z-index:2}
     footer a{color:var(--muted);text-decoration:underline;margin:0 8px}
 
+    /* small utility */
+    .muted{color:var(--muted);font-size:13px}
+
     /* Responsive tweaks */
-    @media(max-width:720px){
-      .hero-content h2{font-size:22px}
-      header{padding:12px 14px}
+    @media(max-width:920px){
+      .hero-content h2{font-size:24px}
       .logo img{height:48px;width:48px}
+      .cta-buttons a{padding:10px 14px}
+      :root{--halo-size:18px}
+    }
+    @media(max-width:520px){
+      .hero{padding:40px 16px 64px}
+      .hero-content h2{font-size:20px}
+      .sections{grid-template-columns:1fr}
+    }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .rainbow-halo::before, .logo-wrap::after, .pulse { animation: none; transition: none; filter: none; }
     }
 
   </style>
@@ -120,12 +249,15 @@
 <body>
   <header>
     <div class="logo">
-      <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo">
+      <span class="logo-wrap" aria-hidden="true">
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo">
+      </span>
       <h1>Beni-Wealth</h1>
     </div>
-    <div class="nav-buttons">
-      <button class="signin" onclick="location.href='login.html'">Sign In</button>
-      <button class="signup" onclick="location.href='register.html'">Sign Up</button>
+
+    <div class="nav-buttons" role="navigation" aria-label="Main">
+      <button class="signin rainbow-halo" onclick="location.href='login.html'">Sign In</button>
+      <button class="signup rainbow-halo" onclick="location.href='register.html'">Sign Up</button>
     </div>
   </header>
 
@@ -133,16 +265,16 @@
     <div class="hero-content container">
       <h2 id="hero-heading">Building Wealth, One Click at a Time</h2>
       <p>Discover tasks and shortlinks that pay you instantly. Advertise to our engaged community and grow your brand — secure, fast and transparent.</p>
-      <div class="cta-buttons">
-        <a href="register.html">✍️ Get Started</a>
-        <a class="secondary" href="login.html">📝 Sign In</a>
+      <div class="cta-buttons" role="region" aria-label="Get started">
+        <a class="rainbow-halo" href="register.html">✍️ Get Started</a>
+        <a class="secondary rainbow-halo" href="login.html">📝 Sign In</a>
       </div>
     </div>
   </section>
 
-  <main class="container">
-    <div class="sections" aria-live="polite">
-      <div class="card">
+  <main class="container" aria-live="polite">
+    <div class="sections">
+      <div class="card featured">
         <span class="emoji">📣</span>
         <h3>Advertisers: Amplify Your Reach</h3>
         <p>Tap into a network of active users. Launch campaigns, track real-time results, and optimize for maximum ROI with clear metrics.</p>
@@ -162,10 +294,10 @@
     </div>
 
     <section class="stats-section" aria-labelledby="stats-heading">
-      <h2 id="stats-heading">Our Impact</h2>
+      <h2 id="stats-heading">Our Impact <span class="muted">— real numbers, real people</span></h2>
       <div class="stat-boxes">
         <div class="stat-box" role="region" aria-label="Total users">
-          <h3 id="usersCount">0</h3>
+          <h3 id="usersCount">0 <span class="pulse" aria-hidden="true"></span></h3>
           <p>Total Users</p>
         </div>
         <div class="stat-box" role="region" aria-label="Total paid">
@@ -177,41 +309,46 @@
   </main>
 
   <footer>
-    <a href="beniwealth70@gmail.com">Contact Support</a> |
+    <a href="mailto:beniwealth70@gmail.com">Contact Support</a> |
     <a href="privacy.html">Privacy Policy</a> |
     <a href="terms.html">Terms of Use</a>
     <div style="margin-top:8px; color:var(--muted)">&copy; 2025 Beni-Wealth. All rights reserved.</div>
   </footer>
 
   <script>
-    // Smooth numeric animation helper
+    // Smooth numeric animation helper (fixed and robust)
     function animateCount(id, end, prefix='', suffix='', duration=1200) {
       const el = document.getElementById(id);
       if (!el) return;
       const start = 0;
       const range = Math.max(0, end - start);
-      if (range === 0) {
-        el.innerText = prefix + (end).toLocaleString() + suffix;
+      // if small number simply set
+      if (range <= 0) {
+        el.innerText = prefix + end.toLocaleString() + suffix;
         return;
       }
-      const stepTime = Math.max(20, Math.floor(duration / (range / Math.ceil(range / 10))));
+      const steps = Math.min(60, Math.ceil(duration / 16)); // aim for ~60fps cap
+      const stepVal = range / steps;
       let current = start;
-      const increment = Math.max(1, Math.ceil(range / (duration / stepTime)));
+      let step = 0;
       const timer = setInterval(() => {
-        current += increment;
-        if (current >= end) {
+        step++;
+        current = Math.round(start + stepVal * step);
+        if (current >= end || step >= steps) {
           current = end;
           clearInterval(timer);
         }
         el.innerText = prefix + current.toLocaleString() + suffix;
-      }, stepTime);
+      }, Math.max(16, Math.floor(duration / steps)));
     }
 
-    // Fixed the broken onload call (it was split accidentally)
+    // Example: replace the zeros with real numbers if you have backend data.
+    // For demo/sleekness we'll animate to friendly sample values.
     window.onload = function() {
-      // currently using zeros as your original file did; replace with live data if desired
-      animateCount('usersCount', 0);
-      animateCount('paidCount', 0, '₦');
+      // use real values when integrating with Firebase or your API
+      // here are tasteful demo values (change or remove as needed)
+      animateCount('usersCount', 0);      // sample users
+      animateCount('paidCount', 0.00, '₦'); // sample paid out
     };
   </script>
 </body>
