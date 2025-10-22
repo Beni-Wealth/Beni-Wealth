@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Plans Catalog</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
     :root{ --bg:#0b0613; --panel:#0f0820; --muted:rgba(255,255,255,0.6); --accent1:#2fe0b8; --accent2:#7a5fff; --card:rgba(255,255,255,0.02); --text:#e9f0ff; }
     body{margin:0;font-family:'Poppins',system-ui,Arial;background:linear-gradient(180deg,var(--bg),var(--panel));color:var(--text);-webkit-font-smoothing:antialiased;padding:28px 18px 120px}
@@ -24,7 +24,6 @@
     .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
     .user-info{color:var(--muted)}
     .toast{position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;padding:10px 14px;border-radius:10px;font-weight:700;box-shadow:0 12px 40px rgba(0,0,0,0.6);z-index:9999}
-
     /* bottom nav */
     .bottom-nav{
       position:fixed; left:18px; right:18px; bottom:16px;
@@ -44,7 +43,7 @@
     <div class="topbar">
       <div>
         <h1>Beni-Wealth Plans</h1>
-        <div class="intro">Pick a plan to increase your earnings. Purchase requires enough balance — balance will be debited on purchase. Plans last 30 days and will revert to Basic when they expire.</div>
+        <div class="intro">Pick a plan to increase your shortlink earnings. Purchase requires enough balance — balance will be debited on purchase. Plans last 30 days and revert to Basic on expiry.</div>
       </div>
       <div class="user-info" id="userInfo">Not signed in</div>
     </div>
@@ -88,12 +87,12 @@
 
     // Plan definitions
     // plan.price = cost to buy the plan
-    // plan.earning = reward per day
+    // plan.earning = reward per shortlink
     const PLANS = [
-      { id: 'Bronze', price: 3000, earning: 200 naira daily },
-      { id: 'Silver', price: 5000, earning: 350 naira daily },
-      { id: 'Gold', price: 8000, earning: 540 naira daily },
-      { id: 'Platinum', price: 15000, earning: 1000 naira daily }
+      { id: 'Bronze', price: 3000, earning: 100 },
+      { id: 'Silver', price: 5000, earning: 175 },
+      { id: 'Gold', price: 8000, earning: 270 },
+      { id: 'Platinum', price: 15000, earning: 500 }
     ];
 
     const plansGrid = document.getElementById('plansGrid');
@@ -215,7 +214,6 @@
 
     // Expiry helper: if plan expired -> revert to Basic in a transaction
     async function enforcePlanExpiryIfNeeded(uid, userDocData){
-      // userDocData expected to be object from Firestore (may be undefined)
       try{
         if(!uid) return false;
         const plan = userDocData?.plan || 'Basic';
@@ -228,23 +226,22 @@
         const userRef = doc(db, 'users', uid);
         await runTransaction(db, async (tx) => {
           const snap = await tx.get(userRef);
-          if(!snap.exists) return; // nothing to do
+          if(!snap.exists) return;
           const data = snap.data() || {};
           const currentExpiry = data.planExpiryAt || data.planExpiry || null;
-          const currentPlan = data.plan || 'Basic';
-          if(!currentExpiry) return; // nothing to do
+          if(!currentExpiry) return;
           if(Date.now() <= new Date(currentExpiry).getTime()) return; // another writer updated it
           // set plan back to Basic and clear expiry fields
           const updates = {
             plan: 'Basic',
-            planExpiredAt: new Date().toISOString()
+            planExpiredAt: new Date().toISOString(),
+            planExpiryAt: null,
+            planPurchasedAt: null
           };
-          updates['planExpiryAt'] = null; // remove expiry (merged null overwrites)
-          updates['planPurchasedAt'] = null;
           tx.set(userRef, updates, { merge: true });
         });
 
-        // optionally create a transaction record to mark expiry event (optional)
+        // create a transaction record to mark expiry event
         await addDoc(collection(db, 'users', uid, 'transactions'), {
           source: `Plan expired — reverted to Basic`,
           amount: 0,
@@ -316,7 +313,7 @@
       await refreshUserUI();
     });
 
-    // navigation handlers for bottom nav
+    // bottom nav handlers
     document.getElementById('navHome').addEventListener('click', ()=> window.location.href='catalog.html');
     document.getElementById('navConvert').addEventListener('click', ()=> window.location.href='convert.html');
     document.getElementById('navCenter').addEventListener('click', ()=> window.location.href='center.html');
