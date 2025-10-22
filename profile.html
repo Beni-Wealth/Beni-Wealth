@@ -169,6 +169,30 @@
     function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
     function safeText(v){ return typeof v === 'string' && v.trim() ? v.trim() : '—'; }
 
+    // helper to display Firestore Timestamp / ISO string / null
+    function formatCreatedAt(value){
+      if(!value) return '—';
+      try {
+        // Firestore Timestamp object has toDate()
+        if (value && typeof value.toDate === 'function') {
+          return new Date(value.toDate()).toLocaleString();
+        }
+        // raw object { seconds:..., nanoseconds:... }
+        if (value && typeof value.seconds === 'number') {
+          return new Date(value.seconds * 1000).toLocaleString();
+        }
+        // iso string
+        if (typeof value === 'string') {
+          const d = new Date(value);
+          if (!isNaN(d.getTime())) return d.toLocaleString();
+        }
+        // fallback
+        return String(value);
+      } catch (e) {
+        return '—';
+      }
+    }
+
     // Enable/disable save username button based on changes
     usernameInput.addEventListener('input', () => {
       const v = usernameInput.value.trim();
@@ -197,16 +221,17 @@
       saveNameBtn.textContent = 'Saving...';
 
       try {
-        // update auth displayName
-        await updateProfile(auth.currentUser, { displayName: newName });
-      } catch(e){
-        console.warn('updateProfile failed:', e);
-        // continue to update Firestore even if updateProfile fails
-      }
+        // update auth displayName (best-effort)
+        try {
+          await updateProfile(auth.currentUser, { displayName: newName });
+        } catch(e){
+          console.warn('updateProfile failed:', e);
+        }
 
-      try {
+        // update Firestore user doc and set updatedAt via serverTimestamp
         const userRef = doc(db, 'users', currentUid);
-        await setDoc(userRef, { username: newName, updatedAt: new Date().toISOString() }, { merge: true });
+        await setDoc(userRef, { username: newName, updatedAt: serverTimestamp() }, { merge: true });
+
         initialUsername = newName;
         displayNameEl.textContent = newName;
         avatar.textContent = newName.charAt(0).toUpperCase();
@@ -240,19 +265,17 @@
 
         // update password
         await updatePassword(auth.currentUser, nxt);
-        // optional: record in audit — DON'T store the password anywhere
+        // record last password change time (serverTimestamp)
         const userRef = doc(db, 'users', currentUid);
-        await updateDoc(userRef, { lastPasswordChangeAt: new Date().toISOString() }).catch(()=>{});
+        await updateDoc(userRef, { lastPasswordChangeAt: serverTimestamp() }).catch(()=>{});
         toast('Password updated successfully');
         currentPass.value = '';
         newPass.value = '';
       } catch(err){
         console.error('Password change failed', err);
-        // common errors: wrong-password, auth/requires-recent-login
         if(err && err.code === 'auth/wrong-password') {
           toast('Current password is incorrect');
         } else if(err && err.code === 'auth/requires-recent-login') {
-          // prompt the user to re-login
           if(confirm('You need to re-login to change your password. Sign out now?')) {
             try { await signOut(auth); window.location.href = 'login.html'; } catch(e){ window.location.href='login.html'; }
           }
@@ -280,7 +303,7 @@
     document.getElementById('navNews').addEventListener('click', ()=> window.location.href='news.html');
     document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='assets.html');
 
-    // Listen to auth and populate UI
+    // Listen to auth and populate UI, ensuring createdAt is set in user doc (serverTimestamp)
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       currentUid = user ? user.uid : null;
@@ -303,7 +326,8 @@
       // show basic auth info first (fast)
       displayNameEl.textContent = user.displayName || user.email || 'User';
       emailLine.textContent = user.email || '—';
-      joinedLine.textContent = user.metadata && user.metadata.creationTime ? `Joined: ${new Date(user.metadata.creationTime).toLocaleString()}` : 'Joined: —';
+      // joinedLine will be filled from Firestore createdAt below (preferred)
+      joinedLine.textContent = 'Joined: loading...';
       avatar.textContent = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
       metaUid.textContent = user.uid.slice(0,10);
 
@@ -313,26 +337,34 @@
         const snap = await getDoc(userRef);
         let data = snap.exists ? snap.data() : null;
 
-        // if no doc, create minimal doc (default Basic)
+        // if no doc, create minimal doc with createdAt set via serverTimestamp
         if(!data) {
-          await setDoc(userRef, { username: user.displayName || null, plan: 'Basic', balance: 0, createdAt: new Date().toISOString() }, { merge: true });
-          data = { username: user.displayName || null, plan:'Basic', balance:0, createdAt: new Date().toISOString() };
+          await setDoc(userRef, {
+            username: user.displayName || null,
+            plan: 'Basic',
+            balance: 0,
+            createdAt: serverTimestamp()
+          }, { merge: true });
+          // re-fetch to get the server timestamp (it will appear as a Timestamp)
+          const snap2 = await getDoc(userRef);
+          data = snap2.exists ? snap2.data() : null;
         }
 
         // fill fields
-        const username = data.username || user.displayName || '';
+        const username = data?.username || user.displayName || '';
         usernameInput.value = username;
         initialUsername = username;
         saveNameBtn.disabled = true;
         discardNameBtn.style.display = 'none';
 
-        // joined date prefer user.createdAt then auth metadata
-        const joined = data.createdAt || user.metadata && user.metadata.creationTime || null;
-        joinedLine.textContent = joined ? `Joined: ${new Date(joined).toLocaleString()}` : 'Joined: —';
+        // joined date: prefer users/{uid}.createdAt (Firestore serverTimestamp), fall back to auth metadata
+        const createdAt = data?.createdAt || data?.createdAtISO || (user.metadata && user.metadata.creationTime) || null;
+        joinedLine.textContent = 'Joined: ' + (createdAt ? formatCreatedAt(createdAt) : '—');
 
-        metaPlan.textContent = data.plan || 'Basic';
-        metaBalance.textContent = formatN(Number(data.balance || 0));
-        metaExpiry.textContent = data.planExpiryAt ? new Date(data.planExpiryAt).toLocaleString() : '—';
+        metaPlan.textContent = data?.plan || 'Basic';
+        metaBalance.textContent = formatN(Number(data?.balance || 0));
+        metaExpiry.textContent = data?.planExpiryAt ? formatCreatedAt(data.planExpiryAt) : '—';
+
         // update display also
         displayNameEl.textContent = username || (user.displayName || user.email || 'User');
         avatar.textContent = (username || user.displayName || user.email || 'U').charAt(0).toUpperCase();
@@ -340,6 +372,8 @@
       } catch(err){
         console.error('Failed to load user doc', err);
         toast('Could not load profile data (see console)');
+        // fallback to auth metadata for joined date
+        joinedLine.textContent = user.metadata && user.metadata.creationTime ? `Joined: ${new Date(user.metadata.creationTime).toLocaleString()}` : 'Joined: —';
       }
     });
   </script>
