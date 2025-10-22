@@ -18,13 +18,13 @@
     .greet{flex:1}
     .greet h1{margin:0;font-size:22px}
     .greet p{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .plan-badge{display:inline-block;margin-top:8px;padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,#ffffff08,#ffffff06);color:var(--muted);font-weight:600;font-size:13px}
     .icons{display:flex;gap:12px;align-items:center}
     .icon-btn{width:44px;height:44px;border-radius:12px;background:var(--glass);display:grid;place-items:center;color:var(--text);cursor:pointer;border:0}
 
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:20px;padding:18px 22px;margin:8px 0;box-shadow:0 16px 40px rgba(0,0,0,0.6)}
     .small{font-size:14px;color:var(--muted)}
     .balance-row{display:flex;align-items:center;gap:12px}
-    /* Reduced balance size from 52px -> 36px */
     .big-balance{font-size:36px;font-weight:800;line-height:1}
     .approx{margin-top:8px;color:var(--muted);font-size:14px}
 
@@ -40,28 +40,14 @@
     .li-text h3{margin:0;color:var(--accent-end);font-size:18px}
     .li-text p{margin:6px 0 0;color:var(--muted);font-size:13px}
 
-    /* Bottom nav: make items more spread out like your screenshot */
-    .bottom-nav{
-      position:fixed;
-      left:18px;
-      right:18px;
-      bottom:16px;
-      background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));
-      padding:14px 18px;
-      border-radius:40px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      box-shadow:0 14px 40px rgba(2,6,23,0.6);
-      backdrop-filter: blur(6px);
-      opacity: 0.98;
-    }
-
-    /* Give each nav slot a fixed width so spacing is wide and even */
+    .bottom-nav{position:fixed;left:18px;right:18px;bottom:16px;background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));padding:14px 18px;border-radius:40px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 14px 40px rgba(2,6,23,0.6);backdrop-filter: blur(6px);opacity: 0.98}
     .nav-btn{width:64px;text-align:center;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center}
     .nav-btn .icon-wrap{display:block;margin-bottom:6px;width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.04);display:grid;place-items:center;font-size:18px}
     .nav-center{flex:0 0 100px;display:flex;justify-content:center}
     .nav-center .center-btn{width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-size:26px;box-shadow:0 12px 36px rgba(61,46,111,0.35);transform:translateY(-22px)}
+
+    .plan-line{margin-top:10px;color:var(--muted);font-size:13px}
+    .plan-inline-strong{color:var(--accent-start);font-weight:800}
 
     .error{color:#ffb3b3;margin-bottom:12px}
     @media(min-width:900px){body{padding:40px 80px}}
@@ -74,6 +60,7 @@
     <div class="greet">
       <h1 id="greeting">Hello, User</h1>
       <p id="uidline">UID: -</p>
+      <div class="plan-badge" id="planBadge">Plan: Basic</div>
     </div>
     <div class="icons">
       <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
@@ -89,6 +76,7 @@
       <div>
         <div class="big-balance" id="balance">₦0.00</div>
         <div class="approx" id="approx">≈ ₦0.00</div>
+        <div class="plan-line">Your plan: <span id="userPlan" class="plan-inline-strong">Basic</span></div>
       </div>
       <div style="margin-left:auto;">
         <button class="icon-btn" id="eyeBtn" aria-pressed="false" aria-label="Hide balance" title="Hide/Show balance">👁️</button>
@@ -139,7 +127,7 @@
   <div class="bottom-nav" role="navigation" aria-label="Main navigation">
     <div class="nav-btn" id="navHome"><div class="icon-wrap">🏠</div><span>Home</span></div>
     <div class="nav-btn" id="navConvert"><div class="icon-wrap">🔁</div><span>Convert</span></div>
-    <div class="nav-center"><div class="center-btn" id="navCenter">➕</div></div>
+    <div class="nav-center"><div class="center-btn" id="navCenter">⚖️</div></div>
     <div class="nav-btn" id="navNews"><div class="icon-wrap">💬</div><span>News</span></div>
     <div class="nav-btn" id="navAssets"><div class="icon-wrap">👤</div><span>Assets</span></div>
   </div>
@@ -147,7 +135,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // Beni-Wealth config
     const firebaseConfig = {
@@ -172,6 +160,11 @@
     const approxEl = document.getElementById('approx');
     const eyeBtn = document.getElementById('eyeBtn');
     const assetsError = document.getElementById('assetsError');
+    const planBadge = document.getElementById('planBadge');
+    const userPlanEl = document.getElementById('userPlan');
+
+    // Plan to reward mapping
+    const PLAN_REWARDS = { Bronze:100, Silver:175, Gold:270, Platinum:500, Basic:0 };
 
     function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
     function gen5(){ return Math.floor(10000 + Math.random()*90000).toString(); }
@@ -243,6 +236,10 @@
         const demo = gen5();
         uidLine.textContent = `UID: ${demo}`;
         greetingEl.textContent = 'Hello, User';
+        // show Basic plan for guests
+        planBadge.textContent = 'Plan: Basic';
+        userPlanEl.textContent = 'Basic';
+        planRewardEl.textContent = '₦0';
         return;
       }
 
@@ -256,11 +253,17 @@
           if(!snap.exists()){
             greetingEl.textContent = user.displayName ? `Hi, ${user.displayName}` : 'Hello, User';
             avatarEl.textContent = (user.displayName || (user.email && user.email[0]) || 'U').charAt(0).toUpperCase();
+            // create minimal user doc with default Basic plan
+            await setDoc(uRef, { plan: 'Basic', balance: 0 }, { merge: true });
             const fb = await tryBalanceFallback(user.uid);
             const val = fb !== null ? fb : 0;
             balanceEl.dataset.realText = formatN(val);
             approxEl.dataset.realText = `≈ ${formatN(val)}`;
             setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
+            // show plan
+            planBadge.textContent = 'Plan: Basic • Reward: ₦0';
+            userPlanEl.textContent = 'Basic';
+            planRewardEl.textContent = '₦0';
             return;
           }
           const data = snap.data();
@@ -273,10 +276,18 @@
             avatarEl.textContent = (user.email && user.email[0]) ? user.email[0].toUpperCase() : 'U';
           }
 
+          // balance
           const balNum = Number(data.balance ?? 0);
           balanceEl.dataset.realText = formatN(balNum);
           approxEl.dataset.realText = `≈ ${formatN(balNum)}`;
           setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
+
+          // plan detection: support multiple keys and fallback to Basic
+          const plan = data.plan || data.type || data.membership || data.tier || 'Basic';
+          const reward = PLAN_REWARDS[plan] || 0;
+
+          planBadge.textContent = `Plan: ${plan}`;
+          userPlanEl.textContent = plan;
 
         }catch(e){
           console.error('onSnapshot handler error', e);
@@ -304,6 +315,12 @@
               balanceEl.dataset.realText = formatN(bal);
               approxEl.dataset.realText = `≈ ${formatN(bal)}`;
               setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
+
+              const plan = d.plan || d.type || d.membership || d.tier || 'Basic';
+              const reward = PLAN_REWARDS[plan] || 0;
+              planBadge.textContent = `Plan: ${plan} • Reward: ₦${reward.toLocaleString()}`;
+              userPlanEl.textContent = plan;
+              planRewardEl.textContent = `₦${reward}`;
             } else {
               const fb = await tryBalanceFallback(user.uid);
               const val = fb !== null ? fb : 0;
@@ -317,4 +334,4 @@
     });
   </script>
 </body>
-      </html>
+</html>
