@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Profile</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.62);
@@ -101,7 +101,7 @@
     </div>
   </div>
 
-  <!-- bottom nav (same compact spaced style) -->
+  <!-- bottom nav (compact spaced) -->
   <div class="bottom-nav" role="navigation" aria-label="Main navigation">
     <div class="nav-btn" id="navHome"><div class="icon-wrap">🏠</div><span>Home</span></div>
     <div class="nav-btn" id="navConvert"><div class="icon-wrap">🔁</div><span>Convert</span></div>
@@ -167,27 +167,29 @@
     }
 
     function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
-    function safeText(v){ return typeof v === 'string' && v.trim() ? v.trim() : '—'; }
 
-    // helper to display Firestore Timestamp / ISO string / null
+    // robust createdAt formatter
     function formatCreatedAt(value){
-      if(!value) return '—';
+      if (!value) return '—';
       try {
-        // Firestore Timestamp object has toDate()
+        // Firestore Timestamp instance (has toDate())
         if (value && typeof value.toDate === 'function') {
-          return new Date(value.toDate()).toLocaleString();
+          const d = value.toDate();
+          return isNaN(d.getTime()) ? '—' : d.toLocaleString();
         }
-        // raw object { seconds:..., nanoseconds:... }
-        if (value && typeof value.seconds === 'number') {
-          return new Date(value.seconds * 1000).toLocaleString();
+        // plain object with seconds/nanoseconds
+        if (typeof value === 'object' && typeof value.seconds === 'number') {
+          const ms = value.seconds * 1000 + (value.nanoseconds || 0) / 1e6;
+          const d = new Date(ms);
+          return isNaN(d.getTime()) ? '—' : d.toLocaleString();
         }
-        // iso string
+        // ISO string
         if (typeof value === 'string') {
           const d = new Date(value);
-          if (!isNaN(d.getTime())) return d.toLocaleString();
+          return isNaN(d.getTime()) ? '—' : d.toLocaleString();
         }
-        // fallback
-        return String(value);
+        // If it's something else (server sentinel) show pending instead of Invalid Date
+        return 'Pending…';
       } catch (e) {
         return '—';
       }
@@ -222,11 +224,7 @@
 
       try {
         // update auth displayName (best-effort)
-        try {
-          await updateProfile(auth.currentUser, { displayName: newName });
-        } catch(e){
-          console.warn('updateProfile failed:', e);
-        }
+        try { await updateProfile(auth.currentUser, { displayName: newName }); } catch(e) { console.warn('updateProfile failed:', e); }
 
         // update Firestore user doc and set updatedAt via serverTimestamp
         const userRef = doc(db, 'users', currentUid);
@@ -326,7 +324,6 @@
       // show basic auth info first (fast)
       displayNameEl.textContent = user.displayName || user.email || 'User';
       emailLine.textContent = user.email || '—';
-      // joinedLine will be filled from Firestore createdAt below (preferred)
       joinedLine.textContent = 'Joined: loading...';
       avatar.textContent = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
       metaUid.textContent = user.uid.slice(0,10);
@@ -334,10 +331,10 @@
       // fetch user doc
       try {
         const userRef = doc(db, 'users', user.uid);
-        const snap = await getDoc(userRef);
+        let snap = await getDoc(userRef);
         let data = snap.exists ? snap.data() : null;
 
-        // if no doc, create minimal doc with createdAt set via serverTimestamp
+        // if no doc, create minimal doc with createdAt serverTimestamp and poll for resolved timestamp
         if(!data) {
           await setDoc(userRef, {
             username: user.displayName || null,
@@ -345,12 +342,25 @@
             balance: 0,
             createdAt: serverTimestamp()
           }, { merge: true });
-          // re-fetch to get the server timestamp (it will appear as a Timestamp)
-          const snap2 = await getDoc(userRef);
-          data = snap2.exists ? snap2.data() : null;
+
+          // poll a few times (total ~3s) to let serverTimestamp resolve and avoid "Invalid Date"
+          for (let i = 0; i < 6; i++) {
+            await new Promise(r => setTimeout(r, 500));
+            snap = await getDoc(userRef);
+            if (snap.exists && snap.data() && snap.data().createdAt) {
+              data = snap.data();
+              break;
+            }
+          }
+
+          // final fallback: attempt one last read
+          if (!data) {
+            snap = await getDoc(userRef);
+            data = snap.exists ? snap.data() : null;
+          }
         }
 
-        // fill fields
+        // fill fields (using createdAt from Firestore if present)
         const username = data?.username || user.displayName || '';
         usernameInput.value = username;
         initialUsername = username;
@@ -378,4 +388,5 @@
     });
   </script>
 </body>
-</html>
+  </html>
+  
