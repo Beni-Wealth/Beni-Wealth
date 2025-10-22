@@ -12,7 +12,8 @@
       --text:#e9f0ff;
     }
     *{box-sizing:border-box}
-    body{margin:0;padding:28px;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text)}
+    /* increased bottom padding so fixed bottom-nav doesn't obscure content */
+    body{margin:0;padding:28px 28px 180px;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text)}
     .wrap{max-width:980px;margin:0 auto}
     h1{margin:0 0 6px;font-size:20px}
     p.lead{margin:6px 0 18px;color:var(--muted)}
@@ -35,7 +36,7 @@
     .nav-btn .icon-wrap{margin-bottom:6px;width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.04);display:grid;place-items:center;font-size:16px}
     .nav-center{flex:0 0 86px;display:flex;justify-content:center}
     .nav-center .center-btn{width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-size:24px;box-shadow:0 10px 30px rgba(61,46,111,0.28);transform:translateY(-18px)}
-    @media(max-width:520px){body{padding:16px} .nav-btn{width:50px} .nav-center .center-btn{width:60px;height:60px;transform:translateY(-14px)}}
+    @media(max-width:520px){body{padding:16px 16px 140px} .nav-btn{width:50px} .nav-center .center-btn{width:60px;height:60px;transform:translateY(-14px)}}
   </style>
 </head>
 <body>
@@ -99,7 +100,11 @@
         <div class="row"><div class="label">User ID</div><div id="metaUid">—</div></div>
       </div>
     </div>
+
   </div>
+
+  <!-- spacer so content can scroll above the fixed nav (prevents obstruction) -->
+  <div style="height:140px;"></div>
 
   <!-- bottom nav (compact spaced) -->
   <div class="bottom-nav" role="navigation" aria-label="Main navigation">
@@ -299,7 +304,7 @@
     document.getElementById('navConvert').addEventListener('click', ()=> window.location.href='convert.html');
     document.getElementById('navCenter').addEventListener('click', ()=> window.location.href='center.html');
     document.getElementById('navNews').addEventListener('click', ()=> window.location.href='news.html');
-    document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='assets.html');
+    document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='dashboard.html');
 
     // Listen to auth and populate UI, ensuring createdAt is set in user doc (serverTimestamp)
     onAuthStateChanged(auth, async (user) => {
