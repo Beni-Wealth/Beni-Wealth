@@ -7,263 +7,149 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg: #F7F3E3;
-      --panel: #FFFFFF;
-      --ink: #0B2545;
-      --muted: #6B7A8A;
-      --accent: #1976D2;
-      --success: #2e7d32;
-      --radius: 12px;
-      --maxw: 980px;
+      --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.62);
+      --accent-start:#2fe0b8; --accent-end:#7a5fff; --glass:rgba(255,255,255,0.03);
+      --text:#e9f0ff;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:'Poppins',Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
-    body{display:flex;justify-content:center;padding:20px 16px 60px;}
+    body{margin:0;padding:20px 18px 160px;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text)}
+    .header{display:flex;align-items:center;gap:14px;padding:6px 4px 18px}
+    .avatar{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:800;font-size:22px;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+    .greet{flex:1}
+    .greet h1{margin:0;font-size:22px}
+    .greet p{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .icons{display:flex;gap:12px;align-items:center}
+    .icon-btn{width:44px;height:44px;border-radius:12px;background:var(--glass);display:grid;place-items:center;color:var(--text);cursor:pointer;border:0}
 
-    /* header - pointer-events: auto so the hamburger receives clicks */
-    header.app-header{
-      position:fixed; left:50%; transform:translateX(-50%); top:12px;
-      width:100%; max-width:var(--maxw); height:64px; z-index:1300;
-      display:flex; align-items:center; justify-content:space-between; padding:8px 12px;
-      pointer-events:auto;
-      background:rgba(255,255,255,0.6); backdrop-filter: blur(4px); border-radius:10px;
-      box-shadow:0 10px 30px rgba(11,37,69,0.04);
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:20px;padding:18px 22px;margin:8px 0;box-shadow:0 16px 40px rgba(0,0,0,0.6)}
+    .small{font-size:14px;color:var(--muted)}
+    .balance-row{display:flex;align-items:center;gap:12px}
+    /* Reduced balance size from 52px -> 36px */
+    .big-balance{font-size:36px;font-weight:800;line-height:1}
+    .approx{margin-top:8px;color:var(--muted);font-size:14px}
+
+    .buttons{display:flex;gap:14px;margin-top:16px}
+    .btn{flex:1;padding:12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;text-align:center}
+    .btn.primary{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+
+    .list{margin-top:18px;display:flex;flex-direction:column;gap:14px}
+    .list-item{background:rgba(255,255,255,0.02);border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:14px;cursor:pointer;border:1px solid rgba(255,255,255,0.02)}
+    .li-left{display:flex;gap:14px;align-items:center}
+    .li-icon{width:56px;height:56px;border-radius:12px;background:rgba(255,255,255,0.02);display:grid;place-items:center;font-size:22px}
+    .li-text h3{margin:0;color:var(--accent-end);font-size:18px}
+    .li-text p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    /* Bottom nav: make items more spread out like your screenshot */
+    .bottom-nav{
+      position:fixed;
+      left:18px;
+      right:18px;
+      bottom:16px;
+      background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));
+      padding:14px 18px;
+      border-radius:40px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      box-shadow:0 14px 40px rgba(2,6,23,0.6);
+      backdrop-filter: blur(6px);
+      opacity: 0.98;
     }
-    .header-inner{ display:flex; align-items:center; gap:12px; width:100%; justify-content:space-between;}
-    .left-controls{display:flex;align-items:center;gap:10px}
-    .hamburger{width:52px;height:52px;border-radius:12px;background:var(--panel);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 28px rgba(11,37,69,0.06);border:1px solid rgba(11,37,69,0.04);transition:transform .18s}
-    .hamburger .bar{width:20px;height:2px;background:var(--ink);display:block;margin:3px 0;border-radius:2px;transition:transform .18s, opacity .12s}
-    .hamburger.open .bar:nth-child(1) { transform: translateY(6px) rotate(45deg); }
-    .hamburger.open .bar:nth-child(2) { opacity:0; transform: scale(0); }
-    .hamburger.open .bar:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-    .icon-btn{width:44px;height:44px;border-radius:12px;background:var(--panel);display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(11,37,69,0.03)}
-    .brand img{height:44px;border-radius:10px;box-shadow:0 10px 30px rgba(11,37,69,0.06)}
+    /* Give each nav slot a fixed width so spacing is wide and even */
+    .nav-btn{width:64px;text-align:center;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center}
+    .nav-btn .icon-wrap{display:block;margin-bottom:6px;width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.04);display:grid;place-items:center;font-size:18px}
+    .nav-center{flex:0 0 100px;display:flex;justify-content:center}
+    .nav-center .center-btn{width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-size:26px;box-shadow:0 12px 36px rgba(61,46,111,0.35);transform:translateY(-22px)}
 
-    main.stage{width:100%; max-width:var(--maxw); margin-top:96px; display:grid; gap:20px;}
-
-    /* left sidebar (overlay) */
-    .sidebar {
-      position:fixed; left:0; top:0; height:100vh; width:100%;
-      transform:translateX(-100%);
-      background:rgba(255,255,255,0.98); box-shadow:2px 0 24px rgba(0,0,0,0.08); z-index:2200; overflow:auto;
-      transition: transform .34s cubic-bezier(.2,.9,.3,1);
-      display:flex; flex-direction:column; gap:12px; padding:18px; border-top-right-radius:14px; border-bottom-right-radius:14px;
-      will-change: transform;
-    }
-    @media(min-width:1100px){
-      .sidebar { width: clamp(420px, 36vw, 520px); left: calc(50% - 260px); border-radius:14px; top:28px; height:calc(100vh - 56px); }
-      .sidebar.open { transform:translateX(0); left: calc(50% - 260px); }
-    }
-    .sidebar.open { transform:translateX(0); }
-
-    .side-head { display:flex; align-items:center; gap:12px; justify-content:space-between; }
-    .avatar-wrap{display:flex;align-items:center;gap:12px}
-    #avatar {
-      width:72px;height:72px;border-radius:14px;background:linear-gradient(180deg,#1976D2,#115293);color:#fff;font-weight:700;font-size:28px;
-      display:flex;align-items:center;justify-content:center;overflow:hidden;
-    }
-    #avatar img { width:100%; height:100%; object-fit:cover; display:block; }
-
-    .user-meta { display:flex; flex-direction:column; gap:6px; }
-    .user-meta .name { font-size:16px; font-weight:700; color:var(--ink); }
-    .user-meta .uid { font-size:13px; color:var(--muted); }
-    .ref-row { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); }
-    .ref-row button { padding:6px 8px; border-radius:8px; border:none; background:var(--accent); color:#fff; cursor:pointer; font-weight:600; }
-
-    .close-x { background:transparent;border:none;font-size:22px;cursor:pointer;color:var(--accent); }
-
-    nav.side-nav{margin-top:12px;display:flex;flex-direction:column;gap:8px;padding-right:8px}
-    .nav-item { display:flex; align-items:center; gap:12px; padding:10px; border-radius:10px; text-decoration:none; color:var(--ink); background:transparent; transition: background .12s, transform .12s; }
-    .nav-item:focus, .nav-item:hover { background: rgba(25,118,210,0.04); transform: translateY(-2px); outline: none; }
-    .nav-emoji{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;background:rgba(25,118,210,0.08)}
-    .nav-label{font-weight:600}
-
-    .side-footer{margin-top:auto;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px}
-
-    .backdrop{position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.24);opacity:0;pointer-events:none;z-index:2100;transition:opacity .22s}
-    .backdrop.visible{opacity:1;pointer-events:auto}
-
-    /* content layout */
-    .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
-    .left-col{display:flex;flex-direction:column;gap:16px}
-    .card{background:var(--panel);border-radius:12px;padding:16px;box-shadow:0 6px 24px rgba(11,37,69,0.05)}
-    .big-balance{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:22px;border-radius:12px}
-    .label{font-weight:700;color:var(--muted)}
-    .amount{font-size:36px;color:var(--accent);font-weight:800}
-
-    .stats-row{display:flex;gap:12px}
-    .stat{flex:1;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(25,118,210,0.04), rgba(25,118,210,0.01));text-align:center}
-    .stat .num{font-weight:800;font-size:18px}
-    .stat .lbl{color:var(--muted);font-size:13px;margin-top:6px}
-
-    .right-col{display:flex;flex-direction:column;gap:12px}
-    .tx-list table{width:100%;border-collapse:collapse}
-    .tx-list th,.tx-list td{text-align:left;padding:8px 0;border-bottom:1px solid #f3f3f3;font-size:14px;color:var(--ink)}
-    .tx-list thead th{color:var(--muted);font-weight:700;border-bottom:2px solid #eee}
-
-    .upload-row{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-
-    .progress-wrap{margin-top:8px}
-    .progress{height:8px;background:#e9f3ff;border-radius:999px;overflow:hidden}
-    .progress > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#3aa0ff)}
-
-    .toast{position:fixed;right:20px;bottom:26px;background:var(--panel);padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(11,37,69,0.08);border-left:4px solid var(--accent);z-index:2400;display:none}
-    .toast.show{display:block}
-
-    @media (max-width:980px){ .container{grid-template-columns:1fr} .right-col{order:2} .sidebar.open{width:100%} }
+    .error{color:#ffb3b3;margin-bottom:12px}
+    @media(min-width:900px){body{padding:40px 80px}}
+    @media(max-width:360px){ .nav-btn{width:52px} .nav-center .center-btn{width:70px;height:70px} }
   </style>
 </head>
 <body>
-  <!-- on-page error logger (visible for Acode/mobile) -->
-  <pre id="__dev_errors" style="position:fixed;left:8px;right:8px;bottom:8px;max-height:34vh;overflow:auto;background:rgba(0,0,0,0.78);color:#fff;padding:10px;border-radius:8px;font-family:monospace;font-size:12px;z-index:999999;display:none"></pre>
+  <div class="header">
+    <div class="avatar" id="avatar">U</div>
+    <div class="greet">
+      <h1 id="greeting">Hello, User</h1>
+      <p id="uidline">UID: -</p>
+    </div>
+    <div class="icons">
+      <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+      <button class="icon-btn" id="chatBtn" title="Chat">💬</button>
+    </div>
+  </div>
 
-  <!-- toast -->
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="assetsError"></div>
 
-  <!-- backdrop -->
-  <div id="backdrop" class="backdrop" aria-hidden="true"></div>
-
-  <!-- sidebar -->
-  <aside id="sidebar" class="sidebar" aria-hidden="true" aria-modal="true" role="dialog">
-    <div class="side-head">
-      <div class="avatar-wrap">
-        <div id="avatar" aria-hidden="true">U</div>
-        <div class="user-meta">
-          <div id="sb-name" class="name">User</div>
-          <div id="sb-uid" class="uid">UID: -----</div>
-          <div class="ref-row">Referral: <strong id="ref-code">-</strong><button id="copy-ref">Copy</button></div>
-        </div>
+  <div class="card">
+    <div class="small">Total Assets (NGN)</div>
+    <div class="balance-row" style="justify-content:space-between;align-items:center">
+      <div>
+        <div class="big-balance" id="balance">₦0.00</div>
+        <div class="approx" id="approx">≈ ₦0.00</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <button id="side-notif" class="icon-btn" title="Notifications">🔔</button>
-        <button id="side-profile" class="icon-btn" title="Profile">👤</button>
-        <button id="close-x" class="close-x" aria-label="Close menu">×</button>
+      <div style="margin-left:auto;">
+        <button class="icon-btn" id="eyeBtn" aria-pressed="false" aria-label="Hide balance" title="Hide/Show balance">👁️</button>
       </div>
     </div>
 
-    <div class="card">
-      <div style="font-weight:700;margin-bottom:8px">Profile photo</div>
-      <div class="upload-row">
-        <input id="photo-input" type="file" accept="image/*" style="padding:6px" aria-label="Choose profile photo" />
-        <div id="preview-wrap" style="display:flex;align-items:center;gap:12px">
-          <div id="preview" style="width:72px;height:72px;border-radius:12px;background:#f3f3f3;display:flex;align-items:center;justify-content:center;color:#777">Preview</div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <button id="upload-btn" style="padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer">Upload Photo</button>
-            <div id="upload-status" style="font-size:13px;color:var(--muted)"></div>
-            <div id="upload-progress" class="progress-wrap" style="display:none">
-              <div class="progress" aria-hidden="true"><i id="upload-progress-bar"></i></div>
-              <div id="upload-percent" style="font-size:12px;color:var(--muted);margin-top:6px">0%</div>
-            </div>
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--muted);margin-top:6px">Max size 2.5MB (will compress if needed). Square images work best.</div>
-      </div>
+    <div class="buttons">
+      <div class="btn primary" id="rechargeBtn">Recharge</div>
+      <div class="btn ghost" id="withdrawBtn">Withdraw</div>
     </div>
+  </div>
 
-    <nav id="side-nav" class="side-nav" aria-label="Sidebar navigation">
-      <a class="nav-item" href="tasks.html"><div class="nav-emoji task-emoji">🧾</div><div class="nav-label">Completed Tasks</div></a>
-      <a class="nav-item" href="orders.html"><div class="nav-emoji">📦</div><div class="nav-label">Orders</div></a>
-      <a class="nav-item" href="shortlinks.html"><div class="nav-emoji">🔗</div><div class="nav-label">Shortlinks</div></a>
-      <a class="nav-item" href="terms.html"><div class="nav-emoji">📜</div><div class="nav-label">Terms</div></a>
-      <a class="nav-item" href="contact.html"><div class="nav-emoji">✉️</div><div class="nav-label">Contact Us</div></a>
-      <a id="signout-btn" class="nav-item" href="#"><div class="nav-emoji">⛔</div><div class="nav-label">Sign out</div></a>
-    </nav>
-
-    <div class="side-footer">
-      <div style="font-size:13px;color:var(--muted)">Beni-Wealth • v1.0</div>
-      <a href="profile.html" style="text-decoration:none;color:var(--accent);font-weight:600">View profile</a>
-    </div>
-  </aside>
-
-  <!-- header -->
-  <header class="app-header">
-    <div class="header-inner">
-      <div class="left-controls">
-        <button id="menu-btn" class="hamburger" aria-label="Open menu" title="Menu" aria-expanded="false">
-          <span style="display:flex;flex-direction:column;align-items:center">
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
-          </span>
-        </button>
-        <div class="brand"><img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="logo"></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;pointer-events:auto">
-        <button id="top-notif" class="icon-btn" title="Notifications">🔔</button>
-        <button id="top-profile" class="icon-btn" title="Profile"><span id="top-profile-placeholder">👤</span></button>
-      </div>
-    </div>
-  </header>
-
-  <!-- main content -->
-  <main class="stage" role="main">
-    <div class="container">
-      <div class="left-col">
-        <div class="card big-balance">
-          <div>
-            <div class="label">Main Balance</div>
-            <div id="main-balance" class="amount">₦0.00</div>
-            <div style="color:var(--muted);font-size:13px;margin-top:6px">Welcome back — nice to see you.</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-            <button id="withdraw-btn" style="background:var(--accent);border:none;color:#fff;padding:10px 14px;border-radius:8px;cursor:pointer">Withdraw</button>
-            <button id="tasks-btn" style="border:1px solid rgba(11,37,69,0.06);background:transparent;padding:8px 12px;border-radius:8px;cursor:pointer">View Tasks</button>
-          </div>
-        </div>
-
-        <div class="stats-row">
-          <div class="stat card">
-            <div class="num" id="completed-count">0</div>
-            <div class="lbl">Completed Tasks</div>
-          </div>
-          <div class="stat card">
-            <div class="num" id="orders-count">0</div>
-            <div class="lbl">Orders</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-weight:700">Quick Actions</div>
-            <div style="color:var(--muted);font-size:13px">Shortcuts</div>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:12px">
-            <button id="start-task" style="background:var(--accent);color:#fff;padding:10px;border-radius:8px;border:none;cursor:pointer">Start Task</button>
-            <button id="complete-shortlink" style="border:1px solid rgba(11,37,69,0.06);padding:10px;border-radius:8px;background:transparent;cursor:pointer">Complete Shortlink</button>
-            <button id="invite" style="border:1px solid rgba(11,37,69,0.06);padding:10px;border-radius:8px;background:transparent;cursor:pointer">Invite</button>
-          </div>
+  <div class="list">
+    <div class="list-item" id="ordersItem" role="button" aria-label="My Orders">
+      <div class="li-left">
+        <div class="li-icon">📄</div>
+        <div class="li-text">
+          <h3>My Orders</h3>
+          <p class="small">orders overview</p>
         </div>
       </div>
-
-      <aside class="right-col">
-        <div class="card tx-list">
-          <h3 style="margin-top:0">Recent Transactions</h3>
-          <table>
-            <thead><tr><th>Type</th><th>Date</th><th style="text-align:right">Amount</th></tr></thead>
-            <tbody id="txn-body"><tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">Loading...</td></tr></tbody>
-          </table>
-        </div>
-
-        <div class="card leaderboard">
-          <div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-weight:700">Leaderboard</div><div style="color:var(--muted);font-size:13px">Top referrers</div></div>
-          <ol style="margin:12px 0 0 18px;color:var(--ink)"><li style="margin-bottom:8px">Blamo — ₦12,000</li><li style="margin-bottom:8px">Ada — ₦10,200</li><li style="margin-bottom:8px">Chike — ₦8,400</li></ol>
-        </div>
-      </aside>
+      <div>›</div>
     </div>
-  </main>
 
-  <!-- Module script (Firebase + toggle + upload). Complete and robust. -->
+    <div class="list-item" id="tasksItem" role="button" aria-label="Available tasks">
+      <div class="li-left">
+        <div class="li-icon">🔎</div>
+        <div class="li-text">
+          <h3>available tasks</h3>
+          <p class="small">Market & promotions</p>
+        </div>
+      </div>
+      <div>›</div>
+    </div>
+
+    <div class="list-item" id="earningsItem" role="button" aria-label="Earnings Report">
+      <div class="li-left">
+        <div class="li-icon">📈</div>
+        <div class="li-text">
+          <h3>Earnings Report</h3>
+          <p class="small">Performance</p>
+        </div>
+      </div>
+      <div>›</div>
+    </div>
+  </div>
+
+  <div class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-btn" id="navHome"><div class="icon-wrap">🏠</div><span>Home</span></div>
+    <div class="nav-btn" id="navConvert"><div class="icon-wrap">🔁</div><span>Convert</span></div>
+    <div class="nav-center"><div class="center-btn" id="navCenter">⚖️</div></div>
+    <div class="nav-btn" id="navNews"><div class="icon-wrap">💬</div><span>News</span></div>
+    <div class="nav-btn" id="navAssets"><div class="icon-wrap">👤</div><span>Assets</span></div>
+  </div>
+
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-    import {
-      getFirestore, doc, collection, query, where, orderBy, limit,
-      onSnapshot, setDoc, getDocs, serverTimestamp
-    } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
-    import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Beni-Wealth Firebase config (from your script)
+    // Beni-Wealth config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -274,104 +160,161 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    // init firebase (best-effort)
-    let app, auth, db, storage;
-    try {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getFirestore(app);
-      storage = getStorage(app);
-      console.info('Firebase initialized');
-      showOnPageLog('Firebase initialized');
-    } catch (err) {
-      console.error('Firebase init failed', err);
-      showOnPageLog('Firebase init failed: ' + err.message);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI refs
+    const avatarEl = document.getElementById('avatar');
+    const greetingEl = document.getElementById('greeting');
+    const uidLine = document.getElementById('uidline');
+    const balanceEl = document.getElementById('balance');
+    const approxEl = document.getElementById('approx');
+    const eyeBtn = document.getElementById('eyeBtn');
+    const assetsError = document.getElementById('assetsError');
+
+    function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+    function gen5(){ return Math.floor(10000 + Math.random()*90000).toString(); }
+    function showAssetsError(msg){ assetsError.innerHTML = msg ? `<div class="error">${msg}</div>` : ''; }
+
+    function makeHiddenKey(uid){ return `bw_balance_hidden_${uid || 'guest'}`; }
+    function getPersistedHidden(uid){ try{ return localStorage.getItem(makeHiddenKey(uid)) === '1'; }catch(e){return false;} }
+    function setPersistedHidden(uid, hidden){ try{ localStorage.setItem(makeHiddenKey(uid), hidden ? '1' : '0'); }catch(e){} }
+
+    function setBalanceVisibility(hidden, uid){
+      setPersistedHidden(uid, hidden);
+      eyeBtn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+      eyeBtn.setAttribute('aria-label', hidden ? 'Show balance' : 'Hide balance');
+      eyeBtn.textContent = hidden ? '🙈' : '👁️';
+      if(hidden){
+        balanceEl.textContent = '₦••••';
+        approxEl.textContent = '≈ ₦••••';
+      } else {
+        balanceEl.textContent = balanceEl.dataset.realText || '₦0.00';
+        approxEl.textContent = approxEl.dataset.realText || `≈ ${balanceEl.dataset.realText || '₦0.00'}`;
+      }
     }
 
-    // DOM-ready helper
-    function onReady(fn) {
-      if (document.readyState !== 'loading') fn();
-      else document.addEventListener('DOMContentLoaded', fn);
+    eyeBtn.addEventListener('click', ()=>{
+      const uid = eyeBtn.dataset.uid || 'guest';
+      const hidden = getPersistedHidden(uid);
+      setBalanceVisibility(!hidden, uid);
+    });
+
+    // navigations
+    document.getElementById('settingsBtn').addEventListener('click', ()=> window.location.href='profile.html');
+    document.getElementById('chatBtn').addEventListener('click', ()=> window.location.href='chat.html');
+    document.getElementById('rechargeBtn').addEventListener('click', ()=> window.location.href='recharge.html');
+    document.getElementById('withdrawBtn').addEventListener('click', ()=> window.location.href='withdraw.html');
+    document.getElementById('navHome').addEventListener('click', ()=> window.location.href='catalog.html');
+    document.getElementById('navConvert').addEventListener('click', ()=> window.location.href='convert.html');
+    document.getElementById('navCenter').addEventListener('click', ()=> window.location.href='center.html');
+    document.getElementById('navNews').addEventListener('click', ()=> window.location.href='news.html');
+    document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='assets.html');
+
+    document.getElementById('ordersItem').addEventListener('click', ()=> window.location.href='orders.html');
+    document.getElementById('tasksItem').addEventListener('click', ()=> window.location.href='tasks.html');
+    document.getElementById('earningsItem').addEventListener('click', ()=> window.location.href='earnings.html');
+
+    async function tryBalanceFallback(uid){
+      try{
+        const bRef = doc(db, 'balances', uid);
+        const bSnap = await getDoc(bRef);
+        if(bSnap && bSnap.exists()){
+          const bd = bSnap.data();
+          if(bd && (bd.balance !== undefined || bd.amount !== undefined)) return Number(bd.balance ?? bd.amount ?? 0);
+        }
+      }catch(e){ console.warn('balances/{uid} lookup failed', e); }
+      try{
+        const col = collection(db, 'balances');
+        const q = query(col, where('userId','==', uid));
+        const snap = await getDocs(q);
+        if(!snap.empty){ const d = snap.docs[0].data(); return Number(d.balance ?? d.amount ?? 0); }
+      }catch(e){ console.warn('balances collection query failed', e); }
+      return null;
     }
 
-    // small helper to log to the on-page logger if present
-    function showOnPageLog(msg) {
-      try {
-        const p = document.getElementById('__dev_errors');
-        if (p) { p.style.display = 'block'; p.textContent += msg + '\\n'; p.scrollTop = p.scrollHeight; }
-      } catch (e) { /* ignore */ }
-    }
+    // wire auth and realtime
+    onAuthStateChanged(auth, async (user) => {
+      eyeBtn.dataset.uid = 'guest';
+      setBalanceVisibility(getPersistedHidden('guest'), 'guest');
 
-    onReady(() => {
-      // DOM refs
-      const menuBtn = document.getElementById('menu-btn');
-      const sidebar = document.getElementById('sidebar');
-      const closeX = document.getElementById('close-x');
-      const backdrop = document.getElementById('backdrop');
-      const sideNav = document.getElementById('side-nav');
-
-      // make sure header/menu accept clicks and are above overlays
-      const header = document.querySelector('.app-header') || document.querySelector('header');
-      if (header) header.style.pointerEvents = 'auto';
-      if (menuBtn) {
-        menuBtn.style.pointerEvents = 'auto';
-        menuBtn.style.zIndex = 3000;
+      if(!user){
+        const demo = gen5();
+        uidLine.textContent = `UID: ${demo}`;
+        greetingEl.textContent = 'Hello, User';
+        return;
       }
 
-      // Defensive checks
-      console.info('Initializing UI — found:', { menuBtn: !!menuBtn, sidebar: !!sidebar, backdrop: !!backdrop });
-      showOnPageLog('Initializing UI — found elements: menuBtn=' + !!menuBtn + ', sidebar=' + !!sidebar);
+      eyeBtn.dataset.uid = user.uid;
+      setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
+      uidLine.textContent = `UID: ${user.uid.slice(0,5)}`;
 
-      // Toggle helpers
-      function openSidebar() {
-        if (!sidebar || !backdrop) return;
-        sidebar.classList.add('open');
-        backdrop.classList.add('visible');
-        sidebar.setAttribute('aria-hidden','false');
-        backdrop.setAttribute('aria-hidden','false');
-        document.body.style.overflow = 'hidden';
-        if (menuBtn) { menuBtn.classList.add('open'); menuBtn.setAttribute('aria-expanded','true'); }
-        if (closeX) closeX.focus();
-        console.info('Sidebar opened');
-        showOnPageLog('Sidebar opened');
-      }
-      function closeSidebar() {
-        if (!sidebar || !backdrop) return;
-        sidebar.classList.remove('open');
-        backdrop.classList.remove('visible');
-        sidebar.setAttribute('aria-hidden','true');
-        backdrop.setAttribute('aria-hidden','true');
-        document.body.style.overflow = '';
-        if (menuBtn) { menuBtn.classList.remove('open'); menuBtn.setAttribute('aria-expanded','false'); menuBtn.focus(); }
-        console.info('Sidebar closed');
-        showOnPageLog('Sidebar closed');
-      }
-      function toggleSidebar(e) {
-        if (e && e.preventDefault) e.preventDefault();
-        if (!sidebar) return;
-        sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-      }
+      const uRef = doc(db, 'users', user.uid);
+      const unsub = onSnapshot(uRef, async (snap) => {
+        try{
+          if(!snap.exists()){
+            greetingEl.textContent = user.displayName ? `Hi, ${user.displayName}` : 'Hello, User';
+            avatarEl.textContent = (user.displayName || (user.email && user.email[0]) || 'U').charAt(0).toUpperCase();
+            const fb = await tryBalanceFallback(user.uid);
+            const val = fb !== null ? fb : 0;
+            balanceEl.dataset.realText = formatN(val);
+            approxEl.dataset.realText = `≈ ${formatN(val)}`;
+            setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
+            return;
+          }
+          const data = snap.data();
+          const username = data.username || user.displayName || (user.email ? user.email.split('@')[0] : null);
+          if(username){
+            greetingEl.textContent = `Hi, ${username}`;
+            avatarEl.textContent = username.charAt(0).toUpperCase();
+          } else {
+            greetingEl.textContent = 'Hello, User';
+            avatarEl.textContent = (user.email && user.email[0]) ? user.email[0].toUpperCase() : 'U';
+          }
 
-      // attach regular listeners
-      if (menuBtn && !menuBtn.__sidebarAttached) {
-        menuBtn.addEventListener('click', (ev) => {
-          console.log('menuBtn click event received (module)');
-          ev.__sidebar_handled = true;
-          toggleSidebar(ev);
-        });
-        menuBtn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') toggleSidebar(ev); });
-        menuBtn.__sidebarAttached = true;
-      }
+          const balNum = Number(data.balance ?? 0);
+          balanceEl.dataset.realText = formatN(balNum);
+          approxEl.dataset.realText = `≈ ${formatN(balNum)}`;
+          setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
 
-      if (backdrop && !backdrop.__attached) {
-        backdrop.addEventListener('click', (ev) => { if (ev && ev.preventDefault) ev.preventDefault(); closeSidebar(); });
-        backdrop.__attached = true;
-      }
-
-      if (closeX && !closeX.__attached) {
-        closeX.addEventListener('click', (ev) => { if (ev && ev.preventDefault) ev.preventDefault(); closeSidebar(); });
-        closeX.__attached = true;
-      }
-
-      if (!document.__sidebarEsc) {
-        document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && sidebar && s
+        }catch(e){
+          console.error('onSnapshot handler error', e);
+          if(e && e.code === 'permission-denied'){
+            showAssetsError('Permission denied: check Firestore rules for users/{uid} read access.');
+          } else {
+            showAssetsError('Error reading user data — see console.');
+          }
+        }
+      }, (err) => {
+        console.warn('users/{uid} onSnapshot error', err);
+        if(err && err.code === 'permission-denied'){
+          showAssetsError('Permission denied: check Firestore rules for users/{uid} read access.');
+        } else {
+          showAssetsError('Could not get live updates — falling back to one-time reads (see console).');
+        }
+        (async ()=>{
+          try{
+            const uSnap = await getDoc(uRef);
+            if(uSnap.exists()){
+              const d = uSnap.data();
+              const username = d.username || user.displayName || (user.email ? user.email.split('@')[0] : null);
+              if(username) { greetingEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); }
+              const bal = Number(d.balance ?? 0);
+              balanceEl.dataset.realText = formatN(bal);
+              approxEl.dataset.realText = `≈ ${formatN(bal)}`;
+              setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
+            } else {
+              const fb = await tryBalanceFallback(user.uid);
+              const val = fb !== null ? fb : 0;
+              balanceEl.dataset.realText = formatN(val);
+              approxEl.dataset.realText = `≈ ${formatN(val)}`;
+              setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
+            }
+          }catch(e){ console.error('fallback read failed', e); }
+        })();
+      });
+    });
+  </script>
+</body>
+      </html>
