@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.62);
+      --accent-start:#2fe0b8; --accent-end:#7a5fff; --glass:rgba(255,255,255,0.03);
+      --text:#e9f0ff;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;padding:28px;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text)}
+    .wrap{max-width:980px;margin:0 auto}
+    h1{margin:0 0 6px;font-size:20px}
+    p.lead{margin:6px 0 18px;color:var(--muted)}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:18px;margin:12px 0;box-shadow:0 12px 36px rgba(0,0,0,0.6)}
+    .row{display:flex;gap:12px;align-items:center}
+    .label{width:160px;color:var(--muted);font-size:14px}
+    input[type="text"], input[type="email"], input[type="password"]{
+      flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--text);
+    }
+    .small{font-size:13px;color:var(--muted)}
+    .muted{color:var(--muted)}
+    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
+    .actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .hint{margin-top:8px;color:var(--muted);font-size:13px}
+    .toast{position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;padding:10px 14px;border-radius:10px;font-weight:700;box-shadow:0 12px 40px rgba(0,0,0,0.6);z-index:9999}
+    .bottom-nav{position:fixed;left:18px;right:18px;bottom:16px;background:linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));padding:10px 16px;border-radius:36px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 12px 32px rgba(2,6,23,0.55);backdrop-filter: blur(6px);opacity:0.98;}
+    .nav-btn{width:56px;text-align:center;color:var(--muted);font-size:11px;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+    .nav-btn .icon-wrap{margin-bottom:6px;width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.04);display:grid;place-items:center;font-size:16px}
+    .nav-center{flex:0 0 86px;display:flex;justify-content:center}
+    .nav-center .center-btn{width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-size:24px;box-shadow:0 10px 30px rgba(61,46,111,0.28);transform:translateY(-18px)}
+    @media(max-width:520px){body{padding:16px} .nav-btn{width:50px} .nav-center .center-btn{width:60px;height:60px;transform:translateY(-14px)}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Profile & Settings</h1>
+    <p class="lead">Edit your profile, change password, and view account details.</p>
+
+    <div class="card" id="accountCard" aria-live="polite">
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
+        <div style="width:72px;height:72px;border-radius:14px;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-weight:800;font-size:20px" id="avatar">U</div>
+        <div>
+          <div id="displayName" style="font-weight:800;font-size:18px">—</div>
+          <div class="small muted" id="emailLine">—</div>
+          <div class="small muted" id="joinedLine">Joined: —</div>
+        </div>
+      </div>
+
+      <!-- Username editing -->
+      <div style="margin-top:8px">
+        <div class="row" style="margin-bottom:8px">
+          <div class="label">Username</div>
+          <input id="usernameInput" type="text" placeholder="Enter username">
+        </div>
+        <div class="actions">
+          <button id="saveNameBtn" class="btn primary" disabled>Save Username</button>
+          <button id="discardNameBtn" class="btn ghost" style="display:none">Cancel</button>
+        </div>
+        <div class="hint">Username will update your display name and users/{uid}.username in Firestore.</div>
+      </div>
+    </div>
+
+    <div class="card" id="securityCard">
+      <div style="font-weight:700;margin-bottom:8px">Password</div>
+      <div class="small muted">To change password you must provide your current password (reauthentication)</div>
+
+      <div style="margin-top:12px">
+        <div class="row" style="margin-bottom:8px">
+          <div class="label">Current password</div>
+          <input id="currentPass" type="password" autocomplete="current-password" placeholder="Current password">
+        </div>
+        <div class="row" style="margin-bottom:8px">
+          <div class="label">New password</div>
+          <input id="newPass" type="password" autocomplete="new-password" placeholder="New password (min 6)">
+        </div>
+
+        <div class="actions">
+          <button id="changePassBtn" class="btn primary">Change password</button>
+          <button id="signOutBtn" class="btn ghost">Sign out</button>
+        </div>
+
+        <div class="hint">If reauthentication is required and you cannot provide the current password, sign out and sign back in before changing password.</div>
+      </div>
+    </div>
+
+    <div class="card" id="metaCard">
+      <div style="font-weight:700;margin-bottom:8px">Account details</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="row"><div class="label">Plan</div><div id="metaPlan">Basic</div></div>
+        <div class="row"><div class="label">Balance</div><div id="metaBalance">₦0.00</div></div>
+        <div class="row"><div class="label">Plan expiry</div><div id="metaExpiry">—</div></div>
+        <div class="row"><div class="label">User ID</div><div id="metaUid">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- bottom nav (same compact spaced style) -->
+  <div class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-btn" id="navHome"><div class="icon-wrap">🏠</div><span>Home</span></div>
+    <div class="nav-btn" id="navConvert"><div class="icon-wrap">🔁</div><span>Convert</span></div>
+    <div class="nav-center"><div class="center-btn" id="navCenter">⚖️</div></div>
+    <div class="nav-btn" id="navNews"><div class="icon-wrap">💬</div><span>News</span></div>
+    <div class="nav-btn" id="navAssets"><div class="icon-wrap">👤</div><span>Assets</span></div>
+  </div>
+
+  <!-- Firebase (modular v9) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider, updateProfile, signOut
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // Beni-Wealth config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI refs
+    const avatar = document.getElementById('avatar');
+    const displayNameEl = document.getElementById('displayName');
+    const emailLine = document.getElementById('emailLine');
+    const joinedLine = document.getElementById('joinedLine');
+    const usernameInput = document.getElementById('usernameInput');
+    const saveNameBtn = document.getElementById('saveNameBtn');
+    const discardNameBtn = document.getElementById('discardNameBtn');
+
+    const currentPass = document.getElementById('currentPass');
+    const newPass = document.getElementById('newPass');
+    const changePassBtn = document.getElementById('changePassBtn');
+    const signOutBtn = document.getElementById('signOutBtn');
+
+    const metaPlan = document.getElementById('metaPlan');
+    const metaBalance = document.getElementById('metaBalance');
+    const metaExpiry = document.getElementById('metaExpiry');
+    const metaUid = document.getElementById('metaUid');
+
+    let currentUser = null;
+    let currentUid = null;
+    let initialUsername = '';
+
+    function toast(msg){
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, 3000);
+    }
+
+    function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+    function safeText(v){ return typeof v === 'string' && v.trim() ? v.trim() : '—'; }
+
+    // Enable/disable save username button based on changes
+    usernameInput.addEventListener('input', () => {
+      const v = usernameInput.value.trim();
+      if(v && v !== initialUsername) {
+        saveNameBtn.disabled = false;
+        discardNameBtn.style.display = 'inline-block';
+      } else {
+        saveNameBtn.disabled = true;
+        discardNameBtn.style.display = 'none';
+      }
+    });
+
+    discardNameBtn.addEventListener('click', () => {
+      usernameInput.value = initialUsername || '';
+      saveNameBtn.disabled = true;
+      discardNameBtn.style.display = 'none';
+    });
+
+    // Save username -> update auth displayName and users/{uid}.username
+    saveNameBtn.addEventListener('click', async () => {
+      const newName = usernameInput.value.trim();
+      if(!newName) return toast('Username cannot be empty');
+      if(!currentUid) return toast('Not signed in');
+
+      saveNameBtn.disabled = true;
+      saveNameBtn.textContent = 'Saving...';
+
+      try {
+        // update auth displayName
+        await updateProfile(auth.currentUser, { displayName: newName });
+      } catch(e){
+        console.warn('updateProfile failed:', e);
+        // continue to update Firestore even if updateProfile fails
+      }
+
+      try {
+        const userRef = doc(db, 'users', currentUid);
+        await setDoc(userRef, { username: newName, updatedAt: new Date().toISOString() }, { merge: true });
+        initialUsername = newName;
+        displayNameEl.textContent = newName;
+        avatar.textContent = newName.charAt(0).toUpperCase();
+        toast('Username saved');
+      } catch(err){
+        console.error('Failed to save username', err);
+        toast('Failed to save username');
+      } finally {
+        saveNameBtn.disabled = true;
+        saveNameBtn.textContent = 'Save Username';
+        discardNameBtn.style.display = 'none';
+      }
+    });
+
+    // Change password: reauthenticate then updatePassword
+    changePassBtn.addEventListener('click', async () => {
+      const cur = currentPass.value || '';
+      const nxt = newPass.value || '';
+
+      if(!currentUid) return toast('Not signed in');
+      if(!cur || !nxt) return toast('Both current and new passwords are required');
+      if(nxt.length < 6) return toast('New password should be at least 6 characters');
+
+      changePassBtn.disabled = true;
+      changePassBtn.textContent = 'Processing...';
+
+      try {
+        // reauthenticate
+        const cred = EmailAuthProvider.credential(auth.currentUser.email, cur);
+        await reauthenticateWithCredential(auth.currentUser, cred);
+
+        // update password
+        await updatePassword(auth.currentUser, nxt);
+        // optional: record in audit — DON'T store the password anywhere
+        const userRef = doc(db, 'users', currentUid);
+        await updateDoc(userRef, { lastPasswordChangeAt: new Date().toISOString() }).catch(()=>{});
+        toast('Password updated successfully');
+        currentPass.value = '';
+        newPass.value = '';
+      } catch(err){
+        console.error('Password change failed', err);
+        // common errors: wrong-password, auth/requires-recent-login
+        if(err && err.code === 'auth/wrong-password') {
+          toast('Current password is incorrect');
+        } else if(err && err.code === 'auth/requires-recent-login') {
+          // prompt the user to re-login
+          if(confirm('You need to re-login to change your password. Sign out now?')) {
+            try { await signOut(auth); window.location.href = 'login.html'; } catch(e){ window.location.href='login.html'; }
+          }
+        } else {
+          toast(err && err.message ? err.message : 'Failed to change password');
+        }
+      } finally {
+        changePassBtn.disabled = false;
+        changePassBtn.textContent = 'Change password';
+      }
+    });
+
+    // Sign out
+    signOutBtn.addEventListener('click', async () => {
+      if(confirm('Sign out of this account?')) {
+        await signOut(auth);
+        window.location.href = 'index.html';
+      }
+    });
+
+    // Bottom nav handlers (same IDs as other pages)
+    document.getElementById('navHome').addEventListener('click', ()=> window.location.href='catalog.html');
+    document.getElementById('navConvert').addEventListener('click', ()=> window.location.href='convert.html');
+    document.getElementById('navCenter').addEventListener('click', ()=> window.location.href='center.html');
+    document.getElementById('navNews').addEventListener('click', ()=> window.location.href='news.html');
+    document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='assets.html');
+
+    // Listen to auth and populate UI
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      currentUid = user ? user.uid : null;
+
+      if(!user) {
+        displayNameEl.textContent = 'Guest';
+        emailLine.textContent = 'Not signed in';
+        joinedLine.textContent = 'Joined: —';
+        usernameInput.value = '';
+        initialUsername = '';
+        metaPlan.textContent = '—';
+        metaBalance.textContent = formatN(0);
+        metaExpiry.textContent = '—';
+        metaUid.textContent = '—';
+        avatar.textContent = 'U';
+        saveNameBtn.disabled = true;
+        return;
+      }
+
+      // show basic auth info first (fast)
+      displayNameEl.textContent = user.displayName || user.email || 'User';
+      emailLine.textContent = user.email || '—';
+      joinedLine.textContent = user.metadata && user.metadata.creationTime ? `Joined: ${new Date(user.metadata.creationTime).toLocaleString()}` : 'Joined: —';
+      avatar.textContent = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
+      metaUid.textContent = user.uid.slice(0,10);
+
+      // fetch user doc
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const snap = await getDoc(userRef);
+        let data = snap.exists ? snap.data() : null;
+
+        // if no doc, create minimal doc (default Basic)
+        if(!data) {
+          await setDoc(userRef, { username: user.displayName || null, plan: 'Basic', balance: 0, createdAt: new Date().toISOString() }, { merge: true });
+          data = { username: user.displayName || null, plan:'Basic', balance:0, createdAt: new Date().toISOString() };
+        }
+
+        // fill fields
+        const username = data.username || user.displayName || '';
+        usernameInput.value = username;
+        initialUsername = username;
+        saveNameBtn.disabled = true;
+        discardNameBtn.style.display = 'none';
+
+        // joined date prefer user.createdAt then auth metadata
+        const joined = data.createdAt || user.metadata && user.metadata.creationTime || null;
+        joinedLine.textContent = joined ? `Joined: ${new Date(joined).toLocaleString()}` : 'Joined: —';
+
+        metaPlan.textContent = data.plan || 'Basic';
+        metaBalance.textContent = formatN(Number(data.balance || 0));
+        metaExpiry.textContent = data.planExpiryAt ? new Date(data.planExpiryAt).toLocaleString() : '—';
+        // update display also
+        displayNameEl.textContent = username || (user.displayName || user.email || 'User');
+        avatar.textContent = (username || user.displayName || user.email || 'U').charAt(0).toUpperCase();
+
+      } catch(err){
+        console.error('Failed to load user doc', err);
+        toast('Could not load profile data (see console)');
+      }
+    });
+  </script>
+</body>
+</html>
