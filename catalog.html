@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Plans Catalog</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{ --bg:#0b0613; --panel:#0f0820; --muted:rgba(255,255,255,0.6); --accent1:#2fe0b8; --accent2:#7a5fff; --card:rgba(255,255,255,0.02); --text:#e9f0ff; }
+    body{margin:0;font-family:'Poppins',system-ui,Arial;background:linear-gradient(180deg,var(--bg),var(--panel));color:var(--text);-webkit-font-smoothing:antialiased;padding:28px}
+    .wrap{max-width:980px;margin:0 auto}
+    h1{margin:0 0 12px}
+    .intro{color:var(--muted);margin-bottom:18px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+    .plan{background:var(--card);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 18px 40px rgba(0,0,0,0.5)}
+    .plan h3{margin:0 0 6px;color:var(--accent2)}
+    .plan .price{font-weight:800;font-size:20px;margin-top:6px}
+    .plan .earn{color:var(--muted);margin-top:6px}
+    .plan .buy{margin-top:12px;display:flex;gap:8px;align-items:center}
+    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.05);color:var(--text)}
+    .status{margin-top:18px;color:var(--muted)}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    .user-info{color:var(--muted)}
+    .toast{position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;padding:10px 14px;border-radius:10px;font-weight:700;box-shadow:0 12px 40px rgba(0,0,0,0.6);z-index:9999}
+    @media(max-width:520px){body{padding:16px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>Beni-Wealth Plans</h1>
+        <div class="intro">Pick a plan to increase your shortlink earnings. Purchase requires enough balance — balance will be debited on purchase.</div>
+      </div>
+      <div class="user-info" id="userInfo">Not signed in</div>
+    </div>
+
+    <div class="grid" id="plansGrid"></div>
+
+    <div class="status" id="status">Prices are one-time upgrades. Your balance will be debited immediately on a successful purchase.</div>
+  </div>
+
+  <!-- Firebase (modular v9) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, runTransaction, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // === Beni-Wealth Firebase config (project you provided) ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Plan definitions
+    // planPrice = cost to buy the plan
+    // planEarning = reward per shortlink
+    const PLANS = [
+      { id: 'Bronze', price: 3000, earning: 100 },
+      { id: 'Silver', price: 5000, earning: 175 },
+      { id: 'Gold', price: 8000, earning: 270 },
+      { id: 'Platinum', price: 15000, earning: 500 }
+    ];
+
+    const plansGrid = document.getElementById('plansGrid');
+    const userInfo = document.getElementById('userInfo');
+    const status = document.getElementById('status');
+
+    let currentUser = null;
+    let currentUid = null;
+
+    // Utility / UI
+    function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
+    function toast(msg){ const t = document.createElement('div'); t.className='toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, 3000); }
+
+    function renderPlans() {
+      plansGrid.innerHTML = '';
+      PLANS.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'plan';
+        div.innerHTML = `
+          <h3>${p.id}</h3>
+          <div class="price">Price: <strong>${formatN(p.price)}</strong></div>
+          <div class="earn">Earnings / shortlink: <strong>${formatN(p.earning)}</strong></div>
+          <div class="buy">
+            <button class="btn primary" data-plan="${p.id}" data-price="${p.price}">Activate ${p.id}</button>
+            <button class="btn ghost" data-plan-info="${p.id}">Details</button>
+          </div>
+        `;
+        plansGrid.appendChild(div);
+      });
+
+      // Add listeners
+      document.querySelectorAll('.plan .buy .primary').forEach(b => {
+        b.addEventListener('click', onBuyClick);
+      });
+      document.querySelectorAll('.plan .buy .ghost').forEach(b => {
+        b.addEventListener('click', (e) => {
+          const plan = e.currentTarget.getAttribute('data-plan-info');
+          const p = PLANS.find(x=>x.id===plan);
+          alert(`${p.id}\nPrice: ${formatN(p.price)}\nEarnings / shortlink: ${formatN(p.earning)}`);
+        });
+      });
+    }
+
+    // click handler
+    async function onBuyClick(e){
+      const plan = e.currentTarget.getAttribute('data-plan');
+      const price = Number(e.currentTarget.getAttribute('data-price') || 0);
+      if(!currentUid){
+        const go = confirm('You are not signed in. Would you like to sign in now?');
+        if(go) window.location.href = 'login.html';
+        return;
+      }
+
+      // quick confirm
+      const ok = confirm(`Buy ${plan} for ${formatN(price)}? This will debit your account immediately.`);
+      if(!ok) return;
+
+      // disable buttons while processing
+      disablePlanButtons(true, plan);
+
+      try{
+        const userRef = doc(db, 'users', currentUid);
+        // Transaction: check balance and deduct + set plan and purchase timestamp
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(userRef);
+          const data = snap.exists ? snap.data() : {};
+          const bal = Number(data.balance || 0);
+
+          if(bal < price){
+            throw new Error(`Insufficient balance: ${formatN(bal)} available, ${formatN(price)} required.`);
+          }
+
+          // Deduct and set plan atomically
+          const newBal = bal - price;
+          const updates = {
+            balance: newBal,
+            plan: plan,
+            planPurchasedAt: new Date().toISOString()
+          };
+          // also mark lastPlanClaimAt clear if you want; leave it
+          tx.set(userRef, updates, { merge: true });
+        });
+
+        // record transaction (separate write)
+        await addDoc(collection(db, 'users', currentUid, 'transactions'), {
+          source: `Plan purchase — ${plan}`,
+          amount: -price,
+          date: new Date().toISOString()
+        });
+
+        toast(`Plan ${plan} purchased — ${formatN(price)} debited`);
+        // refresh UI: fetch latest user doc
+        await refreshUserUI();
+      }catch(err){
+        console.error('Purchase failed', err);
+        alert(err && err.message ? err.message : 'Purchase failed');
+      }finally{
+        disablePlanButtons(false);
+      }
+    }
+
+    function disablePlanButtons(disable, exceptPlan){
+      document.querySelectorAll('.plan .buy .primary').forEach(b => {
+        if(exceptPlan && b.getAttribute('data-plan') === exceptPlan && disable===true){
+          b.disabled = true;
+          b.textContent = 'Processing...';
+        } else {
+          b.disabled = disable;
+          const p = b.getAttribute('data-plan');
+          b.textContent = disable ? 'Please wait...' : `Activate ${p}`;
+        }
+      });
+    }
+
+    // refresh user's UI info (balance / plan)
+    async function refreshUserUI(){
+      if(!currentUid) {
+        userInfo.textContent = 'Not signed in';
+        return;
+      }
+      try{
+        const userRef = doc(db, 'users', currentUid);
+        const snap = await getDoc(userRef);
+        const data = snap.exists ? snap.data() : {};
+        const bal = Number(data.balance || 0);
+        const plan = data.plan || 'Basic';
+        userInfo.textContent = `${userInfoText(data, currentUid)}`;
+        // update status text to show current plan & balance
+        status.textContent = `Plan: ${plan} — Balance: ${formatN(bal)}`;
+      }catch(e){
+        console.warn('refreshUserUI failed', e);
+      }
+    }
+
+    function userInfoText(data, uid){
+      const name = data.displayName || data.username || (auth.currentUser && auth.currentUser.email) || (uid ? uid.slice(0,6)+'...' : 'Guest');
+      const plan = data.plan || 'Basic';
+      const bal = Number(data.balance || 0);
+      return `${name} • Plan: ${plan} • ${formatN(bal)}`;
+    }
+
+    // Auth listener
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      currentUid = user ? user.uid : null;
+      if(user){
+        // initial text while we fetch
+        userInfo.textContent = 'Signed in — loading...';
+      } else {
+        userInfo.textContent = 'Not signed in';
+        status.textContent = 'Prices are one-time upgrades. Sign in to purchase.';
+      }
+      await refreshUserUI();
+    });
+
+    // initial render
+    renderPlans();
+    refreshUserUI();
+
+    // Expose for debugging (optional)
+    window._bwCatalog = { PLANS, refreshUserUI };
+  </script>
+</body>
+</html>
