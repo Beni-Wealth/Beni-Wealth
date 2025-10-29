@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.62);
@@ -61,6 +61,8 @@
       <h1 id="greeting">Hello, User</h1>
       <p id="uidline">UID: -</p>
       <div class="plan-badge" id="planBadge">Plan: Basic</div>
+      <!-- hidden placeholder for planReward to avoid undefined reference errors in existing script -->
+      <span id="planRewardEl" style="display:none"></span>
     </div>
     <div class="icons">
       <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
@@ -122,12 +124,25 @@
       </div>
       <div>›</div>
     </div>
+
+    <!-- NEW: Referrals list item (added after Earnings Report) -->
+    <div class="list-item" id="referralsItem" role="button" aria-label="Referrals">
+      <div class="li-left">
+        <div class="li-icon">👥</div>
+        <div class="li-text">
+          <h3>Referrals</h3>
+          <p class="small">Friends who joined through you</p>
+        </div>
+      </div>
+      <div>›</div>
+    </div>
+
   </div>
 
   <div class="bottom-nav" role="navigation" aria-label="Main navigation">
     <div class="nav-btn" id="navHome"><div class="icon-wrap">🏠</div><span>Home</span></div>
-    <div class="nav-btn" id="navConvert"><div class="icon-wrap">🔁</div><span>Convert</span></div>
-    <div class="nav-center"><div class="center-btn" id="navCenter">⚖️</div></div>
+    <div class="nav-btn" id="navConvert"><div class="icon-wrap">🔗</div><span>shortlinks</span></div>
+    <div class="nav-center"><div class="center-btn" id="navCenter">➕</div></div>
     <div class="nav-btn" id="navNews"><div class="icon-wrap">💬</div><span>News</span></div>
     <div class="nav-btn" id="navAssets"><div class="icon-wrap">👤</div><span>Assets</span></div>
   </div>
@@ -162,6 +177,7 @@
     const assetsError = document.getElementById('assetsError');
     const planBadge = document.getElementById('planBadge');
     const userPlanEl = document.getElementById('userPlan');
+    const planRewardEl = document.getElementById('planRewardEl'); // placeholder to avoid undefined references
 
     // Plan to reward mapping
     const PLAN_REWARDS = { Bronze:100, Silver:175, Gold:270, Platinum:500, Basic:0 };
@@ -209,6 +225,12 @@
     document.getElementById('tasksItem').addEventListener('click', ()=> window.location.href='tasks.html');
     document.getElementById('earningsItem').addEventListener('click', ()=> window.location.href='earnings.html');
 
+    // NEW: referrals list navigation
+    const referralsEl = document.getElementById('referralsItem');
+    if(referralsEl){
+      referralsEl.addEventListener('click', ()=> window.location.href='referrals.html');
+    }
+
     async function tryBalanceFallback(uid){
       try{
         const bRef = doc(db, 'balances', uid);
@@ -239,7 +261,7 @@
         // show Basic plan for guests
         planBadge.textContent = 'Plan: Basic';
         userPlanEl.textContent = 'Basic';
-        planRewardEl.textContent = '₦0';
+        if(planRewardEl) planRewardEl.textContent = '₦0';
         return;
       }
 
@@ -263,7 +285,7 @@
             // show plan
             planBadge.textContent = 'Plan: Basic • Reward: ₦0';
             userPlanEl.textContent = 'Basic';
-            planRewardEl.textContent = '₦0';
+            if(planRewardEl) planRewardEl.textContent = '₦0';
             return;
           }
           const data = snap.data();
@@ -288,6 +310,7 @@
 
           planBadge.textContent = `Plan: ${plan}`;
           userPlanEl.textContent = plan;
+          if(planRewardEl) planRewardEl.textContent = `₦${reward}`;
 
         }catch(e){
           console.error('onSnapshot handler error', e);
@@ -320,11 +343,12 @@
               const reward = PLAN_REWARDS[plan] || 0;
               planBadge.textContent = `Plan: ${plan} • Reward: ₦${reward.toLocaleString()}`;
               userPlanEl.textContent = plan;
-              planRewardEl.textContent = `₦${reward}`;
+              if(planRewardEl) planRewardEl.textContent = `₦${reward}`;
             } else {
               const fb = await tryBalanceFallback(user.uid);
               const val = fb !== null ? fb : 0;
-              balanceEl.dataset.realText = formatN(val);
+  
+  balanceEl.dataset.realText = formatN(val);
               approxEl.dataset.realText = `≈ ${formatN(val)}`;
               setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
             }
@@ -334,4 +358,5 @@
     });
   </script>
 </body>
-</html>
+  </html>
+  
