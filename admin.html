@@ -1,180 +1,137 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
-import { Card, CardContent } from '@/components/ui/card';
-import Button from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beni-Wealth Admin</title>
+    <script type="module">
+      // Import Firebase SDKs (v9 modular)
+      import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+      import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-// Firebase configuration for Beni-Wealth
-const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-  authDomain: "beni-wealths.firebaseapp.com",
-  projectId: "beni-wealths",
-  storageBucket: "beni-wealths.firebasestorage.app",
-  messagingSenderId: "807950483822",
-  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-  measurementId: "G-Z2XP3YN6NS"
-};
+      // Your Firebase config
+      const firebaseConfig = {
+        apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+        authDomain: "beni-wealths.firebaseapp.com",
+        projectId: "beni-wealths",
+        storageBucket: "beni-wealths.firebasestorage.app",
+        messagingSenderId: "807950483822",
+        appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+        measurementId: "G-Z2XP3YN6NS",
+      };
 
-// Robust Firebase initializer: only initialize once and return auth + db instances
-function initFirebaseOnce() {
-  if (!getApps().length) {
-    initializeApp(firebaseConfig);
-  }
-  const auth = getAuth();
-  const db = getFirestore();
-  return { auth, db };
-}
-
-export default function AdminDashboard() {
-  const navigate = useNavigate();
-  const [{ auth, db }] = useMemo(() => [initFirebaseOnce()], []);
-
-  const [user, setUser] = useState(null);
-  const [stats, setStats] = useState({ users: 0, deposits: 0, withdrawals: 0, tasks: 0, adverts: 0 });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Ensure auth is available before registering listener
-    if (!auth) {
-      console.error('Firebase auth not initialized');
-      navigate('/login');
-      return;
-    }
-
-    const unsub = onAuthStateChanged(auth, async (currentUser) => {
-      if (!currentUser || currentUser.email !== 'beniwealth70@gmail.com') {
-        // not authorized — redirect to login
-        try { await signOut(auth); } catch (e) { /* ignore */ }
-        navigate('/login');
-      } else {
-        setUser(currentUser);
-        await loadStats();
+      // Initialize Firebase safely
+      function initFirebaseOnce() {
+        if (!getApps().length) {
+          initializeApp(firebaseConfig);
+        }
+        const auth = getAuth();
+        const db = getFirestore();
+        return { auth, db };
       }
-      setLoading(false);
-    });
 
-    return () => {
-      if (typeof unsub === 'function') unsub();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth]);
+      const { auth, db } = initFirebaseOnce();
 
-  const loadStats = async () => {
-    if (!db) return;
-    try {
-      // Read counts (lightweight) — consider using aggregated counters in production
-      const [usersSnap, depositsSnap, withdrawalsSnap, tasksSnap, advertsSnap] = await Promise.all([
-        getDocs(collection(db, 'users')),
-        getDocs(collection(db, 'deposits')),
-        getDocs(collection(db, 'withdrawals')),
-        getDocs(collection(db, 'tasks')),
-        getDocs(collection(db, 'adverts'))
-      ]);
-
-      setStats({
-        users: usersSnap.size || 0,
-        deposits: depositsSnap.size || 0,
-        withdrawals: withdrawalsSnap.size || 0,
-        tasks: tasksSnap.size || 0,
-        adverts: advertsSnap.size || 0,
+      // Redirect unauthorized users
+      onAuthStateChanged(auth, async (user) => {
+        if (!user || user.email !== "beniwealth70@gmail.com") {
+          document.body.innerHTML = `
+            <div style="text-align:center; margin-top: 15%;">
+              <h2 style="color:white;">Access Denied</h2>
+              <p style="color:#bbb;">You must be logged in as <b>beniwealth70@gmail.com</b>.</p>
+              <button id="loginBtn" style="padding:10px 20px;margin-top:15px;border:none;background:#2563eb;color:white;border-radius:8px;cursor:pointer;">Go to Login</button>
+            </div>`;
+          document.getElementById("loginBtn").addEventListener("click", () => {
+            window.location.href = "/login";
+          });
+        } else {
+          loadDashboard(user);
+        }
       });
-    } catch (err) {
-      console.error('Error loading stats:', err);
-    }
-  };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (err) {
-      console.warn('Logout error', err);
-    }
-    navigate('/login');
-  };
+      async function loadDashboard(user) {
+        const [usersSnap, depositsSnap, withdrawalsSnap, tasksSnap, advertsSnap] = await Promise.all([
+          getDocs(collection(db, "users")),
+          getDocs(collection(db, "deposits")),
+          getDocs(collection(db, "withdrawals")),
+          getDocs(collection(db, "tasks")),
+          getDocs(collection(db, "adverts")),
+        ]);
 
-  const actions = [
-    { label: 'Withdrawals', icon: '💸', path: '/admin/withdrawals' },
-    { label: 'Deposits', icon: '💰', path: '/admin/deposits' },
-    { label: 'Tasks', icon: '📋', path: '/admin/tasks' },
-    { label: 'Adverts', icon: '📢', path: '/admin/adverts' },
-    { label: 'Users', icon: '👥', path: '/admin/users' }
-  ];
+        document.getElementById("dashboard").innerHTML = `
+          <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:40px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" width="60" height="60" style="border-radius:12px;" alt="Beni-Wealth Logo">
+              <h1 style="font-size:24px;font-weight:700;">Beni-Wealth Admin</h1>
+            </div>
+            <div>
+              <span style="margin-right:10px;color:#cbd5e1;">${user.email}</span>
+              <button id="logoutBtn" style="background:#2563eb;color:white;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;">Logout</button>
+            </div>
+          </header>
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b0613] to-[#120521] text-white">
-        <div>Loading admin…</div>
-      </div>
-    );
-  }
+          <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px;margin-bottom:40px;">
+            ${[
+              { title: "Users", count: usersSnap.size },
+              { title: "Deposits", count: depositsSnap.size },
+              { title: "Withdrawals", count: withdrawalsSnap.size },
+              { title: "Tasks", count: tasksSnap.size },
+              { title: "Adverts", count: advertsSnap.size },
+            ]
+              .map(
+                (s) => `
+              <div style="background:rgba(255,255,255,0.1);padding:20px;text-align:center;border-radius:15px;">
+                <h3 style="color:#bbb;font-size:14px;">${s.title}</h3>
+                <p style="color:white;font-size:22px;font-weight:700;">${s.count}</p>
+              </div>`
+              )
+              .join("")}
+          </section>
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0b0613] to-[#120521] text-white p-6">
-      <header className="flex justify-between items-center mb-10">
-        <div className="flex items-center gap-3">
-          <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo" className="w-14 h-14 rounded-xl" />
-          <h1 className="text-2xl font-bold">Beni-Wealth Admin</h1>
-        </div>
-        {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ fontSize: 14, color: '#cbd5e1' }}>{user.email}</div>
-            <Button onClick={handleLogout}>Logout</Button>
-          </div>
-        ) : (
-          <Button onClick={() => navigate('/login')}>Sign in</Button>
-        )}
-      </header>
+          <section>
+            <h2 style="font-size:18px;margin-bottom:15px;">Quick Actions</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:20px;">
+              ${[
+                { label: "Withdrawals", icon: "💸", path: "/admin/withdrawals" },
+                { label: "Deposits", icon: "💰", path: "/admin/deposits" },
+                { label: "Tasks", icon: "📋", path: "/admin/tasks" },
+                { label: "Adverts", icon: "📢", path: "/admin/adverts" },
+                { label: "Users", icon: "👥", path: "/admin/users" },
+              ]
+                .map(
+                  (a) => `
+                <a href="${a.path}" style="text-decoration:none;">
+                  <div style="background:rgba(255,255,255,0.1);border-radius:15px;padding:25px;text-align:center;color:white;transition:background 0.3s;">
+                    <div style="font-size:30px;margin-bottom:10px;">${a.icon}</div>
+                    <div style="font-size:14px;">${a.label}</div>
+                  </div>
+                </a>`
+                )
+                .join("")}
+            </div>
+          </section>
+        `;
 
-      <section className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5 mb-10">
-        <Card className="bg-white/10 border border-white/10 text-center p-4 rounded-2xl">
-          <CardContent>
-            <h3 className="text-sm text-gray-300">Users</h3>
-            <p className="text-2xl font-bold text-white">{stats.users}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white/10 border border-white/10 text-center p-4 rounded-2xl">
-          <CardContent>
-            <h3 className="text-sm text-gray-300">Deposits</h3>
-            <p className="text-2xl font-bold text-white">{stats.deposits}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white/10 border border-white/10 text-center p-4 rounded-2xl">
-          <CardContent>
-            <h3 className="text-sm text-gray-300">Withdrawals</h3>
-            <p className="text-2xl font-bold text-white">{stats.withdrawals}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white/10 border border-white/10 text-center p-4 rounded-2xl">
-          <CardContent>
-            <h3 className="text-sm text-gray-300">Tasks</h3>
-            <p className="text-2xl font-bold text-white">{stats.tasks}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white/10 border border-white/10 text-center p-4 rounded-2xl">
-          <CardContent>
-            <h3 className="text-sm text-gray-300">Adverts</h3>
-            <p className="text-2xl font-bold text-white">{stats.adverts}</p>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-5">
-          {actions.map((action, i) => (
-            <button
-              key={i}
-              onClick={() => navigate(action.path)}
-              className="flex flex-col items-center justify-center bg-white/10 border border-white/10 rounded-2xl py-6 hover:bg-white/20 transition"
-            >
-              <div className="text-3xl mb-2">{action.icon}</div>
-              <div className="text-sm font-medium text-white">{action.label}</div>
-            </button>
-          ))}
-        </div>
-      </section>
+        document.getElementById("logoutBtn").addEventListener("click", async () => {
+          await signOut(auth);
+          window.location.href = "/login";
+        });
+      }
+    </script>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Poppins", sans-serif;
+        background: linear-gradient(to bottom, #0b0613, #120521);
+        color: white;
+        padding: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="dashboard" style="text-align:center;margin-top:20%;">
+      <p>Loading Admin...</p>
     </div>
-  );
-}
+  </body>
+</html>
