@@ -36,8 +36,10 @@
   .logo {
     width:72px; height:72px; border-radius:14px; display:grid; place-items:center;
     background: linear-gradient(135deg,var(--accent-start),var(--accent-end));
-    color:#041219; font-weight:800; font-size:22px;
+    color:#041219; font-weight:800; font-size:22px; position:relative; overflow:hidden;
   }
+  .logo img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:14px; }
+  .logo .initials{ display:none; width:100%; height:100%; place-items:center; }
   .app-title { font-size:20px; font-weight:700; color:var(--text); }
   .app-sub { color:var(--muted); font-size:13px; margin-top:4px; }
 
@@ -100,12 +102,15 @@
 <body>
   <main class="shell" role="main" aria-labelledby="policyTitle">
     <header class="appbar">
-      <div class="logo" aria-hidden="true">B<i style="font-size:14px;margin-left:3px">W</i></div>
+      <a href="/" class="logo-link" aria-label="Beni-Wealth home">
+        <div class="logo" aria-hidden="false" title="Beni-Wealth">
+          <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+        </div>
+      </a>
       <div>
         <div class="app-title">Beni-Wealth</div>
-        <div class="app-sub">Terms</div>
       </div>
-    </header>
+    </header>  
 
     <div class="grid">
       <!-- left: policy content -->
@@ -199,7 +204,9 @@
           <h2>14. Contact Us</h2>
           <p><strong>Beni-Wealth Support</strong><br>
             📧 <a href="mailto:beniwealth70@gmail.com" style="color:var(--accent-start)">beniwealth70@gmail.com</a><br>
-            📞 08037402826 (WhatsApp available)</a>
+            📞 08037402826 (WhatsApp available)</p>
+        </div>
+      </section>
 
       <!-- right: appeals & quick info -->
       <aside class="side-card">
@@ -209,29 +216,12 @@
             <div><strong>One device = one account</strong><br><span class="note">Violations may be fined or suspended. Appeals below.</span></div>
           </div>
 
-          <div class="block">
-            <div class="label">Appeal / Reactivation</div>
-            <p class="note">If your account was disabled or you were fined, submit an appeal. We will review and respond.</p>
-
-            <!-- Appeal form -->
-            <form id="appealForm" aria-label="Appeal and reactivation form">
-              <input id="appealUid" type="text" placeholder="Your UID (auto-filled if signed in)" />
-              <input id="appealEmail" type="email" placeholder="Your email (auto-filled if signed in)" />
-              <input id="appealName" type="text" placeholder="Full name" />
-              <label class="label" style="margin-top:6px;">Reason (describe issue / attach evidence links)</label>
-              <textarea id="appealMessage" placeholder="Explain why your account should be reactivated or why a fine should be reversed..."></textarea>
-              <input id="appealTxn" type="text" placeholder="Transaction ID (optional)" />
-              <div style="display:flex; gap:8px; margin-top:6px;">
-                <button id="appealBtn" class="btn" type="button">Submit Appeal</button>
-                <button id="clearBtn" type="button" class="btn ghost">Clear</button>
-              </div>
-              <div id="appealStatus" class="note" style="margin-top:8px"></div>
+          <div id="appealStatus" class="note" style="margin-top:8px"></div>
             </form>
           </div>
 
           <div class="block" style="margin-top:12px">
             <div class="label">Policy quick links</div>
-            <div><a href="terms.html" style="color:var(--accent-start)">Terms of Use</a></div>
             <div style="margin-top:8px"><a href="contact.html" style="color:var(--accent-start)">Support Center</a></div>
           </div>
         </div>
@@ -352,4 +342,3 @@
   </script>
 </body>
   </html>
-  
