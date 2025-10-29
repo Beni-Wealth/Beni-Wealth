@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Contact — Beni-Wealth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1:#0b0613; --bg2:#120521;
+      --muted: rgba(255,255,255,0.6);
+      --text: #f3f6ff;
+      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    .container{max-width:920px;margin:48px auto;padding:28px}
+    header.appbar{display:flex;align-items:center;gap:16px;margin-bottom:28px}
+    .logo{width:72px;height:72px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent-start),var(--accent-end))}
+    .logo img{width:100%;height:100%;object-fit:cover;display:block}
+    .title{font-size:20px;font-weight:700}
+    .subtitle{color:var(--muted);font-size:13px}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:var(--radius);padding:32px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 18px 60px rgba(0,0,0,0.6)}
+    .lead{color:var(--muted);margin-bottom:18px}
+
+    .actions{display:flex;gap:16px;flex-wrap:wrap}
+    .action{flex:1;min-width:220px;padding:18px;border-radius:12px;display:flex;align-items:center;gap:12px;text-decoration:none;border:1px solid rgba(255,255,255,0.03);background:rgba(255,255,255,0.02);color:var(--text)}
+    .action .icon{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
+    .action h3{margin:0;font-size:16px}
+    .action p{margin:0;color:var(--muted);font-size:13px}
+
+    .note{margin-top:14px;color:var(--muted);font-size:13px}
+
+    footer{text-align:center;margin-top:18px;color:rgba(255,255,255,0.35);font-size:13px}
+
+    @media(max-width:680px){.actions{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="appbar">
+      <a href="/" aria-label="Home" style="text-decoration:none;color:inherit">
+        <div class="logo" aria-hidden="false">
+          <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
+        </div>
+      </a>
+      <div>
+        <div class="title">Beni-Wealth</div>
+        <div class="subtitle">Contact the CEO or Platform Support</div>
+      </div>
+    </header>
+
+    <main class="card" role="main">
+      <p class="lead">Need help or want to reach the CEO directly? Choose one of the contact methods below — Email or WhatsApp. Clicking will open your mail app or WhatsApp chat.</p>
+
+      <div class="actions" role="list">
+        <!-- Email -->
+        <a class="action" role="listitem" href="mailto:beniwealth70@gmail.com?subject=Contact%20via%20Website" title="Email Beni-Wealth">
+          <div class="icon" aria-hidden="true">@</div>
+          <div>
+            <h3>Email the CEO</h3>
+            <p>beniwealth70@gmail.com — Opens your mail client</p>
+          </div>
+        </a>
+
+        <!-- WhatsApp -->
+        <a class="action" role="listitem" href="https://wa.me/2348037402826?text=Hello%20Beni-Wealth" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp (ChatSuite)">
+          <div class="icon" aria-hidden="true">WA</div>
+          <div>
+            <h3>WhatsApp (ChatSuite)</h3>
+            <p>+234 803 740 2826 — Open chat in WhatsApp</p>
+          </div>
+        </a>
+      </div>
+
+      <p class="note">If you prefer, include your name and a short message when emailing so we can respond faster.</p>
+    </main>
+
+    <footer>
+      © <span id="year"></span> Beni-Wealth — All rights reserved.
+    </footer>
+  </div>
+
+  <script>document.getElementById('year').textContent=new Date().getFullYear();</script>
+</body>
+</html>
