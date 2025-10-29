@@ -1,0 +1,180 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { Card, CardContent } from '@/components/ui/card';
+import Button from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+
+// Firebase configuration for Beni-Wealth
+const firebaseConfig = {
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  authDomain: "beni-wealths.firebaseapp.com",
+  projectId: "beni-wealths",
+  storageBucket: "beni-wealths.firebasestorage.app",
+  messagingSenderId: "807950483822",
+  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+  measurementId: "G-Z2XP3YN6NS"
+};
+
+// Robust Firebase initializer: only initialize once and return auth + db instances
+function initFirebaseOnce() {
+  if (!getApps().length) {
+    initializeApp(firebaseConfig);
+  }
+  const auth = getAuth();
+  const db = getFirestore();
+  return { auth, db };
+}
+
+export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const [{ auth, db }] = useMemo(() => [initFirebaseOnce()], []);
+
+  const [user, setUser] = useState(null);
+  const [stats, setStats] = useState({ users: 0, deposits: 0, withdrawals: 0, tasks: 0, adverts: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Ensure auth is available before registering listener
+    if (!auth) {
+      console.error('Firebase auth not initialized');
+      navigate('/login');
+      return;
+    }
+
+    const unsub = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser || currentUser.email !== 'beniwealth70@gmail.com') {
+        // not authorized — redirect to login
+        try { await signOut(auth); } catch (e) { /* ignore */ }
+        navigate('/login');
+      } else {
+        setUser(currentUser);
+        await loadStats();
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      if (typeof unsub === 'function') unsub();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth]);
+
+  const loadStats = async () => {
+    if (!db) return;
+    try {
+      // Read counts (lightweight) — consider using aggregated counters in production
+      const [usersSnap, depositsSnap, withdrawalsSnap, tasksSnap, advertsSnap] = await Promise.all([
+        getDocs(collection(db, 'users')),
+        getDocs(collection(db, 'deposits')),
+        getDocs(collection(db, 'withdrawals')),
+        getDocs(collection(db, 'tasks')),
+        getDocs(collection(db, 'adverts'))
+      ]);
+
+      setStats({
+        users: usersSnap.size || 0,
+        deposits: depositsSnap.size || 0,
+        withdrawals: withdrawalsSnap.size || 0,
+        tasks: tasksSnap.size || 0,
+        adverts: advertsSnap.size || 0,
+      });
+    } catch (err) {
+      console.error('Error loading stats:', err);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.warn('Logout error', err);
+    }
+    navigate('/login');
+  };
+
+  const actions = [
+    { label: 'Withdrawals', icon: '💸', path: '/admin/withdrawals' },
+    { label: 'Deposits', icon: '💰', path: '/admin/deposits' },
+    { label: 'Tasks', icon: '📋', path: '/admin/tasks' },
+    { label: 'Adverts', icon: '📢', path: '/admin/adverts' },
+    { label: 'Users', icon: '👥', path: '/admin/users' }
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b0613] to-[#120521] text-white">
+        <div>Loading admin…</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#0b0613] to-[#120521] text-white p-6">
+      <header className="flex justify-between items-center mb-10">
+        <div className="flex items-center gap-3">
+          <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth Logo" className="w-14 h-14 rounded-xl" />
+          <h1 className="text-2xl font-bold">Beni-Wealth Admin</h1>
+        </div>
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 14, color: '#cbd5e1' }}>{user.email}</div>
+            <Button onClick={handleLogout}>Logout</Button>
+          </div>
+        ) : (
+          <Button onClick={() => navigate('/login')}>Sign in</Button>
+        )}
+      </header>
+
+      <section className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5 mb-10">
+        <Card className="bg-white/10 border border-white/10 text-center p-4 rounded-2xl">
+          <CardContent>
+            <h3 className="text-sm text-gray-300">Users</h3>
+            <p className="text-2xl font-bold text-white">{stats.users}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white/10 border border-white/10 text-center p-4 rounded-2xl">
+          <CardContent>
+            <h3 className="text-sm text-gray-300">Deposits</h3>
+            <p className="text-2xl font-bold text-white">{stats.deposits}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white/10 border border-white/10 text-center p-4 rounded-2xl">
+          <CardContent>
+            <h3 className="text-sm text-gray-300">Withdrawals</h3>
+            <p className="text-2xl font-bold text-white">{stats.withdrawals}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white/10 border border-white/10 text-center p-4 rounded-2xl">
+          <CardContent>
+            <h3 className="text-sm text-gray-300">Tasks</h3>
+            <p className="text-2xl font-bold text-white">{stats.tasks}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white/10 border border-white/10 text-center p-4 rounded-2xl">
+          <CardContent>
+            <h3 className="text-sm text-gray-300">Adverts</h3>
+            <p className="text-2xl font-bold text-white">{stats.adverts}</p>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-5">
+          {actions.map((action, i) => (
+            <button
+              key={i}
+              onClick={() => navigate(action.path)}
+              className="flex flex-col items-center justify-center bg-white/10 border border-white/10 rounded-2xl py-6 hover:bg-white/20 transition"
+            >
+              <div className="text-3xl mb-2">{action.icon}</div>
+              <div className="text-sm font-medium text-white">{action.label}</div>
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
