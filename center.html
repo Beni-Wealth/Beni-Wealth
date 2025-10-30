@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Advertise Task — Beni-Wealth</title>
+
+  <!-- Fonts & icons (optional) -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1: #0b0613;
+      --bg2: #120521;
+      --card: rgba(255,255,255,0.03);
+      --muted: rgba(255,255,255,0.6);
+      --text: #eaf2ff;
+      --accent: linear-gradient(90deg,#2fe0b8,#7a5fff);
+      --accent-color: #2fe0b8;
+      --success: #08a74a;
+      --danger: #e03e3e;
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      background: linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:var(--text);
+      padding:36px;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .shell { max-width:980px; margin:0 auto; }
+
+    header.appbar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px;
+    }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand img{ width:54px; height:54px; border-radius:12px; object-fit:cover; box-shadow: 0 6px 18px rgba(0,0,0,0.5); }
+    .brand .title { font-weight:700; font-size:20px; color:var(--text); }
+    .brand .subtitle { font-size:13px; color:var(--muted); margin-top:2px; }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius: var(--radius);
+      padding:20px;
+      border:1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+    }
+
+    .container-grid { display:grid; grid-template-columns: 1fr 360px; gap:20px; align-items:start; }
+    .left { }
+    .right { }
+
+    h1 { margin:0 0 6px 0; font-size:20px; }
+    .muted { color:var(--muted); font-size:13px; }
+
+    /* form */
+    label { display:block; margin-top:12px; font-weight:600; color:var(--text); font-size:13px; }
+    input[type="text"], input[type="url"], input[type="number"], select, textarea {
+      width:100%; padding:12px; border-radius:8px; background: rgba(255,255,255,0.02);
+      border:1px solid rgba(255,255,255,0.04); color:var(--text); font-size:14px; margin-top:8px;
+    }
+    textarea { min-height:120px; resize:vertical; }
+    .row { display:flex; gap:12px; align-items:center; }
+    .row > * { flex:1; }
+
+    .price-box { background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); color:var(--muted); }
+
+    .total { font-weight:800; color:var(--accent-color); margin-top:12px; font-size:16px; }
+
+    .btn {
+      display:inline-flex; align-items:center; gap:10px; justify-content:center;
+      padding:12px 16px; border-radius:10px; border:none; cursor:pointer;
+      background: linear-gradient(90deg,#2fe0b8,#7a5fff); color:#041219; font-weight:700;
+      box-shadow: 0 8px 28px rgba(58,45,122,0.12);
+    }
+    .btn.ghost { background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.04); }
+
+    .spacer { height:12px; }
+
+    /* proofs */
+    .proof-table { width:100%; border-collapse:collapse; margin-top:8px; }
+    .proof-table th, .proof-table td { padding:10px; border-bottom:1px solid rgba(255,255,255,0.03); font-size:13px; color:var(--muted); text-align:left; }
+    .proof-table th { color:var(--muted); font-weight:600; font-size:12px; }
+
+    /* modal */
+    .modal-backdrop { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:60; }
+    .modal { width:100%; max-width:560px; background:linear-gradient(180deg,#0f1220,#0b0f18); border-radius:12px; padding:18px; border:1px solid rgba(255,255,255,0.03); }
+    .line { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,0.02); color:var(--muted); }
+    .modal .total { margin-top:10px; font-weight:800; color:var(--accent-color); font-size:18px; }
+
+    .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+
+    /* responsive */
+    @media(max-width:980px){
+      .container-grid { grid-template-columns: 1fr; }
+      .right { order:2; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="appbar">
+      <div class="brand">
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
+        <div>
+          <div class="title">Beni-Wealth — Advertise Task</div>
+          <div class="muted">Create and fund a new advertising task</div>
+        </div>
+      </div>
+      <div id="acctArea" class="muted">Checking sign-in…</div>
+    </header>
+
+    <div class="container-grid">
+      <!-- left: form -->
+      <section class="card left" aria-labelledby="pageTitle">
+        <h1 id="pageTitle">Advertise Task</h1>
+        <div class="muted">Fill the form below to publish a task. You will be charged when posting.</div>
+
+        <label for="taskTitle">Task Title</label>
+        <input id="taskTitle" type="text" placeholder="Short title for the task" />
+
+        <label for="platform">Platform</label>
+        <select id="platform">
+          <option value="">Select Platform</option>
+          <option>WhatsApp</option>
+          <option>Facebook</option>
+          <option>Instagram</option>
+          <option>Telegram</option>
+          <option>TikTok</option>
+          <option>Website</option>
+          <option>App</option>
+          <option>Twitter</option>
+          <option>YouTube</option>
+        </select>
+
+        <label for="subcategory">Subcategory (minimum price shown)</label>
+        <select id="subcategory"><option value="">Select Subcategory</option></select>
+
+        <div class="row" style="margin-top:10px;">
+          <div>
+            <label>Fixed minimum price</label>
+            <div id="fixedPriceDisplay" class="price-box">₦0</div>
+          </div>
+
+          <div>
+            <label>Unit price (₦) <span class="muted" style="font-weight:400;font-size:12px;">(must be ≥ minimum)</span></label>
+            <input id="unitPrice" type="number" value="0" min="0" step="1" />
+          </div>
+        </div>
+
+        <label for="workers">Number of Workers</label>
+        <input id="workers" type="number" min="1" value="1" />
+
+        <div id="totalCost" class="total">Total Cost: ₦0</div>
+
+        <label for="description">Task Description</label>
+        <textarea id="description" placeholder="Describe the task and proof requirements"></textarea>
+
+        <label for="taskLink">Task Link</label>
+        <input id="taskLink" type="url" placeholder="https://example.com/..." />
+
+        <div style="margin-top:18px; display:flex; gap:12px;">
+          <button id="submitBtn" class="btn">Preview & Confirm</button>
+          <button id="clearBtn" class="btn ghost">Clear</button>
+        </div>
+      </section>
+
+      <!-- right: proofs & help -->
+      <aside class="right">
+        <div class="card">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-weight:700">Balance</div>
+              <div id="balanceDisplay" class="muted">—</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="muted">Account</div>
+              <div id="userEmail" style="font-weight:700; color:var(--text);">—</div>
+            </div>
+          </div>
+
+          <div class="spacer"></div>
+
+          <div>
+            <div style="font-weight:700; margin-bottom:6px;">Quick Tips</div>
+            <div class="muted" style="font-size:13px; line-height:1.4;">
+              • Unit price must be at least the subcategory minimum.<br>
+              • Make sure your link is reachable and proofs are verifiable.<br>
+              • Tasks are reviewed by moderators before going live.
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+          <div style="font-weight:700; margin-bottom:8px;">Recent Proofs (for current task)</div>
+          <div id="proofsPlaceholder" class="muted">No proofs to show yet.</div>
+          <table id="proofTable" class="proof-table" style="display:none;">
+            <thead>
+              <tr><th>User</th><th>Proof</th><th>Date</th><th>Action</th></tr>
+            </thead>
+            <tbody id="proofTableBody"></tbody>
+          </table>
+        </div>
+      </aside>
+    </div>
+
+    <!-- confirmation modal -->
+    <div id="confirmModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal card">
+        <h3 style="margin-top:0">Confirm Task Details</h3>
+
+        <div class="line"><div>Title</div><div id="c_title">—</div></div>
+        <div class="line"><div>Platform</div><div id="c_platform">—</div></div>
+        <div class="line"><div>Subcategory</div><div id="c_subcategory">—</div></div>
+        <div class="line"><div>Fixed min price</div><div id="c_min">₦0</div></div>
+        <div class="line"><div>Unit price</div><div id="c_unit">₦0</div></div>
+        <div class="line"><div>Workers</div><div id="c_workers">0</div></div>
+        <div class="line"><div>Total cost</div><div id="c_total">₦0</div></div>
+        <div class="line"><div>Your balance</div><div id="c_balance">₦0</div></div>
+
+        <div class="total" id="c_sum">Total: ₦0</div>
+
+        <div class="actions">
+          <button id="cancelConfirm" class="btn ghost">Cancel</button>
+          <button id="confirmPost" class="btn">Confirm & Post</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Firebase compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ------------------------
+    // Beni-Wealth Firebase config (inserted)
+    // ------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    // init firebase (compat)
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ------------------------
+    // Subcategory data (same mapping)
+    // ------------------------
+    const subcategoryData = {
+      "WhatsApp": { "WhatsApp Group Join": 15, "WhatsApp channel follow": 20, "WhatsApp Community Join": 35, "WhatsApp status post": 30, "Contact add": 10, "WhatsApp connect": 150 },
+      "Facebook": { "Facebook add friend": 9, "Facebook comment": 9, "Facebook follow": 5, "Facebook like": 5, "Facebook Group Join": 15, "Share a post": 20 },
+      "Instagram": { "Comment": 9, "Follow": 5, "Like": 5 },
+      "Telegram": { "Telegram Group Join": 25, "Telegram bot": 25, "Telegram web app": 65 },
+      "TikTok": { "Follow": 12, "Like": 7, "TikTok post": 20, "TikTok repost": 15 },
+      "Website": { "Simple sign up": 25, "Complex sign up": 60, "Online voting": 20 },
+      "App": { "Download and register": 50, "Complex download": 85 },
+      "Twitter": { "Comment": 9, "Like": 5, "Follow": 5, "Retweet": 20, "Quote": 15 },
+      "YouTube": { "Subscribe": 20, "View": 3, "Like": 4 }
+    };
+
+    // DOM refs
+    const platformSelect = document.getElementById('platform');
+    const subcategorySelect = document.getElementById('subcategory');
+    const fixedPriceDisplay = document.getElementById('fixedPriceDisplay');
+    const unitPriceInput = document.getElementById('unitPrice');
+    const workersInput = document.getElementById('workers');
+    const totalCostDiv = document.getElementById('totalCost');
+    const submitBtn = document.getElementById('submitBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    const balanceDisplay = document.getElementById('balanceDisplay');
+    const userEmail = document.getElementById('userEmail');
+    const acctArea = document.getElementById('acctArea');
+
+    // modal refs
+    const confirmModal = document.getElementById('confirmModal');
+    const cancelConfirm = document.getElementById('cancelConfirm');
+    const confirmPost = document.getElementById('confirmPost');
+
+    const c_title = document.getElementById('c_title');
+    const c_platform = document.getElementById('c_platform');
+    const c_subcategory = document.getElementById('c_subcategory');
+    const c_min = document.getElementById('c_min');
+    const c_unit = document.getElementById('c_unit');
+    const c_workers = document.getElementById('c_workers');
+    const c_total = document.getElementById('c_total');
+    const c_balance = document.getElementById('c_balance');
+    const c_sum = document.getElementById('c_sum');
+
+    // proofs
+    const proofSection = document.getElementById('proofTable');
+    const proofTableBody = document.getElementById('proofTableBody');
+    const proofsPlaceholder = document.getElementById('proofsPlaceholder');
+
+    // state
+    let currentFixedPrice = 0;
+    let currentUser = null;
+    let currentBalance = 0;
+    let currentTaskId = null;
+
+    // populate subcategories when platform changes
+    platformSelect.addEventListener('change', () => {
+      const selected = platformSelect.value;
+      subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+      currentFixedPrice = 0;
+      fixedPriceDisplay.textContent = '₦0';
+      unitPriceInput.value = 0;
+      unitPriceInput.min = 0;
+
+      if (subcategoryData[selected]) {
+        Object.entries(subcategoryData[selected]).forEach(([name, price]) => {
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name + ' (₦' + price + ')';
+          opt.dataset.price = price;
+          subcategorySelect.appendChild(opt);
+        });
+      }
+      updateCost();
+    });
+
+    subcategorySelect.addEventListener('change', () => {
+      const selectedOpt = subcategorySelect.options[subcategorySelect.selectedIndex];
+      currentFixedPrice = selectedOpt ? Number(selectedOpt.dataset.price || 0) : 0;
+      fixedPriceDisplay.textContent = '₦' + currentFixedPrice;
+      unitPriceInput.min = currentFixedPrice;
+      if (Number(unitPriceInput.value) < currentFixedPrice) unitPriceInput.value = currentFixedPrice;
+      updateCost();
+    });
+
+    unitPriceInput.addEventListener('input', () => {
+      const val = Number(unitPriceInput.value || 0);
+      if (currentFixedPrice && val < currentFixedPrice) {
+        unitPriceInput.value = currentFixedPrice;
+      }
+      updateCost();
+    });
+
+    workersInput.addEventListener('input', updateCost);
+
+    function updateCost() {
+      const workers = Math.max(0, parseInt(workersInput.value, 10) || 0);
+      const unit = Math.max(0, Number(unitPriceInput.value) || 0);
+      const total = unit * workers;
+      totalCostDiv.textContent = 'Total Cost: ₦' + total.toLocaleString();
+      return total;
+    }
+
+    // Clear form
+    clearBtn.addEventListener('click', () => {
+      document.getElementById('taskTitle').value = '';
+      platformSelect.value = '';
+      subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+      fixedPriceDisplay.textContent = '₦0';
+      unitPriceInput.value = 0;
+      unitPriceInput.min = 0;
+      workersInput.value = 1;
+      document.getElementById('description').value = '';
+      document.getElementById('taskLink').value = '';
+      totalCostDiv.textContent = 'Total Cost: ₦0';
+    });
+
+    // show confirmation modal
+    submitBtn.addEventListener('click', async () => {
+      const title = (document.getElementById('taskTitle').value || '').trim();
+      const platform = platformSelect.value;
+      const subcategory = subcategorySelect.value;
+      const workers = Math.max(0, parseInt(workersInput.value, 10) || 0);
+      const description = (document.getElementById('description').value || '').trim();
+      const taskLink = (document.getElementById('taskLink').value || '').trim();
+      const chosenUnitPrice = Math.max(0, Number(unitPriceInput.value) || 0);
+      const totalCost = chosenUnitPrice * workers;
+
+      if (!title || !platform || !subcategory || !taskLink) {
+        return alert('Please fill all required fields (title, platform, subcategory, link).');
+      }
+      if (chosenUnitPrice < currentFixedPrice) {
+        return alert('Unit price must be at least ₦' + currentFixedPrice);
+      }
+
+      // ensure signed in
+      const user = auth.currentUser;
+      if (!user) {
+        return alert('Please sign in first.');
+      }
+      currentUser = user;
+
+      // fetch balance
+      try {
+        const uDoc = await db.collection('users').doc(user.uid).get();
+        currentBalance = uDoc.exists ? (uDoc.data().balance || 0) : 0;
+      } catch (err) {
+        console.error('Error fetching balance', err);
+        currentBalance = 0;
+      }
+
+      // populate modal
+      c_title.textContent = title;
+      c_platform.textContent = platform;
+      c_subcategory.textContent = subcategory;
+      c_min.textContent = '₦' + currentFixedPrice;
+      c_unit.textContent = '₦' + chosenUnitPrice;
+      c_workers.textContent = workers;
+      c_total.textContent = '₦' + totalCost.toLocaleString();
+      c_balance.textContent = '₦' + Number(currentBalance).toLocaleString();
+      c_sum.textContent = 'Total: ₦' + totalCost.toLocaleString();
+
+      if (currentBalance < totalCost) {
+        c_sum.style.color = 'crimson';
+        c_sum.textContent = 'Insufficient balance — need ₦' + totalCost.toLocaleString();
+        confirmPost.disabled = true;
+      } else {
+        c_sum.style.color = 'var(--accent-color)';
+        confirmPost.disabled = false;
+      }
+
+      // show modal
+      confirmModal.style.display = 'flex';
+      confirmModal.setAttribute('aria-hidden', 'false');
+      currentTaskId = null;
+    });
+
+    // cancel modal
+    cancelConfirm.addEventListener('click', () => {
+      confirmModal.style.display = 'none';
+      confirmModal.setAttribute('aria-hidden','true');
+    });
+
+    // post the task
+    confirmPost.addEventListener('click', async () => {
+      confirmPost.disabled = true;
+      confirmPost.textContent = 'Posting...';
+
+      try {
+        if (!currentUser) throw new Error('Not signed in');
+
+        const title = (document.getElementById('taskTitle').value || '').trim();
+        const platform = platformSelect.value;
+        const subcategory = subcategorySelect.value;
+        const workers = Math.max(0, parseInt(workersInput.value, 10) || 0);
+        const description = (document.getElementById('description').value || '').trim();
+        const taskLink = (document.getElementById('taskLink').value || '').trim();
+        const chosenUnitPrice = Math.max(0, Number(unitPriceInput.value) || 0);
+        const totalCost = chosenUnitPrice * workers;
+
+        // re-fetch balance server-side check
+        const userRef = db.collection('users').doc(currentUser.uid);
+        const userDoc = await userRef.get();
+        const balance = userDoc.exists ? (userDoc.data().balance || 0) : 0;
+        if (balance < totalCost) {
+          alert('Insufficient balance to post this task.');
+          confirmModal.style.display = 'none';
+          confirmPost.disabled = false;
+          confirmPost.textContent = 'Confirm & Post';
+          return;
+        }
+
+        // create task id and write
+        const taskId = Date.now().toString() + '-' + currentUser.uid;
+        const now = firebase.firestore.FieldValue.serverTimestamp();
+
+        await db.collection('tasks').doc(taskId).set({
+          taskTitle: title,
+          category: platform,
+          subCategory: subcategory,
+          subCategoryMinPrice: currentFixedPrice,
+          subCategoryPrice: chosenUnitPrice,
+          workersNeeded: workers,
+          totalBudget: totalCost,
+          description: description,
+          link: taskLink,
+          createdBy: currentUser.uid,
+          createdAt: now,
+          status: 'pending',
+          taskId: taskId
+        });
+
+        // debit advertiser balance (transactional behavior recommended for production)
+        await userRef.update({ balance: balance - totalCost });
+
+        // record transaction
+        await db.collection('transactions').add({
+          userId: currentUser.uid,
+          type: 'debit',
+          source: 'Task Post',
+          amount: totalCost,
+          date: now
+        });
+
+        currentTaskId = taskId;
+        alert('Task submitted for approval!');
+        confirmModal.style.display = 'none';
+        loadProofs(taskId);
+      } catch (err) {
+        console.error('Error posting task:', err);
+        alert('Error posting task: ' + (err.message || err));
+      } finally {
+        confirmPost.disabled = false;
+        confirmPost.textContent = 'Confirm & Post';
+      }
+    });
+
+    // load proofs for a given task id
+    async function loadProofs(taskId) {
+      try {
+        proofsPlaceholder.style.display = 'none';
+        proofSection.style.display = 'table';
+        proofTableBody.innerHTML = ''; // clear
+        const proofsSnapshot = await db.collection('proofs').where('taskId', '==', taskId).get();
+        if (proofsSnapshot.empty) {
+          proofsPlaceholder.style.display = 'block';
+          proofSection.style.display = 'none';
+          return;
+        }
+        proofsSnapshot.forEach(doc => {
+          const proof = doc.data();
+          const tr = document.createElement('tr');
+
+          // user cell
+          const tdUser = document.createElement('td');
+          tdUser.textContent = proof.userId || '—';
+          tr.appendChild(tdUser);
+
+          // proof cell (link or text)
+          const tdProof = document.createElement('td');
+          if (proof.proofLink) {
+            const a = document.createElement('a');
+            a.href = proof.proofLink;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.textContent = 'View Proof';
+            tdProof.appendChild(a);
+          } else {
+            tdProof.textContent = proof.text || '—';
+          }
+          tr.appendChild(tdProof);
+
+          // date cell
+          const tdDate = document.createElement('td');
+          tdDate.textContent = proof.date && proof.date.toDate ? proof.date.toDate().toLocaleString() : '—';
+          tr.appendChild(tdDate);
+
+          // action cell
+          const tdAction = document.createElement('td');
+          const approveBtn = document.createElement('button');
+          approveBtn.className = 'btn ghost';
+          approveBtn.textContent = 'Approve';
+          approveBtn.addEventListener('click', async () => {
+            await db.collection('proofs').doc(doc.id).update({ status: 'approved' });
+            approveBtn.textContent = 'Approved';
+            approveBtn.disabled = true;
+            alert('Proof approved');
+          });
+          tdAction.appendChild(approveBtn);
+          tr.appendChild(tdAction);
+
+          proofTableBody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Error loading proofs', err);
+      }
+    }
+
+    // watch auth state and show balance & email
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        acctArea.textContent = 'Not signed in — please sign in to continue';
+        userEmail.textContent = '—';
+        balanceDisplay.textContent = '—';
+        currentUser = null;
+        currentBalance = 0;
+        return;
+      }
+
+      currentUser = user;
+      userEmail.textContent = user.email || '—';
+      acctArea.textContent = user.email || 'Signed in';
+
+      // fetch user balance
+      try {
+        const uDoc = await db.collection('users').doc(user.uid).get();
+        currentBalance = uDoc.exists ? (uDoc.data().balance || 0) : 0;
+        balanceDisplay.textContent = '₦' + Number(currentBalance).toLocaleString();
+      } catch (err) {
+        console.error('Error fetching user doc', err);
+        balanceDisplay.textContent = '—';
+      }
+    });
+
+    // small init to wire events (unitPrice/workers)
+    document.addEventListener('DOMContentLoaded', () => {
+      updateCost();
+    });
+
+    // helper escape (not used for DOM textContent insert)
+    function escapeHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  </script>
+</body>
+</html>
