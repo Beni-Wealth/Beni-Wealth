@@ -602,11 +602,12 @@
         });
       });
 
-      // compute current active by pathname
-      const path = location.pathname.split('/').pop() || 'index.html';
-      const map = {
-        'dashboard.html':'home','index.html':'home','shortlinks.html':'shortlinks','convert.html':'shortlinks',
-        'advertise-task.html':'create','center.html':'create','news.html':'news'
+      // small nav wiring (update paths as needed)
+    document.getElementById('navHome').addEventListener('click', ()=> location.href='catalog.html');
+    document.getElementById('navConvert').addEventListener('click', ()=> location.href='convert.html');
+    document.getElementById('navCenter').addEventListener('click', ()=> location.href='center.html');
+    document.getElementById('navNews').addEventListener('click', ()=> location.href='news.html');
+    document.getElementById('navAssets').addEventListener('click', ()=> location.href='dashboard.html');
       };
       const key = map[path] || 'home';
       anchors.forEach(a => { if(a.dataset.key === key) a.classList.add('active'); });
