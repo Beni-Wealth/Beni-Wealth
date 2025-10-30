@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Advertise Task — Beni-Wealth</title>
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
 
   <style>
@@ -17,12 +16,9 @@
       --text: #eaf2ff;
       --accent-start:#2fe0b8;
       --accent-end:#7a5fff;
-
-      /* bottom nav sizing */
       --bw-bottom-nav-height: 72px;
       --bw-nav-gap: 18px;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:0}
     body{
@@ -32,76 +28,40 @@
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
     }
+    .shell { max-width:980px; margin:0 auto; padding:36px 20px calc(var(--bw-bottom-nav-height) + env(safe-area-inset-bottom, 32px)); }
 
-    /* Shell: bottom padding so content isn't hidden by fixed nav */
-    .shell {
-      max-width:980px;
-      margin:0 auto;
-      padding:36px 20px calc(var(--bw-bottom-nav-height) + env(safe-area-inset-bottom, 32px));
-    }
+    header.appbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+    .brand{ display:flex; align-items:center; gap:12px; }
+    .brand img{ width:54px; height:54px; border-radius:12px; object-fit:cover; box-shadow:0 6px 18px rgba(0,0,0,0.5) }
+    .brand .title{ font-weight:700; font-size:18px }
+    .muted{ color:var(--muted); font-size:13px }
 
-    header.appbar{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;
-    }
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand img{width:54px;height:54px;border-radius:12px;object-fit:cover;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
-    .brand .title{font-weight:700;font-size:18px}
-    .muted{color:var(--muted);font-size:13px}
-
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:14px;
-      padding:18px;
-      border:1px solid rgba(255,255,255,0.04);
-      box-shadow: 0 18px 60px rgba(0,0,0,0.6);
-    }
-
+    .card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:18px; border:1px solid rgba(255,255,255,0.04); box-shadow: 0 18px 60px rgba(0,0,0,0.6); }
     .grid { display:grid; grid-template-columns: 1fr 360px; gap:18px; align-items:start; }
     @media(max-width:980px){ .grid { grid-template-columns: 1fr } }
 
-    label{display:block;margin-top:12px;font-weight:600;color:var(--text);font-size:13px}
-    input[type="text"], input[type="url"], input[type="number"], select, textarea {
-      width:100%; padding:12px; margin-top:8px; border-radius:8px;
-      background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); color:var(--text); font-size:14px;
-    }
+    label{ display:block; margin-top:12px; font-weight:600; color:var(--text); font-size:13px }
+    input[type="text"], input[type="url"], input[type="number"], select, textarea { width:100%; padding:12px; margin-top:8px; border-radius:8px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); color:var(--text); font-size:14px; }
     textarea { min-height:120px; resize:vertical; }
 
-    .row{display:flex;gap:12px;align-items:center}
-    .row > *{flex:1}
-
-    .price-box{background:rgba(255,255,255,0.03);padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);color:var(--muted)}
+    .row{ display:flex; gap:12px; align-items:center }
+    .row > *{ flex:1 }
+    .price-box{ background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); color:var(--muted) }
     .total { font-weight:800; color:var(--accent-start); margin-top:12px; font-size:16px; }
 
-    .btn {
-      display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:12px 16px;border-radius:10px;border:none;cursor:pointer;
-      background: linear-gradient(90deg,var(--accent-start),var(--accent-end)); color:#041219; font-weight:700;
-    }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:12px 16px; border-radius:10px; border:none; cursor:pointer; background: linear-gradient(90deg,var(--accent-start),var(--accent-end)); color:#041219; font-weight:700; }
     .btn.ghost { background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); }
 
-    /* modal */
     .modal-backdrop { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:140; }
     .modal { width:100%; max-width:560px; background:linear-gradient(180deg,#0f1220,#0b0f18); border-radius:12px; padding:18px; border:1px solid rgba(255,255,255,0.03); }
     .line { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,0.02); color:var(--muted); }
 
-    /* bottom nav */
-    .bw-bottom-nav {
-      position: fixed;
-      left: var(--bw-nav-gap);
-      right: var(--bw-nav-gap);
-      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-      height: var(--bw-bottom-nav-height);
-      display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));
-      border-radius: 40px; box-shadow: 0 14px 40px rgba(2,6,23,0.6); backdrop-filter: blur(6px); z-index:120;
-      color:var(--text);
-    }
-    .bw-bottom-nav a{ text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; font-size:12px; text-align:center; user-select:none }
-    .bw-bottom-nav .icon-wrap{ width:44px; height:44px; border-radius:10px; background: rgba(255,255,255,0.04); display:grid;place-items:center; font-size:18px }
-    .bw-bottom-nav .center-btn{ width:82px; height:82px; border-radius:50%; background: linear-gradient(135deg,var(--accent-start),var(--accent-end)); display:grid;place-items:center; color:#041219; font-size:26px; box-shadow: 0 12px 36px rgba(61,46,111,0.35); transform:translateY(-22px) }
-
-    .bw-bottom-nav a.active .icon-wrap{ background: linear-gradient(90deg,var(--accent-start),var(--accent-end)); color:#041219 }
+    .bw-bottom-nav { position: fixed; left: var(--bw-nav-gap); right: var(--bw-nav-gap); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); height: var(--bw-bottom-nav-height); display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px; background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); border-radius: 40px; box-shadow: 0 14px 40px rgba(2,6,23,0.6); backdrop-filter: blur(6px); z-index:120; color:var(--text); }
+    .bw-bottom-nav a{ text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; font-size:12px; text-align:center; user-select:none; }
+    .bw-bottom-nav .icon-wrap{ width:44px; height:44px; border-radius:10px; background: rgba(255,255,255,0.04); display:grid; place-items:center; font-size:18px; }
+    .bw-bottom-nav .center-btn{ width:82px; height:82px; border-radius:50%; background: linear-gradient(135deg,var(--accent-start),var(--accent-end)); display:grid; place-items:center; color:#041219; font-size:26px; box-shadow: 0 12px 36px rgba(61,46,111,0.35); transform:translateY(-22px); }
+    .bw-bottom-nav a.active .icon-wrap{ background: linear-gradient(90deg,var(--accent-start),var(--accent-end)); color:#041219; }
     @media(max-width:420px){ .bw-bottom-nav a{ width:52px; font-size:11px } .bw-bottom-nav .center-btn{ width:70px; height:70px; transform:translateY(-18px) } }
-
   </style>
 </head>
 <body>
@@ -118,7 +78,6 @@
     </header>
 
     <div class="grid">
-      <!-- left: main form -->
       <section class="card left" aria-labelledby="pageTitle">
         <h2 id="pageTitle">Advertise Task</h2>
         <p class="muted">Fill out details and preview before posting. Funds will be debited when the task is posted.</p>
@@ -129,15 +88,7 @@
         <label for="platform">Platform</label>
         <select id="platform">
           <option value="">Select Platform</option>
-          <option>WhatsApp</option>
-          <option>Facebook</option>
-          <option>Instagram</option>
-          <option>Telegram</option>
-          <option>TikTok</option>
-          <option>Website</option>
-          <option>App</option>
-          <option>Twitter</option>
-          <option>YouTube</option>
+          <option>WhatsApp</option><option>Facebook</option><option>Instagram</option><option>Telegram</option><option>TikTok</option><option>Website</option><option>App</option><option>Twitter</option><option>YouTube</option>
         </select>
 
         <label for="subcategory">Subcategory (minimum price shown)</label>
@@ -148,7 +99,6 @@
             <label>Fixed minimum price</label>
             <div id="fixedPriceDisplay" class="price-box">₦0</div>
           </div>
-
           <div>
             <label>Unit price (₦) <span class="muted" style="font-weight:400;font-size:12px;">(must be ≥ minimum)</span></label>
             <input id="unitPrice" type="number" value="0" min="0" step="1" />
@@ -172,39 +122,21 @@
         </div>
       </section>
 
-      <!-- right: account & tips -->
       <aside class="right">
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-              <div style="font-weight:700">Balance</div>
-              <div id="balanceDisplay" class="muted">—</div>
-            </div>
-            <div style="text-align:right;">
-              <div class="muted">Account</div>
-              <div id="userName" style="font-weight:700;color:var(--text)">—</div>
-            </div>
+            <div><div style="font-weight:700">Balance</div><div id="balanceDisplay" class="muted">—</div></div>
+            <div style="text-align:right;"><div class="muted">Account</div><div id="userName" style="font-weight:700;color:var(--text)">—</div></div>
           </div>
-
           <div style="height:14px"></div>
-
-          <div>
-            <div style="font-weight:700;margin-bottom:6px;">Quick Tips</div>
-            <div class="muted" style="font-size:13px;line-height:1.4;">
-              • Unit price must be at least the subcategory minimum.<br>
-              • Provide a reachable link and clear proof instructions.<br>
-              • Tasks are reviewed by moderators before publishing.
-            </div>
-          </div>
+          <div><div style="font-weight:700;margin-bottom:6px;">Quick Tips</div><div class="muted" style="font-size:13px;line-height:1.4;">• Unit price must be at least the subcategory minimum.<br>• Provide a reachable link and clear proof instructions.<br>• Tasks are reviewed by moderators before publishing.</div></div>
         </div>
       </aside>
     </div>
 
-    <!-- confirmation modal -->
     <div id="confirmModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
       <div class="modal card" role="document" aria-labelledby="confirmTitle">
         <h3 id="confirmTitle">Confirm Task Details</h3>
-
         <div class="line"><div>Title</div><div id="c_title">—</div></div>
         <div class="line"><div>Platform</div><div id="c_platform">—</div></div>
         <div class="line"><div>Subcategory</div><div id="c_subcategory">—</div></div>
@@ -213,55 +145,30 @@
         <div class="line"><div>Workers</div><div id="c_workers">0</div></div>
         <div class="line"><div>Total cost</div><div id="c_total">₦0</div></div>
         <div class="line"><div>Your balance</div><div id="c_balance">₦0</div></div>
-
         <div class="total" id="c_sum">Total: ₦0</div>
-
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
           <button id="cancelConfirm" class="btn ghost">Cancel</button>
           <button id="confirmPost" class="btn">Confirm & Post</button>
         </div>
       </div>
     </div>
-
   </main>
 
-  <!-- bottom nav (fixed) - Assets now points at /dashboard.html -->
+  <!-- bottom nav -->
   <nav class="bw-bottom-nav" role="navigation" aria-label="Main navigation">
-    <a href="/dashboard.html" data-key="home" title="Home">
-      <div class="icon-wrap">🏠</div>
-      <div>Home</div>
-    </a>
-
-    <a href="/shortlinks.html" data-key="shortlinks" title="Shortlinks">
-      <div class="icon-wrap">🔗</div>
-      <div>Shortlinks</div>
-    </a>
-
-    <div class="nav-center">
-      <a href="/advertise-task.html" class="center-btn" data-key="create" aria-label="Create">➕</a>
-    </div>
-
-    <a href="/news.html" data-key="news" title="News">
-      <div class="icon-wrap">💬</div>
-      <div>News</div>
-    </a>
-
-    <!-- ASSETS now correctly links to the dashboard -->
-    <a href="/dashboard.html" data-key="home" title="Assets / Dashboard">
-      <div class="icon-wrap">👤</div>
-      <div>Assets</div>
-    </a>
+    <a href="/dashboard.html" data-key="home" title="Home"><div class="icon-wrap">🏠</div><div>Home</div></a>
+    <a href="/shortlinks.html" data-key="shortlinks" title="Shortlinks"><div class="icon-wrap">🔗</div><div>Shortlinks</div></a>
+    <div class="nav-center"><a href="/advertise-task.html" class="center-btn" data-key="create" aria-label="Create">➕</a></div>
+    <a href="/news.html" data-key="news" title="News"><div class="icon-wrap">💬</div><div>News</div></a>
+    <a href="/dashboard.html" data-key="home" title="Assets / Dashboard"><div class="icon-wrap">👤</div><div>Assets</div></a>
   </nav>
 
-  <!-- Firebase compat SDKs (easy to drop into a static page) -->
+  <!-- Firebase compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // ------------------------
-    // Beni-Wealth Firebase config (client config only)
-    // ------------------------
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -271,13 +178,11 @@
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
-
-    // initialize firebase (compat)
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // DOM refs
+    // UI refs
     const platformSelect = document.getElementById('platform');
     const subcategorySelect = document.getElementById('subcategory');
     const fixedPriceDisplay = document.getElementById('fixedPriceDisplay');
@@ -286,7 +191,6 @@
     const totalCostDiv = document.getElementById('totalCost');
     const submitBtn = document.getElementById('submitBtn');
     const clearBtn = document.getElementById('clearBtn');
-
     const balanceDisplay = document.getElementById('balanceDisplay');
     const userNameEl = document.getElementById('userName');
     const acctArea = document.getElementById('acctArea');
@@ -305,7 +209,6 @@
     const c_balance = document.getElementById('c_balance');
     const c_sum = document.getElementById('c_sum');
 
-    // subcategory pricing map
     const subcategoryData = {
       "WhatsApp": { "WhatsApp Group Join": 15, "WhatsApp channel follow": 20, "WhatsApp Community Join": 35, "WhatsApp status post": 30, "Contact add": 10, "WhatsApp connect": 150 },
       "Facebook": { "Facebook add friend": 9, "Facebook comment": 9, "Facebook follow": 5, "Facebook like": 5, "Facebook Group Join": 15, "Share a post": 20 },
@@ -318,14 +221,11 @@
       "YouTube": { "Subscribe": 20, "View": 3, "Like": 4 }
     };
 
-    // state
     let currentFixedPrice = 0;
     let currentUser = null;
     let currentBalance = 0;
     let currentTaskId = null;
 
-    // helpers
-    function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
     function updateCost(){ 
       const workers = Math.max(0, parseInt(workersInput.value, 10) || 0);
       const unit = Math.max(0, Number(unitPriceInput.value) || 0);
@@ -334,7 +234,6 @@
       return total;
     }
 
-    // populate subcategories when platform changes
     platformSelect.addEventListener('change', () => {
       const selected = platformSelect.value;
       subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
@@ -342,7 +241,6 @@
       fixedPriceDisplay.textContent = '₦0';
       unitPriceInput.value = 0;
       unitPriceInput.min = 0;
-
       if (subcategoryData[selected]) {
         Object.entries(subcategoryData[selected]).forEach(([name, price]) => {
           const opt = document.createElement('option');
@@ -366,15 +264,11 @@
 
     unitPriceInput.addEventListener('input', () => {
       const val = Number(unitPriceInput.value || 0);
-      if (currentFixedPrice && val < currentFixedPrice) {
-        unitPriceInput.value = currentFixedPrice;
-      }
+      if (currentFixedPrice && val < currentFixedPrice) unitPriceInput.value = currentFixedPrice;
       updateCost();
     });
-
     workersInput.addEventListener('input', updateCost);
 
-    // clear form
     clearBtn.addEventListener('click', () => {
       document.getElementById('taskTitle').value = '';
       platformSelect.value = '';
@@ -388,7 +282,6 @@
       totalCostDiv.textContent = 'Total Cost: ₦0';
     });
 
-    // show confirmation modal
     submitBtn.addEventListener('click', async () => {
       const title = (document.getElementById('taskTitle').value || '').trim();
       const platform = platformSelect.value;
@@ -406,12 +299,10 @@
         return alert('Unit price must be at least ₦' + currentFixedPrice);
       }
 
-      // ensure signed in
       const user = auth.currentUser;
       if (!user) return alert('Please sign in first.');
       currentUser = user;
 
-      // fetch balance
       try {
         const uDoc = await db.collection('users').doc(user.uid).get();
         currentBalance = uDoc.exists ? (uDoc.data().balance || 0) : 0;
@@ -420,7 +311,6 @@
         currentBalance = 0;
       }
 
-      // populate modal
       c_title.textContent = title;
       c_platform.textContent = platform;
       c_subcategory.textContent = subcategory;
@@ -440,23 +330,16 @@
         confirmPost.disabled = false;
       }
 
-      // show modal
       confirmModal.style.display = 'flex';
       confirmModal.setAttribute('aria-hidden', 'false');
       currentTaskId = null;
     });
 
-    // cancel modal
-    cancelConfirm.addEventListener('click', () => {
-      confirmModal.style.display = 'none';
-      confirmModal.setAttribute('aria-hidden','true');
-    });
+    cancelConfirm.addEventListener('click', () => { confirmModal.style.display = 'none'; confirmModal.setAttribute('aria-hidden','true'); });
 
-    // confirm & post (same as earlier)
     confirmPost.addEventListener('click', async () => {
       confirmPost.disabled = true;
       confirmPost.textContent = 'Posting...';
-
       try {
         if (!currentUser) throw new Error('Not signed in');
 
@@ -469,46 +352,22 @@
         const chosenUnitPrice = Math.max(0, Number(unitPriceInput.value) || 0);
         const totalCost = chosenUnitPrice * workers;
 
-        // re-fetch balance server-side check
         const userRef = db.collection('users').doc(currentUser.uid);
         const userDoc = await userRef.get();
         const balance = userDoc.exists ? (userDoc.data().balance || 0) : 0;
-        if (balance < totalCost) {
-          alert('Insufficient balance to post this task.');
-          confirmModal.style.display = 'none';
-          return;
-        }
+        if (balance < totalCost) { alert('Insufficient balance to post this task.'); confirmModal.style.display = 'none'; return; }
 
         const taskId = Date.now().toString() + '-' + currentUser.uid;
         const now = firebase.firestore.FieldValue.serverTimestamp();
 
         await db.collection('tasks').doc(taskId).set({
-          taskTitle: title,
-          category: platform,
-          subCategory: subcategory,
-          subCategoryMinPrice: currentFixedPrice,
-          subCategoryPrice: chosenUnitPrice,
-          workersNeeded: workers,
-          totalBudget: totalCost,
-          description: description,
-          link: taskLink,
-          createdBy: currentUser.uid,
-          createdAt: now,
-          status: 'pending',
-          taskId: taskId
+          taskTitle: title, category: platform, subCategory: subcategory, subCategoryMinPrice: currentFixedPrice,
+          subCategoryPrice: chosenUnitPrice, workersNeeded: workers, totalBudget: totalCost, description,
+          link: taskLink, createdBy: currentUser.uid, createdAt: now, status: 'pending', taskId
         });
 
-        // debit advertiser (consider Cloud Function transaction for production)
         await userRef.update({ balance: balance - totalCost });
-
-        // record transaction
-        await db.collection('transactions').add({
-          userId: currentUser.uid,
-          type: 'debit',
-          source: 'Task Post',
-          amount: totalCost,
-          date: now
-        });
+        await db.collection('transactions').add({ userId: currentUser.uid, type: 'debit', source: 'Task Post', amount: totalCost, date: now });
 
         currentTaskId = taskId;
         alert('Task submitted for approval!');
@@ -522,94 +381,65 @@
       }
     });
 
-    // auth state handling: show username (displayName || users/{uid}.username || local-part) and balance
     auth.onAuthStateChanged(async (user) => {
       if (!user) {
         acctArea.textContent = 'Not signed in — please sign in to continue';
         userNameEl.textContent = '—';
         balanceDisplay.textContent = '—';
-        currentUser = null;
-        currentBalance = 0;
+        currentUser = null; currentBalance = 0;
         return;
       }
-
       currentUser = user;
-      // try to get username & balance from users collection
       try {
         const uDoc = await db.collection('users').doc(user.uid).get();
         let username = user.displayName || '';
-        if (!username && uDoc.exists) {
-          const data = uDoc.data();
-          username = data.username || data.name || '';
-        }
+        if (!username && uDoc.exists) { const data = uDoc.data(); username = data.username || data.name || ''; }
         if (!username && user.email) username = user.email.split('@')[0];
-        acctArea.textContent = username || 'User';
-        userNameEl.textContent = username || 'User';
-
-        const bal = uDoc.exists ? Number(uDoc.data().balance || 0) : 0;
-        currentBalance = bal;
-        balanceDisplay.textContent = '₦' + Number(bal).toLocaleString();
+        acctArea.textContent = username || 'User'; userNameEl.textContent = username || 'User';
+        const bal = uDoc.exists ? Number(uDoc.data().balance || 0) : 0; currentBalance = bal; balanceDisplay.textContent = '₦' + Number(bal).toLocaleString();
       } catch (err) {
         console.error('Error reading user data', err);
         acctArea.textContent = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
-        userNameEl.textContent = acctArea.textContent;
-        balanceDisplay.textContent = '—';
+        userNameEl.textContent = acctArea.textContent; balanceDisplay.textContent = '—';
       }
     });
 
-    // Bottom nav: robust click handling + active state (Assets now maps to home/dashboard)
+    // Bottom nav: ALWAYS navigate to full url (url.href). Works for both absolute (external) and relative links.
     (function setupBottomNav(){
       const nav = document.querySelector('.bw-bottom-nav');
       if(!nav) return;
-
-      // Ensure shell padding is sufficient (already set in CSS but double-check)
+      const anchors = Array.from(nav.querySelectorAll('a'));
+      // Ensure shell has enough bottom padding
       const navHeight = nav.getBoundingClientRect().height || 72;
       const shell = document.querySelector('.shell') || document.body;
       const currentBottomPadding = parseInt(getComputedStyle(shell).paddingBottom) || 0;
       const needed = Math.ceil(navHeight + 28);
       if(currentBottomPadding < needed) shell.style.paddingBottom = needed + 'px';
 
-      // helper navigate: tries SPA-friendly pushState then fallback to assign
-      async function navigateTo(href){
-        if(!href) return;
-        try{
-          const url = new URL(href, location.origin);
-          if(url.origin === location.origin && window.history && window.history.pushState){
-            window.history.pushState({}, '', url.pathname + url.search + url.hash);
-            if(typeof window.onpopstate === 'function'){
-              window.onpopstate({ state: null });
-            } else {
-              window.location.href = url.pathname + url.search + url.hash;
-            }
-            return;
-          }
-          window.location.href = href;
-        }catch(e){
-          window.location.href = href;
-        }
-      }
-
-      // attach handlers to each anchor and center button
-      const anchors = nav.querySelectorAll('a');
       anchors.forEach(a => {
         a.addEventListener('click', (ev) => {
           ev.preventDefault();
-          // set visual active immediately
+          // visual active state
           anchors.forEach(x => x.classList.remove('active'));
           a.classList.add('active');
-          const href = a.getAttribute('href');
-          navigateTo(href);
+          const rawHref = a.getAttribute('href');
+          if(!rawHref) return;
+          try {
+            // Build a URL object (handles relative and absolute hrefs)
+            const absolute = new URL(rawHref, location.href);
+            // Use href (full URL) for navigation so external domains work too
+            location.assign(absolute.href);
+          } catch (err) {
+            // fallback: navigate raw
+            location.assign(rawHref);
+          }
         });
       });
 
-      // small nav wiring (update paths as needed)
-    document.getElementById('navHome').addEventListener('click', ()=> location.href='catalog.html');
-    document.getElementById('navConvert').addEventListener('click', ()=> location.href='convert.html');
-    document.getElementById('navCenter').addEventListener('click', ()=> location.href='center.html');
-    document.getElementById('navNews').addEventListener('click', ()=> location.href='news.html');
-    document.getElementById('navAssets').addEventListener('click', ()=> location.href='dashboard.html');
-      };
-      const key = map[path] || 'home';
+      // Active detection maps dashboard/assets -> home
+      const file = location.pathname.split('/').pop() || 'index.html';
+      const map = { 'dashboard.html':'home','catalog.html':'home','convert.html':'shortlinks','convert.html':'shortlinks','advertise.html':'create','center.html':'create','news.html':'news' };
+      const key = map[file] || 'home';
       anchors.forEach(a => { if(a.dataset.key === key) a.classList.add('active'); });
     })();
   </script>
