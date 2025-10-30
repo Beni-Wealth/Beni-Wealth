@@ -573,7 +573,7 @@
       const path = location.pathname.split('/').pop() || 'index.html';
       const map = {
         'dashboard.html':'home','index.html':'home','shortlinks.html':'shortlinks','convert.html':'shortlinks',
-        'center.html':'center','news.html':'news','dasboard.html':'assets','advertise.html':'center'
+        'center.html':'center','news.html':'news','dashboard.html':'assets','advertise.html':'center'
       };
       const key = map[path] || map[location.pathname] || 'home';
       document.querySelectorAll('.bw-bottom-nav a[data-key]').forEach(a=>{
