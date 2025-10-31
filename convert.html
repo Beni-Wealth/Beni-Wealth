@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Shortlinks</title>
+  <title>Beni-Wealth — Copmlete</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -30,7 +30,6 @@
     @media(max-width:760px){ .grid{grid-template-columns:1fr} }
 
     .tile {
-      position:relative;
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       border-radius:var(--radius);
       padding:20px;
@@ -39,22 +38,11 @@
       cursor:pointer;
       display:flex;align-items:center;gap:14px;transition:transform .14s ease, box-shadow .14s ease;
       text-decoration:none;color:inherit;
-      overflow:hidden;
     }
     .tile:hover{ transform:translateY(-6px); box-shadow:0 26px 80px rgba(0,0,0,0.65); }
     .tile .icon{width:72px;height:72px;border-radius:12px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;font-size:28px;color:#041219;font-weight:800;box-shadow:0 12px 30px rgba(61,46,111,0.28)}
     .tile .body h3{margin:0;font-size:18px}
     .tile .body p{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .tile .statusLine{margin-top:8px;color:var(--muted);font-size:12px}
-
-    /* disabled overlay when on cooldown */
-    .tile.disabled { opacity:0.46; pointer-events:none; transform:none; box-shadow:none; }
-    .tile .overlay {
-      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      background: linear-gradient(180deg, rgba(2,6,23,0.45), rgba(2,6,23,0.6));
-      color: #fff; font-weight:700; font-size:14px; text-align:center;
-      padding:12px;
-    }
 
     .note{margin-top:12px;color:var(--muted);font-size:13px}
 
@@ -95,24 +83,22 @@
     </header>
 
     <h1 id="pageTitle">Shortlinks</h1>
-    <p class="intro">Choose a shortlink option below. Clicking a tile will open the corresponding shortlink page and start a 24-hour cooldown for that shortlink (per user).</p>
+    <p class="intro">Choose a shortlink option below. Clicking a tile will open the corresponding shortlink page.</p>
 
     <section class="grid" aria-label="Shortlink options">
-      <a id="short1" class="tile" role="button" href="#" data-page-id="shortlink-1" data-target="shortlink-1.html">
+      <a id="short1" class="tile" role="button" href="#">
         <div class="icon">A</div>
         <div class="body">
           <h3>Shortlink — 1</h3>
           <p>Redirects to <code>shortlink-1.html</code></p>
-          <div class="statusLine" data-line>Ready</div>
         </div>
       </a>
 
-      <a id="short2" class="tile" role="button" href="#" data-page-id="shortlink-2" data-target="shortlink-2.html">
+      <a id="short2" class="tile" role="button" href="#">
         <div class="icon">B</div>
         <div class="body">
           <h3>Shortlink — 2</h3>
-          <p>Earn from your second<code>shortlink-2.html</code></p>
-          <div class="statusLine" data-line>Ready</div>
+          <p>Redirects to <code>shortlink-2.html</code></p>
         </div>
       </a>
     </section>
@@ -133,7 +119,7 @@
 
   <!-- Firebase modular SDK -->
   <script type="module">
-    // repo-aware helper (prefixes /Beni-Wealth where needed)
+    // helper: repo-aware href builder (prefixes /Beni-Wealth)
     const REPO_BASE = '/Beni-Wealth';
     function withRepoPath(target) {
       if (!target) return location.href;
@@ -153,18 +139,11 @@
       return location.origin + REPO_BASE + (clean ? '/' + clean : '');
     }
 
+    // Beni-Wealth Firebase config (you provided)
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      runTransaction,
-      serverTimestamp,
-      Timestamp
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Beni-Wealth Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -179,210 +158,40 @@
     const auth = getAuth();
     const db = getFirestore();
 
-    // cooldown: 24 hours in ms
-    const COOLDOWN_MS = 24 * 3600 * 1000;
-
-    // UI refs
+    // wire sign-in display (optional)
     const signinArea = document.getElementById('signinArea');
-    const tiles = Array.from(document.querySelectorAll('.tile'));
-
-    // Map pageId => DOM tile
-    const tilesByPage = {};
-    tiles.forEach(t => {
-      tilesByPage[t.dataset.pageId] = t;
-      // set fallback href for SEO and right-click
-      const target = withRepoPath(t.dataset.target);
-      t.setAttribute('href', target);
-    });
-
-    // helper: format remaining ms
-    function formatRemaining(ms){
-      if(ms <= 0) return 'now';
-      const s = Math.floor(ms/1000);
-      const h = Math.floor(s/3600); const m = Math.floor((s%3600)/60); const sec = s%60;
-      if(h>0) return `${h}h ${m}m`;
-      if(m>0) return `${m}m ${sec}s`;
-      return `${sec}s`;
-    }
-
-    // enable or disable tile UI
-    function setTileCooldownUI(pageId, untilTimestamp) {
-      const tile = tilesByPage[pageId];
-      if(!tile) return;
-      const statusLine = tile.querySelector('[data-line]');
-      // remove any existing overlay
-      const existingOverlay = tile.querySelector('.overlay');
-      if(existingOverlay) existingOverlay.remove();
-
-      if(!untilTimestamp){
-        tile.classList.remove('disabled');
-        if(statusLine) statusLine.textContent = 'Ready';
-        return;
-      }
-      const untilMs = (untilTimestamp instanceof Timestamp) ? untilTimestamp.toMillis() : (new Date(untilTimestamp)).getTime();
-      const remaining = untilMs - Date.now();
-      if(remaining <= 0){
-        tile.classList.remove('disabled');
-        if(statusLine) statusLine.textContent = 'Ready';
-        return;
-      }
-
-      tile.classList.add('disabled');
-      if(statusLine) statusLine.textContent = `Next available: ${formatRemaining(remaining)}`;
-
-      // overlay with remaining (updates by timer)
-      const overlay = document.createElement('div');
-      overlay.className = 'overlay';
-      overlay.dataset.until = String(untilMs);
-      overlay.innerHTML = `On cooldown — next in <span class="rem">${formatRemaining(remaining)}</span>`;
-      tile.appendChild(overlay);
-    }
-
-    // update overlays countdown every second
-    setInterval(() => {
-      tiles.forEach(tile => {
-        const overlay = tile.querySelector('.overlay');
-        if(!overlay) return;
-        const untilMs = Number(overlay.dataset.until || 0);
-        const remaining = untilMs - Date.now();
-        const remEl = overlay.querySelector('.rem');
-        if(remaining <= 0){
-          overlay.remove();
-          tile.classList.remove('disabled');
-          const statusLine = tile.querySelector('[data-line]');
-          if(statusLine) statusLine.textContent = 'Ready';
-        } else {
-          if(remEl) remEl.textContent = formatRemaining(remaining);
-          const statusLine = tile.querySelector('[data-line]');
-          if(statusLine) statusLine.textContent = `Next available: ${formatRemaining(remaining)}`;
-        }
-      });
-    }, 1000);
-
-    // check per-user claims and set initial UI
-    async function refreshTilesForUser(user){
-      // clear first
-      Object.keys(tilesByPage).forEach(pid => setTileCooldownUI(pid, null));
-      if(!user) return;
-
-      try {
-        const uRef = doc(db, 'users', user.uid);
-        const snap = await getDoc(uRef);
-        if(!snap.exists()) return;
-        const data = snap.data();
-        const claims = data.claims || {};
-        Object.keys(tilesByPage).forEach(pid => {
-          if(claims[pid]){
-            // claims[pid] should be a Timestamp (server)
-            setTileCooldownUI(pid, claims[pid]);
-          }
-        });
-      } catch (err){
-        console.error('refreshTilesForUser error', err);
-      }
-    }
-
-    // transactional set claim timestamp for a page and return boolean success
-    async function trySetClaimForPage(user, pageId){
-      const uid = user.uid;
-      const userRef = doc(db, 'users', uid);
-      try {
-        await runTransaction(db, async (tx) => {
-          const uSnap = await tx.get(userRef);
-          let claims = {};
-          if(uSnap.exists()){
-            claims = uSnap.data().claims || {};
-          }
-          const existing = claims[pageId];
-          if(existing && existing instanceof Timestamp){
-            const elapsed = Date.now() - existing.toMillis();
-            if(elapsed < COOLDOWN_MS){
-              // still cooling down
-              throw new Error('PAGE_COOLDOWN_ACTIVE');
-            }
-          }
-          // set claims.pageId = serverTimestamp()
-          const updateObj = {};
-          updateObj[`claims.${pageId}`] = serverTimestamp();
-          tx.set(userRef, updateObj, { merge: true });
-        });
-        return { ok: true };
-      } catch (err) {
-        if(err && err.message === 'PAGE_COOLDOWN_ACTIVE') return { ok: false, reason: 'cooldown' };
-        console.error('trySetClaimForPage tx error', err);
-        return { ok: false, reason: 'error' };
-      }
-    }
-
-    // click handler for tiles: record claim then redirect
-    tiles.forEach(tile => {
-      tile.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const pageId = tile.dataset.pageId;
-        const target = withRepoPath(tile.dataset.target || '');
-        const user = auth.currentUser;
-        if(!user){
-          // not signed in -> send to login
-          alert('Please sign in to use shortlinks.');
-          location.assign(withRepoPath('login.html'));
-          return;
-        }
-
-        // check current UI status quickly (client-side)
-        if(tile.classList.contains('disabled')){
-          alert('This shortlink is on cooldown. Check the remaining time shown on the tile.');
-          return;
-        }
-
-        // attempt to set claim transactionally
-        tile.classList.add('disabled'); // optimistic lock to avoid double clicks
-        const statusLine = tile.querySelector('[data-line]');
-        if(statusLine) statusLine.textContent = 'Starting redirect...';
-
-        const res = await trySetClaimForPage(user, pageId);
-        if(!res.ok){
-          // set UI based on reason (fetch latest)
-          await refreshTilesForUser(user);
-          if(res.reason === 'cooldown'){
-            alert('You have recently used this shortlink. Please wait until cooldown ends.');
-          } else {
-            alert('Could not record shortlink usage. Try again.');
-          }
-          return;
-        }
-
-        // success: show cooldown UI (we'll fetch the latest claim from server to display accurate timestamp)
-        await refreshTilesForUser(user);
-
-        // finally redirect to the shortlink page
-        // small delay so UI updates are visible to the user (optional)
-        setTimeout(() => {
-          location.assign(target);
-        }, 250);
-      });
-    });
-
-    // auth display and keep tiles in sync
     onAuthStateChanged(auth, (user) => {
-      if(!user){
+      if (!user) {
         signinArea.textContent = 'Not signed in';
-        // clear tile states (no claims visible)
-        Object.keys(tilesByPage).forEach(pid => setTileCooldownUI(pid, null));
         return;
       }
+      // show username if available, otherwise email (prefers username)
       const username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
       signinArea.textContent = username;
-      refreshTilesForUser(user);
     });
 
-    // nav wiring — repo-aware
+    // wire shortlink tiles — use withRepoPath to build full URL
+    const short1 = document.getElementById('short1');
+    const short2 = document.getElementById('short2');
+
+    const target1 = withRepoPath('shortlink-1.html');
+    const target2 = withRepoPath('shortlink-2.html');
+
+    // set hrefs (for SEO / fallback) and attach robust click handlers
+    short1.setAttribute('href', target1);
+    short2.setAttribute('href', target2);
+
+    short1.addEventListener('click', (e) => { e.preventDefault(); location.assign(target1); });
+    short2.addEventListener('click', (e) => { e.preventDefault(); location.assign(target2); });
+
+    // bottom nav wiring — set repo-aware hrefs and reliable navigation
     document.getElementById('navHome').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('catalog.html')); });
     document.getElementById('navShortlinks').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('convert.html')); });
-    document.getElementById('navCreate').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('center.html')); });
+    document.getElementById('navCreate').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('centre.html')); });
     document.getElementById('navNews').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('news.html')); });
     document.getElementById('navAssets').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('dashboard.html')); });
 
-    // ensure shell bottom padding large enough so content isn't hidden by nav
+    // ensure shell bottom padding large enough so content isn't hidden by nav (double-safety)
     (function ensurePadding(){
       const shell = document.querySelector('.shell');
       const nav = document.querySelector('.bw-bottom-nav');
