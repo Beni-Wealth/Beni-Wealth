@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Complete </title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1:#0b0613; --bg2:#120521;
+      --muted: rgba(255,255,255,0.64);
+      --text: #eaf2ff;
+      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --glass: rgba(255,255,255,0.03);
+      --radius:16px;
+      --bottom-nav-h:72px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
+    .shell{max-width:980px;margin:0 auto;padding:28px 20px calc(var(--bottom-nav-h) + 36px)}
+    header.appbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand img{width:62px;height:62px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+    .brand .title{font-weight:700;font-size:18px}
+    .brand .sub{color:var(--muted);font-size:13px;margin-top:4px}
+
+    .acct{color:var(--muted);font-size:13px;text-align:right}
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:18px;padding:32px;border:1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6); max-width:760px; margin:30px auto;
+      text-align:center;
+    }
+    .plan-badge{display:inline-block;padding:8px 14px;border-radius:999px;background:linear-gradient(90deg,#ffffff08,#ffffff06);color:var(--muted);font-weight:700;margin-top:8px}
+    .earned{font-size:48px;font-weight:900;color:var(--accent-start);margin:18px 0}
+    .earned-sub{color:var(--muted);font-size:15px;margin-bottom:8px}
+    .hint{color:var(--muted);font-size:13px;margin-top:10px}
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700;margin-top:12px}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+
+    /* bottom nav */
+    .bw-bottom-nav {
+      position: fixed;
+      left: 18px;
+      right: 18px;
+      bottom: 16px;
+      height: var(--bottom-nav-h);
+      display:flex;align-items:center;justify-content:space-between;padding:10px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));
+      border-radius: 40px; box-shadow: 0 14px 40px rgba(2,6,23,0.6); backdrop-filter: blur(6px); z-index:120;
+      color:var(--text);
+    }
+    .bw-bottom-nav a{ text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; font-size:12px; text-align:center; user-select:none }
+    .bw-bottom-nav .icon-wrap{ width:44px; height:44px; border-radius:10px; background: rgba(255,255,255,0.04); display:grid;place-items:center; font-size:18px }
+    .nav-center .center-btn{ width:82px; height:82px; border-radius:50%; background: linear-gradient(135deg,var(--accent-start),var(--accent-end)); display:grid; place-items:center; color:#041219; font-size:26px; box-shadow:0 12px 36px rgba(61,46,111,0.35); transform:translateY(-22px) }
+    footer{margin-top:18px;color:rgba(255,255,255,0.3);font-size:13px;text-align:center}
+  </style>
+</head>
+<body>
+  <main class="shell" role="main" aria-labelledby="title">
+    <header class="appbar">
+      <div class="brand">
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
+        <div>
+          <div class="title">Beni-Wealth</div>
+          <div class="sub">Earnings by Plan</div>
+        </div>
+      </div>
+      <div class="acct" id="acctDisplay">Checking sign-in…</div>
+    </header>
+
+    <h1 id="title" style="text-align:center">Plan Earnings</h1>
+
+    <div id="mainCard" class="card" role="region" aria-live="polite">
+      <div id="welcome" style="font-size:18px;font-weight:700">Welcome</div>
+      <div id="planName" class="plan-badge" aria-hidden="true">Plan: —</div>
+
+      <div id="earnedAmount" class="earned">—</div>
+      <div id="earnedMsg" class="earned-sub">You have earned —</div>
+
+      <div id="extra" class="hint">Sign in to see your plan and earnings. If you are not on a plan, you can upgrade to earn more.</div>
+
+      <div style="margin-top:14px">
+        <button id="upgradeBtn" class="btn ghost">Upgrade Plan</button>
+        <button id="refreshBtn" class="btn">Refresh</button>
+      </div>
+    </div>
+
+    <footer>© <span id="year"></span> Beni-Wealth</footer>
+  </main>
+
+  <!-- bottom nav -->
+  <nav class="bw-bottom-nav" role="navigation" aria-label="Main navigation">
+    <a id="navHome"><div class="icon-wrap">🏠</div><div>Home</div></a>
+    <a id="navShortlinks"><div class="icon-wrap">🔗</div><div>Shortlinks</div></a>
+    <div class="nav-center"><a id="navCreate" class="center-btn" aria-label="Create">➕</a></div>
+    <a id="navNews"><div class="icon-wrap">💬</div><div>News</div></a>
+    <a id="navAssets"><div class="icon-wrap">👤</div><div>Assets</div></a>
+  </nav>
+
+  <!-- Firebase modular SDK -->
+  <script type="module">
+    // repo helper (same pattern used earlier)
+    const REPO_BASE = '/Beni-Wealth';
+    function withRepoPath(target) {
+      if (!target) return location.href;
+      try {
+        const maybe = new URL(target, location.href);
+        if (maybe.protocol === 'http:' || maybe.protocol === 'https:') {
+          if (maybe.origin === location.origin) {
+            const pathname = maybe.pathname.replace(/\/+/g, '/');
+            if (pathname.indexOf(REPO_BASE) === 0) return maybe.origin + pathname + maybe.search + maybe.hash;
+          }
+          return maybe.href;
+        }
+      } catch(e){}
+      const clean = String(target).replace(/^\/+/, '');
+      const repoClean = REPO_BASE.replace(/^\/+/, '');
+      if (clean.indexOf(repoClean) === 0) return location.origin + '/' + clean;
+      return location.origin + REPO_BASE + (clean ? '/' + clean : '');
+    }
+
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // Beni-Wealth Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    if (!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // plan -> earning map
+    const PLAN_EARNINGS = {
+      bronze: 100,
+      silver: 175,
+      gold: 270,
+      platinum: 500,
+      basic: 0
+    };
+
+    const acctDisplay = document.getElementById('acctDisplay');
+    const welcome = document.getElementById('welcome');
+    const planNameEl = document.getElementById('planName');
+    const earnedAmountEl = document.getElementById('earnedAmount');
+    const earnedMsgEl = document.getElementById('earnedMsg');
+    const extraEl = document.getElementById('extra');
+    const upgradeBtn = document.getElementById('upgradeBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
+
+    async function updateForUser(user) {
+      // default display
+      acctDisplay.textContent = 'Loading...';
+      welcome.textContent = 'Welcome';
+      planNameEl.textContent = 'Plan: —';
+      earnedAmountEl.textContent = '—';
+      earnedMsgEl.textContent = 'You have earned —';
+      extraEl.textContent = 'Sign in to see your plan and earnings.';
+
+      if (!user) {
+        acctDisplay.textContent = 'Not signed in';
+        extraEl.textContent = 'Please sign in to view your plan and earnings.';
+        return;
+      }
+
+      // display username (prefer stored username then displayName then email local part)
+      let username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+      acctDisplay.textContent = username;
+      welcome.textContent = `Hi, ${username}`;
+
+      // fetch user doc
+      try {
+        const uRef = doc(db, 'users', user.uid);
+        const snap = await getDoc(uRef);
+        let plan = 'basic';
+        if (snap.exists()) {
+          const data = snap.data();
+          plan = (data.plan || data.type || data.membership || data.tier || 'basic').toString().trim();
+        }
+        const planKey = plan.toLowerCase();
+        const earn = PLAN_EARNINGS.hasOwnProperty(planKey) ? PLAN_EARNINGS[planKey] : 0;
+
+        planNameEl.textContent = `Plan: ${planKey.charAt(0).toUpperCase() + planKey.slice(1)}`;
+        earnedAmountEl.textContent = formatN(earn);
+        earnedMsgEl.textContent = `You have earned ${formatN(earn)}.`;
+
+        extraEl.textContent = earn > 0 ? `Nice — as a ${planKey} member you earn ${formatN(earn)}.` : `You are on ${planKey} plan. Upgrade to start earning more.`;
+
+      } catch (err) {
+        console.error('error fetching user doc', err);
+        extraEl.textContent = 'Unable to fetch your plan — check your connection.';
+      }
+    }
+
+    // auth state
+    onAuthStateChanged(auth, (user) => {
+      updateForUser(user);
+    });
+
+    // upgrade button -> redirect to settings / upgrade page
+    upgradeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      location.assign(withRepoPath('settings.html'));
+    });
+
+    refreshBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      await updateForUser(user);
+    });
+
+    // bottom nav wiring
+    document.getElementById('navHome').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('index.html')); });
+    document.getElementById('navShortlinks').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('shortlinks.html')); });
+    document.getElementById('navCreate').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('advertise-task.html')); });
+    document.getElementById('navNews').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('news.html')); });
+    document.getElementById('navAssets').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('dashboard.html')); });
+
+    // ensure shell padding so content isn't hidden by nav
+    (function ensurePadding(){
+      const shell = document.querySelector('.shell');
+      const nav = document.querySelector('.bw-bottom-nav');
+      if(!shell || !nav) return;
+      const need = (nav.getBoundingClientRect().height || 72) + 24;
+      const cur = parseInt(getComputedStyle(shell).paddingBottom) || 0;
+      if(cur < need) shell.style.paddingBottom = need + 'px';
+    })();
+
+    // set year
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
