@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Complete</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg1:#0b0613; --bg2:#120521; --muted: rgba(255,255,255,0.64);
@@ -21,6 +21,7 @@
     .plan-badge{display:inline-block;padding:8px 14px;border-radius:999px;background:linear-gradient(90deg,#ffffff08,#ffffff06);color:var(--muted);font-weight:700;margin-top:8px}
     .earned{font-size:48px;font-weight:900;color:var(--accent-start);margin:18px 0}
     .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700;margin-top:12px}
+    .btn[disabled]{opacity:0.6;cursor:not-allowed}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
     .status{margin-top:14px;font-size:14px;color:var(--muted)} .status.error{color:#ffb3b3} .status.success{color:#bff0d9}
     .bw-bottom-nav{position:fixed;left:18px;right:18px;bottom:16px;height:var(--bottom-nav-h);display:flex;align-items:center;justify-content:space-between;padding:10px;background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));border-radius:40px;box-shadow:0 14px 40px rgba(2,6,23,0.6);backdrop-filter:blur(6px);z-index:120}
@@ -37,7 +38,7 @@
         <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
         <div>
           <div style="font-weight:700;font-size:18px">Beni-Wealth</div>
-          <div style="color:var(--muted);font-size:13px">Shortlink-2 </div>
+          <div style="color:var(--muted);font-size:13px">Shortlink-2</div>
         </div>
       </div>
       <div id="acctDisplay" style="color:var(--muted);font-size:13px">Checking sign-in…</div>
@@ -126,8 +127,8 @@
     // PAGE ID for this page (distinct)
     const PAGE_ID = 'shortlink-2';
 
-    // CLAIM cooldown (milliseconds). Now set to 24 hours.
-    const CLAIM_COOLDOWN_MS = 24 * 3600 * 1000; // 24 hours
+    // CLAIM cooldown (milliseconds) - 24 hours
+    const CLAIM_COOLDOWN_MS = 24 * 3600 * 1000;
 
     // Plan earnings mapping
     const PLAN_EARNINGS = { bronze:100, silver:175, gold:270, platinum:500, basic:0 };
@@ -158,10 +159,36 @@
     let currentEarn = 0;
     let lastClaimTimestamp = null;
     let authReported = false;
+    let claimCountdownInterval = null;
+
+    // clear countdown
+    function clearClaimCountdown() {
+      if(claimCountdownInterval) { clearInterval(claimCountdownInterval); claimCountdownInterval = null; }
+    }
+
+    // Live update of the "lastClaimText" when there is a timestamp
+    function startClaimCountdownIfNeeded() {
+      clearClaimCountdown();
+      if (!lastClaimTimestamp || !(lastClaimTimestamp instanceof Timestamp)) return;
+      claimCountdownInterval = setInterval(() => {
+        const lastMs = lastClaimTimestamp.toMillis();
+        const elapsed = Date.now() - lastMs;
+        if (elapsed >= CLAIM_COOLDOWN_MS) {
+          lastClaimText.textContent = `Last claimed: ${new Date(lastMs).toLocaleString()}. You can claim now.`;
+          claimBtn.disabled = currentEarn <= 0;
+          clearClaimCountdown();
+        } else {
+          const remaining = CLAIM_COOLDOWN_MS - elapsed;
+          lastClaimText.textContent = `Last claimed: ${new Date(lastMs).toLocaleString()}. Next claim in ${timeRemaining(remaining)}.`;
+          claimBtn.disabled = true;
+        }
+      }, 1000);
+    }
 
     // Load user state and per-page last claim
     async function loadUserState(user){
       statusEl.textContent = ''; statusEl.className = 'status';
+      clearClaimCountdown();
       if(!user){
         acctDisplay.textContent = 'Not signed in';
         welcome.textContent = 'Welcome';
@@ -190,8 +217,7 @@
           plan = (d.plan || d.type || d.membership || d.tier || 'basic').toString().trim();
           balance = Number(d.balance || 0);
 
-          // Important: claims is expected to be a map/object on user doc:
-          // claims: { 'shortlink-1': Timestamp, 'shortlink-2': Timestamp, ... }
+          // claims: map on user doc where each key is a page id
           if (d.claims && d.claims[PAGE_ID]) {
             lastClaimTimestamp = d.claims[PAGE_ID];
           }
@@ -205,24 +231,30 @@
         earnedAmountEl.textContent = formatN(currentEarn);
         earnedMsgEl.textContent = `You have earned ${formatN(currentEarn)}.`;
 
+        // if there is a lastClaimTimestamp, compute elapsed & set UI (and start live countdown)
         if(lastClaimTimestamp && lastClaimTimestamp instanceof Timestamp){
           const lastMillis = lastClaimTimestamp.toMillis();
           const elapsed = Date.now() - lastMillis;
           if(elapsed >= CLAIM_COOLDOWN_MS){
             lastClaimText.textContent = `Last claimed: ${new Date(lastMillis).toLocaleString()}. You can claim now.`;
+            claimBtn.disabled = currentEarn <= 0;
           } else {
+            claimBtn.disabled = true;
             const remaining = CLAIM_COOLDOWN_MS - elapsed;
             lastClaimText.textContent = `Last claimed: ${new Date(lastMillis).toLocaleString()}. Next claim in ${timeRemaining(remaining)}.`;
+            // start live countdown updating every second
+            startClaimCountdownIfNeeded();
           }
         } else {
           lastClaimText.textContent = 'You have not claimed this shortlink yet. You can claim now.';
+          claimBtn.disabled = currentEarn <= 0;
         }
 
-        claimBtn.disabled = currentEarn <= 0;
       } catch (err){
         console.error('loadUserState error', err);
         statusEl.textContent = 'Unable to load user data — check console.';
         statusEl.className = 'status error';
+        claimBtn.disabled = true;
       }
     }
 
@@ -264,7 +296,6 @@
           const newBalance = balance + currentEarn;
 
           // update user's balance and set claims.PAGE_ID = serverTimestamp()
-          // Using merge true to avoid overwriting other fields
           const claimField = {};
           claimField[`claims.${PAGE_ID}`] = serverTimestamp();
           tx.set(userRef, { balance: newBalance, ...claimField }, { merge: true });
@@ -297,7 +328,7 @@
           statusEl.className = 'status error';
         }
       } finally {
-        claimBtn.disabled = false;
+        claimBtn.disabled = claimBtn.disabled || false;
         claimBtn.textContent = 'Claim Reward';
       }
     });
