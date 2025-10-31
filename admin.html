@@ -153,13 +153,53 @@
       <footer>© <span id="year"></span> Beni-Wealth — Admin</footer>
     </div>
 
-    <!-- Firebase modular imports -->
+    <!-- Script -->
     <script type="module">
+      // ---------------------------
+      // Config: repo base and firebase
+      // ---------------------------
+      const REPO_BASE = '/Beni-Wealth'; // change if your repo folder name changes
+
+      // Safe helper to ensure URLs include the repo base (or leave absolute URLs untouched)
+      function withRepoPath(target) {
+        if (!target) return location.href;
+        // If it's already an absolute URL, return as-is (but normalize same-origin)
+        try {
+          const maybe = new URL(target, location.href);
+          if (maybe.protocol === 'http:' || maybe.protocol === 'https:') {
+            // If internal and already contains the repo segment, normalize and return
+            if (maybe.origin === location.origin) {
+              const pathname = maybe.pathname.replace(/\/+/g, '/');
+              if (pathname.indexOf(REPO_BASE) === 0) {
+                return maybe.origin + pathname + maybe.search + maybe.hash;
+              }
+            }
+            return maybe.href;
+          }
+        } catch (e) {
+          // not a full absolute URL — continue
+        }
+
+        // Clean input and repo strings
+        const cleanTarget = String(target).replace(/^\/+/, ''); // remove leading slashes
+        const repoClean = REPO_BASE.replace(/^\/+/, '');
+
+        // If target already starts with repo, just attach origin
+        if (cleanTarget.indexOf(repoClean) === 0) {
+          return location.origin + '/' + cleanTarget;
+        }
+
+        // Otherwise prefix repo path
+        return location.origin + REPO_BASE + (cleanTarget ? '/' + cleanTarget : '');
+      }
+
+      // ---------------------------
+      // Firebase imports & init
+      // ---------------------------
       import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
       import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
       import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-      // Beni-Wealth Firebase config (client-side)
       const firebaseConfig = {
         apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
         authDomain: "beni-wealths.firebaseapp.com",
@@ -170,17 +210,13 @@
         measurementId: "G-Z2XP3YN6NS",
       };
 
-      // initialize app safely (only once)
-      function init() {
-        if (!getApps().length) initializeApp(firebaseConfig);
-        const auth = getAuth();
-        const db = getFirestore();
-        return { auth, db };
-      }
+      if (!getApps().length) initializeApp(firebaseConfig);
+      const auth = getAuth();
+      const db = getFirestore();
 
-      const { auth, db } = init();
-
-      // DOM refs
+      // ---------------------------
+      // UI constants & DOM refs
+      // ---------------------------
       const metricsSection = document.getElementById('metricsSection');
       const actionsWrap = document.getElementById('actionsWrap');
       const emailBadge = document.getElementById('emailBadge');
@@ -188,64 +224,80 @@
       const refreshBtn = document.getElementById('refreshBtn');
       const openConsole = document.getElementById('openConsole');
       const recentPlaceholder = document.getElementById('recentPlaceholder');
-
       document.getElementById('year').textContent = new Date().getFullYear();
 
-      // quick actions config (these will be shown as smaller tiles)
+      // Quick actions (paths are now page filenames without 'admin/' prefix)
       const QUICK_ACTIONS = [
-        { label: "Tasks", icon: "📋", path: "/admin/tasks" },
-        { label: "View Users", icon: "👥", path: "/admin/users" },
-        { label: "Approve Proofs", icon: "✅", path: "/admin/proofs" },
-        { label: "Transactions", icon: "💳", path: "/admin/transactions" },
-        { label: "Settings", icon: "⚙️", path: "/admin/settings" }
+        { label: "Tasks", icon: "📋", path: "tasks.html" },
+        { label: "View Users", icon: "👥", path: "users.html" },
+        { label: "Approve Proofs", icon: "✅", path: "proofs.html" },
+        { label: "Transactions", icon: "💳", path: "transactions.html" },
+        { label: "Settings", icon: "⚙️", path: "settings.html" }
       ];
 
-      // collections to show as big cards (metrics)
+      // Metrics (big cards) - collection names; metric card links go to e.g. 'deposits.html'
       const METRICS = [
-        { key: "users", title: "Users", collection: "users", color: null },
-        { key: "deposits", title: "Deposits", collection: "deposits", color: null },
-        { key: "withdrawals", title: "Withdrawals", collection: "withdrawals", color: null },
-        { key: "adverts", title: "Adverts", collection: "adverts", color: null }
+        { key: "users", title: "Users", collection: "users" },
+        { key: "deposits", title: "Deposits", collection: "deposits" },
+        { key: "withdrawals", title: "Withdrawals", collection: "withdrawals" },
+        { key: "adverts", title: "Adverts", collection: "adverts" }
       ];
 
-      // helper: render metrics
+      // ---------------------------
+      // Render helpers
+      // ---------------------------
       function renderMetrics(metricsData) {
         metricsSection.innerHTML = METRICS.map(m => {
           const count = (metricsData[m.collection] ?? 0);
+          // Link to collection page like 'deposits.html'
+          const href = withRepoPath(`${m.collection}.html`);
           return `
-            <div class="metric-card" role="article" aria-label="${m.title} count">
+            <a href="${href}" class="metric-card" style="text-decoration:none;" data-collection="${m.collection}">
               <div class="metric-title">${m.title}</div>
               <div class="metric-value">${count}</div>
               <div class="metric-sub">Documents in <code style="font-size:12px;color:var(--muted)">${m.collection}</code></div>
-            </div>
+            </a>
           `;
         }).join('');
-      }
-
-      // helper: render quick actions
-      function renderQuickActions() {
-        actionsWrap.innerHTML = QUICK_ACTIONS.map(a => `
-          <a class="quick" href="${a.path}">
-            <div class="action-tile" role="button" tabindex="0">
-              <div class="action-icon">${a.icon}</div>
-              <div>
-                <div class="action-label">${a.label}</div>
-                <div class="action-desc">Go to ${a.label.toLowerCase()}</div>
-              </div>
-            </div>
-          </a>
-        `).join('');
-        // attach safe click handlers (open in same tab)
-        actionsWrap.querySelectorAll('a.quick').forEach(a=>{
+        // attach click handlers to metric cards to navigate to full URL (safe)
+        metricsSection.querySelectorAll('.metric-card').forEach(a=>{
           a.addEventListener('click', (ev)=>{
             ev.preventDefault();
-            try { location.assign(new URL(a.href, location.href).href); }
-            catch(e) { location.assign(a.getAttribute('href')); }
+            const href = a.getAttribute('href');
+            try { location.assign(href); } catch(e) { location.href = href; }
           });
         });
       }
 
-      // fetch counts for collections
+      function renderQuickActions() {
+        actionsWrap.innerHTML = QUICK_ACTIONS.map(a => {
+          const href = withRepoPath(a.path);
+          return `
+            <a class="quick" href="${href}">
+              <div class="action-tile" role="button" tabindex="0" aria-label="${a.label}">
+                <div class="action-icon">${a.icon}</div>
+                <div>
+                  <div class="action-label">${a.label}</div>
+                  <div class="action-desc">Go to ${a.label.toLowerCase()}</div>
+                </div>
+              </div>
+            </a>
+          `;
+        }).join('');
+
+        // attach reliable click handlers that navigate to the full URL
+        actionsWrap.querySelectorAll('a.quick').forEach(a=>{
+          a.addEventListener('click', (ev)=>{
+            ev.preventDefault();
+            const href = a.getAttribute('href');
+            try { location.assign(href); } catch(e) { location.href = href; }
+          });
+        });
+      }
+
+      // ---------------------------
+      // Data fetching
+      // ---------------------------
       async function fetchCounts() {
         const result = {};
         try {
@@ -260,16 +312,13 @@
 
       async function loadDashboard(user) {
         try {
-          // show user
-          emailBadge.textContent = user.email;
+          emailBadge.textContent = user.email || 'Admin';
           logoutBtn.style.display = 'inline-block';
 
-          // fetch metrics counts
           const counts = await fetchCounts();
           renderMetrics(counts);
           renderQuickActions();
 
-          // example: fill recentPlaceholder with sample latest actions (not heavy)
           recentPlaceholder.textContent = `Loaded at ${new Date().toLocaleString()}. Metrics refreshed. Click a tile to manage that section.`;
         } catch (err) {
           console.error('loadDashboard error', err);
@@ -277,54 +326,59 @@
         }
       }
 
-      // guard: only allow specific admin email
+      // ---------------------------
+      // Auth guard (only allow beniwealth70@gmail.com)
+      // ---------------------------
       onAuthStateChanged(auth, async (user) => {
+        const allowedAdmin = "beniwealth70@gmail.com";
+
         if (!user) {
-          // not signed in
+          // not signed in -> show friendly sign-in CTA that respects repo base
+          const loginHref = withRepoPath('login.html');
           document.getElementById('wrap').innerHTML = `
             <div style="display:grid;place-items:center;min-height:60vh">
               <div style="text-align:center">
                 <h2 style="margin:0 0 8px 0;color:#fff">Access Restricted</h2>
                 <p style="color:var(--muted);margin:0 0 16px 0">Please sign in with the administrator account to continue.</p>
-                <a href="/login" style="text-decoration:none"><button class="btn">Go to Login</button></a>
+                <a href="${loginHref}" style="text-decoration:none"><button class="btn">Go to Login</button></a>
               </div>
             </div>
           `;
           return;
         }
 
-        // only allow the configured admin email
-        const allowedAdmin = "beniwealth70@gmail.com";
         if (user.email !== allowedAdmin) {
-          // sign them out and show message
+          // If signed in but not the admin, sign them out and show message
           try { await signOut(auth); } catch(e){}
+          const loginHref = withRepoPath('login.html');
           document.getElementById('wrap').innerHTML = `
             <div style="display:grid;place-items:center;min-height:60vh">
               <div style="text-align:center">
                 <h2 style="margin:0 0 8px 0;color:#fff">Access Denied</h2>
                 <p style="color:var(--muted);margin:0 0 16px 0">You must be logged in as <b>${allowedAdmin}</b> to access this admin panel.</p>
-                <a href="/login" style="text-decoration:none"><button class="btn">Go to Login</button></a>
+                <a href="${loginHref}" style="text-decoration:none"><button class="btn">Go to Login</button></a>
               </div>
             </div>
           `;
           return;
         }
 
-        // authorized — load dashboard
+        // Authorized
         await loadDashboard(user);
       });
 
-      // logout
+      // ---------------------------
+      // UI actions
+      // ---------------------------
       logoutBtn.addEventListener('click', async () => {
         try {
           await signOut(auth);
-          location.assign('/login');
+          location.assign(withRepoPath('login.html'));
         } catch (err) {
           console.error('logout failed', err);
         }
       });
 
-      // refresh button
       refreshBtn.addEventListener('click', async () => {
         const user = auth.currentUser;
         if (!user) return alert('Not signed in');
@@ -333,9 +387,7 @@
         recentPlaceholder.textContent = `Refreshed at ${new Date().toLocaleString()}`;
       });
 
-      // open console link — opens firebase console in new tab (user must have access)
       openConsole.addEventListener('click', () => {
-        // console link to Firestore for this project
         window.open(`https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore/data`, '_blank');
       });
     </script>
