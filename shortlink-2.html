@@ -60,7 +60,7 @@
       <div id="status" class="status" aria-live="polite"></div>
       <div id="lastClaimText" class="status" style="margin-top:8px;color:var(--muted)"></div>
 
-      <div style="margin-top:10px;color:var(--muted);font-size:13px">You can claim once per page cooldown. Credited to your balance and saved in transactions (tagged with pageId).</div>
+      <div style="margin-top:10px;color:var(--muted);font-size:13px">You can claim once per page every 24 hours. Credited to your balance and saved in transactions (tagged with pageId).</div>
     </section>
 
     <footer>© <span id="year"></span> Beni-Wealth</footer>
@@ -126,9 +126,8 @@
     // PAGE ID for this page (distinct)
     const PAGE_ID = 'shortlink-2';
 
-    // CLAIM cooldown (milliseconds). Default set to 4 hours (4 * 3600 * 1000).
-    // Change to 24*3600*1000 if you want a 24-hour cooldown.
-    const CLAIM_COOLDOWN_MS = 4 * 3600 * 1000;
+    // CLAIM cooldown (milliseconds). Now set to 24 hours.
+    const CLAIM_COOLDOWN_MS = 24 * 3600 * 1000; // 24 hours
 
     // Plan earnings mapping
     const PLAN_EARNINGS = { bronze:100, silver:175, gold:270, platinum:500, basic:0 };
@@ -291,7 +290,7 @@
       } catch (err) {
         console.error('claim error', err);
         if(err && (err.message === 'CLAIM_AGAIN_LATER_FOR_PAGE')){
-          statusEl.textContent = `You already claimed this shortlink within the last ${Math.round(CLAIM_COOLDOWN_MS/3600000)} hour(s). Try again later.`;
+          statusEl.textContent = `You already claimed this shortlink within the last 24 hours. Try again later.`;
           statusEl.className = 'status error';
         } else {
           statusEl.textContent = 'Unable to process claim. Check your connection and Firestore rules.';
@@ -312,9 +311,9 @@
     });
 
     // nav wiring
-    document.getElementById('navHome').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('index.html'));});
-    document.getElementById('navShortlinks').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('shortlinks.html'));});
-    document.getElementById('navCreate').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('advertise-task.html'));});
+    document.getElementById('navHome').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('catalog.html'));});
+    document.getElementById('navShortlinks').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('convert.html'));});
+    document.getElementById('navCreate').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('center.html'));});
     document.getElementById('navNews').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('news.html'));});
     document.getElementById('navAssets').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('dashboard.html'));});
 
