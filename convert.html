@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Complete</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
+  <title>Beni-Wealth — Copmlete</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg1:#0b0613; --bg2:#120521;
@@ -30,7 +30,6 @@
     @media(max-width:760px){ .grid{grid-template-columns:1fr} }
 
     .tile {
-      position:relative;
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       border-radius:var(--radius);
       padding:20px;
@@ -39,27 +38,11 @@
       cursor:pointer;
       display:flex;align-items:center;gap:14px;transition:transform .14s ease, box-shadow .14s ease;
       text-decoration:none;color:inherit;
-      overflow:hidden;
     }
-    .tile.disabled { pointer-events:none; opacity:0.66; }
     .tile:hover{ transform:translateY(-6px); box-shadow:0 26px 80px rgba(0,0,0,0.65); }
     .tile .icon{width:72px;height:72px;border-radius:12px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;font-size:28px;color:#041219;font-weight:800;box-shadow:0 12px 30px rgba(61,46,111,0.28)}
     .tile .body h3{margin:0;font-size:18px}
     .tile .body p{margin:6px 0 0;color:var(--muted);font-size:13px}
-
-    /* overlay small countdown badge */
-    .tile .cooldown {
-      position:absolute;
-      right:12px;
-      top:12px;
-      background:rgba(0,0,0,0.45);
-      color:var(--text);
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:13px;
-      border:1px solid rgba(255,255,255,0.03);
-      backdrop-filter: blur(4px);
-    }
 
     .note{margin-top:12px;color:var(--muted);font-size:13px}
 
@@ -100,7 +83,7 @@
     </header>
 
     <h1 id="pageTitle">Shortlinks</h1>
-    <p class="intro">Choose a shortlink option below. Clicking a tile will open the corresponding shortlink page. After clicking, a 24-hour cooldown appears on that tile for your account.</p>
+    <p class="intro">Choose a shortlink option below. Clicking a tile will open the corresponding shortlink page.</p>
 
     <section class="grid" aria-label="Shortlink options">
       <a id="short1" class="tile" role="button" href="#">
@@ -109,7 +92,6 @@
           <h3>Shortlink — 1</h3>
           <p>Redirects to <code>shortlink-1.html</code></p>
         </div>
-        <div class="cooldown" aria-hidden="true" style="display:none">—</div>
       </a>
 
       <a id="short2" class="tile" role="button" href="#">
@@ -118,11 +100,10 @@
           <h3>Shortlink — 2</h3>
           <p>Redirects to <code>shortlink-2.html</code></p>
         </div>
-        <div class="cooldown" aria-hidden="true" style="display:none">—</div>
       </a>
     </section>
 
-    <p class="note">Tip: tiles use the repo-aware routing helper so they work when hosted at <code>https://beni-wealth.github.io/Beni-Wealth/</code>.</p>
+    <p class="note">Tip: these tiles use the repo-aware routing helper so they will work when hosted at <code>https://beni-wealth.github.io/Beni-Wealth/</code>.</p>
 
     <footer>© <span id="year"></span> Beni-Wealth</footer>
   </main>
@@ -136,8 +117,9 @@
     <a id="navAssets"><div class="icon-wrap">👤</div><div>Assets</div></a>
   </nav>
 
+  <!-- Firebase modular SDK -->
   <script type="module">
-    // repo-aware path helper
+    // helper: repo-aware href builder (prefixes /Beni-Wealth)
     const REPO_BASE = '/Beni-Wealth';
     function withRepoPath(target) {
       if (!target) return location.href;
@@ -157,19 +139,11 @@
       return location.origin + REPO_BASE + (clean ? '/' + clean : '');
     }
 
-    // firebase imports (modular)
+    // Beni-Wealth Firebase config (you provided)
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      runTransaction,
-      serverTimestamp,
-      Timestamp
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // config (your Beni-Wealth)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -184,48 +158,51 @@
     const auth = getAuth();
     const db = getFirestore();
 
-    // pages metadata
-    const PAGES = [
-      { id: 'shortlink-1', elId: 'short1', target: withRepoPath('shortlink-1.html') },
-      { id: 'shortlink-2', elId: 'short2', target: withRepoPath('shortlink-2.html') }
-    ];
-
-    const CLAIM_COOLDOWN_MS = 24 * 3600 * 1000; // 24 hours
-
-    // UI refs
+    // wire sign-in display (optional)
     const signinArea = document.getElementById('signinArea');
-    const tiles = {};
-    PAGES.forEach(p => {
-      const el = document.getElementById(p.elId);
-      tiles[p.id] = {
-        root: el,
-        cooldownBadge: el.querySelector('.cooldown'),
-        target: p.target
-      };
-      // Ensure href fallback (SEO)
-      el.setAttribute('href', p.target);
-    });
-
-    // signin info
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         signinArea.textContent = 'Not signed in';
-        refreshAllTiles(null);
         return;
       }
+      // show username if available, otherwise email (prefers username)
       const username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
       signinArea.textContent = username;
-      refreshAllTiles(user);
     });
 
-    // keeps local cache of user's claims map
-    let claimsCache = {}; // pageId -> Timestamp (Firestore Timestamp) or null
-    let claimsInterval = null;
-    function clearClaimsInterval(){ if(claimsInterval){ clearInterval(claimsInterval); claimsInterval = null; } }
+    // wire shortlink tiles — use withRepoPath to build full URL
+    const short1 = document.getElementById('short1');
+    const short2 = document.getElementById('short2');
 
-    // fetch claims for the user and update tile UI
-    async function refreshAllTiles(user){
-      clearClaimsInterval();
-      claimsCache = {};
-      // reset UI first
-      Object.values(tiles).forEach
+    const target1 = withRepoPath('shortlink-1.html');
+    const target2 = withRepoPath('shortlink-2.html');
+
+    // set hrefs (for SEO / fallback) and attach robust click handlers
+    short1.setAttribute('href', target1);
+    short2.setAttribute('href', target2);
+
+    short1.addEventListener('click', (e) => { e.preventDefault(); location.assign(target1); });
+    short2.addEventListener('click', (e) => { e.preventDefault(); location.assign(target2); });
+
+    // bottom nav wiring — set repo-aware hrefs and reliable navigation
+    document.getElementById('navHome').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('catalog.html')); });
+    document.getElementById('navShortlinks').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('convert.html')); });
+    document.getElementById('navCreate').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('centre.html')); });
+    document.getElementById('navNews').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('news.html')); });
+    document.getElementById('navAssets').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('dashboard.html')); });
+
+    // ensure shell bottom padding large enough so content isn't hidden by nav (double-safety)
+    (function ensurePadding(){
+      const shell = document.querySelector('.shell');
+      const nav = document.querySelector('.bw-bottom-nav');
+      if(!shell || !nav) return;
+      const need = (nav.getBoundingClientRect().height || 72) + 24;
+      const cur = parseInt(getComputedStyle(shell).paddingBottom) || 0;
+      if(cur < need) shell.style.paddingBottom = need + 'px';
+    })();
+
+    // set year
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
