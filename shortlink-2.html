@@ -18,7 +18,7 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
-    main#earn-page{max-width:980px;margin:0 auto;padding:var(--page-pad) 20px calc(var(--bottom-nav-h) + 48px)}
+    main#complete-earn-page{max-width:980px;margin:0 auto;padding:var(--page-pad) 20px calc(var(--bottom-nav-h) + 48px)}
     header.appbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
     .brand{display:flex;align-items:center;gap:12px}
     .brand img{width:62px;height:62px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
@@ -56,7 +56,7 @@
   </style>
 </head>
 <body>
-  <main id="earn-page" role="main" aria-labelledby="title">
+  <main id="complete-earn-page" role="main" aria-labelledby="title" data-page-id="complete">
     <header class="appbar">
       <div class="brand">
         <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo" />
@@ -168,6 +168,9 @@
     const refreshBtn = document.getElementById('refreshBtn');
     const statusEl = document.getElementById('status');
     const lastClaimText = document.getElementById('lastClaimText');
+
+    // Page identifier used in transaction metadata
+    const PAGE_ID = document.querySelector('main[data-page-id]')?.dataset?.pageId || 'complete';
 
     function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
     function timeRemaining(ms){
@@ -294,6 +297,7 @@
             source: 'daily_plan_reward',
             plan: currentPlanKey,
             amount: currentEarn,
+            pageId: PAGE_ID,
             createdAt: serverTimestamp()
           });
         });
@@ -335,7 +339,7 @@
 
     // ensure shell padding so content isn't hidden by nav
     (function ensurePadding(){
-      const shell = document.querySelector('#earn-page');
+      const shell = document.querySelector('#complete-earn-page');
       const nav = document.querySelector('.bw-bottom-nav');
       if(!shell || !nav) return;
       const need = (nav.getBoundingClientRect().height || 72) + 24;
