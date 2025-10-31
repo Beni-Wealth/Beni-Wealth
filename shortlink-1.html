@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Complete </title>
+  <title>Beni-Wealth — Claim Plan Complete </title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -14,16 +14,16 @@
       --glass: rgba(255,255,255,0.03);
       --radius:16px;
       --bottom-nav-h:72px;
+      --page-pad:28px;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
-    .shell{max-width:980px;margin:0 auto;padding:28px 20px calc(var(--bottom-nav-h) + 36px)}
+    main#earn-page{max-width:980px;margin:0 auto;padding:var(--page-pad) 20px calc(var(--bottom-nav-h) + 48px)}
     header.appbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
     .brand{display:flex;align-items:center;gap:12px}
     .brand img{width:62px;height:62px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
     .brand .title{font-weight:700;font-size:18px}
     .brand .sub{color:var(--muted);font-size:13px;margin-top:4px}
-
     .acct{color:var(--muted);font-size:13px;text-align:right}
 
     .card{
@@ -38,18 +38,16 @@
     .hint{color:var(--muted);font-size:13px;margin-top:10px}
     .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700;margin-top:12px}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    .status { margin-top:14px; font-size:14px; color:var(--muted) }
+    .status.error { color:#ffb3b3 }
+    .status.success { color:#bff0d9 }
 
     /* bottom nav */
     .bw-bottom-nav {
-      position: fixed;
-      left: 18px;
-      right: 18px;
-      bottom: 16px;
-      height: var(--bottom-nav-h);
+      position: fixed; left: 18px; right: 18px; bottom: 16px; height: var(--bottom-nav-h);
       display:flex;align-items:center;justify-content:space-between;padding:10px;
       background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));
-      border-radius: 40px; box-shadow: 0 14px 40px rgba(2,6,23,0.6); backdrop-filter: blur(6px); z-index:120;
-      color:var(--text);
+      border-radius: 40px; box-shadow: 0 14px 40px rgba(2,6,23,0.6); backdrop-filter: blur(6px); z-index:120; color:var(--text);
     }
     .bw-bottom-nav a{ text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; font-size:12px; text-align:center; user-select:none }
     .bw-bottom-nav .icon-wrap{ width:44px; height:44px; border-radius:10px; background: rgba(255,255,255,0.04); display:grid;place-items:center; font-size:18px }
@@ -58,34 +56,37 @@
   </style>
 </head>
 <body>
-  <main class="shell" role="main" aria-labelledby="title">
+  <main id="earn-page" role="main" aria-labelledby="title">
     <header class="appbar">
       <div class="brand">
-        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo" />
         <div>
           <div class="title">Beni-Wealth</div>
-          <div class="sub">Earnings by Plan</div>
+          <div class="sub">Daily Plan Reward</div>
         </div>
       </div>
       <div class="acct" id="acctDisplay">Checking sign-in…</div>
     </header>
 
-    <h1 id="title" style="text-align:center">Plan Earnings</h1>
+    <h1 id="title" style="text-align:center">Claim your plan reward</h1>
 
-    <div id="mainCard" class="card" role="region" aria-live="polite">
+    <section class="card" aria-labelledby="title">
       <div id="welcome" style="font-size:18px;font-weight:700">Welcome</div>
       <div id="planName" class="plan-badge" aria-hidden="true">Plan: —</div>
 
       <div id="earnedAmount" class="earned">—</div>
       <div id="earnedMsg" class="earned-sub">You have earned —</div>
 
-      <div id="extra" class="hint">Sign in to see your plan and earnings. If you are not on a plan, you can upgrade to earn more.</div>
-
-      <div style="margin-top:14px">
-        <button id="upgradeBtn" class="btn ghost">Upgrade Plan</button>
-        <button id="refreshBtn" class="btn">Refresh</button>
+      <div id="claimControls">
+        <button id="claimBtn" class="btn">Claim Reward</button>
+        <button id="refreshBtn" class="btn ghost">Refresh</button>
       </div>
-    </div>
+
+      <div id="status" class="status" aria-live="polite"></div>
+      <div id="lastClaimText" class="status" style="margin-top:8px;color:var(--muted)"></div>
+
+      <div id="extra" class="hint">You can claim this reward once every 24 hours. After claiming, the amount will be added to your account balance and a transaction will be saved.</div>
+    </section>
 
     <footer>© <span id="year"></span> Beni-Wealth</footer>
   </main>
@@ -99,12 +100,12 @@
     <a id="navAssets"><div class="icon-wrap">👤</div><div>Assets</div></a>
   </nav>
 
-  <!-- Firebase modular SDK -->
+  <!-- Firebase & app script -->
   <script type="module">
-    // repo helper (same pattern used earlier)
+    // repo helper
     const REPO_BASE = '/Beni-Wealth';
-    function withRepoPath(target) {
-      if (!target) return location.href;
+    function withRepoPath(target){
+      if(!target) return location.href;
       try {
         const maybe = new URL(target, location.href);
         if (maybe.protocol === 'http:' || maybe.protocol === 'https:') {
@@ -121,11 +122,20 @@
       return location.origin + REPO_BASE + (clean ? '/' + clean : '');
     }
 
+    // imports
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import {
+      getFirestore,
+      doc,
+      collection,
+      getDoc,
+      runTransaction,
+      serverTimestamp,
+      Timestamp
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Beni-Wealth Firebase config
+    // firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -140,106 +150,19 @@
     const auth = getAuth();
     const db = getFirestore();
 
-    // plan -> earning map
-    const PLAN_EARNINGS = {
-      bronze: 100,
-      silver: 175,
-      gold: 270,
-      platinum: 500,
-      basic: 0
-    };
+    // Plan earnings map
+    const PLAN_EARNINGS = { bronze: 100, silver: 175, gold: 270, platinum: 500, basic: 0 };
 
+    // DOM refs
     const acctDisplay = document.getElementById('acctDisplay');
     const welcome = document.getElementById('welcome');
     const planNameEl = document.getElementById('planName');
     const earnedAmountEl = document.getElementById('earnedAmount');
     const earnedMsgEl = document.getElementById('earnedMsg');
-    const extraEl = document.getElementById('extra');
-    const upgradeBtn = document.getElementById('upgradeBtn');
+    const claimBtn = document.getElementById('claimBtn');
     const refreshBtn = document.getElementById('refreshBtn');
+    const statusEl = document.getElementById('status');
+    const lastClaimText = document.getElementById('lastClaimText');
 
     function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
-
-    async function updateForUser(user) {
-      // default display
-      acctDisplay.textContent = 'Loading...';
-      welcome.textContent = 'Welcome';
-      planNameEl.textContent = 'Plan: —';
-      earnedAmountEl.textContent = '—';
-      earnedMsgEl.textContent = 'You have earned —';
-      extraEl.textContent = 'Sign in to see your plan and earnings.';
-
-      if (!user) {
-        acctDisplay.textContent = 'Not signed in';
-        extraEl.textContent = 'Please sign in to view your plan and earnings.';
-        return;
-      }
-
-      // display username (prefer stored username then displayName then email local part)
-      let username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
-      acctDisplay.textContent = username;
-      welcome.textContent = `Hi, ${username}`;
-
-      // fetch user doc
-      try {
-        const uRef = doc(db, 'users', user.uid);
-        const snap = await getDoc(uRef);
-        let plan = 'basic';
-        if (snap.exists()) {
-          const data = snap.data();
-          plan = (data.plan || data.type || data.membership || data.tier || 'basic').toString().trim();
-        }
-        const planKey = plan.toLowerCase();
-        const earn = PLAN_EARNINGS.hasOwnProperty(planKey) ? PLAN_EARNINGS[planKey] : 0;
-
-        planNameEl.textContent = `Plan: ${planKey.charAt(0).toUpperCase() + planKey.slice(1)}`;
-        earnedAmountEl.textContent = formatN(earn);
-        earnedMsgEl.textContent = `You have earned ${formatN(earn)}.`;
-
-        extraEl.textContent = earn > 0 ? `Nice — as a ${planKey} member you earn ${formatN(earn)}.` : `You are on ${planKey} plan. Upgrade to start earning more.`;
-
-      } catch (err) {
-        console.error('error fetching user doc', err);
-        extraEl.textContent = 'Unable to fetch your plan — check your connection.';
-      }
-    }
-
-    // auth state
-    onAuthStateChanged(auth, (user) => {
-      updateForUser(user);
-    });
-
-    // upgrade button -> redirect to settings / upgrade page
-    upgradeBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      location.assign(withRepoPath('settings.html'));
-    });
-
-    refreshBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const user = auth.currentUser;
-      await updateForUser(user);
-    });
-
-    // bottom nav wiring
-    document.getElementById('navHome').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('index.html')); });
-    document.getElementById('navShortlinks').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('shortlinks.html')); });
-    document.getElementById('navCreate').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('advertise-task.html')); });
-    document.getElementById('navNews').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('news.html')); });
-    document.getElementById('navAssets').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('dashboard.html')); });
-
-    // ensure shell padding so content isn't hidden by nav
-    (function ensurePadding(){
-      const shell = document.querySelector('.shell');
-      const nav = document.querySelector('.bw-bottom-nav');
-      if(!shell || !nav) return;
-      const need = (nav.getBoundingClientRect().height || 72) + 24;
-      const cur = parseInt(getComputedStyle(shell).paddingBottom) || 0;
-      if(cur < need) shell.style.paddingBottom = need + 'px';
-    })();
-
-    // set year
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
-</body>
-</html>
+    function plural(n, s='s'){ return n === 1 ? '' : s; }
