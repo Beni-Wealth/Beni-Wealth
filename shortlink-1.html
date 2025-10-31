@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Claim Plan Complete </title>
+  <title>Beni-Wealth — Claim Plan Complete</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -78,7 +78,7 @@
       <div id="earnedMsg" class="earned-sub">You have earned —</div>
 
       <div id="claimControls">
-        <button id="claimBtn" class="btn">Claim Reward</button>
+        <button id="claimBtn" class="btn" disabled>Claim Reward</button>
         <button id="refreshBtn" class="btn ghost">Refresh</button>
       </div>
 
@@ -124,15 +124,15 @@
 
     // imports
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
       getFirestore,
       doc,
-      collection,
       getDoc,
       runTransaction,
       serverTimestamp,
-      Timestamp
+      Timestamp,
+      setDoc
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // firebase config
@@ -150,6 +150,11 @@
     const auth = getAuth();
     const db = getFirestore();
 
+    // attempt persistent auth (best effort)
+    setPersistence(auth, browserLocalPersistence).catch(err => {
+      console.warn('setPersistence failed', err);
+    });
+
     // Plan earnings map
     const PLAN_EARNINGS = { bronze: 100, silver: 175, gold: 270, platinum: 500, basic: 0 };
 
@@ -165,4 +170,210 @@
     const lastClaimText = document.getElementById('lastClaimText');
 
     function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
-    function plural(n, s='s'){ return n === 1 ? '' : s; }
+    function timeRemaining(ms){
+      if(ms <= 0) return 'now';
+      const s = Math.floor(ms/1000);
+      const h = Math.floor(s/3600); const m = Math.floor((s%3600)/60); const sec = s%60;
+      if(h>0) return `${h}h ${m}m`;
+      if(m>0) return `${m}m ${sec}s`;
+      return `${sec}s`;
+    }
+
+    let currentUser = null;
+    let currentPlanKey = 'basic';
+    let currentEarn = 0;
+    let lastClaimTimestamp = null;
+    let authReported = false; // to track listener arrival
+
+    async function loadUserState(user){
+      statusEl.textContent=''; statusEl.className='status';
+      if(!user){
+        acctDisplay.textContent = 'Not signed in';
+        welcome.textContent = 'Welcome';
+        planNameEl.textContent = 'Plan: —';
+        earnedAmountEl.textContent = '—';
+        earnedMsgEl.textContent = 'You have earned —';
+        claimBtn.disabled = true;
+        lastClaimText.textContent = '';
+        return;
+      }
+      currentUser = user;
+      const username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+      acctDisplay.textContent = username;
+      welcome.textContent = `Hi, ${username}`;
+
+      try {
+        const uRef = doc(db, 'users', user.uid);
+        const snap = await getDoc(uRef);
+        let plan = 'basic';
+        let balance = 0;
+        lastClaimTimestamp = null;
+        if(snap.exists()){
+          const d = snap.data();
+          plan = (d.plan || d.type || d.membership || d.tier || 'basic').toString().trim();
+          balance = Number(d.balance || 0);
+          if(d.lastEarningClaim) lastClaimTimestamp = d.lastEarningClaim;
+        }
+        const pkey = plan.toLowerCase();
+        currentPlanKey = pkey;
+        currentEarn = PLAN_EARNINGS.hasOwnProperty(pkey) ? PLAN_EARNINGS[pkey] : 0;
+
+        planNameEl.textContent = `Plan: ${pkey.charAt(0).toUpperCase() + pkey.slice(1)}`;
+        earnedAmountEl.textContent = formatN(currentEarn);
+        earnedMsgEl.textContent = `You have earned ${formatN(currentEarn)}.`;
+
+        // compute last claim / next available time
+        if(lastClaimTimestamp && lastClaimTimestamp instanceof Timestamp){
+          const lastMillis = lastClaimTimestamp.toMillis();
+          const elapsed = Date.now() - lastMillis;
+          const dayMs = 24*3600*1000;
+          if(elapsed >= dayMs){
+            lastClaimText.textContent = `Last claimed: ${new Date(lastMillis).toLocaleString()}. You can claim now.`;
+          } else {
+            const remaining = dayMs - elapsed;
+            lastClaimText.textContent = `Last claimed: ${new Date(lastMillis).toLocaleString()}. Next claim in ${timeRemaining(remaining)}.`;
+          }
+        } else {
+          lastClaimText.textContent = 'You have not claimed this reward yet. You can claim now.';
+        }
+
+        claimBtn.disabled = currentEarn <= 0;
+      } catch (err){
+        console.error('loadUserState error', err);
+        statusEl.textContent = 'Unable to load user data — check console.';
+        statusEl.className = 'status error';
+      }
+    }
+
+    // claim handler (transaction)
+    claimBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = ''; statusEl.className = 'status';
+      if(!currentUser) { statusEl.textContent = 'Please sign in to claim.'; statusEl.className='status error'; return; }
+      if(currentEarn <= 0){ statusEl.textContent = 'No reward available on your plan.'; statusEl.className='status error'; return; }
+
+      claimBtn.disabled = true;
+      claimBtn.textContent = 'Processing...';
+
+      const uid = currentUser.uid;
+      const userRef = doc(db, 'users', uid);
+
+      try {
+        await runTransaction(db, async (tx) => {
+          const uSnap = await tx.get(userRef);
+          const nowMs = Date.now();
+          const dayMs = 24*3600*1000;
+
+          let last = null;
+          let balance = 0;
+          if(uSnap.exists()){
+            const d = uSnap.data();
+            balance = Number(d.balance || 0);
+            if(d.lastEarningClaim) last = d.lastEarningClaim;
+          }
+
+          if(last && last instanceof Timestamp){
+            const lastMs = last.toMillis();
+            if(nowMs - lastMs < dayMs){
+              // within 24 hours -> abort with special code
+              throw new Error('CLAIM_AGAIN_LATER');
+            }
+          }
+
+          const newBalance = balance + currentEarn;
+
+          // safely update user doc
+          tx.set(userRef, { balance: newBalance, lastEarningClaim: serverTimestamp() }, { merge: true });
+
+          // create a transactions doc with deterministic-ish id to use within transaction
+          const txId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+          const txRef = doc(db, 'transactions', txId);
+          tx.set(txRef, {
+            userId: uid,
+            type: 'credit',
+            source: 'daily_plan_reward',
+            plan: currentPlanKey,
+            amount: currentEarn,
+            createdAt: serverTimestamp()
+          });
+        });
+
+        // success
+        statusEl.textContent = `Success — ${formatN(currentEarn)} credited to your balance.`;
+        statusEl.className = 'status success';
+        // reload user state so last claim shown
+        await loadUserState(currentUser);
+      } catch (err) {
+        console.error('claim error', err);
+        if(err && err.message === 'CLAIM_AGAIN_LATER'){
+          statusEl.textContent = 'You have already claimed this reward within the last 24 hours. Please try again later.';
+          statusEl.className = 'status error';
+        } else {
+          statusEl.textContent = 'Unable to process claim. Check your connection and permissions.';
+          statusEl.className = 'status error';
+        }
+      } finally {
+        claimBtn.disabled = false;
+        claimBtn.textContent = 'Claim Reward';
+      }
+    });
+
+    refreshBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      await loadUserState(user);
+      statusEl.textContent = 'Refreshed';
+      statusEl.className = 'status';
+    });
+
+    // bottom nav wiring (repo-aware)
+    document.getElementById('navHome').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('index.html')); });
+    document.getElementById('navShortlinks').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('shortlinks.html')); });
+    document.getElementById('navCreate').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('advertise-task.html')); });
+    document.getElementById('navNews').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('news.html')); });
+    document.getElementById('navAssets').addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('dashboard.html')); });
+
+    // ensure shell padding so content isn't hidden by nav
+    (function ensurePadding(){
+      const shell = document.querySelector('#earn-page');
+      const nav = document.querySelector('.bw-bottom-nav');
+      if(!shell || !nav) return;
+      const need = (nav.getBoundingClientRect().height || 72) + 24;
+      const cur = parseInt(getComputedStyle(shell).paddingBottom) || 0;
+      if(cur < need) shell.style.paddingBottom = need + 'px';
+    })();
+
+    // auth tracking: immediate check + listener + fallback timeout
+    // set initial UI
+    acctDisplay.textContent = 'Checking sign-in…';
+    claimBtn.disabled = true;
+    statusEl.textContent = '';
+
+    // onAuthStateChanged listener
+    onAuthStateChanged(auth, async (user) => {
+      console.log('onAuthStateChanged fired', !!user);
+      authReported = true;
+      await loadUserState(user);
+    });
+
+    // immediate check (helps when listener hasn't fired yet)
+    if (auth.currentUser) {
+      authReported = true;
+      loadUserState(auth.currentUser).catch(e=>console.error('immediate load error', e));
+    }
+
+    // if listener doesn't report within 6s, show sign-in CTA
+    setTimeout(() => {
+      if (!authReported) {
+        console.warn('Auth listener not reporting within 6s — showing sign-in CTA');
+        acctDisplay.innerHTML = `Not signed in — <a style="color:var(--accent-start);text-decoration:underline" href="${withRepoPath('login.html')}">Sign in</a>`;
+        claimBtn.disabled = true;
+        statusEl.textContent = 'Sign in to claim your reward.';
+      }
+    }, 6000);
+
+    // set year
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
