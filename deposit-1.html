@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Deposit — SAQ 1</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg1:#0b0613; --bg2:#120521;
@@ -17,11 +17,11 @@
       --page-pad:28px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
+    html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
     .shell{max-width:980px;margin:0 auto;padding:var(--page-pad) 20px calc(var(--bottom-nav-h) + 48px)}
     header.appbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
     .brand{display:flex;align-items:center;gap:12px}
-    .brand img{width:62px;height:62px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+    .brand img{width:62px;height:62px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,0.6);flex-shrink:0}
     .brand .title{font-weight:700;font-size:18px}
     .brand .sub{color:var(--muted);font-size:13px;margin-top:4px}
     .card{
@@ -36,28 +36,43 @@
       flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--text);
       outline:none;font-size:14px;
     }
-    .provider-block{display:flex;flex-direction:column;gap:8px}
-    .provider-id{font-weight:800;color:var(--accent-start);font-size:20px}
+    .provider-block{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+    .provider-id{font-weight:900;color:var(--accent-start);font-size:20px;letter-spacing:0.2px}
+    /* New styles for account name & number (highlighted like bank name) */
+    .provider-acc{font-weight:800;color:var(--accent-start);font-size:17px}
+    .provider-acc small{display:block;color:var(--muted);font-weight:600;font-size:13px;margin-top:2px}
     .hint{color:var(--muted);font-size:13px;margin-top:8px}
     .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700;margin-top:14px}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .status{margin-top:12px;font-size:14px;color:var(--muted)}
-    .status.error{color:#ffb3b3}
-    .status.success{color:#bff0d9}
+    .status{margin-top:12px;font-size:14px;color:var(--muted)} .status.error{color:#ffb3b3} .status.success{color:#bff0d9}
     progress{width:100%;height:8px;border-radius:6px;overflow:hidden}
     .small{font-size:13px;color:var(--muted)}
     /* bottom nav */
-    .bw-bottom-nav {
-      position: fixed; left: 18px; right: 18px; bottom: 16px; height: var(--bottom-nav-h);
-      display:flex;align-items:center;justify-content:space-between;padding:10px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));
-      border-radius: 40px; box-shadow: 0 14px 40px rgba(2,6,23,0.6); backdrop-filter: blur(6px); z-index:120; color:var(--text);
-    }
+    .bw-bottom-nav{position:fixed;left:18px;right:18px;bottom:16px;height:var(--bottom-nav-h);display:flex;align-items:center;justify-content:space-between;padding:10px;background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));border-radius:40px;box-shadow:0 14px 40px rgba(2,6,23,0.6);backdrop-filter: blur(6px);z-index:120}
     .bw-bottom-nav a{ text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; font-size:12px; text-align:center; user-select:none }
     .bw-bottom-nav .icon-wrap{ width:44px; height:44px; border-radius:10px; background: rgba(255,255,255,0.04); display:grid;place-items:center; font-size:18px }
     .nav-center .center-btn{ width:82px; height:82px; border-radius:50%; background: linear-gradient(135deg,var(--accent-start),var(--accent-end)); display:grid; place-items:center; color:#041219; font-size:26px; box-shadow:0 12px 36px rgba(61,46,111,0.35); transform:translateY(-22px) }
     footer{margin-top:18px;color:rgba(255,255,255,0.3);font-size:13px;text-align:center}
-    @media(max-width:760px){ label{min-width:120px} }
+
+    /* Responsive: stack label + field on smaller screens and reduce paddings/sizes */
+    @media (max-width: 760px) {
+      .shell{padding:20px 14px calc(var(--bottom-nav-h) + 56px)}
+      header.appbar{align-items:flex-start;gap:10px}
+      .brand img{width:54px;height:54px}
+      .brand .title{font-size:16px}
+      .card{padding:20px}
+      label{min-width:0; width:100%; display:block; margin-bottom:8px}
+      .field{flex-direction:column;align-items:stretch}
+      input[type="text"], input[type="number"], textarea{font-size:15px}
+      .provider-id{font-size:18px}
+      .provider-acc{font-size:16px}
+      .btn{width:100%}
+    }
+    @media (max-width:420px){
+      .brand img{width:48px;height:48px}
+      .provider-id{font-size:16px}
+      .provider-acc{font-size:15px}
+    }
   </style>
 </head>
 <body>
@@ -79,13 +94,14 @@
       <h2 id="title">Deposit — SAQ 1</h2>
       <p class="muted">Send payment to the account below, then upload proof here for verification.</p>
 
-      <div class="provider-block">
+      <div class="provider-block" aria-hidden="false">
         <div class="small">Provider</div>
-        <div style="display:flex;align-items:center;gap:18px">
+        <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
           <div>
             <div class="provider-id">Moniepoint</div>
-            <div class="small">Account name: <strong>StarkTech</strong></div>
-            <div class="small">Account number: <strong>5792230881</strong></div>
+            <!-- account name and number highlighted like the bank name -->
+            <div class="provider-acc">StarkTech <small>Account name</small></div>
+            <div class="provider-acc">5792230881 <small>Account number</small></div>
           </div>
         </div>
       </div>
@@ -215,7 +231,6 @@
     const clearBtn = document.getElementById('clearBtn');
     const statusEl = document.getElementById('status');
     const uploadProgress = document.getElementById('uploadProgress');
-    const acctDisplay = document.querySelector('.appbar div[style]') || null;
 
     // provider details
     const PROVIDER = {
@@ -225,6 +240,7 @@
     };
 
     // show logged in username if available
+    const acctDisplay = document.querySelector('.appbar div[style]') || null;
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         if (acctDisplay) acctDisplay.textContent = 'Not signed in';
