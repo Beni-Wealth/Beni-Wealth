@@ -27,7 +27,9 @@
     .brand .sub{color:var(--muted);font-size:13px;margin-top:4px}
     .intro{margin:10px 0 18px;color:var(--muted);font-size:15px;line-height:1.45}
 
-    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+    /* grid now supports 3 items gracefully */
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    @media(max-width:1100px){ .grid{grid-template-columns:repeat(2,1fr)} }
     @media(max-width:820px){ .grid{grid-template-columns:1fr} }
 
     .card{
@@ -81,9 +83,9 @@
     </header>
 
     <h1 id="title">Send money — choose a SAQ channel</h1>
-    <p class="intro">Select one of the two channels below to get deposit instructions. Each button will take you to a dedicated deposit page</p>
+    <p class="intro">Select one of the two channels below to get deposit instructions. Each button will take you to a dedicated deposit page. You can also view your deposit history.</p>
 
-    <section class="grid" aria-label="SAQ channels">
+    <section class="grid" aria-label="SAQ channels and history">
       <a id="saq1" class="card" href="#" role="link" aria-labelledby="saq1-title">
         <div class="head">
           <div class="saq-badge">1</div>
@@ -104,13 +106,29 @@
           <div class="saq-badge">2</div>
           <div>
             <h3 id="saq2-title">SAQ 2 — Deposit Channel</h3>
-            <p>Alternative deposit channel. Use this at pleasure or if channel 1 isn't available — visit the page for guidance.</p>
+            <p>Alternative deposit channel. Use this if channel 1 isn't available — visit the page for guidance.</p>
           </div>
         </div>
 
         <div class="cta" aria-hidden="true">
           <button class="btn" data-target="deposit-2.html">Go to SAQ 2</button>
           <button class="btn ghost" data-target="deposit-2.html">View instructions</button>
+        </div>
+      </a>
+
+      <!-- NEW: Deposit history card -->
+      <a id="depositHistoryCard" class="card" href="#" role="link" aria-labelledby="history-title">
+        <div class="head">
+          <div class="saq-badge">H</div>
+          <div>
+            <h3 id="history-title">Deposit History</h3>
+            <p>View all your submitted deposits and their verification status. Tap to open your deposit history.</p>
+          </div>
+        </div>
+
+        <div class="cta" aria-hidden="true">
+          <button class="btn" data-target="deposit-history.html">Open History</button>
+          <button class="btn ghost" data-target="deposit-history.html">View</button>
         </div>
       </a>
     </section>
@@ -150,7 +168,7 @@
       return location.origin + REPO_BASE + (clean ? '/' + clean : '');
     }
 
-    // wire SAQ buttons & cards to deposit pages (use withRepoPath)
+    // wire card buttons & cards to deposit pages (use withRepoPath)
     document.querySelectorAll('[data-target]').forEach(btn=>{
       const target = btn.getAttribute('data-target');
       const full = withRepoPath(target);
@@ -159,7 +177,8 @@
         location.assign(full);
       });
     });
-    // also clicking the whole card should navigate
+
+    // also clicking the whole card should navigate (ignores clicks on nested buttons)
     document.querySelectorAll('.card[role="link"]').forEach(card=>{
       const btn = card.querySelector('[data-target]');
       if(!btn) return;
@@ -167,7 +186,6 @@
       const full = withRepoPath(target);
       card.setAttribute('href', full);
       card.addEventListener('click', (e)=>{
-        // allow buttons to handle the event; cards also navigate but respect default prevented
         if(e.target && e.target.closest('button')) return;
         e.preventDefault();
         location.assign(full);
