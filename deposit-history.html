@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — deposit</title>
+  <title>Beni-Wealth — Deposit History</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -12,47 +12,65 @@
       --text: #eaf2ff;
       --accent-start:#2fe0b8; --accent-end:#7a5fff;
       --glass: rgba(255,255,255,0.03);
-      --radius:16px;
+      --card: rgba(255,255,255,0.02);
+      --radius:14px;
       --bottom-nav-h:72px;
-      --page-pad:28px;
-      --card-pad:22px;
+      --page-pad:22px;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
-    .shell{max-width:980px;margin:0 auto;padding:var(--page-pad) 20px calc(var(--bottom-nav-h) + 48px)}
+    .shell{max-width:1100px;margin:0 auto;padding:var(--page-pad) 18px calc(var(--bottom-nav-h) + 48px)}
     header.appbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
     .brand{display:flex;align-items:center;gap:12px}
-    .brand img{width:62px;height:62px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
-    .brand .title{font-weight:700;font-size:18px}
-    .brand .sub{color:var(--muted);font-size:13px;margin-top:4px}
-    .intro{margin:10px 0 18px;color:var(--muted);font-size:15px;line-height:1.45}
-
-    /* grid now supports 3 items gracefully */
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-    @media(max-width:1100px){ .grid{grid-template-columns:repeat(2,1fr)} }
-    @media(max-width:820px){ .grid{grid-template-columns:1fr} }
-
+    .brand img{width:54px;height:54px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+    .title-block .title{font-weight:700;font-size:18px}
+    .title-block .sub{color:var(--muted);font-size:13px;margin-top:3px}
+    .muted{color:var(--muted)}
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:calc(var(--radius) - 2px);
-      padding:var(--card-pad);
+      background: linear-gradient(180deg, var(--card), rgba(255,255,255,0.01));
+      border-radius:calc(var(--radius));
+      padding:18px;
       border:1px solid rgba(255,255,255,0.04);
-      box-shadow: 0 22px 60px rgba(0,0,0,0.6);
-      display:flex;flex-direction:column;gap:12px;justify-content:space-between;
-      transition:transform .14s ease, box-shadow .14s ease;
-      text-decoration:none;color:inherit;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
     }
-    .card:hover{ transform:translateY(-6px); box-shadow:0 32px 80px rgba(0,0,0,0.7); }
-    .card .head{display:flex;align-items:center;gap:14px}
-    .saq-badge{width:68px;height:68px;border-radius:12px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;font-size:26px;color:#041219;font-weight:800;box-shadow:0 12px 32px rgba(61,46,111,0.28)}
-    .card h3{margin:0;font-size:18px;color:var(--accent-end)}
-    .card p{margin:6px 0 0;color:var(--muted);font-size:14px}
-    .card .cta{display:flex;gap:10px;align-items:center;margin-top:8px}
-    .btn{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .note{margin-top:12px;color:var(--muted);font-size:13px}
 
-    /* bottom nav */
+    .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+    .search{flex:1;min-width:200px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .small{font-size:13px;color:var(--muted)}
+
+    /* table */
+    .table-wrap{overflow:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+    table{width:100%;border-collapse:collapse;min-width:720px}
+    th, td{padding:12px 14px;text-align:left;border-bottom:1px dashed rgba(255,255,255,0.03)}
+    th{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
+    td{font-size:15px;color:var(--text);vertical-align:middle}
+    tr:hover td{background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));}
+
+    .status-pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:13px;color:#041219}
+    .status-pending{background:#fff6d6;color:#6a4f00} /* light yellow */
+    .status-success{background:#bff0d9;color:#05461f} /* light green */
+    .status-rejected{background:#ffdede;color:#6b0b0b} /* light red */
+
+    .proof-link{color:var(--accent-start);text-decoration:underline;cursor:pointer}
+    .proof-link:focus{outline:2px solid rgba(47,224,184,0.25);border-radius:4px}
+
+    /* overlay viewer */
+    .viewer-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);z-index:9999;padding:20px}
+    .viewer{max-width:100%;max-height:100%;border-radius:12px;overflow:hidden;box-shadow:0 30px 100px rgba(0,0,0,0.8);background:#000;display:flex;flex-direction:column}
+    .viewer img{max-width:calc(100vw - 80px);max-height:calc(100vh - 160px);display:block;margin:0 auto}
+    .viewer .meta{padding:12px;background:rgba(0,0,0,0.45);color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+    .viewer .meta .close{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;cursor:pointer}
+
+    /* responsive tweaks */
+    @media (max-width:760px){
+      th,td{padding:10px}
+      .brand img{width:48px;height:48px}
+      .controls{flex-direction:column;align-items:stretch}
+    }
+
+    /* bottom nav (same theme) */
     .bw-bottom-nav {
       position: fixed; left: 18px; right: 18px; bottom: 16px; height: var(--bottom-nav-h);
       display:flex;align-items:center;justify-content:space-between;padding:10px;
@@ -61,82 +79,64 @@
     }
     .bw-bottom-nav a{ text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; font-size:12px; text-align:center; user-select:none }
     .bw-bottom-nav .icon-wrap{ width:44px; height:44px; border-radius:10px; background: rgba(255,255,255,0.04); display:grid;place-items:center; font-size:18px }
-    .nav-center .center-btn{ width:82px; height:82px; border-radius:50%; background: linear-gradient(135deg,var(--accent-start),var(--accent-end)); display:grid; place-items:center; color:#041219; font-size:26px; box-shadow:0 12px 36px rgba(61,46,111,0.35); transform:translateY(-22px) }
-
-    footer{margin-top:18px;color:rgba(255,255,255,0.3);font-size:13px;text-align:center}
   </style>
 </head>
 <body>
-  <main class="shell" role="main" aria-labelledby="title">
-    <header class="appbar" aria-label="brand">
+  <main class="shell">
+    <header class="appbar">
       <div class="brand">
-        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo" />
-        <div>
-          <div class="title">Beni-Wealth</div>
-          <div class="sub">Payment Channels</div>
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth" />
+        <div class="title-block">
+          <div class="title">Deposit History</div>
+          <div class="sub small">Your submitted deposits and verification status</div>
         </div>
       </div>
 
-      <div style="text-align:right;color:var(--muted);font-size:13px">
-        Need help? <a href="mailto:beniwealth70@gmail.com" style="color:var(--accent-start);text-decoration:underline">beniwealth70@gmail.com</a>
+      <div style="text-align:right">
+        <div id="acctDisplay" class="small">Checking sign-in…</div>
       </div>
     </header>
 
-    <h1 id="title">Send money — choose a SAQ channel</h1>
-    <p class="intro">Select one of the two channels below to get deposit instructions. Each button will take you to a dedicated deposit page. You can also view your deposit history.</p>
+    <section class="card" aria-labelledby="title">
+      <div class="controls" role="toolbar" aria-label="controls">
+        <input id="q" class="search" placeholder="Search sender name or status..." />
+        <button id="refreshBtn" class="btn ghost">Refresh</button>
+        <div class="small" id="countText">—</div>
+      </div>
 
-    <section class="grid" aria-label="SAQ channels and history">
-      <a id="saq1" class="card" href="#" role="link" aria-labelledby="saq1-title">
-        <div class="head">
-          <div class="saq-badge">1</div>
-          <div>
-            <h3 id="saq1-title">SAQ 1 — Deposit Channel</h3>
-            <p>Bank transfer / Mobile deposit instructions. Fast verification — visit the page to make your deposit.</p>
-          </div>
-        </div>
-
-        <div class="cta" aria-hidden="true">
-          <button class="btn" data-target="deposit-1.html">Go to SAQ 1</button>
-          <button class="btn ghost" data-target="deposit-1.html">View instructions</button>
-        </div>
-      </a>
-
-      <a id="saq2" class="card" href="#" role="link" aria-labelledby="saq2-title">
-        <div class="head">
-          <div class="saq-badge">2</div>
-          <div>
-            <h3 id="saq2-title">SAQ 2 — Deposit Channel</h3>
-            <p>Alternative deposit channel. Use this if channel 1 isn't available — visit the page for guidance.</p>
-          </div>
-        </div>
-
-        <div class="cta" aria-hidden="true">
-          <button class="btn" data-target="deposit-2.html">Go to SAQ 2</button>
-          <button class="btn ghost" data-target="deposit-2.html">View instructions</button>
-        </div>
-      </a>
-
-      <!-- NEW: Deposit history card -->
-      <a id="depositHistoryCard" class="card" href="#" role="link" aria-labelledby="history-title">
-        <div class="head">
-          <div class="saq-badge">H</div>
-          <div>
-            <h3 id="history-title">Deposit History</h3>
-            <p>View all your submitted deposits and their verification status. Tap to open your deposit history.</p>
-          </div>
-        </div>
-
-        <div class="cta" aria-hidden="true">
-          <button class="btn" data-target="deposit-history.html">Open History</button>
-          <button class="btn ghost" data-target="deposit-history.html">View</button>
-        </div>
-      </a>
+      <div class="table-wrap" role="region" aria-label="Deposit table">
+        <table id="depositsTable" aria-live="polite">
+          <thead>
+            <tr>
+              <th>Sender name</th>
+              <th>Date</th>
+              <th>Proof</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="4" class="small muted">Loading deposits…</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
-    <p class="note">After sending payment on either channel, please attach proof (WhatsApp or email) so our team can verify and credit your account promptly.</p>
-
-    <footer>© <span id="year"></span> Beni-Wealth</footer>
+    <footer class="small muted">© <span id="year"></span> Beni-Wealth</footer>
   </main>
+
+  <!-- image viewer overlay -->
+  <div id="viewerBackdrop" class="viewer-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="viewer" role="document">
+      <img id="viewerImg" alt="Proof image" />
+      <div class="meta">
+        <div id="viewerMeta" class="small"></div>
+        <div>
+          <button id="openNewTabBtn" class="btn ghost" style="margin-right:8px">Open in new tab</button>
+          <button id="closeViewerBtn" class="close">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- bottom nav -->
   <nav class="bw-bottom-nav" role="navigation" aria-label="Main navigation">
@@ -147,8 +147,8 @@
     <a id="navAssets"><div class="icon-wrap">👤</div><div>Assets</div></a>
   </nav>
 
-  <script>
-    // repo-aware URL helper (prefixes /Beni-Wealth when appropriate)
+  <script type="module">
+    // ----------------- Repo helper -----------------
     const REPO_BASE = '/Beni-Wealth';
     function withRepoPath(target){
       if(!target) return location.href;
@@ -168,49 +168,193 @@
       return location.origin + REPO_BASE + (clean ? '/' + clean : '');
     }
 
-    // wire card buttons & cards to deposit pages (use withRepoPath)
-    document.querySelectorAll('[data-target]').forEach(btn=>{
-      const target = btn.getAttribute('data-target');
-      const full = withRepoPath(target);
-      btn.addEventListener('click', (e)=>{
-        e.preventDefault();
-        location.assign(full);
+    // ----------------- Firebase imports & init -----------------
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    if (!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // ----------------- DOM refs -----------------
+    const acctDisplay = document.getElementById('acctDisplay');
+    const tbody = document.getElementById('tbody');
+    const countText = document.getElementById('countText');
+    const qInput = document.getElementById('q');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const viewerBackdrop = document.getElementById('viewerBackdrop');
+    const viewerImg = document.getElementById('viewerImg');
+    const viewerMeta = document.getElementById('viewerMeta');
+    const closeViewerBtn = document.getElementById('closeViewerBtn');
+    const openNewTabBtn = document.getElementById('openNewTabBtn');
+
+    // repo nav wiring
+    document.getElementById('navHome').addEventListener('click',(e)=>{e.preventDefault();location.assign(withRepoPath('catalog.html'));});
+    document.getElementById('navShortlinks').addEventListener('click',(e)=>{e.preventDefault();location.assign(withRepoPath('convert.html'));});
+    document.getElementById('navCreate').addEventListener('click',(e)=>{e.preventDefault();location.assign(withRepoPath('center.html'));});
+    document.getElementById('navNews').addEventListener('click',(e)=>{e.preventDefault();location.assign(withRepoPath('news.html'));});
+    document.getElementById('navAssets').addEventListener('click',(e)=>{e.preventDefault();location.assign(withRepoPath('dashboard.html'));});
+
+    // ----------------- helpers -----------------
+    function niceDate(d){
+      try {
+        const dt = (d && typeof d.toDate === 'function') ? d.toDate() : (d ? new Date(d) : null);
+        if(!dt) return '-';
+        return dt.toLocaleString();
+      } catch(e){ return '-'; }
+    }
+
+    function statusClass(status){
+      const s = String(status || '').toLowerCase();
+      if(s === 'pending') return 'status-pending';
+      if(s === 'success' || s === 'successful' || s === 'completed') return 'status-success';
+      if(s === 'rejected' || s === 'failed') return 'status-rejected';
+      return 'status-pending';
+    }
+
+    function escapeHtml(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // ----------------- load deposits -----------------
+    let currentUser = null;
+    let depositsCache = []; // raw list
+
+    async function loadDepositsForUser(uid){
+      tbody.innerHTML = `<tr><td colspan="4" class="small muted">Loading deposits…</td></tr>`;
+      countText.textContent = 'Loading…';
+      try {
+        const col = collection(db, 'deposits');
+        const q = query(col, where('userId','==', uid), orderBy('createdAt','desc'));
+        const snap = await getDocs(q);
+        const docs = [];
+        snap.forEach(d => {
+          docs.push({ id: d.id, ...d.data() });
+        });
+        depositsCache = docs;
+        renderTable(depositsCache);
+      } catch (err) {
+        console.error('loadDepositsForUser error', err);
+        tbody.innerHTML = `<tr><td colspan="4" class="small muted">Unable to load deposits. Check console or Firestore rules.</td></tr>`;
+        countText.textContent = 'Error';
+      }
+    }
+
+    function renderTable(list){
+      if(!list || list.length === 0){
+        tbody.innerHTML = `<tr><td colspan="4" class="small muted">No deposits found.</td></tr>`;
+        countText.textContent = '0 deposits';
+        return;
+      }
+      countText.textContent = `${list.length} deposit${list.length>1?'s':''}`;
+      const rows = list.map(doc => {
+        const sender = escapeHtml(doc.accountNameEntered || doc.username || '-');
+        const createdAt = niceDate(doc.createdAt);
+        const proofUrl = doc.proofUrl || '';
+        const status = doc.status || 'pending';
+        const pillClass = statusClass(status);
+        const proofCell = proofUrl
+          ? `<a class="proof-link" data-proof="${escapeHtml(proofUrl)}" href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener noreferrer">View proof</a>`
+          : `<span class="small muted">—</span>`;
+
+        return `<tr data-id="${escapeHtml(doc.id)}">
+          <td>${sender}</td>
+          <td>${createdAt}</td>
+          <td>${proofCell}</td>
+          <td><span class="status-pill ${pillClass}">${escapeHtml(String(status).toUpperCase())}</span></td>
+        </tr>`;
       });
+      tbody.innerHTML = rows.join('');
+      // attach proof click handlers (open overlay)
+      document.querySelectorAll('.proof-link').forEach(a=>{
+        a.addEventListener('click', (ev)=>{
+          ev.preventDefault();
+          const url = a.getAttribute('data-proof');
+          openViewer(url);
+        });
+      });
+    }
+
+    // ----------------- viewer overlay -----------------
+    function openViewer(url){
+      if(!url) return;
+      viewerImg.src = url;
+      viewerMeta.textContent = url;
+      openNewTabBtn.onclick = ()=> window.open(url, '_blank', 'noopener');
+      viewerBackdrop.style.display = 'flex';
+      viewerBackdrop.setAttribute('aria-hidden', 'false');
+      // trap scroll
+      document.body.style.overflow = 'hidden';
+    }
+    function closeViewer(){
+      viewerBackdrop.style.display = 'none';
+      viewerBackdrop.setAttribute('aria-hidden', 'true');
+      viewerImg.src = '';
+      document.body.style.overflow = '';
+    }
+    closeViewerBtn.addEventListener('click', closeViewer);
+    viewerBackdrop.addEventListener('click', (e)=>{ if(e.target === viewerBackdrop) closeViewer(); });
+
+    // ----------------- search/filter -----------------
+    qInput.addEventListener('input', (e)=>{
+      const q = (e.target.value || '').toLowerCase().trim();
+      if(!q) return renderTable(depositsCache);
+      const filtered = depositsCache.filter(d=>{
+        const name = String(d.accountNameEntered || d.username || '').toLowerCase();
+        const status = String(d.status || '').toLowerCase();
+        return name.includes(q) || status.includes(q) || (d.proofUrl || '').toLowerCase().includes(q);
+      });
+      renderTable(filtered);
     });
 
-    // also clicking the whole card should navigate (ignores clicks on nested buttons)
-    document.querySelectorAll('.card[role="link"]').forEach(card=>{
-      const btn = card.querySelector('[data-target]');
-      if(!btn) return;
-      const target = btn.getAttribute('data-target');
-      const full = withRepoPath(target);
-      card.setAttribute('href', full);
-      card.addEventListener('click', (e)=>{
-        if(e.target && e.target.closest('button')) return;
-        e.preventDefault();
-        location.assign(full);
-      });
+    refreshBtn.addEventListener('click', async ()=> {
+      if(!currentUser) return;
+      await loadDepositsForUser(currentUser.uid);
     });
 
-    // bottom nav wiring
-    document.getElementById('navHome').addEventListener('click',(e)=>{ e.preventDefault(); location.assign(withRepoPath('catalog.html')); });
-    document.getElementById('navShortlinks').addEventListener('click',(e)=>{ e.preventDefault(); location.assign(withRepoPath('convert.html')); });
-    document.getElementById('navCreate').addEventListener('click',(e)=>{ e.preventDefault(); location.assign(withRepoPath('center.html')); });
-    document.getElementById('navNews').addEventListener('click',(e)=>{ e.preventDefault(); location.assign(withRepoPath('news.html')); });
-    document.getElementById('navAssets').addEventListener('click',(e)=>{ e.preventDefault(); location.assign(withRepoPath('dashboard.html')); });
+    // ----------------- auth & initial load -----------------
+    acctDisplay.textContent = 'Checking sign-in…';
+    onAuthStateChanged(auth, async (user) => {
+      if(!user){
+        acctDisplay.innerHTML = `Not signed in — <a style="color:var(--accent-start)" href="${withRepoPath('login.html')}">Sign in</a>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="small muted">Sign in to view your deposit history.</td></tr>`;
+        countText.textContent = '-';
+        return;
+      }
+      currentUser = user;
+      const username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+      acctDisplay.textContent = username;
+      await loadDepositsForUser(user.uid);
+    });
 
-    // ensure shell padding so bottom nav doesn't hide content
-    (function ensurePadding(){
-      const shell = document.querySelector('.shell');
-      const nav = document.querySelector('.bw-bottom-nav');
-      if(!shell || !nav) return;
-      const need = (nav.getBoundingClientRect().height || 72) + 24;
-      const cur = parseInt(getComputedStyle(shell).paddingBottom) || 0;
-      if(cur < need) shell.style.paddingBottom = need + 'px';
-    })();
+    // immediate check
+    if(auth.currentUser){
+      currentUser = auth.currentUser;
+      acctDisplay.textContent = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'User');
+      loadDepositsForUser(currentUser.uid).catch(e=>console.error(e));
+    } else {
+      // fallback: after 6s show sign-in CTA if listener doesn't report
+      setTimeout(()=> {
+        if(!currentUser){
+          acctDisplay.innerHTML = `Not signed in — <a style="color:var(--accent-start)" href="${withRepoPath('login.html')}">Sign in</a>`;
+          tbody.innerHTML = `<tr><td colspan="4" class="small muted">Sign in to view your deposit history.</td></tr>`;
+          countText.textContent = '-';
+        }
+      }, 6000);
+    }
 
     // set year
     document.getElementById('year').textContent = new Date().getFullYear();
+
   </script>
 </body>
 </html>
