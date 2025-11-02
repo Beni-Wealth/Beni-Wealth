@@ -209,8 +209,9 @@
     // ----------------- helpers -----------------
     function niceDate(d){
       try {
+        // support Firestore Timestamp objects and raw Date strings
         const dt = (d && typeof d.toDate === 'function') ? d.toDate() : (d ? new Date(d) : null);
-        if(!dt) return '-';
+        if(!dt || isNaN(dt.getTime())) return '-';
         return dt.toLocaleString();
       } catch(e){ return '-'; }
     }
@@ -230,22 +231,66 @@
     let depositsCache = []; // raw list
 
     async function loadDepositsForUser(uid){
+      // show loading skeleton
       tbody.innerHTML = `<tr><td colspan="4" class="small muted">Loading deposits…</td></tr>`;
       countText.textContent = 'Loading…';
+
+      if(!uid){
+        tbody.innerHTML = `<tr><td colspan="4" class="small muted">No user id provided.</td></tr>`;
+        countText.textContent = '-';
+        return;
+      }
+
       try {
         const col = collection(db, 'deposits');
-        const q = query(col, where('userId','==', uid), orderBy('createdAt','desc'));
-        const snap = await getDocs(q);
-        const docs = [];
-        snap.forEach(d => {
-          docs.push({ id: d.id, ...d.data() });
-        });
-        depositsCache = docs;
-        renderTable(depositsCache);
+
+        // First attempt: run the intended query with orderBy (this may require a composite index)
+        try {
+          const q = query(col, where('userId','==', uid), orderBy('createdAt','desc'));
+          const snap = await getDocs(q);
+          const docs = [];
+          snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+          depositsCache = docs;
+          renderTable(depositsCache);
+          return;
+        } catch (errQuery) {
+          // if ordering/index fails, we fall back to a simpler query to determine if it's an index vs permission problem
+          console.warn('Primary ordered query failed — falling back to simpler query. Error:', errQuery);
+
+          // If permission denied, rethrow so outer catch handles it uniformly
+          if(errQuery && String(errQuery.code || '').toLowerCase().includes('permission')) throw errQuery;
+
+          // If it's an index error or other ordering issue, try the simple where query (no orderBy)
+          try {
+            const q2 = query(col, where('userId','==', uid));
+            const snap2 = await getDocs(q2);
+            const docs2 = [];
+            snap2.forEach(d => docs2.push({ id: d.id, ...d.data() }));
+            depositsCache = docs2;
+            renderTable(depositsCache);
+            // inform user that results are shown without ordering (helpful debug text)
+            countText.textContent = `${depositsCache.length} deposit${depositsCache.length>1?'s':''} (unordered)`;
+            return;
+          } catch (errFallback) {
+            console.warn('Fallback simple query also failed:', errFallback);
+            throw errFallback; // let outer catch render the full error
+          }
+        }
+
       } catch (err) {
+        // top-level error handling — surface the real firebase error code + message in UI for debugging
         console.error('loadDepositsForUser error', err);
-        tbody.innerHTML = `<tr><td colspan="4" class="small muted">Unable to load deposits. Check console or Firestore rules.</td></tr>`;
+        const code = err && err.code ? err.code : 'unknown_error';
+        const msg  = err && err.message ? err.message : String(err);
+
+        // Friendly UI message while keeping sensitivity low
+        tbody.innerHTML = `<tr><td colspan="4" class="small muted">Unable to load deposits: <strong>${escapeHtml(code)}</strong> — ${escapeHtml(msg)}</td></tr>`;
         countText.textContent = 'Error';
+
+        // Helpful hints for common cases
+        // permission-denied -> Firestore rules need to allow the read for this user
+        // failed-precondition / requires an index -> create composite index for where+orderBy
+        return;
       }
     }
 
@@ -328,15 +373,17 @@
         acctDisplay.innerHTML = `Not signed in — <a style="color:var(--accent-start)" href="${withRepoPath('login.html')}">Sign in</a>`;
         tbody.innerHTML = `<tr><td colspan="4" class="small muted">Sign in to view your deposit history.</td></tr>`;
         countText.textContent = '-';
+        currentUser = null;
         return;
       }
       currentUser = user;
       const username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
       acctDisplay.textContent = username;
+      // load deposits for the signed-in user
       await loadDepositsForUser(user.uid);
     });
 
-    // immediate check
+    // immediate check (safe fallback; onAuthStateChanged should handle most cases)
     if(auth.currentUser){
       currentUser = auth.currentUser;
       acctDisplay.textContent = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'User');
