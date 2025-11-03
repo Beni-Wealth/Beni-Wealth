@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth - withdraw </title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{font-family: 'Poppins',sans-serif}
+    .glass{background:rgba(255,255,255,0.06);backdrop-filter:blur(6px)}
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-gray-900 text-slate-100 flex items-center justify-center p-6">
+  <main class="max-w-3xl w-full">
+    <div class="glass border border-white/6 rounded-2xl p-8 shadow-2xl">
+      <header class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-semibold">Request Withdrawal</h1>
+          <p class="text-sm text-slate-400">Fill the details below to request a withdrawal.</p>
+        </div>
+        <a href="withdrawal-record.html" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm shadow">Records</a>
+      </header>
+
+      <form id="withdrawForm" class="grid grid-cols-1 gap-4">
+        <label class="block">
+          <span class="text-sm text-slate-300">Account name</span>
+          <input id="accountName" required type="text" placeholder="John Doe" class="mt-2 w-full rounded-lg bg-white/5 border border-white/6 py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500" />
+        </label>
+
+        <label class="block">
+          <span class="text-sm text-slate-300">Account number</span>
+          <input id="accountNumber" required inputmode="numeric" type="text" maxlength="10" placeholder="0123456789" class="mt-2 w-full rounded-lg bg-white/5 border border-white/6 py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500" />
+          <p class="text-xs text-slate-400 mt-1">Most Nigerian banks use 10-digit account numbers — we'll validate this.</p>
+        </label>
+
+        <label class="block">
+          <span class="text-sm text-slate-300">Bank</span>
+          <select id="bank" required class="mt-2 w-full rounded-lg bg-white/5 border border-white/6 py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">Select bank</option>
+            <option>Access Bank</option>
+            <option>GTBank (Guaranty Trust Bank)</option>
+            <option>Zenith Bank</option>
+            <option>First Bank</option>
+            <option>UBA (United Bank for Africa)</option>
+            <option>Fidelity Bank</option>
+            <option>Stanbic IBTC</option>
+            <option>Sterling Bank</option>
+            <option>FCMB</option>
+            <option>Polaris Bank</option>
+            <option>Keystone Bank</option>
+            <option>Wema Bank</option>
+            <option>Union Bank</option>
+            <option>Ecobank</option>
+            <option>Heritage Bank</option>
+            <option>Globus Bank</option>
+            <option>Citibank</option>
+            <option>Jaiz Bank</option>
+            <option>Unity Bank</option>
+            <option>StanChart (Standard Chartered)</option>
+          </select>
+        </label>
+
+        <label class="block">
+          <span class="text-sm text-slate-300">Amount (₦)</span>
+          <input id="amount" required type="number" min="1000" step="1" placeholder="1000" class="mt-2 w-full rounded-lg bg-white/5 border border-white/6 py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500" />
+          <p class="text-xs text-slate-400 mt-1">Minimum withdrawal amount is ₦1,000.</p>
+        </label>
+
+        <div class="flex items-center justify-between mt-2">
+          <div id="formMsg" class="text-sm"></div>
+          <div class="flex items-center gap-3">
+            <button id="submitBtn" type="submit" class="px-5 py-2 bg-green-600 rounded-lg shadow hover:bg-green-500">Request</button>
+            <button id="clearBtn" type="button" class="px-4 py-2 bg-white/5 rounded-lg">Clear</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="statusToast" class="fixed right-6 bottom-6 invisible transform transition-all rounded-lg p-4 shadow-lg"></div>
+    </div>
+
+    <footer class="mt-6 text-center text-slate-400 text-xs">© Beni-Wealth</footer>
+  </main>
+
+  <script type="module">
+    // ---------- FIREBASE CONFIG (from your saved config) ----------
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // ---------- UI helpers ----------
+    const form = document.getElementById('withdrawForm');
+    const accountNameEl = document.getElementById('accountName');
+    const accountNumberEl = document.getElementById('accountNumber');
+    const bankEl = document.getElementById('bank');
+    const amountEl = document.getElementById('amount');
+    const formMsg = document.getElementById('formMsg');
+    const submitBtn = document.getElementById('submitBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const statusToast = document.getElementById('statusToast');
+
+    let currentUser = null;
+
+    // Check auth state (optional). If you don't use Firebase Auth, currentUser will remain null.
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+    });
+
+    function showToast(message, isError = false) {
+      statusToast.textContent = message;
+      statusToast.className = `fixed right-6 bottom-6 rounded-lg p-4 shadow-lg ${isError ? 'bg-red-600 text-white' : 'bg-green-600 text-white'} visible`;
+      setTimeout(() => {
+        statusToast.classList.remove('visible');
+        statusToast.style.opacity = '0';
+        statusToast.className = 'fixed right-6 bottom-6 invisible transform transition-all rounded-lg p-4 shadow-lg';
+      }, 3500);
+    }
+
+    function validate() {
+      const accountName = accountNameEl.value.trim();
+      const accountNumber = accountNumberEl.value.trim();
+      const bank = bankEl.value.trim();
+      const amount = Number(amountEl.value);
+
+      if (!accountName) return { ok:false, msg: 'Account name is required.' };
+      if (!/^[0-9]{10}$/.test(accountNumber)) return { ok:false, msg: 'Account number must be 10 digits.' };
+      if (!bank) return { ok:false, msg: 'Please select a bank.' };
+      if (!amount || isNaN(amount)) return { ok:false, msg: 'Enter a valid amount.' };
+      // Interpreting your instruction as: minimum withdrawal is ₦1,000 — user must not withdraw below ₦1,000.
+      if (amount < 1000) return { ok:false, msg: 'Minimum withdrawal is ₦1,000.' };
+
+      return { ok:true, data: { accountName, accountNumber, bank, amount } };
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formMsg.textContent = '';
+
+      const check = validate();
+      if (!check.ok) { formMsg.textContent = check.msg; formMsg.className = 'text-sm text-red-400'; return; }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      try {
+        const payload = {
+          accountName: check.data.accountName,
+          accountNumber: check.data.accountNumber,
+          bank: check.data.bank,
+          amount: check.data.amount,
+          status: 'pending',
+          createdAt: serverTimestamp(),
+          requestedBy: currentUser ? currentUser.uid : null
+        };
+
+        await addDoc(collection(db, 'withdrawal'), payload);
+
+        showToast('Withdrawal request submitted — pending review.');
+        form.reset();
+      } catch (err) {
+        console.error(err);
+        showToast('Failed to submit. Try again.', true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Request';
+      }
+    });
+
+    clearBtn.addEventListener('click', () => form.reset());
+  </script>
+</body>
+</html>
