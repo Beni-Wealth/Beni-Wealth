@@ -10,21 +10,23 @@
 </head>
 <body class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-gray-900 text-slate-100 p-6">
   <main class="max-w-6xl mx-auto">
+
+    <!-- Back button positioned ABOVE the header as requested -->
+    <div class="mb-4">
+      <a href="dashboard.html" id="backBtnTop" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/6 text-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0L3.586 10l4.707-4.707a1 1 0 011.414 1.414L6.414 9H17a1 1 0 110 2H6.414l3.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+        Back to dashboard
+      </a>
+    </div>
+
     <div class="glass border border-white/6 rounded-2xl p-6 shadow-2xl">
       <header class="flex items-center justify-between gap-4 mb-6">
-        <div class="flex items-center gap-4">
-          <a href="dashboard.html" id="backBtn" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/6 text-sm">
-            <!-- simple back arrow -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0L3.586 10l4.707-4.707a1 1 0 011.414 1.414L6.414 9H17a1 1 0 110 2H6.414l3.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
-            Back
-          </a>
-          <div>
+        <div>
             <h1 class="text-2xl font-semibold">Withdrawal Records</h1>
             <p class="text-sm text-slate-400 mt-1">Your withdrawal requests will be processed within 48hrs</p>
-          </div>
         </div>
         <div class="flex items-center gap-3 w-full sm:w-auto">
-          <a href="withdraw.html" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm shadow">New Withdrawal</a>
+          <a href="withdrawal.html" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm shadow">New Withdrawal</a>
         </div>
       </header>
 
@@ -58,6 +60,9 @@
       </div>
 
       <div id="emptyState" class="hidden p-6 text-center text-slate-400">No records found.</div>
+
+      <!-- area for actionable errors (e.g. missing index) -->
+      <div id="actionError" class="mt-4"></div>
     </div>
 
     <footer class="mt-6 text-center text-slate-400 text-xs">© Beni-Wealth</footer>
@@ -87,6 +92,7 @@
     const refreshBtn = document.getElementById('refreshBtn');
     const exportBtn = document.getElementById('exportBtn');
     const emptyState = document.getElementById('emptyState');
+    const actionError = document.getElementById('actionError');
 
     let unsubscribe = null;
     let recordsCache = [];
@@ -150,6 +156,8 @@
     }
 
     async function fetchInitialAndSubscribe(uid) {
+      actionError.innerHTML = ''; // clear previous actionable errors
+
       // build query
       const col = collection(db, 'withdrawal');
       const q = query(col, where('requestedBy', '==', uid), orderBy('createdAt', 'desc'));
@@ -168,6 +176,11 @@
         }
       } catch (err) {
         console.error('Initial fetch error', err);
+        // Firestore often provides a direct URL in the error message for creating the needed index.
+        const urlMatch = String(err.message || '').match(/https?:\/\/[^\s)]+/);
+        if (urlMatch) {
+          actionError.innerHTML = `<div class="mt-4 p-4 rounded-lg bg-yellow-700/10 border border-yellow-700/20 text-sm">Firestore requires a composite index to run this query. <a class="underline" href="${urlMatch[0]}" target="_blank" rel="noopener">Create the index in Firebase Console</a> — click the link and follow the console to create it.</div>`;
+        }
         tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-400">Error loading records: ${escapeHtml(err.message || String(err))}</td></tr>`;
         return;
       }
@@ -180,6 +193,10 @@
         renderTable(rows);
       }, err => {
         console.error('Realtime listener error', err);
+        const urlMatch = String(err.message || '').match(/https?:\/\/[^\s)]+/);
+        if (urlMatch) {
+          actionError.innerHTML = `<div class="mt-4 p-4 rounded-lg bg-yellow-700/10 border border-yellow-700/20 text-sm">Realtime query requires a composite index. <a class="underline" href="${urlMatch[0]}" target="_blank" rel="noopener">Create the index in Firebase Console</a>.</div>`;
+        }
         tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-400">Realtime error: ${escapeHtml(err.message || String(err))}</td></tr>`;
       });
     }
