@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Withdrawal Records — Beni-Wealth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{font-family:'Poppins',sans-serif} .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(6px)}</style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-gray-900 text-slate-100 p-6">
+  <main class="max-w-6xl mx-auto">
+    <div class="glass border border-white/6 rounded-2xl p-6 shadow-2xl">
+      <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 class="text-2xl font-semibold">Withdrawal Records</h1>
+          <p class="text-sm text-slate-400 mt-1">Your withdrawal requests. This list is pulled directly from Firestore.</p>
+        </div>
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <a href="withdrawal.html" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm shadow">New Withdrawal</a>
+          <button id="toggleAllBtn" class="px-3 py-2 rounded-lg bg-white/5 text-sm">Show all (admin)</button>
+        </div>
+      </header>
+
+      <section class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3 w-full sm:w-1/2">
+          <input id="search" type="search" placeholder="Search by name, account number, bank, uid or status" class="w-full rounded-lg bg-white/5 border border-white/6 py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="refreshBtn" class="px-3 py-2 rounded-lg bg-white/5 text-sm">Refresh</button>
+          <button id="exportBtn" class="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm">Export CSV</button>
+        </div>
+      </section>
+
+      <div class="overflow-x-auto">
+        <table id="recordsTable" class="min-w-full table-auto divide-y divide-white/6">
+          <thead class="bg-white/3">
+            <tr class="text-left text-sm text-slate-300">
+              <th class="px-4 py-3">Account name</th>
+              <th class="px-4 py-3">Account number</th>
+              <th class="px-4 py-3">Amount</th>
+              <th class="px-4 py-3">Bank</th>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">UID</th>
+              <th class="px-4 py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbody" class="bg-transparent divide-y divide-white/6">
+            <tr><td colspan="7" class="p-6 text-center text-slate-400">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="emptyState" class="hidden p-6 text-center text-slate-400">No records found.</div>
+    </div>
+
+    <footer class="mt-6 text-center text-slate-400 text-xs">© Beni-Wealth</footer>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getFirestore, collection, query, where, orderBy, onSnapshot, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const tbody = document.getElementById('tbody');
+    const searchEl = document.getElementById('search');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const toggleAllBtn = document.getElementById('toggleAllBtn');
+    const emptyState = document.getElementById('emptyState');
+
+    let unsubscribe = null;
+    let recordsCache = [];
+    let showAll = false;
+
+    function formatDate(ts) {
+      try {
+        if (!ts) return '-';
+        // Firestore Timestamp
+        if (ts.toDate) ts = ts.toDate();
+        const d = new Date(ts);
+        return d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      } catch (e) { return '-'; }
+    }
+
+    function formatAmount(n) {
+      if (n == null || n === '') return '-';
+      try {
+        return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(Number(n));
+      } catch (e) { return '₦' + n; }
+    }
+
+    function statusPill(status) {
+      const s = (status || '').toLowerCase();
+      if (s === 'pending') return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-yellow-400 text-slate-900">Pending</span>`;
+      if (s === 'successful' || s === 'success') return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-600 text-white">Successful</span>`;
+      if (s === 'failed' || s === 'rejected') return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-red-600 text-white">${status}</span>`;
+      return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-slate-200">${status || '-'}</span>`;
+    }
+
+    function renderTable(rows) {
+      recordsCache = rows;
+      const q = (searchEl.value || '').trim().toLowerCase();
+      const filtered = rows.filter(r => {
+        if (!q) return true;
+        return [r.accountName, r.accountNumber, String(r.amount), r.bank, r.requestedBy, r.status].join(' ').toLowerCase().includes(q);
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">No records match your search.</td></tr>';
+        emptyState.classList.remove('hidden');
+        return;
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      tbody.innerHTML = filtered.map(r => `
+        <tr class="hover:bg-white/2">
+          <td class="px-4 py-3">${escapeHtml(r.accountName)}</td>
+          <td class="px-4 py-3">${escapeHtml(r.accountNumber)}</td>
+          <td class="px-4 py-3 font-medium">${formatAmount(r.amount)}</td>
+          <td class="px-4 py-3">${escapeHtml(r.bank)}</td>
+          <td class="px-4 py-3">${formatDate(r.createdAt)}</td>
+          <td class="px-4 py-3 text-sm text-slate-400">${escapeHtml(r.requestedBy || '-')}</td>
+          <td class="px-4 py-3">${statusPill(r.status)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      if (text == null) return '';
+      return String(text).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+    }
+
+    function subscribeForUser(uid) {
+      if (unsubscribe) unsubscribe();
+      const col = collection(db, 'withdrawal');
+      let q;
+      if (showAll) {
+        q = query(col, orderBy('createdAt', 'desc'));
+      } else {
+        q = query(col, where('requestedBy', '==', uid), orderBy('createdAt', 'desc'));
+      }
+      unsubscribe = onSnapshot(q, snap => {
+        const rows = [];
+        snap.forEach(doc => {
+          rows.push({ id: doc.id, ...doc.data() });
+        });
+        renderTable(rows);
+      }, err => {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-400">Error loading records: ${escapeHtml(err.message)}</td></tr>`;
+      });
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">Please sign in to see your withdrawal records.</td></tr>';
+        return;
+      }
+      subscribeForUser(user.uid);
+    });
+
+    // Toggle admin "show all"
+    toggleAllBtn.addEventListener('click', async () => {
+      const yes = confirm('This will show ALL withdrawal records (admin only). Continue only if you are an admin.');
+      if (!yes) return;
+      showAll = !showAll;
+      toggleAllBtn.textContent = showAll ? 'Showing: all' : 'Show all (admin)';
+
+      // re-subscribe using current user UID if present
+      const user = auth.currentUser;
+      if (user) subscribeForUser(user.uid);
+      else {
+        // when no auth, just fetch all once
+        const col = collection(db, 'withdrawal');
+        const q = query(col, orderBy('createdAt', 'desc'));
+        const snap = await getDocs(q);
+        const rows = [];
+        snap.forEach(d => rows.push({ id: d.id, ...d.data() }));
+        renderTable(rows);
+      }
+    });
+
+    refreshBtn.addEventListener('click', () => {
+      // simple re-render from cache
+      renderTable(recordsCache);
+    });
+
+    searchEl.addEventListener('input', () => renderTable(recordsCache));
+
+    exportBtn.addEventListener('click', () => {
+      if (!recordsCache || recordsCache.length === 0) {
+        alert('No records to export');
+        return;
+      }
+      const rows = recordsCache.map(r => ({
+        accountName: r.accountName || '',
+        accountNumber: r.accountNumber || '',
+        amount: r.amount || '',
+        bank: r.bank || '',
+        createdAt: formatDate(r.createdAt),
+        requestedBy: r.requestedBy || '',
+        status: r.status || ''
+      }));
+
+      const header = ['Account name','Account number','Amount','Bank','Date','UID','Status'];
+      const csv = [header.join(',')].concat(rows.map(r => [r.accountName, r.accountNumber, r.amount, r.bank, `"${r.createdAt}"`, r.requestedBy, r.status].map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(','))).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'withdrawal-records.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
