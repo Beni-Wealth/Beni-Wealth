@@ -85,7 +85,7 @@
     <div class="topbar">
       <div>
         <h1>Beni-Wealth Plans</h1>
-        <div class="intro">Pick a plan to increase earnings. Purchase requires enough balance — balance will be debited on purchase. Plans last 30 days and revert to Basic on expiry.</div>
+        <div class="intro">Pick a plan to increase earnings. Purchase requires enough balance — balance will be debited on purchase. Plans are valid forever (no automatic expiry).</div>
       </div>
       <div class="user-info" id="userInfo">Not signed in</div>
     </div>
@@ -128,6 +128,7 @@
     const db = getFirestore(app);
 
     // Plan definitions
+    // NOTE: 'earning' is the "full" earning (max). We display a 50%-100% range to show 50% off.
     const PLANS = [
       { id: 'Bronze', price: 3000, earning: 200 },
       { id: 'Silver', price: 5000, earning: 350 },
@@ -144,7 +145,12 @@
 
     function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
     function toast(msg){ const t = document.createElement('div'); t.className='toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, 3000); }
-    function daysUntil(iso){ if(!iso) return null; const ms = new Date(iso).getTime() - Date.now(); return Math.ceil(ms / (1000*60*60*24)); }
+
+    // given a plan's full earning, compute 50% min and create display string
+    function earningRangeDisplay(full){
+      const min = Math.round(full * 0.5);
+      return `${formatN(min)} - ${formatN(full)}`;
+    }
 
     function renderPlans() {
       plansGrid.innerHTML = '';
@@ -154,7 +160,7 @@
         div.innerHTML = `
           <h3>${p.id}</h3>
           <div class="price">Price: <strong>${formatN(p.price)}</strong></div>
-          <div class="earn">Earnings / shortlink: <strong>${formatN(p.earning)}</strong></div>
+          <div class="earn">Earnings / shortlink: <strong>${earningRangeDisplay(p.earning)}</strong></div>
           <div class="buy">
             <button class="btn primary" data-plan="${p.id}" data-price="${p.price}">Activate ${p.id}</button>
             <button class="btn ghost" data-plan-info="${p.id}">Details</button>
@@ -168,7 +174,7 @@
         b.addEventListener('click', (e) => {
           const plan = e.currentTarget.getAttribute('data-plan-info');
           const p = PLANS.find(x=>x.id===plan);
-          alert(`${p.id}\nPrice: ${formatN(p.price)}\nEarnings / shortlink: ${formatN(p.earning)}\nValid for: 30 days`);
+          alert(`${p.id}\nPrice: ${formatN(p.price)}\nEarnings / shortlink: ${earningRangeDisplay(p.earning)}\nValidity: Forever`);
         });
       });
     }
@@ -182,7 +188,7 @@
         return;
       }
 
-      const ok = confirm(`Buy ${plan} for ${formatN(price)}? This will debit your account immediately and activate ${plan} for 30 days.`);
+      const ok = confirm(`Buy ${plan} for ${formatN(price)}? This will debit your account immediately and activate ${plan} (valid forever).`);
       if(!ok) return;
 
       disablePlanButtons(true, plan);
@@ -190,8 +196,8 @@
       try{
         const userRef = doc(db, 'users', currentUid);
         const now = new Date();
-        const expiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
+        // Transactionally deduct balance and set plan (no expiry)
         await runTransaction(db, async (tx) => {
           const snap = await tx.get(userRef);
           const data = snap.exists ? snap.data() : {};
@@ -200,10 +206,16 @@
           if(bal < price) throw new Error(`Insufficient balance: ${formatN(bal)} available, ${formatN(price)} required.`);
 
           const newBal = bal - price;
-          const updates = { balance: newBal, plan: plan, planPurchasedAt: now.toISOString(), planExpiryAt: expiry };
+          const updates = {
+            balance: newBal,
+            plan: plan,
+            planPurchasedAt: now.toISOString()
+            // deliberately NOT setting planExpiryAt — plans are valid forever
+          };
           tx.set(userRef, updates, { merge: true });
         });
 
+        // write transaction record
         await addDoc(collection(db, 'users', currentUid, 'transactions'), {
           source: `Plan purchase — ${plan}`,
           amount: -price,
@@ -232,36 +244,6 @@
       });
     }
 
-    async function enforcePlanExpiryIfNeeded(uid, userDocData){
-      try{
-        if(!uid) return false;
-        const expiry = userDocData?.planExpiryAt || userDocData?.planExpiry || null;
-        if(!expiry) return false;
-        if(Date.now() <= new Date(expiry).getTime()) return false;
-
-        const userRef = doc(db, 'users', uid);
-        await runTransaction(db, async (tx) => {
-          const snap = await tx.get(userRef);
-          if(!snap.exists) return;
-          const data = snap.data() || {};
-          const currentExpiry = data.planExpiryAt || data.planExpiry || null;
-          if(!currentExpiry) return;
-          if(Date.now() <= new Date(currentExpiry).getTime()) return;
-          const updates = { plan: 'Basic', planExpiredAt: new Date().toISOString(), planExpiryAt: null, planPurchasedAt: null };
-          tx.set(userRef, updates, { merge: true });
-        });
-
-        await addDoc(collection(db, 'users', uid, 'transactions'), {
-          source: `Plan expired — reverted to Basic`,
-          amount: 0,
-          date: new Date().toISOString()
-        });
-
-        toast('Your plan has expired and reverted to Basic');
-        return true;
-      }catch(err){ console.error('Failed to enforce plan expiry', err); return false; }
-    }
-
     async function refreshUserUI(){
       if(!currentUid) {
         userInfo.textContent = 'Not signed in';
@@ -272,23 +254,11 @@
         const userRef = doc(db, 'users', currentUid);
         const snap = await getDoc(userRef);
         const data = snap.exists ? snap.data() : {};
-        const didExpire = await enforcePlanExpiryIfNeeded(currentUid, data);
-        let refreshedSnap = snap;
-        if(didExpire) refreshedSnap = await getDoc(userRef);
-        const finalData = refreshedSnap.exists ? refreshedSnap.data() : {};
-        const bal = Number(finalData.balance || 0);
-        const plan = finalData.plan || 'Basic';
-        const expiry = finalData.planExpiryAt || finalData.planExpiry || null;
-        const daysLeft = expiry ? daysUntil(expiry) : null;
+        const bal = Number(data.balance || 0);
+        const plan = data.plan || 'Basic';
 
-        userInfo.textContent = userInfoText(finalData, currentUid);
-        if(daysLeft === null){
-          statusEl.textContent = `Plan: ${plan} — Balance: ${formatN(bal)} (no active expiry)`;
-        } else if(daysLeft > 0){
-          statusEl.textContent = `Plan: ${plan} — Balance: ${formatN(bal)} — expires in ${daysLeft} day(s)`;
-        } else {
-          statusEl.textContent = `Plan: ${plan} — Balance: ${formatN(bal)} — expired`;
-        }
+        userInfo.textContent = userInfoText(data, currentUid);
+        statusEl.textContent = `Plan: ${plan} — Balance: ${formatN(bal)} — valid: Forever`;
       }catch(e){ console.warn('refreshUserUI failed', e); }
     }
 
@@ -318,8 +288,8 @@
     renderPlans();
     refreshUserUI();
 
-    window._bwCatalog = { PLANS, refreshUserUI, enforcePlanExpiryIfNeeded };
+    // expose debug helpers
+    window._bwCatalog = { PLANS, refreshUserUI };
   </script>
 </body>
-  </html>
-  
+</html>
