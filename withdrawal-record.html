@@ -15,10 +15,7 @@
         <button id="backBtn" aria-label="Back to dashboard" class="p-2 rounded-lg bg-white/6 hover:bg-white/8">← Back</button>
         <h1 class="text-2xl font-semibold">Withdrawal Records</h1>
       </div>
-      <div class="flex items-center gap-3">
-        <button id="refreshBtn" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm shadow">Refresh</button>
-        <a id="newReq" href="withdraw.html" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm shadow">New Request</a>
-      </div>
+      
     </div>
 
     <section class="glass border border-white/6 rounded-2xl p-6 shadow-2xl">
@@ -80,14 +77,13 @@
     const recordsEl = document.getElementById('records');
     const emptyState = document.getElementById('emptyState');
     const statusLine = document.getElementById('statusLine');
-    const refreshBtn = document.getElementById('refreshBtn');
+    
     const emptyNew = document.getElementById('emptyNew');
 
     let unsubscribe = null;
     let currentUser = null;
 
-    backBtn.addEventListener('click', (e) => { e.preventDefault(); location.assign(withRepoPath('dashboard.html')); });
-    refreshBtn.addEventListener('click', () => { if(currentUser) attachListener(currentUser); else statusLine.textContent = 'Sign in to view your records.'; });
+    backBtn.addEventListener('click', (e) => { e.preventDefault(); location.assign(withRepoPath('dashboard.html')); }); else statusLine.textContent = 'Sign in to view your records.'; });
 
     function fmtDate(ts){
       try {
