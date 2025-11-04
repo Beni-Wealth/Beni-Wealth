@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth - withdraw </title>
+  <title>Beni-Wealth - withdraw</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -19,7 +19,10 @@
           <h1 class="text-2xl font-semibold">Request Withdrawal</h1>
           <p class="text-sm text-slate-400">Fill the details below to request a withdrawal.</p>
         </div>
-        <a href="withdrawal-record.html" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm shadow">Records</a>
+        <div class="text-right">
+          <div id="balanceDisplay" class="text-sm text-slate-300">Balance: ₦0</div>
+          <a id="recordsLink" href="withdrawal-record.html" class="inline-block mt-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm shadow">Records</a>
+        </div>
       </header>
 
       <form id="withdrawForm" class="grid grid-cols-1 gap-4">
@@ -40,7 +43,7 @@
             <option value="">Select bank</option>
             <option>OPay</option>
             <option>Palmpay</option>
-             <option>Kuda</option>
+            <option>Kuda</option>
             <option>Access Bank</option>
             <option>GTBank (Guaranty Trust Bank)</option>
             <option>Zenith Bank</option>
@@ -88,8 +91,10 @@
 
   <script type="module">
     // ---------- FIREBASE CONFIG (from your saved config) ----------
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import {
+      getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, onSnapshot, getDoc
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     const firebaseConfig = {
@@ -102,9 +107,9 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    if (!getApps().length) initializeApp(firebaseConfig);
+    const db = getFirestore();
+    const auth = getAuth();
 
     // ---------- UI helpers ----------
     const form = document.getElementById('withdrawForm');
@@ -116,13 +121,11 @@
     const submitBtn = document.getElementById('submitBtn');
     const clearBtn = document.getElementById('clearBtn');
     const statusToast = document.getElementById('statusToast');
+    const balanceDisplay = document.getElementById('balanceDisplay');
 
     let currentUser = null;
-
-    // Check auth state (optional). If you don't use Firebase Auth, currentUser will remain null.
-    onAuthStateChanged(auth, (user) => {
-      currentUser = user;
-    });
+    let currentBalance = 0;
+    const MIN_WITHDRAWAL = 1000;
 
     function showToast(message, isError = false) {
       statusToast.textContent = message;
@@ -134,7 +137,35 @@
       }, 3500);
     }
 
-    function validate() {
+    function setFormError(msg){ formMsg.textContent = msg; formMsg.className = 'text-sm text-red-400'; }
+    function clearFormError(){ formMsg.textContent = ''; formMsg.className = 'text-sm'; }
+
+    function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
+
+    // auth state: track user and user's balance (live via onSnapshot)
+    let userUnsub = null;
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if(user){
+        // subscribe to user doc to keep balance fresh
+        const uRef = doc(db, 'users', user.uid);
+        if(userUnsub) userUnsub();
+        userUnsub = onSnapshot(uRef, (snap)=>{
+          const d = snap.exists() ? snap.data() : {};
+          currentBalance = Number(d.balance || 0);
+          balanceDisplay.textContent = `Balance: ${formatN(currentBalance)}`;
+          // enable/disable submit depending on balance and auth
+          submitBtn.disabled = currentBalance < MIN_WITHDRAWAL;
+        }, (err)=>{ console.error('user doc listener err', err); });
+      } else {
+        if(userUnsub) userUnsub(); userUnsub = null;
+        currentBalance = 0;
+        balanceDisplay.textContent = `Balance: ${formatN(0)} (sign in required)`;
+        submitBtn.disabled = true;
+      }
+    });
+
+    function validateInputs(){
       const accountName = accountNameEl.value.trim();
       const accountNumber = accountNumberEl.value.trim();
       const bank = bankEl.value.trim();
@@ -144,47 +175,75 @@
       if (!/^[0-9]{10}$/.test(accountNumber)) return { ok:false, msg: 'Account number must be 10 digits.' };
       if (!bank) return { ok:false, msg: 'Please select a bank.' };
       if (!amount || isNaN(amount)) return { ok:false, msg: 'Enter a valid amount.' };
-      // Interpreting your instruction as: minimum withdrawal is ₦1,000 — user must not withdraw below ₦1,000.
-      if (amount < 1000) return { ok:false, msg: 'Minimum withdrawal is ₦1,000.' };
-
+      if (amount < MIN_WITHDRAWAL) return { ok:false, msg: `Minimum withdrawal is ${formatN(MIN_WITHDRAWAL)}.` };
       return { ok:true, data: { accountName, accountNumber, bank, amount } };
     }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      formMsg.textContent = '';
+      clearFormError();
 
-      const check = validate();
-      if (!check.ok) { formMsg.textContent = check.msg; formMsg.className = 'text-sm text-red-400'; return; }
+      if(!currentUser){ setFormError('Please sign in to request a withdrawal.'); return; }
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Sending...';
+      const check = validateInputs();
+      if(!check.ok){ setFormError(check.msg); return; }
+
+      const { accountName, accountNumber, bank, amount } = check.data;
+
+      // optimistic UI: disable button
+      submitBtn.disabled = true; submitBtn.textContent = 'Processing...';
 
       try {
-        const payload = {
-          accountName: check.data.accountName,
-          accountNumber: check.data.accountNumber,
-          bank: check.data.bank,
-          amount: check.data.amount,
-          status: 'pending',
-          createdAt: serverTimestamp(),
-          requestedBy: currentUser ? currentUser.uid : null
-        };
+        // run transaction: ensure user has enough balance, deduct, create withdrawal and transaction docs
+        const userRef = doc(db, 'users', currentUser.uid);
 
-        await addDoc(collection(db, 'withdrawal'), payload);
+        await runTransaction(db, async (tx) => {
+          const uSnap = await tx.get(userRef);
+          if(!uSnap.exists()) throw new Error('User account not found');
+          const uData = uSnap.data();
+          const bal = Number(uData.balance || 0);
+          if(bal < amount) throw new Error('INSUFFICIENT_FUNDS');
 
-        showToast('Withdrawal request submitted — pending review.');
+          const newBal = bal - amount;
+          // update balance and write a withdrawal request
+          tx.set(userRef, { balance: newBal }, { merge: true });
+
+          const withdrawRef = doc(collection(db, 'withdrawal'));
+          tx.set(withdrawRef, {
+            accountName, accountNumber, bank, amount,
+            status: 'pending', requestedBy: currentUser.uid, createdAt: serverTimestamp()
+          });
+
+          // also create a transaction record
+          const txRef = doc(collection(db, 'transactions'));
+          tx.set(txRef, {
+            userId: currentUser.uid,
+            type: 'debit',
+            source: 'withdrawal_request',
+            amount: amount,
+            balanceAfter: newBal,
+            createdAt: serverTimestamp(),
+            meta: { withdrawalRef: withdrawRef.id }
+          });
+        });
+
+        showToast('Withdrawal requested and debited from your balance.');
         form.reset();
       } catch (err) {
-        console.error(err);
-        showToast('Failed to submit. Try again.', true);
+        console.error('withdraw err', err);
+        if(err && err.message === 'INSUFFICIENT_FUNDS'){
+          setFormError('Insufficient balance for this withdrawal.');
+        } else if(err && err.message === 'User account not found'){
+          setFormError('Account data not found — contact support.');
+        } else {
+          setFormError('Unable to submit withdrawal. Try again later.');
+        }
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Request';
+        submitBtn.disabled = false; submitBtn.textContent = 'Request';
       }
     });
 
     clearBtn.addEventListener('click', () => form.reset());
   </script>
 </body>
-</html>
+        </html>
