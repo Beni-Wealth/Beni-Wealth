@@ -15,7 +15,9 @@
         <button id="backBtn" aria-label="Back to dashboard" class="p-2 rounded-lg bg-white/6 hover:bg-white/8">← Back</button>
         <h1 class="text-2xl font-semibold">Withdrawal Records</h1>
       </div>
-      
+      <div class="flex items-center gap-3">
+        <!-- intentionally compact header: removed refresh/new-request buttons -->
+      </div>
     </div>
 
     <section class="glass border border-white/6 rounded-2xl p-6 shadow-2xl">
@@ -55,7 +57,10 @@
     }
 
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, query, where, orderBy, onSnapshot, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import {
+      getFirestore, collection, query, where, orderBy,
+      onSnapshot, getDocs
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     // your firebase config (keep in sync with other pages)
@@ -77,20 +82,17 @@
     const recordsEl = document.getElementById('records');
     const emptyState = document.getElementById('emptyState');
     const statusLine = document.getElementById('statusLine');
-    
     const emptyNew = document.getElementById('emptyNew');
 
     let unsubscribe = null;
     let currentUser = null;
 
-    backBtn.addEventListener('click', (e) => { e.preventDefault(); location.assign(withRepoPath('dashboard.html')); }); else statusLine.textContent = 'Sign in to view your records.'; });
+    backBtn.addEventListener('click', (e) => { e.preventDefault(); location.assign(withRepoPath('dashboard.html')); });
 
     function fmtDate(ts){
       try {
         if(!ts) return '-';
-        // Firestore Timestamp has toDate()
-        if(ts.toDate) return new Date(ts.toDate()).toLocaleString();
-        // fallback if plain millis
+        if(ts.toDate) return ts.toDate().toLocaleString();
         if(typeof ts === 'number') return new Date(ts).toLocaleString();
         if(ts.seconds) return new Date(ts.seconds * 1000).toLocaleString();
       } catch(e){}
@@ -123,22 +125,62 @@
       return el;
     }
 
-    function attachListener(user){
-      // remove existing listener
-      if(unsubscribe) { unsubscribe(); unsubscribe = null; }
+    async function attachListener(user){
+      // teardown existing listener if any
+      if(unsubscribe) { try { unsubscribe(); } catch(e){}; unsubscribe = null; }
       recordsEl.innerHTML = '';
       recordsEl.classList.add('hidden');
       emptyState.classList.remove('hidden');
 
-      if(!user){ statusLine.textContent = 'Sign in to view your records.'; return; }
+      if(!user){
+        statusLine.textContent = 'Sign in to view your records.';
+        return;
+      }
 
       currentUser = user;
       statusLine.textContent = 'Listening for your withdrawal requests...';
 
-      const q = query(collection(db, 'withdrawal'), where('requestedBy','==', user.uid), orderBy('createdAt', 'desc'));
+      try {
+        const q = query(collection(db, 'withdrawal'), where('requestedBy','==', user.uid), orderBy('createdAt', 'desc'));
 
-      // live updates
-      unsubscribe = onSnapshot(q, (snap) => {
+        // primary: realtime listener
+        unsubscribe = onSnapshot(q, (snap) => {
+          if(!snap || snap.empty){
+            recordsEl.innerHTML = '';
+            recordsEl.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+            statusLine.textContent = 'You have no withdrawal requests yet.';
+            return;
+          }
+
+          emptyState.classList.add('hidden');
+          recordsEl.classList.remove('hidden');
+          recordsEl.innerHTML = '';
+
+          snap.forEach(doc => {
+            const row = renderRecord(doc);
+            recordsEl.appendChild(row);
+          });
+
+          statusLine.textContent = `Showing ${snap.size} request${snap.size===1 ? '' : 's'}.`;
+        }, (err) => {
+          console.error('snapshot err', err);
+          statusLine.textContent = 'Unable to read records (listener). Falling back to one-time load.';
+          // fallback to one-time fetch
+          fallbackFetch(user);
+        });
+      } catch (err) {
+        console.error('attachListener error', err);
+        statusLine.textContent = 'Unable to read records — check console.';
+        // fallback
+        fallbackFetch(user);
+      }
+    }
+
+    async function fallbackFetch(user){
+      try{
+        const q = query(collection(db, 'withdrawal'), where('requestedBy','==', user.uid), orderBy('createdAt', 'desc'));
+        const snap = await getDocs(q);
         if(!snap || snap.empty){
           recordsEl.innerHTML = '';
           recordsEl.classList.add('hidden');
@@ -146,21 +188,15 @@
           statusLine.textContent = 'You have no withdrawal requests yet.';
           return;
         }
-
         emptyState.classList.add('hidden');
         recordsEl.classList.remove('hidden');
         recordsEl.innerHTML = '';
-
-        snap.forEach(doc => {
-          const row = renderRecord(doc);
-          recordsEl.appendChild(row);
-        });
-
-        statusLine.textContent = `Showing ${snap.size} request${snap.size===1 ? '' : 's'}.`;
-      }, (err) => {
-        console.error('snapshot err', err);
-        statusLine.textContent = 'Unable to read records — check console.';
-      });
+        snap.forEach(doc => recordsEl.appendChild(renderRecord(doc)));
+        statusLine.textContent = `Showing ${snap.size} request${snap.size===1 ? '' : 's'} (loaded).`;
+      }catch(e){
+        console.error('fallbackFetch err', e);
+        statusLine.textContent = 'Unable to fetch records.';
+      }
     }
 
     // auth tracking
@@ -168,7 +204,8 @@
       if(user) attachListener(user); else attachListener(null);
     });
 
-    // safe fallback: if auth state not used, user can click Refresh and see generic list (not recommended)
+    // expose for debugging in console
+    window._bw_debug = { attachListener };
   </script>
 </body>
 </html>
