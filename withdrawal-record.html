@@ -3,76 +3,65 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Withdrawal Records — Beni-Wealth</title>
+  <title>Beni-Wealth — Withdrawal Records</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>body{font-family:'Poppins',sans-serif} .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(6px)}</style>
+  <style>body{font-family:'Poppins',sans-serif} .glass{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));backdrop-filter:blur(6px)}</style>
 </head>
 <body class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-gray-900 text-slate-100 p-6">
-  <main class="max-w-6xl mx-auto">
-
-    <!-- Back button positioned ABOVE the header as requested -->
-    <div class="mb-4">
-      <a href="dashboard.html" id="backBtnTop" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/6 text-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0L3.586 10l4.707-4.707a1 1 0 011.414 1.414L6.414 9H17a1 1 0 110 2H6.414l3.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
-        Back to dashboard
-      </a>
+  <main class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <button id="backBtn" aria-label="Back to dashboard" class="p-2 rounded-lg bg-white/6 hover:bg-white/8">← Back</button>
+        <h1 class="text-2xl font-semibold">Withdrawal Records</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="refreshBtn" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm shadow">Refresh</button>
+        <a id="newReq" href="withdraw.html" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm shadow">New Request</a>
+      </div>
     </div>
 
-    <div class="glass border border-white/6 rounded-2xl p-6 shadow-2xl">
-      <header class="flex items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl font-semibold">Withdrawal Records</h1>
-            <p class="text-sm text-slate-400 mt-1">Your withdrawal requests will be processed within 48hrs</p>
-        </div>
-        <div class="flex items-center gap-3 w-full sm:w-auto">
-          <a href="withdrawal.html" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm shadow">New Withdrawal</a>
-        </div>
-      </header>
+    <section class="glass border border-white/6 rounded-2xl p-6 shadow-2xl">
+      <div id="statusLine" class="text-sm text-slate-400 mb-4">Showing your withdrawal requests (live).</div>
 
-      <section class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center gap-3 w-full sm:w-1/2">
-          <input id="search" type="search" placeholder="Search by name, account number, bank, uid or status" class="w-full rounded-lg bg-white/5 border border-white/6 py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500" />
-        </div>
-        <div class="flex items-center gap-3">
-          <button id="refreshBtn" class="px-3 py-2 rounded-lg bg-white/5 text-sm">Refresh</button>
-          <button id="exportBtn" class="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm">Export CSV</button>
-        </div>
-      </section>
-
-      <div class="overflow-x-auto">
-        <table id="recordsTable" class="min-w-full table-auto divide-y divide-white/6">
-          <thead class="bg-white/3">
-            <tr class="text-left text-sm text-slate-300">
-              <th class="px-4 py-3">Account name</th>
-              <th class="px-4 py-3">Account number</th>
-              <th class="px-4 py-3">Amount</th>
-              <th class="px-4 py-3">Bank</th>
-              <th class="px-4 py-3">Date</th>
-              <th class="px-4 py-3">UID</th>
-              <th class="px-4 py-3">Status</th>
-            </tr>
-          </thead>
-          <tbody id="tbody" class="bg-transparent divide-y divide-white/6">
-            <tr><td colspan="7" class="p-6 text-center text-slate-400">Loading…</td></tr>
-          </tbody>
-        </table>
+      <div id="emptyState" class="text-center py-20 text-slate-400">
+        <div class="text-xl font-medium">No withdrawal requests yet</div>
+        <div class="mt-2">When you submit a withdrawal, it will appear here.</div>
+        <div class="mt-4"><a id="emptyNew" href="withdraw.html" class="inline-block px-4 py-2 bg-green-600 rounded-lg text-white">Request withdrawal</a></div>
       </div>
 
-      <div id="emptyState" class="hidden p-6 text-center text-slate-400">No records found.</div>
-
-      <!-- area for actionable errors (e.g. missing index) -->
-      <div id="actionError" class="mt-4"></div>
-    </div>
+      <div id="records" class="space-y-4 hidden">
+        <!-- records will be injected here -->
+      </div>
+    </section>
 
     <footer class="mt-6 text-center text-slate-400 text-xs">© Beni-Wealth</footer>
   </main>
 
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    // repo helper (keeps links repo-aware)
+    const REPO_BASE = '/Beni-Wealth';
+    function withRepoPath(target){
+      if(!target) return location.href;
+      try {
+        const maybe = new URL(target, location.href);
+        if (maybe.origin === location.origin) {
+          const pathname = maybe.pathname.replace(/\/+/g,'/');
+          if (pathname.indexOf(REPO_BASE) === 0) return maybe.origin + pathname + maybe.search + maybe.hash;
+        }
+        return maybe.href;
+      } catch(e){}
+      const clean = String(target).replace(/^\/+/,'');
+      const repoClean = REPO_BASE.replace(/^\/+/,'');
+      if (clean.indexOf(repoClean) === 0) return location.origin + '/' + clean;
+      return location.origin + REPO_BASE + (clean ? '/' + clean : '');
+    }
+
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import { getFirestore, collection, query, where, orderBy, onSnapshot, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
+    // your firebase config (keep in sync with other pages)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -83,172 +72,107 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    if (!getApps().length) initializeApp(firebaseConfig);
+    const db = getFirestore();
+    const auth = getAuth();
 
-    const tbody = document.getElementById('tbody');
-    const searchEl = document.getElementById('search');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const exportBtn = document.getElementById('exportBtn');
+    const backBtn = document.getElementById('backBtn');
+    const recordsEl = document.getElementById('records');
     const emptyState = document.getElementById('emptyState');
-    const actionError = document.getElementById('actionError');
+    const statusLine = document.getElementById('statusLine');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const emptyNew = document.getElementById('emptyNew');
 
     let unsubscribe = null;
-    let recordsCache = [];
+    let currentUser = null;
 
-    function formatDate(ts) {
+    backBtn.addEventListener('click', (e) => { e.preventDefault(); location.assign(withRepoPath('dashboard.html')); });
+    refreshBtn.addEventListener('click', () => { if(currentUser) attachListener(currentUser); else statusLine.textContent = 'Sign in to view your records.'; });
+
+    function fmtDate(ts){
       try {
-        if (!ts) return '-';
-        if (ts.toDate) ts = ts.toDate();
-        const d = new Date(ts);
-        return d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-      } catch (e) { return '-'; }
+        if(!ts) return '-';
+        // Firestore Timestamp has toDate()
+        if(ts.toDate) return new Date(ts.toDate()).toLocaleString();
+        // fallback if plain millis
+        if(typeof ts === 'number') return new Date(ts).toLocaleString();
+        if(ts.seconds) return new Date(ts.seconds * 1000).toLocaleString();
+      } catch(e){}
+      return '-';
     }
 
-    function formatAmount(n) {
-      if (n == null || n === '') return '-';
-      try {
-        return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(Number(n));
-      } catch (e) { return '₦' + n; }
+    function renderRecord(doc){
+      const d = doc.data();
+      const id = doc.id;
+      const status = (d.status || 'pending');
+      const badge = status === 'pending' ? 'bg-yellow-500 text-black' : status === 'paid' ? 'bg-green-600' : 'bg-red-600';
+      const created = fmtDate(d.createdAt);
+
+      const el = document.createElement('div');
+      el.className = 'p-4 bg-white/3 border border-white/6 rounded-lg flex items-center justify-between';
+      el.innerHTML = `
+        <div>
+          <div class="flex items-center gap-3">
+            <div class="text-lg font-semibold">₦${Number(d.amount).toLocaleString()}</div>
+            <div class="text-sm text-slate-300">•</div>
+            <div class="text-sm text-slate-300">${d.bank} — ${d.accountName}</div>
+          </div>
+          <div class="text-xs text-slate-400 mt-1">Acct: ${d.accountNumber} • ${created}</div>
+        </div>
+        <div class="flex flex-col items-end gap-2">
+          <div class="px-3 py-1 rounded-full text-xs ${badge}">${status.toUpperCase()}</div>
+          <div class="text-xs text-slate-400">Ref: ${id.slice(0,8)}</div>
+        </div>
+      `;
+      return el;
     }
 
-    function escapeHtml(text) {
-      if (text == null) return '';
-      return String(text).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-    }
+    function attachListener(user){
+      // remove existing listener
+      if(unsubscribe) { unsubscribe(); unsubscribe = null; }
+      recordsEl.innerHTML = '';
+      recordsEl.classList.add('hidden');
+      emptyState.classList.remove('hidden');
 
-    function statusPill(status) {
-      const s = (status || '').toLowerCase();
-      if (s === 'pending') return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-yellow-400 text-slate-900">Pending</span>`;
-      if (s === 'successful' || s === 'success') return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-600 text-white">Successful</span>`;
-      if (s === 'failed' || s === 'rejected') return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-red-600 text-white">${escapeHtml(status)}</span>`;
-      return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-slate-200">${escapeHtml(status || '-')}</span>`;
-    }
+      if(!user){ statusLine.textContent = 'Sign in to view your records.'; return; }
 
-    function renderTable(rows) {
-      recordsCache = rows || [];
-      const q = (searchEl.value || '').trim().toLowerCase();
-      const filtered = recordsCache.filter(r => {
-        if (!q) return true;
-        return [r.accountName, r.accountNumber, String(r.amount), r.bank, r.requestedBy, r.status].join(' ').toLowerCase().includes(q);
-      });
+      currentUser = user;
+      statusLine.textContent = 'Listening for your withdrawal requests...';
 
-      if (!filtered || filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">No records match your search.</td></tr>';
-        emptyState.classList.remove('hidden');
-        return;
-      } else {
-        emptyState.classList.add('hidden');
-      }
+      const q = query(collection(db, 'withdrawal'), where('requestedBy','==', user.uid), orderBy('createdAt', 'desc'));
 
-      tbody.innerHTML = filtered.map(r => `
-        <tr class="hover:bg-white/2">
-          <td class="px-4 py-3">${escapeHtml(r.accountName)}</td>
-          <td class="px-4 py-3">${escapeHtml(r.accountNumber)}</td>
-          <td class="px-4 py-3 font-medium">${formatAmount(r.amount)}</td>
-          <td class="px-4 py-3">${escapeHtml(r.bank)}</td>
-          <td class="px-4 py-3">${formatDate(r.createdAt)}</td>
-          <td class="px-4 py-3 text-sm text-slate-400">${escapeHtml(r.requestedBy || '-')}</td>
-          <td class="px-4 py-3">${statusPill(r.status)}</td>
-        </tr>
-      `).join('');
-    }
-
-    async function fetchInitialAndSubscribe(uid) {
-      actionError.innerHTML = ''; // clear previous actionable errors
-
-      // build query
-      const col = collection(db, 'withdrawal');
-      const q = query(col, where('requestedBy', '==', uid), orderBy('createdAt', 'desc'));
-
-      // try a one-time get first so the UI doesn't stay stuck on "Loading…"
-      try {
-        const snap = await getDocs(q);
-        const rows = [];
-        snap.forEach(doc => rows.push({ id: doc.id, ...doc.data() }));
-        if (rows.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">You have no withdrawal records yet.</td></tr>';
-          recordsCache = [];
+      // live updates
+      unsubscribe = onSnapshot(q, (snap) => {
+        if(!snap || snap.empty){
+          recordsEl.innerHTML = '';
+          recordsEl.classList.add('hidden');
           emptyState.classList.remove('hidden');
-        } else {
-          renderTable(rows);
+          statusLine.textContent = 'You have no withdrawal requests yet.';
+          return;
         }
-      } catch (err) {
-        console.error('Initial fetch error', err);
-        // Firestore often provides a direct URL in the error message for creating the needed index.
-        const urlMatch = String(err.message || '').match(/https?:\/\/[^\s)]+/);
-        if (urlMatch) {
-          actionError.innerHTML = `<div class="mt-4 p-4 rounded-lg bg-yellow-700/10 border border-yellow-700/20 text-sm">Firestore requires a composite index to run this query. <a class="underline" href="${urlMatch[0]}" target="_blank" rel="noopener">Create the index in Firebase Console</a> — click the link and follow the console to create it.</div>`;
-        }
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-400">Error loading records: ${escapeHtml(err.message || String(err))}</td></tr>`;
-        return;
-      }
 
-      // attach realtime listener for live updates
-      if (unsubscribe) unsubscribe();
-      unsubscribe = onSnapshot(q, snap => {
-        const rows = [];
-        snap.forEach(doc => rows.push({ id: doc.id, ...doc.data() }));
-        renderTable(rows);
-      }, err => {
-        console.error('Realtime listener error', err);
-        const urlMatch = String(err.message || '').match(/https?:\/\/[^\s)]+/);
-        if (urlMatch) {
-          actionError.innerHTML = `<div class="mt-4 p-4 rounded-lg bg-yellow-700/10 border border-yellow-700/20 text-sm">Realtime query requires a composite index. <a class="underline" href="${urlMatch[0]}" target="_blank" rel="noopener">Create the index in Firebase Console</a>.</div>`;
-        }
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-400">Realtime error: ${escapeHtml(err.message || String(err))}</td></tr>`;
+        emptyState.classList.add('hidden');
+        recordsEl.classList.remove('hidden');
+        recordsEl.innerHTML = '';
+
+        snap.forEach(doc => {
+          const row = renderRecord(doc);
+          recordsEl.appendChild(row);
+        });
+
+        statusLine.textContent = `Showing ${snap.size} request${snap.size===1 ? '' : 's'}.`;
+      }, (err) => {
+        console.error('snapshot err', err);
+        statusLine.textContent = 'Unable to read records — check console.';
       });
     }
 
-    onAuthStateChanged(auth, async (user) => {
-      // clear table while we decide
-      tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">Loading…</td></tr>';
-      if (!user) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">Please sign in to see your withdrawal records.</td></tr>';
-        return;
-      }
-
-      // fetch initial set and subscribe for realtime updates
-      await fetchInitialAndSubscribe(user.uid);
+    // auth tracking
+    onAuthStateChanged(auth, (user) => {
+      if(user) attachListener(user); else attachListener(null);
     });
 
-    refreshBtn.addEventListener('click', async () => {
-      const user = auth.currentUser;
-      if (!user) { alert('Please sign in first'); return; }
-      tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">Refreshing…</td></tr>';
-      await fetchInitialAndSubscribe(user.uid);
-    });
-
-    searchEl.addEventListener('input', () => renderTable(recordsCache));
-
-    exportBtn.addEventListener('click', () => {
-      if (!recordsCache || recordsCache.length === 0) {
-        alert('No records to export');
-        return;
-      }
-      const rows = recordsCache.map(r => ({
-        accountName: r.accountName || '',
-        accountNumber: r.accountNumber || '',
-        amount: r.amount || '',
-        bank: r.bank || '',
-        createdAt: formatDate(r.createdAt),
-        requestedBy: r.requestedBy || '',
-        status: r.status || ''
-      }));
-
-      const header = ['Account name','Account number','Amount','Bank','Date','UID','Status'];
-      const csv = [header.join(',')].concat(rows.map(r => [r.accountName, r.accountNumber, r.amount, r.bank, `"${r.createdAt}"`, r.requestedBy, r.status].map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(','))).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'withdrawal-records.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    });
+    // safe fallback: if auth state not used, user can click Refresh and see generic list (not recommended)
   </script>
 </body>
 </html>
