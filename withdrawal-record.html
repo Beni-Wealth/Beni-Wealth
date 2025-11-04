@@ -102,14 +102,15 @@
     function renderRecord(doc){
       const d = doc.data();
       const id = doc.id;
-      const status = (d.status || 'pending').toLowerCase();
+      // normalize status to lower-case for matching (handles 'approved', 'Approved', etc.)
+      const statusRaw = (d.status || 'pending');
+      const status = String(statusRaw).toLowerCase();
 
-      // badge classes — approved/paid are green, pending is yellow, rejected is red, refunded uses slate
-      const badge = (status === 'pending') ? 'bg-yellow-500 text-black'
-        : (status === 'approved' || status === 'paid') ? 'bg-emerald-500 text-white'
-        : (status === 'refunded') ? 'bg-slate-500 text-white'
-        : (status === 'rejected') ? 'bg-rose-600 text-white'
-        : 'bg-white/6 text-white';
+      // map statuses to badge styles
+      const badge = status === 'pending' ? 'bg-yellow-500 text-black'
+        : (status === 'paid' || status === 'approved' || status === 'completed') ? 'bg-green-600'
+        : (status === 'rejected' || status === 'cancelled' || status === 'declined') ? 'bg-red-600'
+        : 'bg-gray-500';
 
       const created = fmtDate(d.createdAt);
 
@@ -118,14 +119,14 @@
       el.innerHTML = `
         <div>
           <div class="flex items-center gap-3">
-            <div class="text-lg font-semibold">₦${Number(d.amount).toLocaleString()}</div>
+            <div class="text-lg font-semibold">₦${Number(d.amount || 0).toLocaleString()}</div>
             <div class="text-sm text-slate-300">•</div>
-            <div class="text-sm text-slate-300">${d.bank} — ${d.accountName}</div>
+            <div class="text-sm text-slate-300">${d.bank || '-'} — ${d.accountName || '-'}</div>
           </div>
-          <div class="text-xs text-slate-400 mt-1">Acct: ${d.accountNumber} • ${created}</div>
+          <div class="text-xs text-slate-400 mt-1">Acct: ${d.accountNumber || '-'} • ${created}</div>
         </div>
         <div class="flex flex-col items-end gap-2">
-          <div class="px-3 py-1 rounded-full text-xs ${badge}">${String(status).toUpperCase()}</div>
+          <div class="px-3 py-1 rounded-full text-xs ${badge}">${String(statusRaw).toUpperCase()}</div>
           <div class="text-xs text-slate-400">Ref: ${id.slice(0,8)}</div>
         </div>
       `;
