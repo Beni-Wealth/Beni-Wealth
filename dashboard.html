@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Dashboard</title>
+  <title>Beni-Wealth — Dashboard (fixed)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -61,7 +61,6 @@
       <h1 id="greeting">Hello, User</h1>
       <p id="uidline">UID: -</p>
       <div class="plan-badge" id="planBadge">Plan: Basic</div>
-      <!-- hidden placeholder for planReward to avoid undefined reference errors in existing script -->
       <span id="planRewardEl" style="display:none"></span>
     </div>
     <div class="icons">
@@ -125,7 +124,6 @@
       <div>›</div>
     </div>
 
-    <!-- NEW: Referrals list item (added after Earnings Report) -->
     <div class="list-item" id="referralsItem" role="button" aria-label="Referrals">
       <div class="li-left">
         <div class="li-icon">👥</div>
@@ -148,9 +146,9 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // Beni-Wealth config
     const firebaseConfig = {
@@ -163,9 +161,9 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    if (!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
 
     // UI refs
     const avatarEl = document.getElementById('avatar');
@@ -177,7 +175,7 @@
     const assetsError = document.getElementById('assetsError');
     const planBadge = document.getElementById('planBadge');
     const userPlanEl = document.getElementById('userPlan');
-    const planRewardEl = document.getElementById('planRewardEl'); // placeholder to avoid undefined references
+    const planRewardEl = document.getElementById('planRewardEl');
 
     // Plan to reward mapping
     const PLAN_REWARDS = { Bronze:100, Silver:175, Gold:270, Platinum:500, Basic:0 };
@@ -225,12 +223,13 @@
     document.getElementById('tasksItem').addEventListener('click', ()=> window.location.href='tasks.html');
     document.getElementById('earningsItem').addEventListener('click', ()=> window.location.href='earnings.html');
 
-    // NEW: referrals list navigation
+    // referrals navigation (only attach if element present)
     const referralsEl = document.getElementById('referralsItem');
     if(referralsEl){
       referralsEl.addEventListener('click', ()=> window.location.href='referrals.html');
     }
 
+    // fallback: try balances collection/doc if users/{uid} doesn't provide balance
     async function tryBalanceFallback(uid){
       try{
         const bRef = doc(db, 'balances', uid);
@@ -249,8 +248,10 @@
       return null;
     }
 
-    // wire auth and realtime
+    // live wiring: read users/{uid} and keep balance/plan stable
+    let userUnsub = null;
     onAuthStateChanged(auth, async (user) => {
+      // default to guest visibility
       eyeBtn.dataset.uid = 'guest';
       setBalanceVisibility(getPersistedHidden('guest'), 'guest');
 
@@ -258,57 +259,63 @@
         const demo = gen5();
         uidLine.textContent = `UID: ${demo}`;
         greetingEl.textContent = 'Hello, User';
-        // show Basic plan for guests
         planBadge.textContent = 'Plan: Basic';
         userPlanEl.textContent = 'Basic';
         if(planRewardEl) planRewardEl.textContent = '₦0';
+        balanceEl.dataset.realText = formatN(0);
+        approxEl.dataset.realText = `≈ ${formatN(0)}`;
+        setBalanceVisibility(getPersistedHidden('guest'), 'guest');
+        if(userUnsub){ userUnsub(); userUnsub = null; }
         return;
       }
 
       eyeBtn.dataset.uid = user.uid;
       setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
-      uidLine.textContent = `UID: ${user.uid.slice(0,5)}`;
+      uidLine.textContent = `UID: ${user.uid.slice(0,6)}`;
 
       const uRef = doc(db, 'users', user.uid);
-      const unsub = onSnapshot(uRef, async (snap) => {
+
+      // teardown previous
+      if(userUnsub) { try{ userUnsub(); }catch(e){}; userUnsub = null; }
+
+      userUnsub = onSnapshot(uRef, async (snap) => {
+        // if snapshot exists, use its values; if not, don't overwrite with zeros — try fallback instead
         try{
           if(!snap.exists()){
-            greetingEl.textContent = user.displayName ? `Hi, ${user.displayName}` : 'Hello, User';
-            avatarEl.textContent = (user.displayName || (user.email && user.email[0]) || 'U').charAt(0).toUpperCase();
-            // create minimal user doc with default Basic plan
-            await setDoc(uRef, { plan: 'Basic', balance: 0 }, { merge: true });
+            // don't create or overwrite user doc here. Instead, try fallback sources for balance/plan.
+            const fb = await tryBalanceFallback(user.uid);
+            const bal = fb !== null ? fb : 0;
+            balanceEl.dataset.realText = formatN(bal);
+            approxEl.dataset.realText = `≈ ${formatN(bal)}`;
+            setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
+            // keep previous plan if any, otherwise set Basic without forcing db write
+            planBadge.textContent = planBadge.textContent || 'Plan: Basic';
+            userPlanEl.textContent = userPlanEl.textContent || 'Basic';
+            return;
+          }
+
+          const data = snap.data() || {};
+          const username = data.username || user.displayName || (user.email ? user.email.split('@')[0] : null);
+          if(username){ greetingEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); }
+          else { greetingEl.textContent = 'Hello, User'; avatarEl.textContent = (user.email && user.email[0]) ? user.email[0].toUpperCase() : 'U'; }
+
+          // balance — only update if a numeric value exists in doc; otherwise try fallback
+          const balNum = (data.balance !== undefined && data.balance !== null) ? Number(data.balance) : null;
+          if(balNum !== null && !isNaN(balNum)){
+            balanceEl.dataset.realText = formatN(balNum);
+            approxEl.dataset.realText = `≈ ${formatN(balNum)}`;
+          } else {
             const fb = await tryBalanceFallback(user.uid);
             const val = fb !== null ? fb : 0;
             balanceEl.dataset.realText = formatN(val);
             approxEl.dataset.realText = `≈ ${formatN(val)}`;
-            setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
-            // show plan
-            planBadge.textContent = 'Plan: Basic • Reward: ₦0';
-            userPlanEl.textContent = 'Basic';
-            if(planRewardEl) planRewardEl.textContent = '₦0';
-            return;
           }
-          const data = snap.data();
-          const username = data.username || user.displayName || (user.email ? user.email.split('@')[0] : null);
-          if(username){
-            greetingEl.textContent = `Hi, ${username}`;
-            avatarEl.textContent = username.charAt(0).toUpperCase();
-          } else {
-            greetingEl.textContent = 'Hello, User';
-            avatarEl.textContent = (user.email && user.email[0]) ? user.email[0].toUpperCase() : 'U';
-          }
-
-          // balance
-          const balNum = Number(data.balance ?? 0);
-          balanceEl.dataset.realText = formatN(balNum);
-          approxEl.dataset.realText = `≈ ${formatN(balNum)}`;
           setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
 
-          // plan detection: support multiple keys and fallback to Basic
-          const plan = data.plan || data.type || data.membership || data.tier || 'Basic';
+          // plan detection: be conservative and prefer stored value, but don't overwrite client-hidden plan
+          const plan = (data.plan || data.type || data.membership || data.tier || 'Basic');
           const reward = PLAN_REWARDS[plan] || 0;
-
-          planBadge.textContent = `Plan: ${plan}`;
+          planBadge.textContent = `Plan: ${plan} • Reward: ₦${reward.toLocaleString()}`;
           userPlanEl.textContent = plan;
           if(planRewardEl) planRewardEl.textContent = `₦${reward}`;
 
@@ -320,43 +327,39 @@
             showAssetsError('Error reading user data — see console.');
           }
         }
-      }, (err) => {
+      }, async (err) => {
         console.warn('users/{uid} onSnapshot error', err);
         if(err && err.code === 'permission-denied'){
           showAssetsError('Permission denied: check Firestore rules for users/{uid} read access.');
         } else {
           showAssetsError('Could not get live updates — falling back to one-time reads (see console).');
         }
-        (async ()=>{
-          try{
-            const uSnap = await getDoc(uRef);
-            if(uSnap.exists()){
-              const d = uSnap.data();
-              const username = d.username || user.displayName || (user.email ? user.email.split('@')[0] : null);
-              if(username) { greetingEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); }
-              const bal = Number(d.balance ?? 0);
-              balanceEl.dataset.realText = formatN(bal);
-              approxEl.dataset.realText = `≈ ${formatN(bal)}`;
-              setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
 
-              const plan = d.plan || d.type || d.membership || d.tier || 'Basic';
-              const reward = PLAN_REWARDS[plan] || 0;
-              planBadge.textContent = `Plan: ${plan} • Reward: ₦${reward.toLocaleString()}`;
-              userPlanEl.textContent = plan;
-              if(planRewardEl) planRewardEl.textContent = `₦${reward}`;
-            } else {
-              const fb = await tryBalanceFallback(user.uid);
-              const val = fb !== null ? fb : 0;
-  
-  balanceEl.dataset.realText = formatN(val);
-              approxEl.dataset.realText = `≈ ${formatN(val)}`;
-              setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
-            }
-          }catch(e){ console.error('fallback read failed', e); }
-        })();
+        // fallback one-time read
+        try{
+          const uSnap = await getDoc(uRef);
+          if(uSnap.exists()){
+            const d = uSnap.data() || {};
+            const bal = (d.balance !== undefined && d.balance !== null) ? Number(d.balance) : 0;
+            balanceEl.dataset.realText = formatN(bal);
+            approxEl.dataset.realText = `≈ ${formatN(bal)}`;
+            setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
+            const plan = d.plan || d.type || d.membership || d.tier || 'Basic';
+            const reward = PLAN_REWARDS[plan] || 0;
+            planBadge.textContent = `Plan: ${plan} • Reward: ₦${reward.toLocaleString()}`;
+            userPlanEl.textContent = plan;
+            if(planRewardEl) planRewardEl.textContent = `₦${reward}`;
+          } else {
+            const fb = await tryBalanceFallback(user.uid);
+            const val = fb !== null ? fb : 0;
+            balanceEl.dataset.realText = formatN(val);
+            approxEl.dataset.realText = `≈ ${formatN(val)}`;
+            setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
+          }
+        }catch(e){ console.error('fallback read failed', e); }
       });
     });
+
   </script>
 </body>
-  </html>
-  
+</html>
