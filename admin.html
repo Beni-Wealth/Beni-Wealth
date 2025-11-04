@@ -226,21 +226,22 @@
       const recentPlaceholder = document.getElementById('recentPlaceholder');
       document.getElementById('year').textContent = new Date().getFullYear();
 
-      // Quick actions (paths are now page filenames without 'admin/' prefix)
+      // Quick actions — updated to the exact list & paths requested
       const QUICK_ACTIONS = [
-        { label: "Tasks", icon: "📋", path: "tasks.html" },
+        { label: "Adverts", icon: "📢", path: "advert.html" },
         { label: "View Users", icon: "👥", path: "users.html" },
-        { label: "Approve Proofs", icon: "✅", path: "proofs.html" },
-        { label: "Transactions", icon: "💳", path: "transactions.html" },
-        { label: "Settings", icon: "⚙️", path: "settings.html" }
+        { label: "Submissions", icon: "📝", path: "admin-task.html" },
+        { label: "Withdrawals", icon: "💸", path: "admin-withdrawals.html" },
+        { label: "Deposits", icon: "💳", path: "admin-deposit.html" }
       ];
 
-      // Metrics (big cards) - collection names; metric card links go to e.g. 'deposits.html'
+      // Metrics (big cards) - collection names and target admin page paths
       const METRICS = [
-        { key: "users", title: "Users", collection: "users" },
-        { key: "deposits", title: "Deposits", collection: "deposits" },
-        { key: "withdrawals", title: "Withdrawals", collection: "withdrawals" },
-        { key: "adverts", title: "Adverts", collection: "adverts" }
+        { key: "users", title: "Users", collection: "users", path: "users.html" },
+        { key: "deposits", title: "Deposits", collection: "deposits", path: "admin-deposit.html" },
+        // withdrawals: we'll check both 'withdrawals' and 'withdrawal' collections and sum counts to be robust
+        { key: "withdrawals", title: "Withdrawals", collection: "withdrawals", path: "admin-withdrawals.html" },
+        { key: "adverts", title: "Adverts", collection: "adverts", path: "advert.html" }
       ];
 
       // ---------------------------
@@ -249,8 +250,8 @@
       function renderMetrics(metricsData) {
         metricsSection.innerHTML = METRICS.map(m => {
           const count = (metricsData[m.collection] ?? 0);
-          // Link to collection page like 'deposits.html'
-          const href = withRepoPath(`${m.collection}.html`);
+          // Link to admin page provided in m.path (repo-aware)
+          const href = withRepoPath(m.path || (m.collection + '.html'));
           return `
             <a href="${href}" class="metric-card" style="text-decoration:none;" data-collection="${m.collection}">
               <div class="metric-title">${m.title}</div>
@@ -301,7 +302,29 @@
       async function fetchCounts() {
         const result = {};
         try {
-          const promises = METRICS.map(m => getDocs(collection(db, m.collection)).then(snap => ({ k: m.collection, n: snap.size })).catch(e => ({ k: m.collection, n: 0 })));
+          // Build promises for each metric
+          const promises = METRICS.map(async (m) => {
+            // Special handling for withdrawals: check both 'withdrawals' and 'withdrawal' (some pages use singular)
+            if (m.collection === 'withdrawals') {
+              try {
+                const snapA = await getDocs(collection(db, 'withdrawals')).catch(()=>({ size: 0 }));
+                const snapB = await getDocs(collection(db, 'withdrawal')).catch(()=>({ size: 0 }));
+                const total = (snapA.size || 0) + (snapB.size || 0);
+                return { k: m.collection, n: total };
+              } catch (e) {
+                return { k: m.collection, n: 0 };
+              }
+            }
+
+            // Default: read the specified collection
+            try {
+              const snap = await getDocs(collection(db, m.collection));
+              return { k: m.collection, n: snap.size };
+            } catch (e) {
+              return { k: m.collection, n: 0 };
+            }
+          });
+
           const res = await Promise.all(promises);
           res.forEach(r => result[r.k] = r.n);
         } catch (err) {
@@ -382,6 +405,7 @@
       refreshBtn.addEventListener('click', async () => {
         const user = auth.currentUser;
         if (!user) return alert('Not signed in');
+
         const counts = await fetchCounts();
         renderMetrics(counts);
         recentPlaceholder.textContent = `Refreshed at ${new Date().toLocaleString()}`;
@@ -392,4 +416,4 @@
       });
     </script>
   </body>
-</html>
+  </html>
