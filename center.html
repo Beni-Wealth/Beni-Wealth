@@ -176,8 +176,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-    const IMGUR_CLIENT_ID = 'fb533db21a59486'; // from your screenshot
-
+    // ---- CONFIG ----
+    const IMGUR_CLIENT_ID = 'fb533db21a59486'; // your Imgur client-id from screenshot
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -187,11 +187,15 @@
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
-    firebase.initializeApp(firebaseConfig);
+
+    // ---- INIT ----
+    if (!window.firebase || !window.firebase.apps || window.firebase.apps.length === 0) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // UI refs
+    // ---- DOM refs ----
     const platformSelect = document.getElementById('platform');
     const subcategorySelect = document.getElementById('subcategory');
     const fixedPriceDisplay = document.getElementById('fixedPriceDisplay');
@@ -222,6 +226,7 @@
     const c_sum = document.getElementById('c_sum');
     const c_thumb = document.getElementById('c_thumb');
 
+    // ---- pricing data ----
     const subcategoryData = {
       "WhatsApp": { "WhatsApp Group Join": 15, "WhatsApp channel follow": 20, "WhatsApp Community Join": 35, "WhatsApp status post": 30, "Contact add": 10, "WhatsApp connect": 150 },
       "Facebook": { "Facebook add friend": 9, "Facebook comment": 9, "Facebook follow": 5, "Facebook like": 5, "Facebook Group Join": 15, "Share a post": 20 },
@@ -234,13 +239,13 @@
       "YouTube": { "Subscribe": 20, "View": 3, "Like": 4 }
     };
 
+    // ---- state ----
     let currentFixedPrice = 0;
     let currentUser = null;
     let currentBalance = 0;
-    let currentTaskId = null;
     let selectedThumbnailFile = null;
 
-    // small toast helper
+    // ---- helpers ----
     function toast(msg){
       const t = document.createElement('div');
       t.style.position = 'fixed';
@@ -265,6 +270,7 @@
       return total;
     }
 
+    // populate subcategories on platform change
     platformSelect.addEventListener('change', () => {
       const selected = platformSelect.value;
       subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
@@ -333,8 +339,8 @@
       thumbPreview.style.display = 'block';
     });
 
+    // uploads file to Imgur, returns link
     async function uploadToImgur(file){
-      // returns image link or throws
       if (!file) return null;
       const form = new FormData();
       form.append('image', file);
@@ -353,6 +359,7 @@
       }
     }
 
+    // PREVIEW -> Populate confirm modal
     submitBtn.addEventListener('click', async () => {
       const title = (document.getElementById('taskTitle').value || '').trim();
       const platform = platformSelect.value;
@@ -375,12 +382,4 @@
       currentUser = user;
 
       try {
-        const uDoc = await db.collection('users').doc(user.uid).get();
-        currentBalance = uDoc.exists ? (uDoc.data().balance || 0) : 0;
-      } catch (err) {
-        console.error('Error fetching balance', err);
-        currentBalance = 0;
-      }
-
-      c_title.textContent = title;
-      c_platform.te
+        const uDoc = 
