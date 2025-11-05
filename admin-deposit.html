@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Admin Deposits</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    .glass { background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); backdrop-filter: blur(8px); }
+    .truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .modal-wrap { opacity: 0; transform: scale(.98); transition: opacity .18s ease, transform .18s ease; }
+    .modal-show { opacity: 1; transform: scale(1); }
+    .close-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; display: grid; place-items:center; border-radius:8px; background: rgba(255,255,255,0.03); color:#cbd5e1; font-weight:700; border:0; cursor:pointer; }
+    .close-x:hover { background: rgba(255,255,255,0.06); color: white; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-gray-900 text-slate-100 p-6">
+
+  <main class="max-w-6xl mx-auto">
+    <header class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-semibold">Admin — Deposits</h1>
+        <p class="text-sm text-slate-400 mt-1">View and process deposits made by users.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div id="adminEmailBadge" class="text-sm text-slate-400"></div>
+        <button id="signOutBtn" class="px-3 py-2 bg-white/6 rounded-md text-sm hover:bg-white/8">Sign out</button>
+      </div>
+    </header>
+
+    <section id="notAllowed" class="hidden glass rounded-xl p-6 mb-6">
+      <h2 class="text-lg font-medium text-rose-400">Access denied</h2>
+      <p class="text-sm text-slate-300 mt-2">You are not authorized to view this admin panel. Please sign in with an admin account.</p>
+    </section>
+
+    <section id="adminUI" class="hidden">
+      <div class="glass rounded-xl p-4 mb-6 grid md:grid-cols-3 gap-4 items-center">
+        <div class="flex items-center gap-3">
+          <input id="searchInput" type="search" placeholder="Search by uid, deposit id, amount, reference" class="w-full md:w-96 rounded-lg bg-white/5 px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
+          <button id="refreshBtn" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white">Refresh</button>
+        </div>
+
+        <div class="flex items-center gap-3 justify-center">
+          <label class="text-sm text-slate-300">Status</label>
+          <select id="statusFilter" class="rounded-lg bg-white/5 px-3 py-2 outline-none">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+
+        <div class="text-right">
+          <div id="stats" class="text-sm text-slate-300">Loading…</div>
+        </div>
+      </div>
+
+      <div id="listWrap" class="grid gap-4"></div>
+    </section>
+
+    <footer class="mt-8 text-center text-xs text-slate-400">© Beni-Wealth</footer>
+  </main>
+
+  <!-- details modal -->
+  <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-6" aria-hidden="true" role="dialog" aria-modal="true">
+    <div id="modalBackdrop" class="absolute inset-0 bg-black/60"></div>
+
+    <div id="modalCard" class="relative glass rounded-xl shadow-2xl w-full max-w-3xl p-6 z-10 modal-wrap" role="document" aria-labelledby="modalTitle">
+      <button id="xClose" class="close-x" aria-label="Close modal">&times;</button>
+
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h3 id="modalTitle" class="text-lg font-semibold">Deposit details</h3>
+          <p id="modalSubtitle" class="text-sm text-slate-300 mt-1"></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="modalStatus" class="text-sm px-3 py-1 rounded-full bg-white/6"></span>
+          <button id="closeModal" class="px-2 py-1 rounded-md hover:bg-white/6">Close</button>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <dl class="text-sm text-slate-300 space-y-3">
+            <div><dt class="font-medium text-slate-200">Deposit ID</dt><dd id="d_id" class="truncate-2"></dd></div>
+            <div><dt class="font-medium text-slate-200">User (UID)</dt><dd id="d_uid"></dd></div>
+            <div><dt class="font-medium text-slate-200">Amount</dt><dd id="d_amount"></dd></div>
+            <div><dt class="font-medium text-slate-200">Method / Reference</dt><dd id="d_method"></dd></div>
+            <div><dt class="font-medium text-slate-200">Status</dt><dd id="d_status"></dd></div>
+          </dl>
+        </div>
+
+        <div>
+          <dl class="text-sm text-slate-300 space-y-3">
+            <div><dt class="font-medium text-slate-200">Created at</dt><dd id="d_created"></dd></div>
+            <div><dt class="font-medium text-slate-200">Processed by</dt><dd id="d_processedBy"></dd></div>
+            <div><dt class="font-medium text-slate-200">Processed at</dt><dd id="d_processedAt"></dd></div>
+            <div><dt class="font-medium text-slate-200">Meta</dt><dd id="d_meta" class="text-xs text-slate-400"></dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="mt-6 flex gap-3">
+        <button id="approveBtn" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 rounded-lg">Approve (credit user)</button>
+        <button id="rejectBtn" class="px-4 py-2 bg-rose-500 hover:bg-rose-400 rounded-lg">Reject</button>
+        <div class="ml-auto text-sm text-slate-400 self-center">Only admins can approve or reject</div>
+      </div>
+
+      <div id="modalMsg" class="mt-3 text-sm text-rose-400"></div>
+    </div>
+  </div>
+
+  <!-- toast -->
+  <div id="toast" class="fixed right-6 bottom-6 z-60 hidden"></div>
+
+  <script type="module">
+    // Firebase imports
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import {
+      getFirestore, collection, query, orderBy, onSnapshot, doc, runTransaction,
+      updateDoc, serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+    // config (same as your project)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    if (!getApps().length) initializeApp(firebaseConfig);
+    const db = getFirestore();
+    const auth = getAuth();
+
+    // allowed admin emails
+    const ALLOWED_ADMINS = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
+
+    // UI refs
+    const notAllowed = document.getElementById('notAllowed');
+    const adminUI = document.getElementById('adminUI');
+    const adminEmailBadge = document.getElementById('adminEmailBadge');
+    const signOutBtn = document.getElementById('signOutBtn');
+
+    const listWrap = document.getElementById('listWrap');
+    const stats = document.getElementById('stats');
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    const detailModal = document.getElementById('detailModal');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalCard = document.getElementById('modalCard');
+    const closeModal = document.getElementById('closeModal');
+    const xClose = document.getElementById('xClose');
+
+    const d_id = document.getElementById('d_id');
+    const d_uid = document.getElementById('d_uid');
+    const d_amount = document.getElementById('d_amount');
+    const d_method = document.getElementById('d_method');
+    const d_status = document.getElementById('d_status');
+    const d_created = document.getElementById('d_created');
+    const d_processedBy = document.getElementById('d_processedBy');
+    const d_processedAt = document.getElementById('d_processedAt');
+    const d_meta = document.getElementById('d_meta');
+
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSubtitle = document.getElementById('modalSubtitle');
+    const modalStatus = document.getElementById('modalStatus');
+    const modalMsg = document.getElementById('modalMsg');
+
+    const approveBtn = document.getElementById('approveBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
+
+    const toast = document.getElementById('toast');
+
+    let currentUser = null;
+    let snapshotUnsub = null;
+    let cached = []; // {id, data}
+
+    function showToast(txt, ok=true) {
+      toast.textContent = txt;
+      toast.className = `fixed right-6 bottom-6 z-60 px-4 py-2 rounded-md ${ok ? 'bg-emerald-500' : 'bg-rose-600'} text-white`;
+      toast.style.display = 'block';
+      setTimeout(()=> toast.style.display = 'none', 3500);
+    }
+
+    function fmtTS(ts){
+      if(!ts) return '-';
+      try { return ts.toDate ? ts.toDate().toLocaleString() : new Date(ts).toLocaleString(); } catch(e){return '-';}
+    }
+
+    function showModal(){
+      detailModal.classList.remove('hidden');
+      detailModal.style.display = 'flex';
+      modalCard.classList.add('modal-show');
+      detailModal.setAttribute('aria-hidden','false');
+    }
+    function hideModal(){
+      modalCard.classList.remove('modal-show');
+      setTimeout(()=> {
+        detailModal.classList.add('hidden');
+        detailModal.style.display = 'none';
+        detailModal.setAttribute('aria-hidden','true');
+      }, 120);
+    }
+
+    // auth & access control
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      if(user && ALLOWED_ADMINS.includes(user.email)){
+        adminEmailBadge.textContent = `Signed in as ${user.email}`;
+        adminUI.classList.remove('hidden');
+        notAllowed.classList.add('hidden');
+        startListening();
+      } else {
+        adminEmailBadge.textContent = user ? `Signed in as ${user.email}` : '';
+        adminUI.classList.add('hidden');
+        notAllowed.classList.remove('hidden');
+        if(snapshotUnsub){ snapshotUnsub(); snapshotUnsub = null; }
+        if(user){
+          notAllowed.innerHTML = `
+            <h2 class="text-lg font-medium text-rose-400">Access denied</h2>
+            <p class="text-sm text-slate-300 mt-2">The signed-in account (${user.email}) does not have administrator access.</p>
+            <p class="text-sm text-slate-300 mt-1">Allowed admin emails: <strong>${ALLOWED_ADMINS.join(', ')}</strong>.</p>
+          `;
+        } else {
+          notAllowed.innerHTML = `
+            <h2 class="text-lg font-medium text-amber-400">Sign in required</h2>
+            <p class="text-sm text-slate-300 mt-2">Please sign in with an administrator account to view and manage deposits.</p>
+          `;
+        }
+      }
+    });
+
+    signOutBtn.addEventListener('click', async () => {
+      await signOut(auth);
+      showToast('Signed out', true);
+    });
+
+    // live listener
+    function startListening(){
+      if(snapshotUnsub) snapshotUnsub();
+      const col = collection(db, 'deposits');
+      const q = query(col, orderBy('createdAt','desc'));
+      snapshotUnsub = onSnapshot(q, (snap) => {
+        cached = [];
+        snap.forEach(s => cached.push({ id: s.id, data: s.data() }));
+        renderList();
+        updateStats();
+      }, (err) => {
+        console.error('deposits listener err', err);
+        showToast('Failed to load deposits', false);
+      });
+    }
+
+    // render list
+    function renderList(){
+      const queryText = (searchInput.value || '').trim().toLowerCase();
+      const status = statusFilter.value;
+
+      const items = cached.filter(it => {
+        const d = it.data;
+        if(status !== 'all' && String((d.status || 'pending')) !== status) return false;
+        if(!queryText) return true;
+        const fields = [
+          it.id,
+          d.requestedBy || d.userId || '',
+          String(d.amount || ''),
+          String(d.reference || ''),
+          String(d.method || '')
+        ].join(' ').toLowerCase();
+        return fields.includes(queryText);
+      });
+
+      listWrap.innerHTML = items.map(it => {
+        const d = it.data;
+        const created = d.createdAt ? (d.createdAt.toDate ? d.createdAt.toDate().toLocaleString() : String(d.createdAt)) : '-';
+        const statusLower = (d.status || 'pending').toLowerCase();
+        const badgeClass = (statusLower === 'pending') ? 'bg-yellow-500 text-black'
+          : (statusLower === 'approved') ? 'bg-emerald-500 text-white'
+          : (statusLower === 'rejected') ? 'bg-rose-500 text-white'
+          : (statusLower === 'failed') ? 'bg-rose-600 text-white' : 'bg-white/6 text-white';
+
+        const amountText = '₦' + Number(d.amount || 0).toLocaleString('en-NG');
+
+        return `
+          <div class="glass rounded-xl p-4 flex items-center justify-between gap-3 hover:shadow-lg transition">
+            <div class="min-w-0">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-lg bg-white/6 flex items-center justify-center text-lg font-semibold">${amountText}</div>
+                <div class="min-w-0">
+                  <div class="text-sm font-medium text-slate-200 truncate">${d.method || '—'} • ${d.reference || d.ref || '—'}</div>
+                  <div class="text-xs text-slate-400 truncate-2">User: ${d.requestedBy || d.userId || '—'} • ${created}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-end gap-2">
+              <div class="px-3 py-1 rounded-full text-xs ${badgeClass}">${String(statusLower).toUpperCase()}</div>
+              <div class="text-xs text-slate-400">ID: <span class="font-mono">${it.id}</span></div>
+              <div><button data-id="${it.id}" class="openBtn px-3 py-1 rounded-md bg-white/6 hover:bg-white/8 text-xs">View</button></div>
+            </div>
+          </div>
+        `;
+      }).join('') || `<div class="text-center text-slate-400 py-8">No deposits match your filters.</div>`;
+    }
+
+    function updateStats(){
+      const total = cached.length;
+      const counts = cached.reduce((acc, it) => {
+        const s = (it.data.status || 'pending');
+        acc[s] = (acc[s]||0) + 1;
+        return acc;
+      }, {});
+      stats.innerHTML = `Total: <strong>${total}</strong> • Pending: <strong>${counts.pending||0}</strong> • Approved: <strong>${counts.approved||0}</strong> • Rejected: <strong>${counts.rejected||0}</strong>`;
+    }
+
+    // open detail
+    listWrap.addEventListener('click', (e) => {
+      const btn = e.target.closest('.openBtn');
+      if(!btn) return;
+      const id = btn.dataset.id;
+      openDetails(id);
+    });
+
+    async function openDetails(id){
+      const found = cached.find(x => x.id === id);
+      if(!found){ showToast('Item not found', false); return; }
+      const d = found.data;
+
+      modalTitle.textContent = `Deposit — ${id}`;
+      modalSubtitle.textContent = `${d.method || '—'} • ${d.reference || d.ref || '—'}`;
+      modalStatus.textContent = (d.status || 'pending').toUpperCase();
+      modalStatus.className = 'text-sm px-3 py-1 rounded-full ' + ((d.status === 'approved') ? 'bg-emerald-500 text-white' : (d.status === 'pending') ? 'bg-yellow-500 text-black' : 'bg-white/6 text-white');
+
+      d_id.textContent = id;
+      d_uid.textContent = d.requestedBy || d.userId || '-';
+      d_amount.textContent = '₦' + Number(d.amount || 0).toLocaleString('en-NG');
+      d_method.textContent = `${d.method || '-'} • ${d.reference || d.ref || '-'}`;
+      d_status.textContent = (d.status || 'pending');
+      d_created.textContent = fmtTS(d.createdAt);
+      d_processedBy.textContent = d.processedBy ? (d.processedBy.email || d.processedBy) : '-';
+      d_processedAt.textContent = fmtTS(d.processedAt);
+      d_meta.textContent = d.meta ? JSON.stringify(d.meta) : '-';
+
+      const isPending = !d.status || d.status === 'pending';
+      approveBtn.disabled = !isPending;
+      rejectBtn.disabled = !isPending;
+
+      showModal();
+    }
+
+    // close modal handlers
+    closeModal.addEventListener('click', hideModal);
+    modalBackdrop.addEventListener('click', hideModal);
+    xClose.addEventListener('click', hideModal);
+    document.addEventListener('keydown', (e) => { if(e.key === 'Escape' && detailModal && !detailModal.classList.contains('hidden')) hideModal(); });
+
+    // approve action: credit user and mark deposit approved
+    approveBtn.addEventListener('click', async () => {
+      if(!confirm('Approve this deposit and credit the user?')) return;
+      const id = d_id.textContent;
+      await approveDeposit(id);
+    });
+
+    // reject action
+    rejectBtn.addEventListener('click', async () => {
+      const reason = prompt('Optional reason for rejection (leave empty for none):');
+      await changeDepositStatus(d_id.textContent, 'rejected', { reason: reason || null });
+    });
+
+    // change status helper (reject)
+    async function changeDepositStatus(depositId, newStatus, meta = {}){
+      if(!currentUser || !ALLOWED_ADMINS.includes(currentUser.email)){ showToast('Not authorized', false); return; }
+      const dRef = doc(db, 'deposits', depositId);
+      try {
+        await updateDoc(dRef, {
+          status: newStatus,
+          processedBy: { uid: currentUser.uid, email: currentUser.email },
+          processedAt: serverTimestamp(),
+          meta
+        });
+        showToast(`Marked ${newStatus}`);
+        hideModal();
+      } catch (err) {
+        console.error('changeDepositStatus err', err);
+        showToast('Failed to update deposit', false);
+      }
+    }
+
+    // approve deposit: transactionally credit user balance and mark deposit
+    async function approveDeposit(depositId){
+      if(!currentUser || !ALLOWED_ADMINS.includes(currentUser.email)){ showToast('Not authorized', false); return; }
+      const dRef = doc(db, 'deposits', depositId);
+
+      try {
+        await runTransaction(db, async (tx) => {
+          const dSnap = await tx.get(dRef);
+          if(!dSnap.exists()) throw new Error('Deposit not found');
+          const dep = dSnap.data();
+          const curStatus = dep.status || 'pending';
+          if(curStatus !== 'pending') throw new Error('Deposit not pending (cannot approve)');
+
+          const userId = dep.requestedBy || dep.userId;
+          if(!userId) throw new Error('No user id on deposit');
+
+          const userRef = doc(db, 'users', String(userId));
+          const uSnap = await tx.get(userRef);
+          if(!uSnap.exists()) throw new Error('User not found');
+
+          const amount = Number(dep.amount || 0);
+          if(isNaN(amount) || amount <= 0) throw new Error('Invalid deposit amount');
+
+          const prevBal = Number(uSnap.data().balance || 0);
+          const newBal = prevBal + amount;
+
+          // update user balance
+          tx.update(userRef, { balance: newBal });
+
+          // mark deposit approved
+          tx.update(dRef, {
+            status: 'approved',
+            processedBy: { uid: currentUser.uid, email: currentUser.email },
+            processedAt: serverTimestamp(),
+            meta: { creditedToBalance: true, ...(dep.meta || {}) }
+          });
+
+          // create transaction record
+          const txCol = collection(db, 'transactions');
+          const txDocRef = doc(txCol);
+          tx.set(txDocRef, {
+            userId: userId,
+            type: 'credit',
+            source: 'deposit_approval',
+            amount: amount,
+            balanceAfter: newBal,
+            createdAt: serverTimestamp(),
+            meta: { depositId: depositId }
+          });
+        });
+
+        showToast('Deposit approved and user credited');
+        hideModal();
+      } catch (err) {
+        console.error('approveDeposit err', err);
+        showToast('Failed to approve deposit: ' + (err.message || ''), false);
+      }
+    }
+
+    // search / filters
+    statusFilter.addEventListener('change', renderList);
+    searchInput.addEventListener('input', throttle(renderList, 250));
+    refreshBtn.addEventListener('click', () => { if(snapshotUnsub){ snapshotUnsub(); snapshotUnsub = null; startListening(); } });
+
+    function throttle(fn, wait){
+      let t = null;
+      return (...args) => {
+        if(t) clearTimeout(t);
+        t = setTimeout(()=> { fn(...args); t = null; }, wait);
+      };
+    }
+
+    // initial
+    renderList();
+
+  </script>
+</body>
+</html>
