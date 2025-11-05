@@ -1,419 +1,438 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Beni-Wealth — Admin</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beni-Wealth — Admin</title>
 
-    <!-- Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-    <style>
-      :root{
-        --bg-1: #07040a;
-        --bg-2: #0f0820;
-        --card-bg: rgba(255,255,255,0.03);
-        --muted: rgba(255,255,255,0.65);
-        --accent-start: #2fe0b8;
-        --accent-end: #7a5fff;
-        --glass: rgba(255,255,255,0.03);
-        --radius: 14px;
-        --max-width: 1200px;
-      }
+  <style>
+    :root{
+      --bg-1: #07040a;
+      --bg-2: #0f0820;
+      --card-bg: rgba(255,255,255,0.03);
+      --muted: rgba(255,255,255,0.65);
+      --accent-start: #2fe0b8;
+      --accent-end: #7a5fff;
+      --glass: rgba(255,255,255,0.03);
+      --radius: 14px;
+      --max-width: 1200px;
+    }
 
-      *{box-sizing:border-box}
-      html,body{height:100%;margin:0;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:#eef3ff;-webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale}
-      .wrap{max-width:var(--max-width);margin:32px auto;padding:28px}
-      header.top{
-        display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:26px;
-      }
-      .brand{display:flex;gap:14px;align-items:center}
-      .brand img{width:64px;height:64px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(11,8,18,0.6)}
-      .brand .title{font-weight:700;font-size:20px;letter-spacing:0.2px}
-      .brand .sub{color:var(--muted);font-size:13px;margin-top:4px}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:#eef3ff;-webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale}
+    .wrap{max-width:var(--max-width);margin:32px auto;padding:28px}
+    header.top{
+      display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:26px;
+    }
+    .brand{display:flex;gap:14px;align-items:center}
+    .brand img{width:64px;height:64px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(11,8,18,0.6)}
+    .brand .title{font-weight:700;font-size:20px;letter-spacing:0.2px}
+    .brand .sub{color:var(--muted);font-size:13px;margin-top:4px}
 
-      .header-actions{display:flex;align-items:center;gap:12px}
-      .email-badge{color:var(--muted);font-size:14px}
-      .btn {
-        background: linear-gradient(90deg,var(--accent-start),var(--accent-end));
-        color:#041219;padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(46,32,89,0.28)
-      }
-      .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);box-shadow:none}
+    .header-actions{display:flex;align-items:center;gap:12px}
+    .email-badge{color:var(--muted);font-size:14px}
+    .btn {
+      background: linear-gradient(90deg,var(--accent-start),var(--accent-end));
+      color:#041219;padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(46,32,89,0.28)
+    }
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);box-shadow:none}
 
-      /* metrics cards */
-      .metrics {
-        display:grid;
-        grid-template-columns: repeat(4, minmax(180px, 1fr));
-        gap:18px;
-        margin-bottom:28px;
-      }
-      @media(max-width:980px){ .metrics { grid-template-columns: repeat(2, 1fr) } }
-      @media(max-width:520px){ .metrics { grid-template-columns: 1fr } }
+    /* metrics cards */
+    .metrics {
+      display:grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap:18px;
+      margin-bottom:28px;
+    }
+    @media(max-width:980px){ .metrics { grid-template-columns: repeat(2, 1fr) } }
+    @media(max-width:520px){ .metrics { grid-template-columns: 1fr } }
 
-      .metric-card{
-        background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-        border-radius:var(--radius);
-        padding:20px;
-        border:1px solid rgba(255,255,255,0.04);
-        box-shadow: 0 18px 60px rgba(0,0,0,0.55);
-        transition:transform .18s ease, box-shadow .18s ease;
-        display:flex;flex-direction:column;gap:8px;align-items:flex-start;
-      }
-      .metric-card:hover{ transform:translateY(-6px); box-shadow: 0 26px 80px rgba(0,0,0,0.65); }
-      .metric-title{color:var(--muted);font-size:13px;font-weight:600}
-      .metric-value{font-size:28px;font-weight:800;color:var(--accent-end)}
-      .metric-sub{font-size:13px;color:var(--muted)}
+    .metric-card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:var(--radius);
+      padding:20px;
+      border:1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+      transition:transform .18s ease, box-shadow .18s ease;
+      display:flex;flex-direction:column;gap:8px;align-items:flex-start;
+      text-decoration:none;
+      color:inherit;
+    }
+    .metric-card:hover{ transform:translateY(-6px); box-shadow: 0 26px 80px rgba(0,0,0,0.65); }
+    .metric-title{color:var(--muted);font-size:13px;font-weight:600}
+    .metric-value{font-size:28px;font-weight:800;color:var(--accent-end)}
+    .metric-sub{font-size:13px;color:var(--muted)}
 
-      /* quick actions */
-      .actions-wrap{ display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; margin-bottom:28px; }
-      .action-tile{
-        background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-        border-radius:12px;padding:14px 18px;border:1px solid rgba(255,255,255,0.04);min-width:160px;
-        display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform .14s ease, box-shadow .14s ease;
-      }
-      .action-tile:hover{ transform:translateY(-6px); box-shadow:0 20px 60px rgba(0,0,0,0.5); }
-      .action-icon{ width:46px;height:46px;border-radius:10px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;font-size:20px;color:#041219; box-shadow:0 8px 20px rgba(61,46,111,0.25) }
-      .action-label{font-weight:700;color:#eef3ff}
-      .action-desc{font-size:13px;color:var(--muted)}
+    /* quick actions */
+    .actions-wrap{ display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; margin-bottom:28px; }
+    .action-tile{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;padding:14px 18px;border:1px solid rgba(255,255,255,0.04);min-width:160px;
+      display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform .14s ease, box-shadow .14s ease;
+      text-decoration:none;color:inherit;
+    }
+    .action-tile:hover{ transform:translateY(-6px); box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+    .action-icon{ width:46px;height:46px;border-radius:10px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;font-size:20px;color:#041219; box-shadow:0 8px 20px rgba(61,46,111,0.25) }
+    .action-label{font-weight:700;color:#eef3ff}
+    .action-desc{font-size:13px;color:var(--muted)}
 
-      /* main grid for cards + quick actions */
-      .main-grid{ display:grid; grid-template-columns: 1fr 360px; gap:22px; align-items:start; }
-      @media(max-width:980px){ .main-grid { grid-template-columns: 1fr } }
+    /* main grid for cards + quick actions */
+    .main-grid{ display:grid; grid-template-columns: 1fr 360px; gap:22px; align-items:start; }
+    @media(max-width:980px){ .main-grid { grid-template-columns: 1fr } }
 
-      /* right column: logs / info */
-      .panel{
-        background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008));
-        border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04); box-shadow: 0 14px 40px rgba(0,0,0,0.55)
-      }
-      .panel h4{margin:0 0 12px 0;color:var(--muted);font-size:14px}
-      .small{font-size:13px;color:var(--muted)}
+    /* right column: logs / info */
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008));
+      border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04); box-shadow: 0 14px 40px rgba(0,0,0,0.55)
+    }
+    .panel h4{margin:0 0 12px 0;color:var(--muted);font-size:14px}
+    .small{font-size:13px;color:var(--muted)}
 
-      footer{margin-top:26px;color:var(--muted);font-size:13px;text-align:center}
-      a.quick{ text-decoration:none; color:inherit; display:block }
-    </style>
-  </head>
+    footer{margin-top:26px;color:var(--muted);font-size:13px;text-align:center}
+    a.quick{ text-decoration:none; color:inherit; display:block }
+    .center{display:grid;place-items:center}
+  </style>
+</head>
 
-  <body>
-    <div class="wrap" id="wrap">
-      <header class="top" id="topHeader">
-        <div class="brand">
-          <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo" />
-          <div>
-            <div class="title">Beni-Wealth — Admin</div>
-            <div class="sub">Admin console · quick overview</div>
-          </div>
+<body>
+  <div class="wrap" id="wrap">
+    <header class="top" id="topHeader">
+      <div class="brand">
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo" />
+        <div>
+          <div class="title">Beni-Wealth — Admin</div>
+          <div class="sub">Admin console · quick overview</div>
         </div>
-
-        <div class="header-actions" id="headerActions">
-          <div class="email-badge" id="emailBadge">Checking…</div>
-          <button id="logoutBtn" class="btn" style="display:none">Logout</button>
-        </div>
-      </header>
-
-      <!-- metrics row (Users, Deposits, Withdrawals, Adverts) -->
-      <section id="metricsSection" class="metrics" aria-live="polite">
-        <!-- injected -->
-      </section>
-
-      <div class="main-grid">
-        <main>
-          <!-- Quick actions (Tasks, View Users link, etc.) -->
-          <section style="margin-bottom:18px">
-            <h3 style="margin:0 0 12px 0">Quick Actions</h3>
-            <div class="actions-wrap" id="actionsWrap">
-              <!-- injected -->
-            </div>
-          </section>
-
-          <!-- recent logs placeholder -->
-          <section style="margin-top:18px">
-            <h3 style="margin:0 0 12px 0">Recent activity</h3>
-            <div class="panel">
-              <div class="small" id="recentPlaceholder">No recent activity fetched — open a section to view details.</div>
-            </div>
-          </section>
-        </main>
-
-        <aside>
-          <div class="panel">
-            <h4>Admin tips</h4>
-            <p class="small">• Click any quick action to go directly to that admin page. <br>• Metrics are counts of documents in each collection. For transactional accuracy use server-side dashboards (Cloud Functions) or aggregated counters.</p>
-            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0" />
-            <h4>Security</h4>
-            <p class="small">Only <b style="color:#fff">beniwealth70@gmail.com</b> can access this page. Check Firestore rules and admin logs regularly.</p>
-            <div style="height:12px"></div>
-            <div style="display:flex;gap:8px">
-              <button id="refreshBtn" class="btn ghost" style="padding:8px 10px">Refresh</button>
-              <button id="openConsole" class="btn" style="padding:8px 10px">Open Firestore</button>
-            </div>
-          </div>
-        </aside>
       </div>
 
-      <footer>© <span id="year"></span> Beni-Wealth — Admin</footer>
+      <div class="header-actions" id="headerActions">
+        <div class="email-badge" id="emailBadge">Checking…</div>
+        <button id="logoutBtn" class="btn" style="display:none">Logout</button>
+      </div>
+    </header>
+
+    <!-- metrics row (Users, Deposits, Withdrawals, Adverts) -->
+    <section id="metricsSection" class="metrics" aria-live="polite">
+      <!-- injected -->
+    </section>
+
+    <div class="main-grid">
+      <main>
+        <!-- Quick actions (Tasks, View Users link, etc.) -->
+        <section style="margin-bottom:18px">
+          <h3 style="margin:0 0 12px 0">Quick Actions</h3>
+          <div class="actions-wrap" id="actionsWrap">
+            <!-- injected -->
+          </div>
+        </section>
+
+        <!-- recent logs placeholder -->
+        <section style="margin-top:18px">
+          <h3 style="margin:0 0 12px 0">Recent activity</h3>
+          <div class="panel">
+            <div class="small" id="recentPlaceholder">No recent activity fetched — open a section to view details.</div>
+          </div>
+        </section>
+      </main>
+
+      <aside>
+        <div class="panel">
+          <h4>Admin tips</h4>
+          <p class="small">• Click any quick action to go directly to that admin page. <br>• Metrics are counts of documents in each collection. For transactional accuracy use server-side dashboards (Cloud Functions) or aggregated counters.</p>
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0" />
+          <h4>Security</h4>
+          <p class="small">Only the allowed admin emails can access this page. Check Firestore rules and admin logs regularly.</p>
+          <div style="height:12px"></div>
+          <div style="display:flex;gap:8px">
+            <button id="refreshBtn" class="btn ghost" style="padding:8px 10px">Refresh</button>
+            <button id="openConsole" class="btn" style="padding:8px 10px">Open Firestore</button>
+          </div>
+        </div>
+      </aside>
     </div>
 
-    <!-- Script -->
-    <script type="module">
-      // ---------------------------
-      // Config: repo base and firebase
-      // ---------------------------
-      const REPO_BASE = '/Beni-Wealth'; // change if your repo folder name changes
+    <footer>© <span id="year"></span> Beni-Wealth — Admin</footer>
+  </div>
 
-      // Safe helper to ensure URLs include the repo base (or leave absolute URLs untouched)
-      function withRepoPath(target) {
-        if (!target) return location.href;
-        // If it's already an absolute URL, return as-is (but normalize same-origin)
-        try {
-          const maybe = new URL(target, location.href);
-          if (maybe.protocol === 'http:' || maybe.protocol === 'https:') {
-            // If internal and already contains the repo segment, normalize and return
-            if (maybe.origin === location.origin) {
-              const pathname = maybe.pathname.replace(/\/+/g, '/');
-              if (pathname.indexOf(REPO_BASE) === 0) {
-                return maybe.origin + pathname + maybe.search + maybe.hash;
-              }
+  <script type="module">
+    // ---------------------------
+    // Config: repo base and firebase
+    // ---------------------------
+    const REPO_BASE = '/Beni-Wealth'; // change if your repo folder name changes
+
+    function withRepoPath(target) {
+      if (!target) return location.href;
+      try {
+        const maybe = new URL(target, location.href);
+        if (maybe.protocol === 'http:' || maybe.protocol === 'https:') {
+          if (maybe.origin === location.origin) {
+            const pathname = maybe.pathname.replace(/\/+/g, '/');
+            if (pathname.indexOf(REPO_BASE) === 0) {
+              return maybe.origin + pathname + maybe.search + maybe.hash;
             }
-            return maybe.href;
           }
-        } catch (e) {
-          // not a full absolute URL — continue
+          return maybe.href;
         }
-
-        // Clean input and repo strings
-        const cleanTarget = String(target).replace(/^\/+/, ''); // remove leading slashes
-        const repoClean = REPO_BASE.replace(/^\/+/, '');
-
-        // If target already starts with repo, just attach origin
-        if (cleanTarget.indexOf(repoClean) === 0) {
-          return location.origin + '/' + cleanTarget;
-        }
-
-        // Otherwise prefix repo path
-        return location.origin + REPO_BASE + (cleanTarget ? '/' + cleanTarget : '');
+      } catch (e) {
+        // not a full absolute URL — continue
       }
+      const cleanTarget = String(target).replace(/^\/+/, '');
+      const repoClean = REPO_BASE.replace(/^\/+/, '');
+      if (cleanTarget.indexOf(repoClean) === 0) {
+        return location.origin + '/' + cleanTarget;
+      }
+      return location.origin + REPO_BASE + (cleanTarget ? '/' + cleanTarget : '');
+    }
 
-      // ---------------------------
-      // Firebase imports & init
-      // ---------------------------
-      import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-      import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-      import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    // ---------------------------
+    // Firebase imports & init
+    // ---------------------------
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-        authDomain: "beni-wealths.firebaseapp.com",
-        projectId: "beni-wealths",
-        storageBucket: "beni-wealths.firebasestorage.app",
-        messagingSenderId: "807950483822",
-        appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-        measurementId: "G-Z2XP3YN6NS",
-      };
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS",
+    };
 
-      if (!getApps().length) initializeApp(firebaseConfig);
-      const auth = getAuth();
-      const db = getFirestore();
+    if (!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
 
-      // ---------------------------
-      // UI constants & DOM refs
-      // ---------------------------
-      const metricsSection = document.getElementById('metricsSection');
-      const actionsWrap = document.getElementById('actionsWrap');
-      const emailBadge = document.getElementById('emailBadge');
-      const logoutBtn = document.getElementById('logoutBtn');
-      const refreshBtn = document.getElementById('refreshBtn');
-      const openConsole = document.getElementById('openConsole');
-      const recentPlaceholder = document.getElementById('recentPlaceholder');
-      document.getElementById('year').textContent = new Date().getFullYear();
+    // ---------------------------
+    // UI constants & DOM refs
+    // ---------------------------
+    const metricsSection = document.getElementById('metricsSection');
+    const actionsWrap = document.getElementById('actionsWrap');
+    const emailBadge = document.getElementById('emailBadge');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const openConsole = document.getElementById('openConsole');
+    const recentPlaceholder = document.getElementById('recentPlaceholder');
+    document.getElementById('year').textContent = new Date().getFullYear();
 
-      // Quick actions — updated to the exact list & paths requested
-      const QUICK_ACTIONS = [
-        { label: "Adverts", icon: "📢", path: "advert.html" },
-        { label: "View Users", icon: "👥", path: "users.html" },
-        { label: "Submissions", icon: "📝", path: "admin-task.html" },
-        { label: "Withdrawals", icon: "💸", path: "admin-withdrawals.html" },
-        { label: "Deposits", icon: "💳", path: "admin-deposit.html" }
-      ];
+    // Quick actions
+    const QUICK_ACTIONS = [
+      { label: "Adverts", icon: "📢", path: "advert.html" },
+      { label: "View Users", icon: "👥", path: "users.html" },
+      { label: "Submissions", icon: "📝", path: "admin-task.html" },
+      { label: "Withdrawals", icon: "💸", path: "admin-withdrawals.html" },
+      { label: "Deposits", icon: "💳", path: "admin-deposit.html" }
+    ];
 
-      // Metrics (big cards) - collection names and target admin page paths
-      const METRICS = [
-        { key: "users", title: "Users", collection: "users", path: "users.html" },
-        { key: "deposits", title: "Deposits", collection: "deposits", path: "admin-deposit.html" },
-        // withdrawals: we'll check both 'withdrawals' and 'withdrawal' collections and sum counts to be robust
-        { key: "withdrawals", title: "Withdrawals", collection: "withdrawals", path: "admin-withdrawals.html" },
-        { key: "adverts", title: "Adverts", collection: "adverts", path: "advert.html" }
-      ];
+    // Metrics (big cards)
+    const METRICS = [
+      { key: "users", title: "Users", collection: "users", path: "users.html" },
+      { key: "deposits", title: "Deposits", collection: "deposits", path: "admin-deposit.html" },
+      { key: "withdrawals", title: "Withdrawals", collection: "withdrawals", path: "admin-withdrawals.html" },
+      { key: "adverts", title: "Adverts", collection: "adverts", path: "advert.html" }
+    ];
 
-      // ---------------------------
-      // Render helpers
-      // ---------------------------
-      function renderMetrics(metricsData) {
-        metricsSection.innerHTML = METRICS.map(m => {
-          const count = (metricsData[m.collection] ?? 0);
-          // Link to admin page provided in m.path (repo-aware)
-          const href = withRepoPath(m.path || (m.collection + '.html'));
-          return `
-            <a href="${href}" class="metric-card" style="text-decoration:none;" data-collection="${m.collection}">
-              <div class="metric-title">${m.title}</div>
-              <div class="metric-value">${count}</div>
-              <div class="metric-sub">Documents in <code style="font-size:12px;color:var(--muted)">${m.collection}</code></div>
-            </a>
-          `;
-        }).join('');
-        // attach click handlers to metric cards to navigate to full URL (safe)
-        metricsSection.querySelectorAll('.metric-card').forEach(a=>{
-          a.addEventListener('click', (ev)=>{
-            ev.preventDefault();
-            const href = a.getAttribute('href');
-            try { location.assign(href); } catch(e) { location.href = href; }
-          });
+    // ---------------------------
+    // Render helpers
+    // ---------------------------
+    function renderMetrics(metricsData) {
+      metricsSection.innerHTML = METRICS.map(m => {
+        const count = (metricsData[m.collection] ?? 0);
+        const href = withRepoPath(m.path || (m.collection + '.html'));
+        return `
+          <a href="${href}" class="metric-card" data-collection="${m.collection}">
+            <div class="metric-title">${m.title}</div>
+            <div class="metric-value">${count}</div>
+            <div class="metric-sub">Documents in <code style="font-size:12px;color:var(--muted)">${m.collection}</code></div>
+          </a>
+        `;
+      }).join('');
+
+      // attach click handlers to metric cards to navigate to full URL (safe)
+      metricsSection.querySelectorAll('.metric-card').forEach(a=>{
+        a.addEventListener('click', (ev)=>{
+          ev.preventDefault();
+          const href = a.getAttribute('href');
+          try { location.assign(href); } catch(e) { location.href = href; }
         });
-      }
+      });
+    }
 
-      function renderQuickActions() {
-        actionsWrap.innerHTML = QUICK_ACTIONS.map(a => {
-          const href = withRepoPath(a.path);
-          return `
-            <a class="quick" href="${href}">
-              <div class="action-tile" role="button" tabindex="0" aria-label="${a.label}">
-                <div class="action-icon">${a.icon}</div>
-                <div>
-                  <div class="action-label">${a.label}</div>
-                  <div class="action-desc">Go to ${a.label.toLowerCase()}</div>
-                </div>
+    function renderQuickActions() {
+      actionsWrap.innerHTML = QUICK_ACTIONS.map(a => {
+        const href = withRepoPath(a.path);
+        return `
+          <a class="quick" href="${href}">
+            <div class="action-tile" role="button" tabindex="0" aria-label="${a.label}">
+              <div class="action-icon">${a.icon}</div>
+              <div>
+                <div class="action-label">${a.label}</div>
+                <div class="action-desc">Go to ${a.label.toLowerCase()}</div>
               </div>
-            </a>
-          `;
-        }).join('');
+            </div>
+          </a>
+        `;
+      }).join('');
 
-        // attach reliable click handlers that navigate to the full URL
-        actionsWrap.querySelectorAll('a.quick').forEach(a=>{
-          a.addEventListener('click', (ev)=>{
-            ev.preventDefault();
-            const href = a.getAttribute('href');
-            try { location.assign(href); } catch(e) { location.href = href; }
-          });
+      // attach reliable click handlers that navigate to the full URL
+      actionsWrap.querySelectorAll('a.quick').forEach(a=>{
+        a.addEventListener('click', (ev)=>{
+          ev.preventDefault();
+          const href = a.getAttribute('href');
+          try { location.assign(href); } catch(e) { location.href = href; }
         });
-      }
+      });
+    }
 
-      // ---------------------------
-      // Data fetching
-      // ---------------------------
-      async function fetchCounts() {
-        const result = {};
-        try {
-          // Build promises for each metric
-          const promises = METRICS.map(async (m) => {
-            // Special handling for withdrawals: check both 'withdrawals' and 'withdrawal' (some pages use singular)
-            if (m.collection === 'withdrawals') {
-              try {
-                const snapA = await getDocs(collection(db, 'withdrawals')).catch(()=>({ size: 0 }));
-                const snapB = await getDocs(collection(db, 'withdrawal')).catch(()=>({ size: 0 }));
-                const total = (snapA.size || 0) + (snapB.size || 0);
-                return { k: m.collection, n: total };
-              } catch (e) {
-                return { k: m.collection, n: 0 };
-              }
-            }
-
-            // Default: read the specified collection
+    // ---------------------------
+    // Data fetching
+    // ---------------------------
+    async function fetchCounts() {
+      const result = {};
+      try {
+        const promises = METRICS.map(async (m) => {
+          // Special handling for withdrawals: check both 'withdrawals' and 'withdrawal'
+          if (m.collection === 'withdrawals') {
             try {
-              const snap = await getDocs(collection(db, m.collection));
-              return { k: m.collection, n: snap.size };
+              const snapA = await getDocs(collection(db, 'withdrawals')).catch(()=>({ size: 0 }));
+              const snapB = await getDocs(collection(db, 'withdrawal')).catch(()=>({ size: 0 }));
+              const total = (snapA.size || 0) + (snapB.size || 0);
+              return { k: m.collection, n: total };
             } catch (e) {
               return { k: m.collection, n: 0 };
             }
-          });
+          }
 
-          const res = await Promise.all(promises);
-          res.forEach(r => result[r.k] = r.n);
-        } catch (err) {
-          console.error('fetchCounts error', err);
-        }
-        return result;
+          // Default: read the specified collection
+          try {
+            const snap = await getDocs(collection(db, m.collection));
+            return { k: m.collection, n: snap.size };
+          } catch (e) {
+            return { k: m.collection, n: 0 };
+          }
+        });
+
+        const res = await Promise.all(promises);
+        res.forEach(r => result[r.k] = r.n);
+      } catch (err) {
+        console.error('fetchCounts error', err);
       }
+      return result;
+    }
 
-      async function loadDashboard(user) {
-        try {
-          emailBadge.textContent = user.email || 'Admin';
-          logoutBtn.style.display = 'inline-block';
-
-          const counts = await fetchCounts();
-          renderMetrics(counts);
-          renderQuickActions();
-
-          recentPlaceholder.textContent = `Loaded at ${new Date().toLocaleString()}. Metrics refreshed. Click a tile to manage that section.`;
-        } catch (err) {
-          console.error('loadDashboard error', err);
-          recentPlaceholder.textContent = 'Failed to load dashboard — check console.';
-        }
-      }
-
-      // ---------------------------
-      // Auth guard (only allow beniwealth70@gmail.com)
-      // ---------------------------
-      onAuthStateChanged(auth, async (user) => {
-        const allowedAdmin = "beniwealth70@gmail.com, owanaomubo76@gmail.com";
-
-        if (!user) {
-          // not signed in -> show friendly sign-in CTA that respects repo base
-          const loginHref = withRepoPath('login.html');
-          document.getElementById('wrap').innerHTML = `
-            <div style="display:grid;place-items:center;min-height:60vh">
-              <div style="text-align:center">
-                <h2 style="margin:0 0 8px 0;color:#fff">Access Restricted</h2>
-                <p style="color:var(--muted);margin:0 0 16px 0">Please sign in with the administrator account to continue.</p>
-                <a href="${loginHref}" style="text-decoration:none"><button class="btn">Go to Login</button></a>
-              </div>
-            </div>
-          `;
-          return;
-        }
-
-        if (user.email !== allowedAdmin) {
-          // If signed in but not the admin, sign them out and show message
-          try { await signOut(auth); } catch(e){}
-          const loginHref = withRepoPath('login.html');
-          document.getElementById('wrap').innerHTML = `
-            <div style="display:grid;place-items:center;min-height:60vh">
-              <div style="text-align:center">
-                <h2 style="margin:0 0 8px 0;color:#fff">Access Denied</h2>
-                <p style="color:var(--muted);margin:0 0 16px 0">You must be logged in as <b>${allowedAdmin}</b> to access this admin panel.</p>
-                <a href="${loginHref}" style="text-decoration:none"><button class="btn">Go to Login</button></a>
-              </div>
-            </div>
-          `;
-          return;
-        }
-
-        // Authorized
-        await loadDashboard(user);
-      });
-
-      // ---------------------------
-      // UI actions
-      // ---------------------------
-      logoutBtn.addEventListener('click', async () => {
-        try {
-          await signOut(auth);
-          location.assign(withRepoPath('login.html'));
-        } catch (err) {
-          console.error('logout failed', err);
-        }
-      });
-
-      refreshBtn.addEventListener('click', async () => {
-        const user = auth.currentUser;
-        if (!user) return alert('Not signed in');
+    async function loadDashboard(user) {
+      try {
+        emailBadge.textContent = user.email || 'Admin';
+        logoutBtn.style.display = 'inline-block';
 
         const counts = await fetchCounts();
         renderMetrics(counts);
-        recentPlaceholder.textContent = `Refreshed at ${new Date().toLocaleString()}`;
-      });
+        renderQuickActions();
 
-      openConsole.addEventListener('click', () => {
-        window.open(`https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore/data`, '_blank');
-      });
-    </script>
-  </body>
-  </html>
+        recentPlaceholder.textContent = `Loaded at ${new Date().toLocaleString()}. Metrics refreshed. Click a tile to manage that section.`;
+      } catch (err) {
+        console.error('loadDashboard error', err);
+        recentPlaceholder.textContent = 'Failed to load dashboard — check console.';
+      }
+    }
+
+    // ---------------------------
+    // Auth guard (allow these admins)
+    // ---------------------------
+    const allowedAdmins = ["beniwealth70@gmail.com", "owanaomubo76@gmail.com"];
+
+    onAuthStateChanged(auth, async (user) => {
+      // If there's no signed in user, show a friendly sign-in CTA
+      if (!user) {
+        const loginHref = withRepoPath('login.html');
+        document.getElementById('wrap').innerHTML = `
+          <div style="display:grid;place-items:center;min-height:60vh" class="center">
+            <div style="text-align:center">
+              <h2 style="margin:0 0 8px 0;color:#fff">Access Restricted</h2>
+              <p style="color:var(--muted);margin:0 0 16px 0">Please sign in with an administrator account to continue.</p>
+              <a href="${loginHref}" style="text-decoration:none"><button class="btn">Go to Login</button></a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // If user is signed in but not in allowedAdmins, show access denied (do not forcibly sign them out)
+      if (!allowedAdmins.includes(user.email)) {
+        const loginHref = withRepoPath('login.html');
+        document.getElementById('wrap').innerHTML = `
+          <div style="display:grid;place-items:center;min-height:60vh" class="center">
+            <div style="text-align:center">
+              <h2 style="margin:0 0 8px 0;color:#fff">Access Denied</h2>
+              <p style="color:var(--muted);margin:0 0 16px 0">
+                The signed-in account (<strong>${user.email}</strong>) is not authorized to access this admin panel.
+              </p>
+              <p style="color:var(--muted);margin:0 0 16px 0">Allowed admin emails:<br><strong>${allowedAdmins.join('<br>')}</strong></p>
+              <div style="display:flex;gap:8px;justify-content:center">
+                <a href="${loginHref}" style="text-decoration:none"><button class="btn">Sign in as admin</button></a>
+                <button id="forceSignOut" class="btn ghost">Sign out</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // attach sign-out handler
+        document.getElementById('forceSignOut').addEventListener('click', async () => {
+          try { await signOut(auth); location.reload(); } catch(e){ console.error(e); location.reload(); }
+        });
+        return;
+      }
+
+      // Authorized admin — load UI
+      // Re-render page (in case we replaced it above) then re-bind UI references and load dashboard
+      // We'll simply reload the page so original DOM elements are present and then load the dashboard.
+      // This approach avoids complicated partial DOM repairs; it is safe because the user is authorized.
+      try {
+        // If the current DOM is the 'wrap' original content (most likely), just load dashboard
+        // Otherwise reload to get the original UI, then load.
+        const wrapEl = document.getElementById('wrap');
+        if (!wrapEl) {
+          location.reload();
+          return;
+        }
+        await loadDashboard(user);
+      } catch (e) {
+        console.error('auth load error', e);
+      }
+    });
+
+    // ---------------------------
+    // UI actions
+    // ---------------------------
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        location.assign(withRepoPath('login.html'));
+      } catch (err) {
+        console.error('logout failed', err);
+      }
+    });
+
+    refreshBtn.addEventListener('click', async () => {
+      const user = auth.currentUser;
+      if (!user) return alert('Not signed in');
+      const counts = await fetchCounts();
+      renderMetrics(counts);
+      recentPlaceholder.textContent = `Refreshed at ${new Date().toLocaleString()}`;
+    });
+
+    openConsole.addEventListener('click', () => {
+      window.open(`https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore/data`, '_blank');
+    });
+
+    // Expose for quick debugging
+    window._bw_admin = { fetchCounts };
+
+  </script>
+</body>
+</html>
