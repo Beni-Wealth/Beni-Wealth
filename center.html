@@ -354,12 +354,16 @@
 
     cancelConfirm.addEventListener('click', () => { confirmModal.style.display = 'none'; confirmModal.setAttribute('aria-hidden','true'); });
 
+    // click outside modal to close
+    confirmModal.addEventListener('click', (e) => { if (e.target === confirmModal) { confirmModal.style.display = 'none'; confirmModal.setAttribute('aria-hidden','true'); } });
+
     confirmPost.addEventListener('click', async () => {
+      if (!currentUser) return alert('Not signed in');
       confirmPost.disabled = true;
       confirmPost.textContent = 'Posting...';
-      try {
-        if (!currentUser) throw new Error('Not signed in');
 
+      try {
+        // gather final values
         const title = (document.getElementById('taskTitle').value || '').trim();
         const platform = platformSelect.value;
         const subcategory = subcategorySelect.value;
@@ -369,7 +373,5 @@
         const chosenUnitPrice = Math.max(0, Number(unitPriceInput.value) || 0);
         const totalCost = chosenUnitPrice * workers;
 
-        const userRef = db.collection('users').doc(currentUser.uid);
-        const userDoc = await userRef.get();
-        const balance = userDoc.exists ? (userDoc.data().balance || 0) : 0;
-        if (balance < totalCost) { alert('Insufficient balance to post this task.'); confirmModal.style.display =
+        // Re-check balance server-side
+        const userRef = db.collect
