@@ -56,15 +56,14 @@
     .modal { width:100%; max-width:560px; background:linear-gradient(180deg,#0f1220,#0b0f18); border-radius:12px; padding:18px; border:1px solid rgba(255,255,255,0.03); }
     .line { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,0.02); color:var(--muted); }
 
+    .thumb-preview{ width:100%; max-width:160px; border-radius:8px; display:block; margin-top:8px }
+
     .bw-bottom-nav { position: fixed; left: var(--bw-nav-gap); right: var(--bw-nav-gap); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); height: var(--bw-bottom-nav-height); display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px; background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); border-radius: 40px; box-shadow: 0 14px 40px rgba(2,6,23,0.6); backdrop-filter: blur(6px); z-index:120; color:var(--text); }
     .bw-bottom-nav a{ text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; font-size:12px; text-align:center; user-select:none; }
     .bw-bottom-nav .icon-wrap{ width:44px; height:44px; border-radius:10px; background: rgba(255,255,255,0.04); display:grid; place-items:center; font-size:18px; }
     .bw-bottom-nav .center-btn{ width:82px; height:82px; border-radius:50%; background: linear-gradient(135deg,var(--accent-start),var(--accent-end)); display:grid; place-items:center; color:#041219; font-size:26px; box-shadow: 0 12px 36px rgba(61,46,111,0.35); transform:translateY(-22px); }
     .bw-bottom-nav a.active .icon-wrap{ background: linear-gradient(90deg,var(--accent-start),var(--accent-end)); color:#041219; }
     @media(max-width:420px){ .bw-bottom-nav a{ width:52px; font-size:11px } .bw-bottom-nav .center-btn{ width:70px; height:70px; transform:translateY(-18px) } }
-
-    /* toast */
-    .bw-toast { position: fixed; right: 18px; bottom: calc(var(--bw-bottom-nav-height) + 34px); background: linear-gradient(90deg,var(--accent-start),var(--accent-end)); color:#041219; padding:10px 14px; border-radius:10px; font-weight:700; box-shadow:0 12px 40px rgba(0,0,0,0.6); z-index:9999; }
   </style>
 </head>
 <body>
@@ -77,8 +76,7 @@
           <div class="muted">Create and fund a new advertising task</div>
         </div>
       </div>
-      <!-- NOTE: I removed the automatic auth check that was causing "Checking sign-in..." -->
-      <div id="acctArea" class="muted">Sign-in status unchanged (original auth not modified)</div>
+      <div id="acctArea" class="muted">Checking sign-in…</div>
     </header>
 
     <div class="grid">
@@ -120,6 +118,10 @@
         <label for="taskLink">Task Link</label>
         <input id="taskLink" type="url" placeholder="https://example.com/..." />
 
+        <label for="thumbnail">Thumbnail (optional) — image shown to workers as proof example</label>
+        <input id="thumbnail" type="file" accept="image/*" />
+        <img id="thumbPreview" class="thumb-preview" src="" alt="" style="display:none" />
+
         <div style="margin-top:18px; display:flex; gap:12px;">
           <button id="submitBtn" class="btn">Preview & Confirm</button>
           <button id="clearBtn" class="btn ghost">Clear</button>
@@ -149,6 +151,7 @@
         <div class="line"><div>Workers</div><div id="c_workers">0</div></div>
         <div class="line"><div>Total cost</div><div id="c_total">₦0</div></div>
         <div class="line"><div>Your balance</div><div id="c_balance">₦0</div></div>
+        <div class="line"><div>Thumbnail</div><div id="c_thumb">—</div></div>
         <div class="total" id="c_sum">Total: ₦0</div>
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
           <button id="cancelConfirm" class="btn ghost">Cancel</button>
@@ -158,19 +161,37 @@
     </div>
   </main>
 
-  <!-- bottom nav (fixed to repo path: /Beni-Wealth/) -->
+  <!-- bottom nav -->
   <nav class="bw-bottom-nav" role="navigation" aria-label="Main navigation">
     <a href="/Beni-Wealth/dashboard.html" data-key="home" title="Home"><div class="icon-wrap">🏠</div><div>Home</div></a>
-    <a href="/Beni-Wealth/shortlinks.html" data-key="shortlinks" title="Shortlinks"><div class="icon-wrap">🔗</div><div>Shortlinks</div></a>
+    <a href="/Beni-Wealth/convert.html" data-key="shortlinks" title="Shortlinks"><div class="icon-wrap">🔗</div><div>Shortlinks</div></a>
     <div class="nav-center"><a href="/Beni-Wealth/center.html" class="center-btn" data-key="create" aria-label="Create">➕</a></div>
     <a href="/Beni-Wealth/news.html" data-key="news" title="News"><div class="icon-wrap">💬</div><div>News</div></a>
     <a href="/Beni-Wealth/dashboard.html" data-key="assets" title="Assets / Dashboard"><div class="icon-wrap">👤</div><div>Assets</div></a>
   </nav>
 
-  <script>
-    // UI-only script (keeps your Firebase/auth code untouched).
-    // This script only powers the local UI, validation and confim modal.
+  <!-- Firebase compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+  <script>
+    const IMGUR_CLIENT_ID = 'fb533db21a59486'; // from your screenshot
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // UI refs
     const platformSelect = document.getElementById('platform');
     const subcategorySelect = document.getElementById('subcategory');
     const fixedPriceDisplay = document.getElementById('fixedPriceDisplay');
@@ -179,6 +200,12 @@
     const totalCostDiv = document.getElementById('totalCost');
     const submitBtn = document.getElementById('submitBtn');
     const clearBtn = document.getElementById('clearBtn');
+    const balanceDisplay = document.getElementById('balanceDisplay');
+    const userNameEl = document.getElementById('userName');
+    const acctArea = document.getElementById('acctArea');
+
+    const thumbnailInput = document.getElementById('thumbnail');
+    const thumbPreview = document.getElementById('thumbPreview');
 
     const confirmModal = document.getElementById('confirmModal');
     const cancelConfirm = document.getElementById('cancelConfirm');
@@ -193,6 +220,7 @@
     const c_total = document.getElementById('c_total');
     const c_balance = document.getElementById('c_balance');
     const c_sum = document.getElementById('c_sum');
+    const c_thumb = document.getElementById('c_thumb');
 
     const subcategoryData = {
       "WhatsApp": { "WhatsApp Group Join": 15, "WhatsApp channel follow": 20, "WhatsApp Community Join": 35, "WhatsApp status post": 30, "Contact add": 10, "WhatsApp connect": 150 },
@@ -207,6 +235,27 @@
     };
 
     let currentFixedPrice = 0;
+    let currentUser = null;
+    let currentBalance = 0;
+    let currentTaskId = null;
+    let selectedThumbnailFile = null;
+
+    // small toast helper
+    function toast(msg){
+      const t = document.createElement('div');
+      t.style.position = 'fixed';
+      t.style.right = '18px';
+      t.style.bottom = 'calc(var(--bw-bottom-nav-height) + 34px)';
+      t.style.background = 'linear-gradient(90deg,var(--accent-start),var(--accent-end))';
+      t.style.color = '#041219';
+      t.style.padding = '10px 14px';
+      t.style.borderRadius = '10px';
+      t.style.fontWeight = '700';
+      t.style.zIndex = 9999;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, 3000);
+    }
 
     function updateCost(){
       const workers = Math.max(0, parseInt(workersInput.value, 10) || 0);
@@ -227,7 +276,7 @@
         Object.entries(subcategoryData[selected]).forEach(([name, price]) => {
           const opt = document.createElement('option');
           opt.value = name;
-          opt.textContent = `${name} (₦${price})`;
+          opt.textContent = name + ' (₦' + price + ')';
           opt.dataset.price = price;
           subcategorySelect.appendChild(opt);
         });
@@ -262,13 +311,54 @@
       document.getElementById('description').value = '';
       document.getElementById('taskLink').value = '';
       totalCostDiv.textContent = 'Total Cost: ₦0';
+      thumbnailInput.value = '';
+      selectedThumbnailFile = null;
+      thumbPreview.style.display = 'none';
+      thumbPreview.src = '';
     });
 
-    submitBtn.addEventListener('click', () => {
+    thumbnailInput.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) {
+        selectedThumbnailFile = null;
+        thumbPreview.style.display = 'none';
+        thumbPreview.src = '';
+        return;
+      }
+      // small client-side size check (5MB)
+      if (f.size > 5 * 1024 * 1024) { alert('Thumbnail must be smaller than 5MB'); thumbnailInput.value = ''; return; }
+      selectedThumbnailFile = f;
+      const url = URL.createObjectURL(f);
+      thumbPreview.src = url;
+      thumbPreview.style.display = 'block';
+    });
+
+    async function uploadToImgur(file){
+      // returns image link or throws
+      if (!file) return null;
+      const form = new FormData();
+      form.append('image', file);
+      try {
+        const resp = await fetch('https://api.imgur.com/3/image', {
+          method: 'POST',
+          headers: { Authorization: 'Client-ID ' + IMGUR_CLIENT_ID },
+          body: form
+        });
+        const j = await resp.json();
+        if (j && j.success && j.data && j.data.link) return j.data.link;
+        throw new Error((j && j.data && j.data.error) ? JSON.stringify(j.data.error) : 'Imgur upload failed');
+      } catch (err) {
+        console.error('Imgur upload error', err);
+        throw err;
+      }
+    }
+
+    submitBtn.addEventListener('click', async () => {
       const title = (document.getElementById('taskTitle').value || '').trim();
       const platform = platformSelect.value;
       const subcategory = subcategorySelect.value;
       const workers = Math.max(0, parseInt(workersInput.value, 10) || 0);
+      const description = (document.getElementById('description').value || '').trim();
       const taskLink = (document.getElementById('taskLink').value || '').trim();
       const chosenUnitPrice = Math.max(0, Number(unitPriceInput.value) || 0);
       const totalCost = chosenUnitPrice * workers;
@@ -280,35 +370,17 @@
         return alert('Unit price must be at least ₦' + currentFixedPrice);
       }
 
-      // populate confirm modal (this page does not run auth; integrate your auth logic as you had previously)
+      const user = auth.currentUser;
+      if (!user) return alert('Please sign in first.');
+      currentUser = user;
+
+      try {
+        const uDoc = await db.collection('users').doc(user.uid).get();
+        currentBalance = uDoc.exists ? (uDoc.data().balance || 0) : 0;
+      } catch (err) {
+        console.error('Error fetching balance', err);
+        currentBalance = 0;
+      }
+
       c_title.textContent = title;
-      c_platform.textContent = platform;
-      c_subcategory.textContent = subcategory;
-      c_min.textContent = '₦' + currentFixedPrice;
-      c_unit.textContent = '₦' + chosenUnitPrice;
-      c_workers.textContent = workers;
-      c_total.textContent = '₦' + totalCost.toLocaleString();
-
-      // NOTE: since I didn't touch your auth, I can't reliably show "Your balance" here.
-      // Keep the modal open; your existing Firebase/auth code should populate c_balance before confirming.
-      c_balance.textContent = '—';
-
-      c_sum.textContent = 'Total: ₦' + totalCost.toLocaleString();
-      confirmModal.style.display = 'flex';
-      confirmModal.setAttribute('aria-hidden', 'false');
-    });
-
-    cancelConfirm.addEventListener('click', () => {
-      confirmModal.style.display = 'none';
-      confirmModal.setAttribute('aria-hidden', 'true');
-    });
-
-    // confirmPost should be wired to your server/Firestore logic — leave it to your original implementation.
-    confirmPost.addEventListener('click', () => {
-      alert('Confirm & Post pressed. Please ensure your original Firebase posting logic is present to process this.');
-      confirmModal.style.display = 'none';
-      confirmModal.setAttribute('aria-hidden', 'true');
-    });
-  </script>
-</body>
-                                    </html>
+      c_platform.te
