@@ -35,14 +35,14 @@
     }
 
     .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
-    .search{flex:1;min-width:200px}
+    .search{flex:1;min-width:200px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
     .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
     .small{font-size:13px;color:var(--muted)}
 
     /* table */
     .table-wrap{overflow:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
-    table{width:100%;border-collapse:collapse;min-width:720px}
+    table{width:100%;border-collapse:collapse;min-width:820px}
     th, td{padding:12px 14px;text-align:left;border-bottom:1px dashed rgba(255,255,255,0.03)}
     th{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
     td{font-size:15px;color:var(--text);vertical-align:middle}
@@ -99,7 +99,7 @@
 
     <section class="card" aria-labelledby="title">
       <div class="controls" role="toolbar" aria-label="controls">
-        <input id="q" class="search" placeholder="Search sender name or status..." />
+        <input id="q" class="search" placeholder="Search sender name, status, or proof URL..." />
         <button id="refreshBtn" class="btn ghost">Refresh</button>
         <div class="small" id="countText">—</div>
       </div>
@@ -108,6 +108,7 @@
         <table id="depositsTable" aria-live="polite">
           <thead>
             <tr>
+              <th>UID</th>
               <th>Sender name</th>
               <th>Date</th>
               <th>Proof</th>
@@ -115,7 +116,7 @@
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td colspan="4" class="small muted">Loading deposits…</td></tr>
+            <tr><td colspan="5" class="small muted">Loading deposits…</td></tr>
           </tbody>
         </table>
       </div>
@@ -171,7 +172,7 @@
     // ----------------- Firebase imports & init -----------------
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
@@ -209,7 +210,6 @@
     // ----------------- helpers -----------------
     function niceDate(d){
       try {
-        // support Firestore Timestamp objects and raw Date strings
         const dt = (d && typeof d.toDate === 'function') ? d.toDate() : (d ? new Date(d) : null);
         if(!dt || isNaN(dt.getTime())) return '-';
         return dt.toLocaleString();
@@ -219,89 +219,27 @@
     function statusClass(status){
       const s = String(status || '').toLowerCase();
       if(s === 'pending') return 'status-pending';
-      if(s === 'success' || s === 'successful' || s === 'completed') return 'status-success';
+      if(s === 'approved' || s === 'success' || s === 'successful' || s === 'completed') return 'status-success';
       if(s === 'rejected' || s === 'failed') return 'status-rejected';
       return 'status-pending';
     }
 
     function escapeHtml(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    // ----------------- load deposits -----------------
+    // ----------------- load deposits (realtime for current user) -----------------
     let currentUser = null;
     let depositsCache = []; // raw list
-
-    async function loadDepositsForUser(uid){
-      // show loading skeleton
-      tbody.innerHTML = `<tr><td colspan="4" class="small muted">Loading deposits…</td></tr>`;
-      countText.textContent = 'Loading…';
-
-      if(!uid){
-        tbody.innerHTML = `<tr><td colspan="4" class="small muted">No user id provided.</td></tr>`;
-        countText.textContent = '-';
-        return;
-      }
-
-      try {
-        const col = collection(db, 'deposits');
-
-        // First attempt: run the intended query with orderBy (this may require a composite index)
-        try {
-          const q = query(col, where('userId','==', uid), orderBy('createdAt','desc'));
-          const snap = await getDocs(q);
-          const docs = [];
-          snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
-          depositsCache = docs;
-          renderTable(depositsCache);
-          return;
-        } catch (errQuery) {
-          // if ordering/index fails, we fall back to a simpler query to determine if it's an index vs permission problem
-          console.warn('Primary ordered query failed — falling back to simpler query. Error:', errQuery);
-
-          // If permission denied, rethrow so outer catch handles it uniformly
-          if(errQuery && String(errQuery.code || '').toLowerCase().includes('permission')) throw errQuery;
-
-          // If it's an index error or other ordering issue, try the simple where query (no orderBy)
-          try {
-            const q2 = query(col, where('userId','==', uid));
-            const snap2 = await getDocs(q2);
-            const docs2 = [];
-            snap2.forEach(d => docs2.push({ id: d.id, ...d.data() }));
-            depositsCache = docs2;
-            renderTable(depositsCache);
-            // inform user that results are shown without ordering (helpful debug text)
-            countText.textContent = `${depositsCache.length} deposit${depositsCache.length>1?'s':''} (unordered)`;
-            return;
-          } catch (errFallback) {
-            console.warn('Fallback simple query also failed:', errFallback);
-            throw errFallback; // let outer catch render the full error
-          }
-        }
-
-      } catch (err) {
-        // top-level error handling — surface the real firebase error code + message in UI for debugging
-        console.error('loadDepositsForUser error', err);
-        const code = err && err.code ? err.code : 'unknown_error';
-        const msg  = err && err.message ? err.message : String(err);
-
-        // Friendly UI message while keeping sensitivity low
-        tbody.innerHTML = `<tr><td colspan="4" class="small muted">Unable to load deposits: <strong>${escapeHtml(code)}</strong> — ${escapeHtml(msg)}</td></tr>`;
-        countText.textContent = 'Error';
-
-        // Helpful hints for common cases
-        // permission-denied -> Firestore rules need to allow the read for this user
-        // failed-precondition / requires an index -> create composite index for where+orderBy
-        return;
-      }
-    }
+    let listenerUnsub = null;
 
     function renderTable(list){
       if(!list || list.length === 0){
-        tbody.innerHTML = `<tr><td colspan="4" class="small muted">No deposits found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="small muted">No deposits found.</td></tr>`;
         countText.textContent = '0 deposits';
         return;
       }
       countText.textContent = `${list.length} deposit${list.length>1?'s':''}`;
       const rows = list.map(doc => {
+        const uid = escapeHtml(doc.userId || '-');
         const sender = escapeHtml(doc.accountNameEntered || doc.username || '-');
         const createdAt = niceDate(doc.createdAt);
         const proofUrl = doc.proofUrl || '';
@@ -312,6 +250,7 @@
           : `<span class="small muted">—</span>`;
 
         return `<tr data-id="${escapeHtml(doc.id)}">
+          <td style="font-family:monospace">${uid}</td>
           <td>${sender}</td>
           <td>${createdAt}</td>
           <td>${proofCell}</td>
@@ -329,6 +268,56 @@
       });
     }
 
+    function attachListenerForUser(uid){
+      // teardown previous
+      if(listenerUnsub) { try { listenerUnsub(); } catch(e){}; listenerUnsub = null; }
+      depositsCache = [];
+      tbody.innerHTML = `<tr><td colspan="5" class="small muted">Loading deposits…</td></tr>`;
+      countText.textContent = 'Loading…';
+
+      if(!uid){
+        tbody.innerHTML = `<tr><td colspan="5" class="small muted">No user id provided.</td></tr>`;
+        countText.textContent = '-';
+        return;
+      }
+
+      try {
+        const col = collection(db, 'deposits');
+        const q = query(col, where('userId','==', uid), orderBy('createdAt','desc'));
+        listenerUnsub = onSnapshot(q, (snap) => {
+          const docs = [];
+          snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+          depositsCache = docs;
+          renderTable(depositsCache);
+        }, (err) => {
+          console.error('deposits listener error', err);
+          // try a simpler listener without orderBy (in case composite index is missing)
+          try {
+            const q2 = query(col, where('userId','==', uid));
+            if(listenerUnsub){ try{ listenerUnsub(); }catch(e){}; listenerUnsub = null; }
+            listenerUnsub = onSnapshot(q2, (snap2) => {
+              const docs2 = [];
+              snap2.forEach(d => docs2.push({ id: d.id, ...d.data() }));
+              depositsCache = docs2;
+              renderTable(depositsCache);
+            }, (err2) => {
+              console.error('fallback listener err', err2);
+              tbody.innerHTML = `<tr><td colspan="5" class="small muted">Unable to listen for deposits (check permissions/indexes).</td></tr>`;
+              countText.textContent = 'Error';
+            });
+          } catch(e){
+            console.error('fallback attach failed', e);
+            tbody.innerHTML = `<tr><td colspan="5" class="small muted">Unable to listen for deposits.</td></tr>`;
+            countText.textContent = 'Error';
+          }
+        });
+      } catch(e){
+        console.error('attachListenerForUser failed', e);
+        tbody.innerHTML = `<tr><td colspan="5" class="small muted">Unable to load deposits.</td></tr>`;
+        countText.textContent = 'Error';
+      }
+    }
+
     // ----------------- viewer overlay -----------------
     function openViewer(url){
       if(!url) return;
@@ -337,7 +326,6 @@
       openNewTabBtn.onclick = ()=> window.open(url, '_blank', 'noopener');
       viewerBackdrop.style.display = 'flex';
       viewerBackdrop.setAttribute('aria-hidden', 'false');
-      // trap scroll
       document.body.style.overflow = 'hidden';
     }
     function closeViewer(){
@@ -356,14 +344,14 @@
       const filtered = depositsCache.filter(d=>{
         const name = String(d.accountNameEntered || d.username || '').toLowerCase();
         const status = String(d.status || '').toLowerCase();
-        return name.includes(q) || status.includes(q) || (d.proofUrl || '').toLowerCase().includes(q);
+        return name.includes(q) || status.includes(q) || (d.proofUrl || '').toLowerCase().includes(q) || (d.userId || '').toLowerCase().includes(q);
       });
       renderTable(filtered);
     });
 
     refreshBtn.addEventListener('click', async ()=> {
       if(!currentUser) return;
-      await loadDepositsForUser(currentUser.uid);
+      attachListenerForUser(currentUser.uid);
     });
 
     // ----------------- auth & initial load -----------------
@@ -371,36 +359,40 @@
     onAuthStateChanged(auth, async (user) => {
       if(!user){
         acctDisplay.innerHTML = `Not signed in — <a style="color:var(--accent-start)" href="${withRepoPath('login.html')}">Sign in</a>`;
-        tbody.innerHTML = `<tr><td colspan="4" class="small muted">Sign in to view your deposit history.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="small muted">Sign in to view your deposit history.</td></tr>`;
         countText.textContent = '-';
         currentUser = null;
+        if(listenerUnsub){ try{ listenerUnsub(); }catch(e){}; listenerUnsub = null; }
         return;
       }
       currentUser = user;
       const username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
       acctDisplay.textContent = username;
-      // load deposits for the signed-in user
-      await loadDepositsForUser(user.uid);
+      // attach realtime listener for this user's deposits
+      attachListenerForUser(user.uid);
     });
 
-    // immediate check (safe fallback; onAuthStateChanged should handle most cases)
+    // fallback immediate check
     if(auth.currentUser){
       currentUser = auth.currentUser;
       acctDisplay.textContent = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'User');
-      loadDepositsForUser(currentUser.uid).catch(e=>console.error(e));
+      attachListenerForUser(currentUser.uid);
     } else {
-      // fallback: after 6s show sign-in CTA if listener doesn't report
+      // show sign in CTA after brief timeout if still unsigned
       setTimeout(()=> {
         if(!currentUser){
           acctDisplay.innerHTML = `Not signed in — <a style="color:var(--accent-start)" href="${withRepoPath('login.html')}">Sign in</a>`;
-          tbody.innerHTML = `<tr><td colspan="4" class="small muted">Sign in to view your deposit history.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="5" class="small muted">Sign in to view your deposit history.</td></tr>`;
           countText.textContent = '-';
         }
-      }, 6000);
+      }, 4000);
     }
 
     // set year
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Expose depositsCache for debugging
+    window._bw_debug = { depositsCache };
 
   </script>
 </body>
