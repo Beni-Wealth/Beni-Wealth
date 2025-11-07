@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Register</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg-1:#0b0613;
@@ -65,7 +65,7 @@
       outline: none;
       transition: box-shadow .12s, border-color .12s;
       box-sizing: border-box;
-      height:48px;               /* fixed height for consistent alignment */
+      height:48px;
       line-height:1.2;
     }
     input::placeholder{ color: rgba(233,240,255,0.28) }
@@ -104,8 +104,10 @@
       display:none;
     }
     .spinner.show{ display:inline-block }
+    @keyframes spin { to { transform: rotate(360deg) } }
 
     .muted { color:var(--muted); font-size:13px; margin-top:10px; text-align:center }
+    .ref-note { font-size:13px; color:var(--muted); margin-top:6px }
 
     @media (max-width:420px){
       .card{ padding:18px; }
@@ -129,6 +131,7 @@
       <input id="fullName" name="fullName" type="text" placeholder="Full name" required autocomplete="name" />
       <input id="username" name="username" type="text" placeholder="Username" required autocomplete="username" />
       <input id="referral" name="referral" type="text" placeholder="Referral code (optional)" />
+      <div id="refNote" class="ref-note" aria-live="polite" style="display:none"></div>
       <input id="email" name="email" type="email" placeholder="Email address" required autocomplete="email" />
       <div class="row" aria-hidden="false">
         <div><input id="password" name="password" type="password" placeholder="Password (min 6)" minlength="6" required autocomplete="new-password" /></div>
@@ -150,12 +153,11 @@
   </main>
 
   <script type="module">
-    // Modular Firebase (v9 style - static imports)
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, fetchSignInMethodsForEmail, updateProfile } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
     import { getFirestore, doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
-    // Beni-Wealth Firebase config (your project)
+    // --- config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -166,17 +168,20 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    // init
+    // --- init
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // DOM
+    // --- DOM
     const form = document.getElementById('registerForm');
     const submitBtn = document.getElementById('submitBtn');
     const spinner = document.getElementById('spinner');
     const btnText = document.getElementById('btnText');
     const errorText = document.getElementById('errorText');
+    const referralInput = document.getElementById('referral');
+    const refNote = document.getElementById('refNote');
+    const usernameInput = document.getElementById('username');
 
     function showError(msg){
       errorText.textContent = msg || '';
@@ -190,15 +195,43 @@
     // helper: check username uniqueness
     async function isUsernameTaken(name){
       try{
+        if(!name) return true;
         const q = query(collection(db, 'users'), where('username', '==', name));
         const snap = await getDocs(q);
         return !snap.empty;
       }catch(e){
         console.error('username check failed', e);
-        // if check fails, assume not taken to avoid blocking — but still log
+        // if check fails, assume not taken to avoid blocking registration
         return false;
       }
     }
+
+    // sanitize referral: allow letters, numbers, hyphen, underscore, max 40 chars
+    function sanitizeReferral(raw){
+      if(!raw) return null;
+      const t = String(raw).trim();
+      if(!t) return null;
+      const cleaned = t.replace(/[^\w-]/g, '').slice(0,40);
+      return cleaned || null;
+    }
+
+    // read referral from URL (supports ref=, referral=, r=)
+    (function prefillReferralFromURL(){
+      try{
+        const sp = new URLSearchParams(window.location.search);
+        const candidate = sp.get('ref') || sp.get('referral') || sp.get('r') || sp.get('refcode');
+        const sanitized = sanitizeReferral(candidate);
+        if(sanitized){
+          referralInput.value = sanitized;
+          refNote.style.display = 'block';
+          refNote.textContent = `Referred by: ${sanitized} — this will be recorded on signup.`;
+          // optional: visually mark it (do not make readonly so user can change)
+          referralInput.dataset.prefilled = '1';
+        }
+      }catch(e){
+        console.warn('prefill referral failed', e);
+      }
+    })();
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -206,13 +239,14 @@
       setLoading(true);
 
       const fullName = document.getElementById('fullName').value.trim();
-      const username = document.getElementById('username').value.trim();
-      const referral = document.getElementById('referral').value.trim() || null;
+      const username = usernameInput.value.trim();
+      const rawReferral = referralInput.value.trim();
+      const referral = sanitizeReferral(rawReferral);
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const confirm = document.getElementById('confirmPassword').value;
 
-      // simple client validation
+      // basic validation
       if(!fullName || !username || !email || !password || !confirm){
         showError('Please fill all required fields.');
         setLoading(false);
@@ -228,6 +262,11 @@
         setLoading(false);
         return;
       }
+      // prevent self-referral (if user enters their own username in referral) — only possible if username equals referral
+      if(referral && referral.toLowerCase() === username.toLowerCase()){
+        // ignore referral in this case
+        console.warn('Self-referral detected — ignoring.');
+      }
 
       try{
         // check if email already used
@@ -236,7 +275,7 @@
           throw new Error('Email already in use.');
         }
 
-        // check username
+        // check username uniqueness
         const taken = await isUsernameTaken(username);
         if(taken){
           throw new Error('Username is already taken. Choose another.');
@@ -247,28 +286,26 @@
         const user = cred.user;
 
         // update displayName (optional)
-        try{
-          await updateProfile(user, { displayName: username });
-        }catch(upErr){
-          console.warn('updateProfile failed', upErr);
-        }
+        try{ await updateProfile(user, { displayName: username }); } catch(upErr){ console.warn('updateProfile failed', upErr); }
 
-        // send email verification (non-blocking if it fails; but try)
-        try{
-          await sendEmailVerification(user);
-        }catch(verr){
-          console.warn('sendEmailVerification failed', verr);
-        }
+        // send email verification
+        try{ await sendEmailVerification(user); } catch(verr){ console.warn('sendEmailVerification failed', verr); }
 
-        // prepare doc payload (store username as authoritative field)
+        // prepare user doc payload. include multiple referral field names to maximize compatibility with other parts of the app.
+        const referralValue = (referral && referral.toLowerCase() !== username.toLowerCase()) ? referral : null;
+
         const payload = {
           fullName: fullName || '',
           username: username,
           email: user.email || email,
           balance: 0,
           plan: 'basic',
-          referralCode: referral || username,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
+          // referral fields (store same string across several keys so other code finds it)
+          referral: referralValue,
+          referrer: referralValue,
+          referredBy: referralValue,
+          referralCode: referralValue || username
         };
 
         // write user doc users/{uid}
@@ -286,4 +323,5 @@
     });
   </script>
 </body>
-</html>
+  </html>
+  
