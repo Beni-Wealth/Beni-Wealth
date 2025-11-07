@@ -251,9 +251,21 @@
 
     searchInput.addEventListener('input', applyFilter);
 
+    // --- changed copy behavior: build and copy full referral URL using username/code ---
     copyBtn.addEventListener('click', ()=>{
-      const code = refCodeEl.textContent || '';
-      navigator.clipboard.writeText(code).then(()=>{ copyBtn.textContent='Copied'; setTimeout(()=>copyBtn.textContent='Copy',1400) }).catch(()=>{ alert('Copy failed') });
+      const code = (refCodeEl.textContent || '').toString().trim();
+      if(!code){
+        alert('No referral code available to copy.');
+        return;
+      }
+      const url = `https://beni-wealth.github.io/Beni-Wealth/register.html?ref=${encodeURIComponent(code)}`;
+      navigator.clipboard.writeText(url).then(()=>{
+        const prev = copyBtn.textContent;
+        copyBtn.textContent='Copied';
+        setTimeout(()=>copyBtn.textContent=prev,1400);
+      }).catch(()=>{
+        alert('Copy failed — please copy the link manually:\n' + url);
+      });
     });
 
     refreshBtn.addEventListener('click', ()=> {
