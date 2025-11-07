@@ -54,7 +54,6 @@
     form { display:flex; flex-direction:column; gap:12px; }
     label{ font-size:13px; color:var(--muted); }
 
-    /* unified input styles */
     input[type="text"], input[type="email"], input[type="password"] {
       background: transparent;
       border: 1px solid rgba(255,255,255,0.04);
@@ -71,7 +70,14 @@
     input::placeholder{ color: rgba(233,240,255,0.28) }
     input:focus{ box-shadow: 0 6px 20px rgba(47,224,184,0.06); border-color: rgba(127,90,255,0.14) }
 
-    /* use grid for the two-column row so columns match exactly */
+    /* disabled style for the referral input */
+    input[disabled]{
+      background: rgba(255,255,255,0.01);
+      color: rgba(233,240,255,0.6);
+      border-color: rgba(255,255,255,0.02);
+      cursor: not-allowed;
+    }
+
     .row { display: grid; grid-template-columns: 1fr 1fr; gap:12px; }
 
     .error { color: var(--danger); font-size:13px; height:18px; margin-top:6px; }
@@ -107,7 +113,7 @@
     @keyframes spin { to { transform: rotate(360deg) } }
 
     .muted { color:var(--muted); font-size:13px; margin-top:10px; text-align:center }
-    .ref-note { font-size:13px; color:var(--muted); margin-top:6px }
+    .ref-note { font-size:13px; color:var(--muted); margin-top:6px; }
 
     @media (max-width:420px){
       .card{ padding:18px; }
@@ -130,8 +136,12 @@
     <form id="registerForm" novalidate>
       <input id="fullName" name="fullName" type="text" placeholder="Full name" required autocomplete="name" />
       <input id="username" name="username" type="text" placeholder="Username" required autocomplete="username" />
-      <input id="referral" name="referral" type="text" placeholder="Referral code (optional)" />
-      <div id="refNote" class="ref-note" aria-live="polite" style="display:none"></div>
+      <div>
+        <!-- referral is DISABLED (fully uneditable) -->
+        <input id="referral" name="referral" type="text" placeholder="Referral code (optional)" disabled />
+        <div id="refNote" class="ref-note" aria-live="polite" style="display:none"></div>
+      </div>
+
       <input id="email" name="email" type="email" placeholder="Email address" required autocomplete="email" />
       <div class="row" aria-hidden="false">
         <div><input id="password" name="password" type="password" placeholder="Password (min 6)" minlength="6" required autocomplete="new-password" /></div>
@@ -222,16 +232,28 @@
         const candidate = sp.get('ref') || sp.get('referral') || sp.get('r') || sp.get('refcode');
         const sanitized = sanitizeReferral(candidate);
         if(sanitized){
+          // populate but keep field disabled (fully uneditable)
           referralInput.value = sanitized;
           refNote.style.display = 'block';
-          refNote.textContent = `Referred by: ${sanitized} — this will be recorded on signup.`;
-          // optional: visually mark it (do not make readonly so user can change)
-          referralInput.dataset.prefilled = '1';
+          refNote.textContent = `Referral code applied: ${sanitized}`;
+        } else {
+          // no referral in URL — still keep field disabled (fully uneditable)
+          referralInput.value = '';
+          refNote.style.display = 'block';
+          refNote.textContent = 'Referral code (not provided)';
         }
       }catch(e){
         console.warn('prefill referral failed', e);
+        referralInput.value = '';
+        refNote.style.display = 'block';
+        refNote.textContent = 'Referral code (not provided)';
       }
     })();
+
+    // prevent any user edits/paste events programmatically as an extra guard (even though input is disabled)
+    referralInput.addEventListener('keydown', (e) => e.preventDefault());
+    referralInput.addEventListener('paste', (e) => e.preventDefault());
+    referralInput.addEventListener('input', (e) => { referralInput.value = referralInput.value; });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -240,7 +262,8 @@
 
       const fullName = document.getElementById('fullName').value.trim();
       const username = usernameInput.value.trim();
-      const rawReferral = referralInput.value.trim();
+      // read referral value from the input (disabled inputs are still readable via JS)
+      const rawReferral = referralInput.value ? String(referralInput.value).trim() : '';
       const referral = sanitizeReferral(rawReferral);
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
@@ -262,11 +285,9 @@
         setLoading(false);
         return;
       }
-      // prevent self-referral (if user enters their own username in referral) — only possible if username equals referral
-      if(referral && referral.toLowerCase() === username.toLowerCase()){
-        // ignore referral in this case
-        console.warn('Self-referral detected — ignoring.');
-      }
+
+      // prevent self-referral (if somehow referral equals username)
+      const willIgnoreReferral = referral && referral.toLowerCase() === username.toLowerCase();
 
       try{
         // check if email already used
@@ -292,7 +313,7 @@
         try{ await sendEmailVerification(user); } catch(verr){ console.warn('sendEmailVerification failed', verr); }
 
         // prepare user doc payload. include multiple referral field names to maximize compatibility with other parts of the app.
-        const referralValue = (referral && referral.toLowerCase() !== username.toLowerCase()) ? referral : null;
+        const referralValue = (referral && !willIgnoreReferral) ? referral : null;
 
         const payload = {
           fullName: fullName || '',
@@ -301,7 +322,7 @@
           balance: 0,
           plan: 'basic',
           createdAt: serverTimestamp(),
-          // referral fields (store same string across several keys so other code finds it)
+          // referral fields
           referral: referralValue,
           referrer: referralValue,
           referredBy: referralValue,
@@ -323,5 +344,4 @@
     });
   </script>
 </body>
-  </html>
-  
+</html>
