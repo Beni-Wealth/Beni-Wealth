@@ -244,6 +244,7 @@
     let currentUser = null;
     let currentBalance = 0;
     let selectedThumbnailFile = null;
+    let pendingTask = null;
 
     // ---- helpers ----
     function toast(msg){
@@ -359,7 +360,34 @@
       }
     }
 
-    // PREVIEW -> Populate confirm modal
+    // ----------------- ADDED: auth watcher, preview, confirm & post -----------------
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        acctArea.innerHTML = 'Not signed in — <a style="color:var(--accent-start)" href="/Beni-Wealth/login.html">Sign in</a>';
+        userNameEl.textContent = '—';
+        balanceDisplay.textContent = '—';
+        currentUser = null;
+        currentBalance = 0;
+        return;
+      }
+      currentUser = user;
+      try {
+        const userRef = db.collection('users').doc(user.uid);
+        const snap = await userRef.get();
+        const data = (snap && snap.exists) ? snap.data() : {};
+        const display = data.username || data.name || user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+        const bal = Number(data.balance ?? data.wallet ?? 0) || 0;
+        userNameEl.textContent = display;
+        acctArea.innerHTML = `<strong>${escapeHtml(display)}</strong>`;
+        balanceDisplay.textContent = '₦' + bal.toLocaleString();
+        currentBalance = bal;
+      } catch (err) {
+        console.error('Failed to load user profile', err);
+        acctArea.textContent = (user.displayName || (user.email ? user.email.split('@')[0] : 'User'));
+      }
+    });
+
+    // Show preview / confirm modal
     submitBtn.addEventListener('click', async () => {
       const title = (document.getElementById('taskTitle').value || '').trim();
       const platform = platformSelect.value;
@@ -382,4 +410,143 @@
       currentUser = user;
 
       try {
-        const uDoc = 
+        // fetch current user doc to ensure up-to-date balance & profile fields
+        const userRef = db.collection('users').doc(user.uid);
+        const userSnap = await userRef.get();
+        const udata = (userSnap && userSnap.exists) ? userSnap.data() : {};
+        currentBalance = Number(udata.balance ?? udata.wallet ?? 0) || 0;
+        const displayName = udata.username || udata.name || user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+
+        // update UI (right column + header)
+        userNameEl.textContent = displayName;
+        balanceDisplay.textContent = '₦' + currentBalance.toLocaleString();
+        acctArea.innerHTML = `<strong>${escapeHtml(displayName)}</strong>`;
+
+        // store pending task (so confirm handler can access)
+        pendingTask = {
+          title,
+          platform,
+          subcategory,
+          workers,
+          description,
+          taskLink,
+          chosenUnitPrice,
+          totalCost
+        };
+
+        // populate confirm modal
+        c_title.textContent = title;
+        c_platform.textContent = platform;
+        c_subcategory.textContent = subcategory;
+        c_min.textContent = '₦' + currentFixedPrice;
+        c_unit.textContent = '₦' + chosenUnitPrice;
+        c_workers.textContent = workers;
+        c_total.textContent = '₦' + totalCost.toLocaleString();
+        c_balance.textContent = '₦' + currentBalance.toLocaleString();
+        c_sum.textContent = 'Total: ₦' + totalCost.toLocaleString();
+        c_thumb.textContent = selectedThumbnailFile ? selectedThumbnailFile.name : '—';
+
+        // show modal
+        confirmModal.style.display = 'flex';
+        confirmModal.setAttribute('aria-hidden', 'false');
+      } catch (err) {
+        console.error('Error fetching current user doc', err);
+        alert('Could not load your profile. Please try again.');
+      }
+    });
+
+    // cancel confirmation
+    cancelConfirm.addEventListener('click', () => {
+      confirmModal.style.display = 'none';
+      confirmModal.setAttribute('aria-hidden', 'true');
+    });
+
+    // confirm & post — uploads thumbnail (if any), then runs a transaction:
+    // 1) re-check balance, 2) create task doc, 3) deduct balance
+    confirmPost.addEventListener('click', async () => {
+      if (!pendingTask) return alert('Nothing to post.');
+      if (!currentUser) return alert('Please sign in.');
+
+      // disable while posting
+      confirmPost.disabled = true;
+      cancelConfirm.disabled = true;
+      const origText = confirmPost.textContent;
+      confirmPost.textContent = 'Posting...';
+
+      const {
+        title, platform, subcategory, workers, description, taskLink, chosenUnitPrice, totalCost
+      } = pendingTask;
+
+      try {
+        // upload thumbnail first (outside transaction)
+        let thumbnailUrl = null;
+        if (selectedThumbnailFile) {
+          try {
+            thumbnailUrl = await uploadToImgur(selectedThumbnailFile);
+          } catch (uploadErr) {
+            console.warn('Thumbnail upload failed', uploadErr);
+            const cont = confirm('Thumbnail upload failed — continue without thumbnail?');
+            if (!cont) throw uploadErr;
+          }
+        }
+
+        // transaction: check balance and write
+        await db.runTransaction(async (tx) => {
+          const userRef = db.collection('users').doc(currentUser.uid);
+          const userSnap = await tx.get(userRef);
+          if (!userSnap.exists) throw new Error('User profile not found');
+          const bal = Number(userSnap.data().balance ?? userSnap.data().wallet ?? 0) || 0;
+          if (bal < totalCost) throw new Error('Insufficient balance. Please top-up your account.');
+
+          // create task doc
+          const taskRef = db.collection('advertise_tasks').doc(); // collection name; change if needed
+          tx.set(taskRef, {
+            title,
+            platform,
+            subcategory,
+            unitPrice: chosenUnitPrice,
+            workers,
+            totalCost,
+            description,
+            taskLink,
+            thumbnail: thumbnailUrl || null,
+            owner: currentUser.uid,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          // deduct balance
+          tx.update(userRef, { balance: bal - totalCost });
+        });
+
+        toast('Task posted and balance updated successfully.');
+        // hide modal and reset form
+        confirmModal.style.display = 'none';
+        confirmModal.setAttribute('aria-hidden', 'true');
+        cancelConfirm.disabled = false;
+        confirmPost.disabled = false;
+        confirmPost.textContent = origText;
+
+        // clear form (optional)
+        clearBtn.click();
+        // refresh currentBalance and display
+        try {
+          const uSnap = await db.collection('users').doc(currentUser.uid).get();
+          const fresh = uSnap.exists ? uSnap.data() : {};
+          currentBalance = Number(fresh.balance ?? fresh.wallet ?? 0) || 0;
+          balanceDisplay.textContent = '₦' + currentBalance.toLocaleString();
+        } catch (e) { /* ignore */ }
+      } catch (err) {
+        console.error('Post failed', err);
+        alert('Failed to post task: ' + (err.message || err));
+        cancelConfirm.disabled = false;
+        confirmPost.disabled = false;
+        confirmPost.textContent = origText;
+      }
+    });
+
+    // ----------------- end added block -----------------
+
+  </script>
+</body>
+</html>
