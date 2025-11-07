@@ -177,7 +177,7 @@
 
   <script>
     // ---- CONFIG ----
-    const IMGUR_CLIENT_ID = 'fb533db21a59486'; // your Imgur client-id from screenshot
+    const IMGUR_CLIENT_ID = 'fb533db21a59486'; // your Imgur client-id (if used)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -194,6 +194,26 @@
     }
     const auth = firebase.auth();
     const db = firebase.firestore();
+
+    // ---- small helpers ----
+    function escapeHtml(s){
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function toast(msg){
+      const t = document.createElement('div');
+      t.style.position = 'fixed';
+      t.style.right = '18px';
+      t.style.bottom = 'calc(var(--bw-bottom-nav-height) + 34px)';
+      t.style.background = 'linear-gradient(90deg,var(--accent-start),var(--accent-end))';
+      t.style.color = '#041219';
+      t.style.padding = '10px 14px';
+      t.style.borderRadius = '10px';
+      t.style.fontWeight = '700';
+      t.style.zIndex = 9999;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, 3000);
+    }
 
     // ---- DOM refs ----
     const platformSelect = document.getElementById('platform');
@@ -246,23 +266,7 @@
     let selectedThumbnailFile = null;
     let pendingTask = null;
 
-    // ---- helpers ----
-    function toast(msg){
-      const t = document.createElement('div');
-      t.style.position = 'fixed';
-      t.style.right = '18px';
-      t.style.bottom = 'calc(var(--bw-bottom-nav-height) + 34px)';
-      t.style.background = 'linear-gradient(90deg,var(--accent-start),var(--accent-end))';
-      t.style.color = '#041219';
-      t.style.padding = '10px 14px';
-      t.style.borderRadius = '10px';
-      t.style.fontWeight = '700';
-      t.style.zIndex = 9999;
-      t.textContent = msg;
-      document.body.appendChild(t);
-      setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, 3000);
-    }
-
+    // ---- helpers / UI logic ----
     function updateCost(){
       const workers = Math.max(0, parseInt(workersInput.value, 10) || 0);
       const unit = Math.max(0, Number(unitPriceInput.value) || 0);
@@ -360,7 +364,7 @@
       }
     }
 
-    // ----------------- ADDED: auth watcher, preview, confirm & post -----------------
+    // ----------------- auth watcher, preview, confirm & post -----------------
     auth.onAuthStateChanged(async (user) => {
       if (!user) {
         acctArea.innerHTML = 'Not signed in — <a style="color:var(--accent-start)" href="/Beni-Wealth/login.html">Sign in</a>';
@@ -382,8 +386,13 @@
         balanceDisplay.textContent = '₦' + bal.toLocaleString();
         currentBalance = bal;
       } catch (err) {
-        console.error('Failed to load user profile', err);
-        acctArea.textContent = (user.displayName || (user.email ? user.email.split('@')[0] : 'User'));
+        // don't block the UI — log and show reasonable defaults
+        console.warn('Could not read user profile on auth change, falling back to safe defaults.', err);
+        const display = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+        userNameEl.textContent = display;
+        acctArea.innerHTML = `<strong>${escapeHtml(display)}</strong>`;
+        balanceDisplay.textContent = '₦0';
+        currentBalance = 0;
       }
     });
 
@@ -409,50 +418,52 @@
       if (!user) return alert('Please sign in first.');
       currentUser = user;
 
+      // Attempt to fetch fresh profile but don't block the flow if it fails
       try {
-        // fetch current user doc to ensure up-to-date balance & profile fields
         const userRef = db.collection('users').doc(user.uid);
         const userSnap = await userRef.get();
         const udata = (userSnap && userSnap.exists) ? userSnap.data() : {};
-        currentBalance = Number(udata.balance ?? udata.wallet ?? 0) || 0;
+        currentBalance = Number(udata.balance ?? udata.wallet ?? 0) || currentBalance || 0;
         const displayName = udata.username || udata.name || user.displayName || (user.email ? user.email.split('@')[0] : 'User');
-
-        // update UI (right column + header)
         userNameEl.textContent = displayName;
-        balanceDisplay.textContent = '₦' + currentBalance.toLocaleString();
         acctArea.innerHTML = `<strong>${escapeHtml(displayName)}</strong>`;
-
-        // store pending task (so confirm handler can access)
-        pendingTask = {
-          title,
-          platform,
-          subcategory,
-          workers,
-          description,
-          taskLink,
-          chosenUnitPrice,
-          totalCost
-        };
-
-        // populate confirm modal
-        c_title.textContent = title;
-        c_platform.textContent = platform;
-        c_subcategory.textContent = subcategory;
-        c_min.textContent = '₦' + currentFixedPrice;
-        c_unit.textContent = '₦' + chosenUnitPrice;
-        c_workers.textContent = workers;
-        c_total.textContent = '₦' + totalCost.toLocaleString();
-        c_balance.textContent = '₦' + currentBalance.toLocaleString();
-        c_sum.textContent = 'Total: ₦' + totalCost.toLocaleString();
-        c_thumb.textContent = selectedThumbnailFile ? selectedThumbnailFile.name : '—';
-
-        // show modal
-        confirmModal.style.display = 'flex';
-        confirmModal.setAttribute('aria-hidden', 'false');
+        balanceDisplay.textContent = '₦' + currentBalance.toLocaleString();
       } catch (err) {
-        console.error('Error fetching current user doc', err);
-        alert('Could not load your profile. Please try again.');
+        // removed the alert — fallback to existing currentBalance/displayName.
+        console.warn('Could not fetch user document, continuing with cached/available user data.', err);
+        const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+        userNameEl.textContent = displayName;
+        acctArea.innerHTML = `<strong>${escapeHtml(displayName)}</strong>`;
+        balanceDisplay.textContent = '₦' + (currentBalance || 0).toLocaleString();
       }
+
+      // store pending task (so confirm handler can access)
+      pendingTask = {
+        title,
+        platform,
+        subcategory,
+        workers,
+        description,
+        taskLink,
+        chosenUnitPrice,
+        totalCost
+      };
+
+      // populate confirm modal
+      c_title.textContent = title;
+      c_platform.textContent = platform;
+      c_subcategory.textContent = subcategory;
+      c_min.textContent = '₦' + currentFixedPrice;
+      c_unit.textContent = '₦' + chosenUnitPrice;
+      c_workers.textContent = workers;
+      c_total.textContent = '₦' + totalCost.toLocaleString();
+      c_balance.textContent = '₦' + (currentBalance || 0).toLocaleString();
+      c_sum.textContent = 'Total: ₦' + totalCost.toLocaleString();
+      c_thumb.textContent = selectedThumbnailFile ? selectedThumbnailFile.name : '—';
+
+      // show modal
+      confirmModal.style.display = 'flex';
+      confirmModal.setAttribute('aria-hidden', 'false');
     });
 
     // cancel confirmation
@@ -544,8 +555,6 @@
         confirmPost.textContent = origText;
       }
     });
-
-    // ----------------- end added block -----------------
 
   </script>
 </body>
