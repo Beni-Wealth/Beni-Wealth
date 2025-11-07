@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Admin Adverts</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, Arial; background: linear-gradient(180deg,#070417,#0d0426); color: #e6eef8; }
+    .glass { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.04); }
+    .truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .modal-backdrop { background: rgba(0,0,0,0.6); }
+    .status-pill { font-weight:700; padding:.25rem .6rem; border-radius:999px; font-size:.8rem; }
+  </style>
+</head>
+<body class="min-h-screen p-6">
+  <main class="max-w-6xl mx-auto">
+    <header class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-semibold">Admin — Manage Adverts</h1>
+        <p class="text-sm text-slate-400 mt-1">View adverts and approve, reject or take them down. (Admins only)</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div id="adminBadge" class="text-sm text-slate-300">Checking…</div>
+        <button id="signOutBtn" class="px-3 py-2 bg-white/6 rounded-md text-sm hover:bg-white/8 hidden">Sign out</button>
+      </div>
+    </header>
+
+    <!-- access denied -->
+    <section id="notAllowed" class="glass rounded-xl p-6 mb-6 hidden">
+      <h2 class="text-lg font-medium text-rose-400">Access denied</h2>
+      <p id="notAllowedMsg" class="text-sm text-slate-300 mt-2">You are not authorized.</p>
+    </section>
+
+    <!-- admin ui -->
+    <section id="adminUI" class="hidden">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        <div class="flex items-center gap-3">
+          <input id="searchInput" placeholder="Search by title, owner UID, or doc id..." class="rounded-lg bg-white/5 px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-96" />
+          <button id="refreshBtn" class="px-3 py-2 bg-indigo-600 rounded-lg text-white">Refresh</button>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <select id="statusFilter" class="rounded-lg bg-white/5 px-3 py-2">
+            <option value="all">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="takedown">Taken down</option>
+          </select>
+          <div id="stats" class="text-sm text-slate-300"></div>
+        </div>
+      </div>
+
+      <div id="listWrap" class="grid gap-4">
+        <!-- adverts inserted here -->
+      </div>
+    </section>
+
+    <footer class="mt-8 text-center text-xs text-slate-400">© Beni-Wealth</footer>
+  </main>
+
+  <!-- detail modal -->
+  <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 modal-backdrop">
+    <div class="absolute inset-0" id="modalBackdrop"></div>
+
+    <div class="relative w-full max-w-3xl glass rounded-xl shadow-2xl p-6 z-10">
+      <button id="modalCloseX" aria-label="Close" class="absolute right-4 top-4 text-slate-300 hover:text-white">✕</button>
+
+      <div class="flex items-start gap-4">
+        <div class="w-20 h-20 rounded-lg bg-white/6 flex items-center justify-center text-lg font-semibold" id="m_avatar">AD</div>
+
+        <div class="flex-1">
+          <h3 id="m_title" class="text-lg font-semibold">Title</h3>
+          <p id="m_sub" class="text-sm text-slate-300 mt-1">subtitle</p>
+        </div>
+
+        <div class="text-right">
+          <div id="m_status" class="status-pill bg-yellow-300 text-black">PENDING</div>
+          <div class="text-xs text-slate-400 mt-2" id="m_created">—</div>
+        </div>
+      </div>
+
+      <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <dl class="text-sm text-slate-300 space-y-3">
+            <div><dt class="font-medium text-slate-200">Document ID</dt><dd id="m_id" class="font-mono text-xs text-slate-200"></dd></div>
+            <div><dt class="font-medium text-slate-200">Owner (UID)</dt><dd id="m_owner"></dd></div>
+            <div><dt class="font-medium text-slate-200">Workers requested</dt><dd id="m_workers"></dd></div>
+            <div><dt class="font-medium text-slate-200">Unit price</dt><dd id="m_unit"></dd></div>
+            <div><dt class="font-medium text-slate-200">Total cost</dt><dd id="m_total"></dd></div>
+            <div><dt class="font-medium text-slate-200">Task link</dt><dd id="m_link"></dd></div>
+          </dl>
+        </div>
+
+        <div>
+          <div id="thumbWrap" class="mb-3 hidden">
+            <img id="m_thumb" src="" alt="thumbnail" class="w-full rounded-md border border-white/6 object-cover max-h-48" />
+          </div>
+          <div>
+            <dt class="font-medium text-slate-200">Status history / meta</dt>
+            <pre id="m_meta" class="text-xs text-slate-400 bg-white/3 p-3 rounded-md overflow-auto" style="min-height:80px"></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5 flex gap-3">
+        <button id="approveBtn" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 rounded-lg">Approve</button>
+        <button id="rejectBtn" class="px-4 py-2 bg-rose-500 hover:bg-rose-400 rounded-lg">Reject</button>
+        <button id="takedownBtn" class="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg">Take down</button>
+        <div class="ml-auto text-sm text-slate-400 self-center">Only admins may change status</div>
+      </div>
+
+      <div id="modalMsg" class="mt-3 text-sm text-rose-400"></div>
+    </div>
+  </div>
+
+  <!-- toast -->
+  <div id="toast" class="fixed right-6 bottom-6 z-60 hidden"></div>
+
+  <script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import {
+      getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    if (!getApps().length) initializeApp(firebaseConfig);
+    const db = getFirestore();
+    const auth = getAuth();
+
+    const ALLOWED_ADMINS = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
+
+    // UI refs
+    const notAllowed = document.getElementById('notAllowed');
+    const notAllowedMsg = document.getElementById('notAllowedMsg');
+    const adminUI = document.getElementById('adminUI');
+    const adminBadge = document.getElementById('adminBadge');
+    const signOutBtn = document.getElementById('signOutBtn');
+    const listWrap = document.getElementById('listWrap');
+    const stats = document.getElementById('stats');
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    const detailModal = document.getElementById('detailModal');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalCloseX = document.getElementById('modalCloseX');
+
+    const m_avatar = document.getElementById('m_avatar');
+    const m_title = document.getElementById('m_title');
+    const m_sub = document.getElementById('m_sub');
+    const m_status = document.getElementById('m_status');
+    const m_created = document.getElementById('m_created');
+    const m_id = document.getElementById('m_id');
+    const m_owner = document.getElementById('m_owner');
+    const m_workers = document.getElementById('m_workers');
+    const m_unit = document.getElementById('m_unit');
+    const m_total = document.getElementById('m_total');
+    const m_link = document.getElementById('m_link');
+    const m_thumb = document.getElementById('m_thumb');
+    const thumbWrap = document.getElementById('thumbWrap');
+    const m_meta = document.getElementById('m_meta');
+
+    const approveBtn = document.getElementById('approveBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
+    const takedownBtn = document.getElementById('takedownBtn');
+
+    const toastEl = document.getElementById('toast');
+
+    let currentUser = null;
+    let unsubscribe = null;
+    let cachedItems = []; // {id,data}
+
+    function showToast(msg, ok=true){
+      toastEl.textContent = msg;
+      toastEl.className = `fixed right-6 bottom-6 z-60 px-4 py-2 rounded-md ${ok ? 'bg-emerald-500' : 'bg-rose-600'} text-white`;
+      toastEl.style.display = 'block';
+      setTimeout(()=> toastEl.style.display = 'none', 3000);
+    }
+
+    function fmtTS(ts){
+      if(!ts) return '-';
+      try{
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleString();
+      }catch(e){ return String(ts); }
+    }
+
+    function escapeHtml(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // auth / access control
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      if(user && ALLOWED_ADMINS.includes(user.email)){
+        adminBadge.textContent = `Signed in as ${user.email}`;
+        signOutBtn.classList.remove('hidden');
+        adminUI.classList.remove('hidden');
+        notAllowed.classList.add('hidden');
+        startListener();
+      } else {
+        // not allowed
+        adminBadge.textContent = user ? `Signed in as ${user.email}` : 'Not signed in';
+        signOutBtn.classList.add('hidden');
+        adminUI.classList.add('hidden');
+        notAllowed.classList.remove('hidden');
+        if(user){
+          notAllowedMsg.innerHTML = `Signed-in account (${escapeHtml(user.email)}) is not an administrator. Allowed admin emails: <strong>${ALLOWED_ADMINS.join(', ')}</strong>.`;
+        } else {
+          notAllowedMsg.innerHTML = `Please sign-in with an administrator account: <strong>${ALLOWED_ADMINS.join(', ')}</strong>.`;
+        }
+        if(unsubscribe){ unsubscribe(); unsubscribe = null; }
+      }
+    });
+
+    signOutBtn.addEventListener('click', async ()=>{
+      await signOut(auth);
+      showToast('Signed out', true);
+    });
+
+    // start live listener
+    function startListener(){
+      if(unsubscribe) unsubscribe();
+      const col = collection(db, 'advertise_tasks');
+      const q = query(col, orderBy('createdAt','desc'));
+      unsubscribe = onSnapshot(q, snap=>{
+        cachedItems = [];
+        snap.forEach(d => cachedItems.push({ id: d.id, data: d.data() }));
+        renderList();
+        updateStats();
+      }, err=>{
+        console.error('listener error', err);
+        showToast('Failed to load adverts', false);
+      });
+    }
+
+    // rendering helpers
+    function statusBadge(s){
+      s = String(s || 'pending').toLowerCase();
+      if(s === 'pending') return `<span class="status-pill bg-yellow-300 text-black">PENDING</span>`;
+      if(s === 'approved') return `<span class="status-pill bg-emerald-300 text-black">APPROVED</span>`;
+      if(s === 'rejected') return `<span class="status-pill bg-rose-300 text-black">REJECTED</span>`;
+      if(s === 'takedown') return `<span class="status-pill bg-gray-400 text-black">TAKEN DOWN</span>`;
+      return `<span class="status-pill bg-white/6 text-black">${escapeHtml(String(s).toUpperCase())}</span>`;
+    }
+
+    function renderList(){
+      const q = (searchInput.value || '').trim().toLowerCase();
+      const filt = statusFilter.value || 'all';
+
+      const items = cachedItems.filter(it => {
+        const d = it.data;
+        // status filter
+        const st = String(d.status || 'pending').toLowerCase();
+        if(filt !== 'all' && st !== filt) return false;
+        if(!q) return true;
+        // search doc id, title, owner uid, link
+        const hay = [it.id, d.title||'', d.owner||'', d.taskLink||'', String(d.workers||'')].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+
+      if(items.length === 0){
+        listWrap.innerHTML = `<div class="text-center text-slate-400 py-10">No adverts match the filters.</div>`;
+        return;
+      }
+
+      listWrap.innerHTML = items.map(it=>{
+        const d = it.data;
+        const created = d.createdAt ? fmtTS(d.createdAt) : '-';
+        const avatarLetter = escapeHtml((d.title||'A').charAt(0).toUpperCase());
+        const thumbHtml = d.thumbnail ? `<img src="${escapeHtml(d.thumbnail)}" alt="" class="w-28 h-20 object-cover rounded-md border border-white/6">` : `<div class="w-28 h-20 bg-white/6 rounded-md flex items-center justify-center text-slate-200">No image</div>`;
+        return `
+          <div class="glass rounded-xl p-4 flex items-center justify-between gap-3 hover:shadow-lg transition">
+            <div class="flex items-center gap-4 min-w-0">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-lg bg-white/6 flex items-center justify-center text-lg font-semibold">${avatarLetter}</div>
+                <div class="min-w-0">
+                  <div class="text-sm font-medium text-slate-200 truncate">${escapeHtml(d.title || '—')}</div>
+                  <div class="text-xs text-slate-400 truncate-2">${escapeHtml(d.taskLink||'—')}</div>
+                  <div class="text-xs text-slate-400 mt-2">Owner: <span class="font-mono text-xs">${escapeHtml(d.owner||'-')}</span> • ${escapeHtml(created)}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <div class="text-sm font-semibold text-slate-200">₦${Number(d.totalCost||0).toLocaleString()}</div>
+              <div>${statusBadge(d.status)}</div>
+              <div>
+                <button data-id="${it.id}" class="openBtn px-3 py-1 rounded-md bg-white/6 hover:bg-white/8 text-xs">View</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateStats(){
+      const total = cachedItems.length;
+      const counts = cachedItems.reduce((acc, it)=>{
+        const s = (it.data.status || 'pending');
+        acc[s] = (acc[s]||0) + 1; return acc;
+      }, {});
+      stats.innerHTML = `Total: <strong>${total}</strong> • Pending: <strong>${counts.pending||0}</strong> • Approved: <strong>${counts.approved||0}</strong> • Rejected: <strong>${counts.rejected||0}</strong> • Taken down: <strong>${counts.takedown||0}</strong>`;
+    }
+
+    // delegate open button
+    listWrap.addEventListener('click', (e)=>{
+      const b = e.target.closest('.openBtn');
+      if(!b) return;
+      const id = b.dataset.id;
+      openDetails(id);
+    });
+
+    // open details
+    function openDetails(id){
+      const found = cachedItems.find(x => x.id === id);
+      if(!found){ showToast('Item not found', false); return; }
+      const d = found.data;
+
+      m_avatar.textContent = (d.title||'A').charAt(0).toUpperCase();
+      m_title.textContent = d.title || '—';
+      m_sub.textContent = (d.sub || d.subcategory || '') + (d.taskLink ? ' • ' + d.taskLink : '');
+      const st = (d.status || 'pending').toLowerCase();
+      m_status.innerHTML = (st === 'pending') ? '<span class="status-pill bg-yellow-300 text-black">PENDING</span>' :
+                       (st === 'approved') ? '<span class="status-pill bg-emerald-300 text-black">APPROVED</span>' :
+                       (st === 'rejected') ? '<span class="status-pill bg-rose-300 text-black">REJECTED</span>' :
+                       '<span class="status-pill bg-white/6 text-black">' + escapeHtml(st.toUpperCase()) + '</span>';
+
+      m_created.textContent = d.createdAt ? fmtTS(d.createdAt) : '-';
+      m_id.textContent = found.id;
+      m_owner.textContent = d.owner || '-';
+      m_workers.textContent = String(d.workers || '-');
+      m_unit.textContent = '₦' + (Number(d.unitPrice||0).toLocaleString());
+      m_total.textContent = '₦' + (Number(d.totalCost||0).toLocaleString());
+      if(d.taskLink){
+        m_link.innerHTML = `<a href="${escapeHtml(d.taskLink)}" target="_blank" rel="noopener" class="text-indigo-400 underline">${escapeHtml(d.taskLink)}</a>`;
+      } else m_link.textContent = '-';
+
+      if(d.thumbnail){
+        thumbWrap.classList.remove('hidden');
+        m_thumb.src = d.thumbnail;
+      } else {
+        thumbWrap.classList.add('hidden');
+        m_thumb.src = '';
+      }
+
+      // meta / history
+      m_meta.textContent = JSON.stringify(d.meta || { status: d.status || 'pending' }, null, 2);
+
+      // enable/disable buttons depending on status
+      const isPending = (!d.status || d.status === 'pending');
+      approveBtn.disabled = !isPending;
+      rejectBtn.disabled = !isPending;
+      takedownBtn.disabled = false; // takedown can be applied anytime
+
+      // show modal
+      detailModal.classList.remove('hidden');
+      detailModal.style.display = 'flex';
+    }
+
+    // close modal
+    function closeModal(){
+      detailModal.classList.add('hidden');
+      detailModal.style.display = 'none';
+    }
+    modalBackdrop.addEventListener('click', closeModal);
+    modalCloseX.addEventListener('click', closeModal);
+
+    // actions
+    approveBtn.addEventListener('click', async ()=>{
+      const id = m_id.textContent;
+      if(!id) return;
+      if(!currentUser || !ALLOWED_ADMINS.includes(currentUser.email)){ showToast('Not authorized', false); return; }
+      if(!confirm('Approve this advert?')) return;
+      await changeStatus(id, 'approved', { note: 'Approved by admin' });
+    });
+    rejectBtn.addEventListener('click', async ()=>{
+      const id = m_id.textContent;
+      if(!id) return;
+      if(!currentUser || !ALLOWED_ADMINS.includes(currentUser.email)){ showToast('Not authorized', false); return; }
+      const reason = prompt('Optional reason for rejection:');
+      await changeStatus(id, 'rejected', reason ? { reason } : {});
+    });
+    takedownBtn.addEventListener('click', async ()=>{
+      const id = m_id.textContent;
+      if(!id) return;
+      if(!currentUser || !ALLOWED_ADMINS.includes(currentUser.email)){ showToast('Not authorized', false); return; }
+      if(!confirm('Take down this advert (visible but marked as taken down)?')) return;
+      await changeStatus(id, 'takedown', { note: 'Taken down by admin' });
+    });
+
+    async function changeStatus(docId, newStatus, meta = {}){
+      try{
+        const ref = doc(db, 'advertise_tasks', docId);
+        await updateDoc(ref, {
+          status: newStatus,
+          processedBy: { uid: currentUser.uid, email: currentUser.email },
+          processedAt: serverTimestamp(),
+          meta: meta
+        });
+        showToast(`Marked ${newStatus}`);
+        closeModal();
+      }catch(err){
+        console.error('status update error', err);
+        showToast('Failed to update status', false);
+      }
+    }
+
+    // search / filters
+    statusFilter.addEventListener('change', renderList);
+    searchInput.addEventListener('input', throttle(renderList, 250));
+    refreshBtn.addEventListener('click', () => { if(unsubscribe){ unsubscribe(); unsubscribe = null; startListener(); } });
+
+    // utility throttle
+    function throttle(fn, wait){
+      let t = null;
+      return (...args) => {
+        if(t) clearTimeout(t);
+        t = setTimeout(()=>{ fn(...args); t = null; }, wait);
+      };
+    }
+
+    // initial empty render
+    renderList();
+
+  </script>
+</body>
+</html>
