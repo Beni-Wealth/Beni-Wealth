@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg1:#0b0613; --bg2:#120521;
+      --bg1:#060511; --bg2:#0f0920;
       --muted: rgba(255,255,255,0.64);
       --text: #eaf2ff;
       --accent-start:#2fe0b8; --accent-end:#7a5fff;
@@ -15,69 +15,53 @@
       --card: rgba(255,255,255,0.02);
       --radius:14px;
       --bottom-nav-h:72px;
-      --page-pad:22px;
+      --page-pad:24px;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
     .shell{max-width:1100px;margin:0 auto;padding:var(--page-pad) 18px calc(var(--bottom-nav-h) + 48px)}
+
     header.appbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
     .brand{display:flex;align-items:center;gap:12px}
-    .brand img{width:54px;height:54px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+    .brand img{width:56px;height:56px;border-radius:12px;object-fit:cover;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
     .title-block .title{font-weight:700;font-size:18px}
-    .title-block .sub{color:var(--muted);font-size:13px;margin-top:3px}
-    .muted{color:var(--muted)}
-    .card{
-      background: linear-gradient(180deg, var(--card), rgba(255,255,255,0.01));
-      border-radius:calc(var(--radius));
-      padding:18px;
-      border:1px solid rgba(255,255,255,0.04);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    }
+    .title-block .sub{color:var(--muted);font-size:13px;margin-top:4px}
 
-    .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
-    .search{flex:1;min-width:200px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
+    .card{background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:calc(var(--radius));padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow: 0 30px 80px rgba(2,6,23,0.65);}
+
+    .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+    .search{flex:1;min-width:200px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));color:var(--text);box-shadow: inset 0 2px 6px rgba(0,0,0,0.4)}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
     .small{font-size:13px;color:var(--muted)}
 
     /* table */
-    .table-wrap{overflow:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
-    table{width:100%;border-collapse:collapse;min-width:820px}
-    th, td{padding:12px 14px;text-align:left;border-bottom:1px dashed rgba(255,255,255,0.03)}
-    th{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
-    td{font-size:15px;color:var(--text);vertical-align:middle}
-    tr:hover td{background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));}
+    .table-wrap{overflow:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+    table{width:100%;border-collapse:collapse;min-width:860px}
+    thead th{position:sticky;top:0;background:linear-gradient(90deg, rgba(47,224,184,0.06), rgba(122,95,255,0.04));color:var(--text);padding:14px;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.03);font-size:13px}
+    tbody td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.02);font-size:15px;color:var(--text);vertical-align:middle}
+    tbody tr{transition:background .18s,transform .12s}
+    tbody tr:hover{background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));transform:translateY(-2px)}
 
-    .status-pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:13px;color:#041219}
-    .status-pending{background:#fff6d6;color:#6a4f00} /* light yellow */
-    .status-success{background:#bff0d9;color:#05461f} /* light green */
-    .status-rejected{background:#ffdede;color:#6b0b0b} /* light red */
+    .status-pill{display:inline-block;padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#041219}
+    .status-pending{background:#fff6d6;color:#6a4f00}
+    .status-success{background:#bff0d9;color:#05461f}
+    .status-rejected{background:#ffdede;color:#6b0b0b}
 
     .proof-link{color:var(--accent-start);text-decoration:underline;cursor:pointer}
-    .proof-link:focus{outline:2px solid rgba(47,224,184,0.25);border-radius:4px}
 
-    /* overlay viewer */
-    .viewer-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);z-index:9999;padding:20px}
-    .viewer{max-width:100%;max-height:100%;border-radius:12px;overflow:hidden;box-shadow:0 30px 100px rgba(0,0,0,0.8);background:#000;display:flex;flex-direction:column}
+    /* viewer overlay */
+    .viewer-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,0.6),rgba(0,0,0,0.85));z-index:9999;padding:20px}
+    .viewer{max-width:100%;max-height:100%;border-radius:14px;overflow:hidden;box-shadow:0 40px 140px rgba(0,0,0,0.8);background:#000;display:flex;flex-direction:column}
     .viewer img{max-width:calc(100vw - 80px);max-height:calc(100vh - 160px);display:block;margin:0 auto}
     .viewer .meta{padding:12px;background:rgba(0,0,0,0.45);color:var(--muted);display:flex;justify-content:space-between;align-items:center}
-    .viewer .meta .close{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;cursor:pointer}
+    .viewer .meta .close{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;cursor:pointer}
 
-    /* responsive tweaks */
-    @media (max-width:760px){
-      th,td{padding:10px}
-      .brand img{width:48px;height:48px}
-      .controls{flex-direction:column;align-items:stretch}
-    }
+    @media (max-width:760px){thead th,tbody td{padding:10px} .brand img{width:48px;height:48px} .controls{flex-direction:column;align-items:stretch}}
 
-    /* bottom nav (same theme) */
-    .bw-bottom-nav {
-      position: fixed; left: 18px; right: 18px; bottom: 16px; height: var(--bottom-nav-h);
-      display:flex;align-items:center;justify-content:space-between;padding:10px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));
-      border-radius: 40px; box-shadow: 0 14px 40px rgba(2,6,23,0.6); backdrop-filter: blur(6px); z-index:120; color:var(--text);
-    }
-    .bw-bottom-nav a{ text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; font-size:12px; text-align:center; user-select:none }
+    /* bottom nav */
+    .bw-bottom-nav {position: fixed; left: 18px; right: 18px; bottom: 16px; height: var(--bottom-nav-h); display:flex;align-items:center;justify-content:space-between;padding:10px; background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); border-radius: 40px; box-shadow: 0 14px 40px rgba(2,6,23,0.6); backdrop-filter: blur(6px); z-index:120; color:var(--text);} 
+    .bw-bottom-nav a{ text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; font-size:12px; text-align:center; user-select:none } 
     .bw-bottom-nav .icon-wrap{ width:44px; height:44px; border-radius:10px; background: rgba(255,255,255,0.04); display:grid;place-items:center; font-size:18px }
   </style>
 </head>
@@ -99,7 +83,7 @@
 
     <section class="card" aria-labelledby="title">
       <div class="controls" role="toolbar" aria-label="controls">
-        <input id="q" class="search" placeholder="Search sender name, status, or proof URL..." />
+        <input id="q" class="search" placeholder="Search sender name, status, proof URL, id or bank..." />
         <button id="refreshBtn" class="btn ghost">Refresh</button>
         <div class="small" id="countText">—</div>
       </div>
@@ -108,7 +92,7 @@
         <table id="depositsTable" aria-live="polite">
           <thead>
             <tr>
-              <th>UID</th>
+              <th>ID</th>
               <th>Sender name</th>
               <th>Date</th>
               <th>Proof</th>
@@ -178,7 +162,7 @@
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
       projectId: "beni-wealths",
-      storageBucket: "beni-wealths.firebasestorage.app",
+      storageBucket: "beni-weal ths.firebasestorage.app",
       messagingSenderId: "807950483822",
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
@@ -239,7 +223,7 @@
       }
       countText.textContent = `${list.length} deposit${list.length>1?'s':''}`;
       const rows = list.map(doc => {
-        const uid = escapeHtml(doc.userId || '-');
+        const id = escapeHtml(doc.id || '-');
         const sender = escapeHtml(doc.accountNameEntered || doc.username || '-');
         const createdAt = niceDate(doc.createdAt);
         const proofUrl = doc.proofUrl || '';
@@ -250,7 +234,7 @@
           : `<span class="small muted">—</span>`;
 
         return `<tr data-id="${escapeHtml(doc.id)}">
-          <td style="font-family:monospace">${uid}</td>
+          <td style="font-family:monospace">${id}</td>
           <td>${sender}</td>
           <td>${createdAt}</td>
           <td>${proofCell}</td>
@@ -344,7 +328,7 @@
       const filtered = depositsCache.filter(d=>{
         const name = String(d.accountNameEntered || d.username || '').toLowerCase();
         const status = String(d.status || '').toLowerCase();
-        return name.includes(q) || status.includes(q) || (d.proofUrl || '').toLowerCase().includes(q) || (d.userId || '').toLowerCase().includes(q);
+        return name.includes(q) || status.includes(q) || (d.proofUrl || '').toLowerCase().includes(q) || (d.id || '').toLowerCase().includes(q) || (d.bank || '').toLowerCase().includes(q);
       });
       renderTable(filtered);
     });
