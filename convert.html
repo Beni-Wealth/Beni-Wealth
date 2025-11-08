@@ -83,27 +83,27 @@
     </header>
 
     <h1 id="pageTitle">Shortlinks</h1>
-    <p class="intro">Choose a shortlink option below. Clicking a tile will open the corresponding shortlink page.</p>
+    <p class="intro">Choose a shortlink option below. Clicking a tile will open the corresponding shortlink.</p>
 
     <section class="grid" aria-label="Shortlink options">
-      <a id="short1" class="tile" role="button" href="#">
+      <a id="short1" class="tile" role="button" href="#" rel="noopener">
         <div class="icon">A</div>
         <div class="body">
           <h3>Shortlink — 1</h3>
-          <p>Redirects to <code>shortlink-1.html</code></p>
+          <p>Open the shortlink</p>
         </div>
       </a>
 
-      <a id="short2" class="tile" role="button" href="#">
+      <a id="short2" class="tile" role="button" href="#" rel="noopener">
         <div class="icon">B</div>
         <div class="body">
           <h3>Shortlink — 2</h3>
-          <p>Redirects to <code>shortlink-2.html</code></p>
+          <p>Open the shortlink</p>
         </div>
       </a>
     </section>
 
-    <p class="note">Tip: these tiles use the repo-aware routing helper so they will work when hosted at <code>https://beni-wealth.github.io/Beni-Wealth/</code>.</p>
+    <p class="note">Tip: tiles use the repo-aware routing helper for navigation elsewhere in the app.</p>
 
     <footer>© <span id="year"></span> Beni-Wealth</footer>
   </main>
@@ -170,17 +170,18 @@
       signinArea.textContent = username;
     });
 
-    // wire shortlink tiles — use withRepoPath to build full URL
+    // SHORTLINK targets — external URLs you requested
+    const target1 = 'https://tpi.li/Shortlink-1';
+    const target2 = 'https://shrinkme.click/Shortlink-2';
+
+    // wire shortlink tiles — set hrefs and attach robust click handlers that navigate to external targets
     const short1 = document.getElementById('short1');
     const short2 = document.getElementById('short2');
 
-    const target1 = withRepoPath('shortlink-1.html');
-    const target2 = withRepoPath('shortlink-2.html');
-
-    // set hrefs (for SEO / fallback) and attach robust click handlers
     short1.setAttribute('href', target1);
     short2.setAttribute('href', target2);
 
+    // open in same tab (location.assign) — change to window.open(..., '_blank') if you want new tab
     short1.addEventListener('click', (e) => { e.preventDefault(); location.assign(target1); });
     short2.addEventListener('click', (e) => { e.preventDefault(); location.assign(target2); });
 
