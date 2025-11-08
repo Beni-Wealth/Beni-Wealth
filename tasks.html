@@ -3,197 +3,142 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Tasks</title>
+  <title>Tasks — Beni-Wealth</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg-1:#080415;
-      --bg-2:#0f0720;
-      --card: rgba(255,255,255,0.03);
-      --muted: rgba(255,255,255,0.62);
-      --accent-start: #2fe0b8;
-      --accent-end: #7a5fff;
-      --glass: rgba(255,255,255,0.02);
-      --radius: 14px;
-      --max-width: 1100px;
+      --bg1:#060511; --bg2:#0f0920;
+      --muted: rgba(255,255,255,0.65);
+      --text: #eaf2ff;
+      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --card: rgba(255,255,255,0.02);
+      --glass: rgba(255,255,255,0.03);
+      --radius:14px;
     }
     *{box-sizing:border-box}
     body{
-      margin:0;min-height:100vh;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;
-      background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
-      color: #eaf2ff; -webkit-font-smoothing:antialiased;padding:20px; display:flex; justify-content:center;
+      margin:0; min-height:100vh; font-family:'Poppins',sans-serif;
+      background: linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
     }
-    .wrap { width:100%; max-width:var(--max-width) }
 
-    header.top { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px; }
-    .brand{display:flex;gap:12px;align-items:center}
-    .brand img{ width:56px;height:56px;border-radius:10px;object-fit:cover }
-    .title{font-weight:700;font-size:18px}
-    .muted{color:var(--muted);font-size:13px}
+    .wrap{max-width:1100px;margin:22px auto;padding:20px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .back{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:10px;text-decoration:none;color:var(--text)}
+    .title{font-size:20px;font-weight:700}
+    .sub{color:var(--muted);font-size:13px}
 
-    .controls{display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
-    .search{flex:1;min-width:220px}
-    .search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background: rgba(255,255,255,0.02);color:inherit}
+    .controls{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+    .search{flex:1;min-width:180px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+    .btn{padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
 
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-    @media(max-width:1100px){ .grid{grid-template-columns:repeat(2,1fr)} }
-    @media(max-width:680px){ .grid{grid-template-columns:1fr} }
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+    .thumb{width:100%;height:150px;object-fit:cover;border-radius:8px;cursor:pointer}
+    .card h3{margin:10px 0 6px 0;font-size:16px}
+    .meta{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;margin-bottom:8px}
 
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 12px 40px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:10px}
-    .thumb{width:100%;height:140px;border-radius:10px;object-fit:cover;background:linear-gradient(180deg,#0b0b0f,#0a0811);display:block;cursor:pointer}
-    .meta{display:flex;justify-content:space-between;align-items:center;gap:8px}
-    .meta .left{display:flex;flex-direction:column;gap:6px}
-    .tag{padding:6px 8px;border-radius:999px;font-size:12px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
-    .price{font-weight:800;font-size:18px;color:var(--accent-start)}
+    .price{font-weight:800;color:var(--accent-start);font-size:18px}
+    .progressWrap{margin-top:10px}
+    .progressBar{height:10px;background:rgba(255,255,255,0.04);border-radius:999px;overflow:hidden}
+    .progressFill{height:100%;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));width:0%}
+    .progressText{font-size:12px;color:var(--muted);margin-top:6px}
 
-    .progressWrap{height:10px;background:rgba(255,255,255,0.03);border-radius:8px;overflow:hidden;margin-top:8px}
-    .progressBar{height:100%;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));width:0%}
+    .actions{display:flex;gap:8px;margin-top:12px}
+    .small{font-size:13px;color:var(--muted)}
+    .empty{padding:40px;text-align:center;color:var(--muted)}
 
-    .actions{display:flex;gap:8px;margin-top:10px}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
-    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .btn.primary{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219}
+    /* overlays */
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:999;padding:18px}
+    .panel{width:100%;max-width:920px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 120px rgba(0,0,0,0.8);overflow:auto;max-height:90vh}
+    .panel .closeX{float:right;background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
+    .panel h2{margin:6px 0 12px 0}
+    .detailRow{display:flex;gap:12px;align-items:center;margin:8px 0}
+    .detailCol{flex:1}
+    textarea, input[type="file"], input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+    .submitProof{display:flex;gap:8px;align-items:center;margin-top:12px}
+    .thumbLarge{max-width:100%;border-radius:8px;display:block;margin:12px 0}
 
-    .empty{padding:28px;text-align:center;color:var(--muted);border-radius:12px;background:var(--card)}
-
-    /* overlay details */
-    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:999;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.8));padding:12px}
-    .panel{width:100%;max-width:920px;background:linear-gradient(180deg,#0b0f17,#06060a);border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 100px rgba(0,0,0,0.7);color:#eaf2ff;max-height:90vh;overflow:auto;position:relative}
-    .panel h2{margin:0 0 8px 0}
-    .panel .close{position:absolute;right:18px;top:14px;font-size:20px;background:transparent;border:none;color:var(--muted);cursor:pointer}
-
-    .two-col{display:grid;grid-template-columns:1fr 360px;gap:18px}
-    @media(max-width:980px){ .two-col{grid-template-columns:1fr} }
-
-    label{display:block;font-size:13px;color:var(--muted);margin-top:10px}
-    textarea,input[type="text"],input[type="file"]{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background: rgba(255,255,255,0.02);color:inherit;font-size:14px}
-    textarea{min-height:120px;resize:vertical}
-    .proof-preview{width:100%;max-width:260px;margin-top:8px;border-radius:10px;display:block;object-fit:cover}
-
-    /* image viewer overlay */
-    .imgOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:1500;padding:8px}
-    .imgBox{max-width:95%;max-height:95%;border-radius:12px;overflow:hidden}
-    .imgBox img{display:block;max-width:100%;max-height:100%;object-fit:contain}
-
-    .topbar{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-    .backBtn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:10px;color:var(--muted);cursor:pointer}
-
-    .toast{position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;padding:10px 14px;border-radius:10px;font-weight:700;z-index:2000}
-
-    /* small responsive tweaks to make overlays full-screen friendly */
-    @media (max-width:520px){
-      .panel{padding:14px;border-radius:12px;height:100vh;max-height:100vh;border-left:none;border-right:none;border-bottom:none;border-top:none}
-      .panel .close{right:10px;top:10px}
-      .imgOverlay{padding:0}
-    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header class="top" aria-live="polite">
-      <div class="brand">
-        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth">
-        <div>
-          <div class="title">Available Tasks</div>
-          <div class="muted">Approved adverts open for workers</div>
-        </div>
+    <div class="top">
+      <a class="back" href="dashboard.html" id="backBtn">← Back to dashboard</a>
+      <div style="text-align:right">
+        <div class="title">Available Tasks</div>
+        <div class="sub">Tasks you can perform — pay attention to proof rules.</div>
       </div>
-
-      <div style="display:flex;gap:8px;align-items:center">
-        <button id="backBtn" class="backBtn" aria-label="Back to dashboard">← Back</button>
-        <div id="acctArea" class="muted" style="min-width:160px;text-align:right">Checking sign-in…</div>
-      </div>
-    </header>
+    </div>
 
     <div class="controls">
-      <div class="search"><input id="search" placeholder="Search title, platform, subcategory or task id..." /></div>
-      <select id="filterPlatform" style="padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit">
-        <option value="">All platforms</option>
-      </select>
+      <input id="search" class="search" placeholder="Search by title, platform or subcategory" />
+      <button id="refresh" class="btn ghost">Refresh</button>
     </div>
 
-    <div id="listArea" class="grid" aria-live="polite"><div class="empty">Loading tasks…</div></div>
+    <div id="grid" class="grid" aria-live="polite">
+      <div class="empty">Loading tasks…</div>
+    </div>
   </div>
 
-  <!-- details overlay -->
-  <div id="overlay" class="overlay" aria-hidden="true">
-    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
-      <button id="closeOverlay" class="close" aria-label="Close details">✕</button>
-      <div class="topbar">
-        <h2 id="panelTitle">Task details</h2>
-        <div style="margin-left:auto" id="panelPrice" class="price">₦0</div>
-      </div>
+  <!-- details + submit overlay -->
+  <div id="overlay" class="overlay" aria-hidden="true" role="dialog">
+    <div class="panel" role="document" aria-modal="true">
+      <button id="closeOverlay" class="closeX" aria-label="Close overlay">✕</button>
+      <div id="detailContent">
+        <h2 id="d_title">Title</h2>
+        <div class="meta"><div id="d_platform" class="small">Platform</div><div id="d_price" class="price">₦0</div></div>
+        <img id="d_thumb" class="thumbLarge" src="" alt="thumbnail" style="display:none;cursor:pointer" />
+        <div id="d_desc" class="small" style="white-space:pre-wrap"></div>
 
-      <div class="two-col">
-        <div>
-          <div style="display:flex;gap:12px;align-items:flex-start">
-            <img id="panelThumb" src="" alt="" style="width:140px;height:120px;border-radius:10px;object-fit:cover;background:rgba(255,255,255,0.02);cursor:pointer">
-            <div>
-              <div id="panelPlatform" style="font-weight:700"></div>
-              <div id="panelSub" class="muted" style="margin-top:6px"></div>
-              <div style="margin-top:8px" id="panelDesc" class="muted"></div>
-            </div>
-          </div>
-
-          <label>Task link</label>
-          <input id="panelLink" type="text" readonly />
-
-          <div style="margin-top:10px">
-            <label>Text proof (describe what you did)</label>
-            <textarea id="textProof" placeholder="Write your proof (e.g., screenshot description, caption, group link)"></textarea>
-          </div>
-
-          <div style="margin-top:10px">
-            <label>Image proof (optional)</label>
-            <input id="imageProof" type="file" accept="image/*" />
-            <img id="imagePreview" class="proof-preview" src="" alt="" style="display:none" />
-          </div>
-
-          <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
-            <button id="submitProof" class="btn primary">Submit proof</button>
-            <button id="startBtn" class="btn secondary">Start Task</button>
-            <div id="proofNote" class="muted" style="margin-left:auto">Reward: <span id="panelReward">₦0</span></div>
-          </div>
-
-          <div class="footer-note muted" style="margin-top:12px">After submitting proof, the advertiser will review it. Only <strong>approved</strong> proofs increase progress and pay out.</div>
+        <div style="margin-top:12px">
+          <div class="small">Task link</div>
+          <div style="margin-top:6px"><a id="d_link" href="#" target="_blank" rel="noopener" class="small" style="color:var(--accent-start)"></a></div>
         </div>
 
-        <aside style="padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px">
-          <div style="font-weight:700">Quick info</div>
-          <div class="muted" style="margin-top:8px" id="panelWorkers">Workers: -</div>
-          <div class="muted" style="margin-top:6px" id="panelUnit">Unit price: -</div>
-          <div class="muted" style="margin-top:6px" id="panelTotal">Total cost: -</div>
-          <div style="height:10px"></div>
-          <div style="font-weight:700">Advert by</div>
-          <div id="panelOwner" class="muted" style="margin-top:6px">—</div>
-        </aside>
-      </div>
+        <div style="margin-top:12px">
+          <div class="small">Progress</div>
+          <div class="progressWrap">
+            <div class="progressBar"><div id="d_progress" class="progressFill" style="width:0%"></div></div>
+            <div id="d_progressText" class="progressText">0/0</div>
+          </div>
+        </div>
 
+        <hr style="margin:14px 0;border-color:rgba(255,255,255,0.03)" />
+
+        <div>
+          <div style="font-weight:700;margin-bottom:8px">Submit proof</div>
+          <label class="small">Text proof (describe what you did)</label>
+          <textarea id="proofText" placeholder="Paste link, paste screenshot text or short explanation"></textarea>
+
+          <label class="small" style="margin-top:8px">Image proof (optional) — will be uploaded to Imgur</label>
+          <input id="proofImage" type="file" accept="image/*" />
+          <div style="margin-top:8px">
+            <button id="submitProofBtn" class="btn">Submit Proof</button>
+            <button id="closeOverlayBtn" class="btn ghost">Close</button>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
-  <!-- image viewer overlay -->
-  <div id="imgOverlay" class="imgOverlay" style="display:none" aria-hidden="true">
-    <div style="position:absolute;right:18px;top:18px;z-index:1510"><button id="closeImg" class="backBtn">✕</button></div>
-    <div class="imgBox"><img id="imgLarge" src="" alt="Thumbnail"></div>
+  <!-- thumbnail viewer overlay -->
+  <div id="imgOverlay" class="overlay" aria-hidden="true">
+    <div class="panel" style="max-width:900px; max-height:90vh;">
+      <button id="closeImgOverlay" class="closeX">✕</button>
+      <img id="imgView" src="" alt="thumbnail" style="max-width:100%;display:block;margin-top:8px;border-radius:8px" />
+    </div>
   </div>
 
   <script type="module">
-    // ---------- config ----------
-    const IMGUR_CLIENT_ID = 'fb533db21a59486'; // your Imgur client id
-    const REPO_BASE = '/Beni-Wealth';
-    function withRepoPath(target){ if(!target) return location.href; try { const maybe = new URL(target, location.href); if (maybe.origin === location.origin) { const pathname = maybe.pathname.replace(/\/+/g,'/'); if (pathname.indexOf(REPO_BASE) === 0) return maybe.origin + pathname + maybe.search + maybe.hash; } return maybe.href; } catch(e){} const clean = String(target).replace(/^\/+/,''); const repoClean = REPO_BASE.replace(/^\/+/,''); if (clean.indexOf(repoClean) === 0) return location.origin + '/' + clean; return location.origin + REPO_BASE + (clean ? '/' + clean : ''); }
+    // ---------- CONFIG ----------
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getFirestore, collection, query, where, onSnapshot, getDocs, addDoc, serverTimestamp, runTransaction, doc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
-    // ---------- imports ----------
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import {
-      getFirestore, collection, query, where, orderBy, onSnapshot,
-      addDoc, serverTimestamp, getDoc, doc, updateDoc, runTransaction,
-      getDocs
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
-    // ---------- firebase config ----------
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -203,418 +148,379 @@
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
+
+    const IMGUR_CLIENT_ID = 'fb533db21a59486'; // use your Imgur client id
+
+    // ---------- INIT ----------
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
     // ---------- DOM ----------
-    const acctArea = document.getElementById('acctArea');
-    const listArea = document.getElementById('listArea');
-    const searchInput = document.getElementById('search');
-    const filterPlatform = document.getElementById('filterPlatform');
-    const backBtn = document.getElementById('backBtn');
+    const grid = document.getElementById('grid');
+    const search = document.getElementById('search');
+    const refresh = document.getElementById('refresh');
 
+    // overlay elems
     const overlay = document.getElementById('overlay');
     const closeOverlay = document.getElementById('closeOverlay');
-    const panelTitle = document.getElementById('panelTitle');
-    const panelThumb = document.getElementById('panelThumb');
-    const panelPlatform = document.getElementById('panelPlatform');
-    const panelSub = document.getElementById('panelSub');
-    const panelDesc = document.getElementById('panelDesc');
-    const panelLink = document.getElementById('panelLink');
-    const panelWorkers = document.getElementById('panelWorkers');
-    const panelUnit = document.getElementById('panelUnit');
-    const panelTotal = document.getElementById('panelTotal');
-    const panelOwner = document.getElementById('panelOwner');
-    const panelPrice = document.getElementById('panelPrice');
-    const panelReward = document.getElementById('panelReward');
-    const textProof = document.getElementById('textProof');
-    const imageProof = document.getElementById('imageProof');
-    const imagePreview = document.getElementById('imagePreview');
-    const submitProof = document.getElementById('submitProof');
-    const startBtn = document.getElementById('startBtn');
+    const closeOverlayBtn = document.getElementById('closeOverlayBtn');
+    const d_title = document.getElementById('d_title');
+    const d_platform = document.getElementById('d_platform');
+    const d_price = document.getElementById('d_price');
+    const d_desc = document.getElementById('d_desc');
+    const d_link = document.getElementById('d_link');
+    const d_thumb = document.getElementById('d_thumb');
+    const d_progress = document.getElementById('d_progress');
+    const d_progressText = document.getElementById('d_progressText');
+    const proofText = document.getElementById('proofText');
+    const proofImage = document.getElementById('proofImage');
+    const submitProofBtn = document.getElementById('submitProofBtn');
 
+    // thumbnail viewer
     const imgOverlay = document.getElementById('imgOverlay');
-    const imgLarge = document.getElementById('imgLarge');
-    const closeImg = document.getElementById('closeImg');
+    const imgView = document.getElementById('imgView');
+    const closeImgOverlay = document.getElementById('closeImgOverlay');
 
-    // ---------- state ----------
     let currentUser = null;
-    let adverts = [];                 // array of advert documents (snap objects)
-    let platformsSet = new Set();
-    const approvedCounts = new Map(); // advertId => number of approved proofs
-    const userSubmitted = new Set();  // advertId set where current user created any proof (pending/approved/rejected)
-    let advertsUnsub = null;
+    let advertsListenerUnsub = null;
+    const submissionsListeners = new Map(); // advertId -> unsubscribe
+    const advertsCache = new Map(); // advertId -> doc data
+    const userActiveSubmissionMap = new Map(); // advertId -> boolean (whether current user has pending/approved submission)
+
+    let activeAdvertId = null; // which advert is open in overlay
 
     // ---------- helpers ----------
-    function toast(msg, ms=2200){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, ms); }
-    function fmtN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
-    function rewardOf(total){ return Math.round(Number(total || 0) * 0.7); }
+    function el(tag, attrs = {}, ...children) {
+      const e = document.createElement(tag);
+      for (const k in attrs) {
+        if (k === 'class') e.className = attrs[k];
+        else if (k === 'dataset') Object.assign(e.dataset, attrs[k]);
+        else e.setAttribute(k, attrs[k]);
+      }
+      children.forEach(c => { if (typeof c === 'string') e.appendChild(document.createTextNode(c)); else if (c) e.appendChild(c); });
+      return e;
+    }
 
-    async function uploadToImgur(file){
-      if(!file) return null;
-      const fd = new FormData(); fd.append('image', file);
+    function formatNGN(n){ try { return '₦' + (Math.round(n).toLocaleString('en-NG')); } catch(e) { return '₦' + n; } }
+    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function showOverlayForAdvert(ad) {
+      // ad: { id, data }
+      activeAdvertId = ad.id;
+      d_title.textContent = ad.title || ad.data?.title || 'Untitled';
+      d_platform.textContent = ad.data?.platform || '';
+      // show 70% of totalCost
+      const totalCost = Number(ad.data?.totalCost ?? ad.data?.total_cost ?? ad.data?.total ?? 0) || 0;
+      const displayPrice = Math.round(totalCost * 0.7);
+      d_price.textContent = formatNGN(displayPrice);
+      d_desc.textContent = ad.data?.description || '';
+      d_link.href = ad.data?.taskLink || ad.data?.task_link || '#';
+      d_link.textContent = ad.data?.taskLink || ad.data?.task_link || '';
+      if (ad.data?.thumbnail) {
+        d_thumb.src = ad.data.thumbnail;
+        d_thumb.style.display = 'block';
+      } else {
+        d_thumb.style.display = 'none';
+      }
+      // progress
+      const workersRequested = Number(ad.data?.workers || ad.data?.worker_count || 0) || 0;
+      // We'll compute approved count from cached value updated by submissions listener
+      const approvedCount = ad._approvedCount || 0;
+      const pct = workersRequested === 0 ? 0 : Math.min(100, Math.round((approvedCount / workersRequested) * 100));
+      d_progress.style.width = pct + '%';
+      d_progressText.textContent = `${approvedCount}/${workersRequested}`;
+      // reset form fields
+      proofText.value = '';
+      proofImage.value = '';
+      overlay.style.display = 'flex';
+      overlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeDetailsOverlay() {
+      overlay.style.display = 'none';
+      overlay.setAttribute('aria-hidden', 'true');
+      activeAdvertId = null;
+    }
+
+    function openImageOverlay(src){
+      imgView.src = src;
+      imgOverlay.style.display = 'flex';
+      imgOverlay.setAttribute('aria-hidden','false');
+    }
+    function closeImageOverlay(){
+      imgOverlay.style.display = 'none';
+      imgOverlay.setAttribute('aria-hidden','true');
+      imgView.src = '';
+    }
+
+    // Imgur upload
+    async function uploadImgur(file){
+      if (!file) return null;
+      const form = new FormData();
+      form.append('image', file);
       const res = await fetch('https://api.imgur.com/3/image', {
         method: 'POST',
         headers: { Authorization: 'Client-ID ' + IMGUR_CLIENT_ID },
-        body: fd
+        body: form
       });
       const j = await res.json();
-      if(j && j.success && j.data && j.data.link) return j.data.link;
+      if (j && j.success && j.data && j.data.link) return j.data.link;
       throw new Error('Imgur upload failed');
     }
 
-    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
-    // ---------- rendering ----------
-    function renderList(items){
-      listArea.innerHTML = '';
-      if(!items.length){ listArea.innerHTML = '<div class="empty">No tasks available right now.</div>'; return; }
-
-      const q = (searchInput.value || '').trim().toLowerCase();
-      const platformFilter = filterPlatform.value || '';
-
-      items.forEach(docSnap => {
-        const d = docSnap.data();
-        const id = docSnap.id;
-
-        // hide if user already submitted for this advert
-        if(currentUser && userSubmitted.has(id)) return;
-
-        // apply search / platform filters
-        if(platformFilter && String(d.platform || '').toLowerCase() !== String(platformFilter).toLowerCase()) return;
-        if(q){
-          const hay = [id, d.title||'', d.platform||'', d.subcategory||'', d.taskLink||''].join(' ').toLowerCase();
-          if(!hay.includes(q)) return;
-        }
-
-        const thumb = d.thumbnail || '';
-        const title = d.title || 'Untitled';
-        const platform = d.platform || '-';
-        const sub = d.subcategory || '-';
-        const total = Number(d.totalCost || d.total || 0);
-        const price = rewardOf(total);
-
-        const approved = approvedCounts.get(id) || 0;
-        const workersNeeded = Number(d.workers || 0);
-        const pct = workersNeeded > 0 ? Math.min(100, Math.round((approved / workersNeeded) * 100)) : 0;
-
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          ${ thumb ? `<img class="thumb" src="${escapeHtml(thumb)}" data-thumb="${escapeHtml(thumb)}" data-id="${escapeHtml(id)}">` : `<div class="thumb" style="display:flex;align-items:center;justify-content:center;color:var(--muted)">No image</div>`}
-          <div class="meta">
-            <div class="left">
-              <div style="font-weight:800">${escapeHtml(title)}</div>
-              <div class="muted">${escapeHtml(platform)} · ${escapeHtml(sub)}</div>
-            </div>
-            <div style="text-align:right">
-              <div class="tag">Task</div>
-              <div class="price" style="margin-top:10px">${fmtN(price)}</div>
-            </div>
-          </div>
-          <div class="muted" style="margin-top:8px">Posted: ${d.createdAt ? (d.createdAt.seconds ? new Date(d.createdAt.seconds*1000).toLocaleString() : new Date(d.createdAt).toLocaleString()) : '-'}</div>
-
-          <div class="progressWrap" aria-hidden="true">
-            <div class="progressBar" style="width:${pct}%"></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:6px;color:var(--muted)">
-            <div>${approved} approved</div>
-            <div>${workersNeeded} required</div>
-          </div>
-
-          <div class="actions">
-            <button class="btn primary" data-action="start" data-id="${escapeHtml(id)}">Start Task</button>
-            <button class="btn secondary" data-action="details" data-id="${escapeHtml(id)}">Details</button>
-          </div>
-        `;
-        card.dataset.advertId = id;
-        listArea.appendChild(card);
-      });
-
-      // if after filtering nothing visible:
-      if(!listArea.children.length) listArea.innerHTML = '<div class="empty">No tasks match your search/filters.</div>';
-    }
-
-    // ---------- data wiring ----------
-    async function computeApprovedCounts(advertDocs){
-      approvedCounts.clear();
-      try{
-        // gather advert ids
-        const advertIds = advertDocs.map(d => d.id);
-        if(advertIds.length === 0) return;
-
-        // pull all proofs with status 'approved' (could be optimized with server-side aggregation)
-        const proofsSnap = await getDocs(collection(db, 'task_proofs'));
-        proofsSnap.forEach(p => {
-          const pd = p.data();
-          if(String(pd.status || '').toLowerCase() === 'approved' && advertIds.includes(pd.advertId)){
-            approvedCounts.set(pd.advertId, (approvedCounts.get(pd.advertId) || 0) + 1);
-          }
-        });
-      }catch(err){
-        console.warn('Could not compute approved counts', err);
-      }
-    }
-
-    // load adverts (approved only) with live listener
-    function startAdvertsListener(){
-      if(advertsUnsub) advertsUnsub();
-      // show loading
-      listArea.innerHTML = '<div class="empty">Loading tasks…</div>';
-      const col = collection(db, 'advertise_tasks');
-      const q = query(col, where('status','==','approved'), orderBy('createdAt','desc'));
-      advertsUnsub = onSnapshot(q, async (snap) => {
-        adverts = [];
-        snap.forEach(d => adverts.push(d));
-        // refresh platform set
-        platformsSet.clear();
-        adverts.forEach(a => { if(a.data().platform) platformsSet.add(a.data().platform); });
-        populatePlatformFilter();
-        // compute approvedCounts across returned adverts
-        await computeApprovedCounts(adverts);
-        // also refresh userSubmitted if user signed in
-        if(currentUser) await loadUserSubmissions(currentUser.uid);
-        // render
-        renderList(adverts);
-      }, (err) => {
-        console.error('adverts listener error', err);
-        listArea.innerHTML = `<div class="empty">Could not load tasks (check console).</div>`;
-      });
-    }
-
-    // load which adverts current user already submitted proofs for
-    async function loadUserSubmissions(uid){
-      userSubmitted.clear();
-      if(!uid) return;
-      try{
-        // get all proofs by user (could be large; consider limiting in production)
-        const proofsQ = query(collection(db,'task_proofs'), where('userId','==', uid));
-        const snap = await getDocs(proofsQ);
-        snap.forEach(p => {
-          const pd = p.data();
-          if(pd && pd.advertId) userSubmitted.add(pd.advertId);
-        });
-      }catch(err){
-        console.warn('could not load user submissions', err);
-      }
-    }
-
-    // ---------- overlay behavior ----------
-    async function openOverlayForAdvertId(advertId){
-      const docRef = doc(db, 'advertise_tasks', advertId);
-      try{
-        const snap = await getDoc(docRef);
-        if(!snap.exists()){
-          toast('Task not found');
-          return;
-        }
-        const d = snap.data();
-        panelTitle.textContent = d.title || 'Task details';
-        panelThumb.src = d.thumbnail || '';
-        panelPlatform.textContent = d.platform || '-';
-        panelSub.textContent = d.subcategory || '-';
-        panelDesc.textContent = d.description || '';
-        panelLink.value = d.taskLink || '';
-        panelWorkers.textContent = 'Workers: ' + (d.workers || '-');
-        panelUnit.textContent = 'Unit price: ' + fmtN(d.unitPrice || d.unit || 0);
-        panelTotal.textContent = 'Total cost: ' + fmtN(d.totalCost || d.total || 0);
-        panelOwner.textContent = d.createdBy || d.owner || '-';
-        const reward = rewardOf(d.totalCost || d.total || 0);
-        panelPrice.textContent = fmtN(reward);
-        panelReward.textContent = fmtN(reward);
-
-        textProof.value = '';
-        imageProof.value = '';
-        imagePreview.style.display = 'none';
-        imagePreview.src = '';
-        overlay.dataset.advertId = advertId;
-
-        overlay.style.display = 'flex';
-        overlay.setAttribute('aria-hidden','false');
-        document.body.style.overflow = 'hidden';
-      }catch(err){
-        console.error('openOverlayForAdvertId err', err);
-        toast('Failed to open task');
-      }
-    }
-
-    function closeOverlayFn(){ overlay.style.display = 'none'; overlay.setAttribute('aria-hidden','true'); document.body.style.overflow = ''; overlay.removeAttribute('data-advert-id'); }
-
-    closeOverlay.addEventListener('click', closeOverlayFn);
-    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeOverlayFn(); });
-    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') { if(overlay.style.display === 'flex') closeOverlayFn(); if(imgOverlay.style.display === 'flex') closeImgFn(); } });
-
-    // thumbnail click to view image larger
-    document.addEventListener('click', (ev)=>{
-      const t = ev.target;
-      if(t.matches('.thumb') && t.dataset.thumb){
-        const url = t.dataset.thumb;
-        if(!url) return;
-        imgLarge.src = url;
-        imgOverlay.style.display = 'flex';
-        imgOverlay.setAttribute('aria-hidden','false');
-        document.body.style.overflow = 'hidden';
-      }
-      // handle actions buttons (delegated)
-      const actionBtn = ev.target.closest('button[data-action]');
-      if(actionBtn){
-        const action = actionBtn.dataset.action;
-        const id = actionBtn.dataset.id;
-        if(action === 'start' || action === 'details'){
-          openOverlayForAdvertId(id);
-        }
-      }
-    });
-    function closeImgFn(){ imgOverlay.style.display = 'none'; imgOverlay.setAttribute('aria-hidden','true'); imgLarge.src=''; document.body.style.overflow=''; }
-    closeImg.addEventListener('click', closeImgFn);
-    imgOverlay.addEventListener('click', (e)=>{ if(e.target === imgOverlay) closeImgFn(); });
-
-    // image proof preview
-    imageProof.addEventListener('change', (e)=>{
-      const f = e.target.files && e.target.files[0];
-      if(!f){ imagePreview.style.display='none'; imagePreview.src=''; return; }
-      if(f.size > 5*1024*1024){ alert('Image must be smaller than 5MB'); imageProof.value=''; return; }
-      imagePreview.src = URL.createObjectURL(f);
-      imagePreview.style.display = 'block';
-    });
-
-    // submit proof
-    submitProof.addEventListener('click', async () => {
-      const advId = overlay.dataset.advertId;
-      if(!advId) return toast('No task selected');
-      if(!currentUser) return alert('Please sign in to submit proof.');
-
-      const text = (textProof.value || '').trim();
-      const imgFile = imageProof.files && imageProof.files[0];
-      if(!text && !imgFile) return alert('Provide text proof or an image.');
-
-      submitProof.disabled = true;
-      submitProof.textContent = 'Submitting...';
-
-      try{
-        let imageUrl = null;
-        if(imgFile){
-          try { imageUrl = await uploadToImgur(imgFile); } catch(err){
-            console.warn('Imgur upload failed', err);
-            const cont = confirm('Image upload failed. Continue without image?');
-            if(!cont) throw err;
-          }
-        }
-
-        // create proof doc
-        await addDoc(collection(db, 'task_proofs'), {
-          advertId: advId,
-          userId: currentUser.uid,
-          text: text || null,
-          imageUrl: imageUrl || null,
-          status: 'pending',
-          createdAt: serverTimestamp()
-        });
-
-        // hide advert for this user
-        userSubmitted.add(advId);
-
-        toast('Proof submitted — awaiting review.');
-        closeOverlayFn();
-        // re-render to hide this advert
-        renderList(adverts);
-      }catch(err){
-        console.error('submit proof err', err);
-        alert('Failed to submit proof: ' + (err.message || err));
-      }finally{
-        submitProof.disabled = false;
-        submitProof.textContent = 'Submit proof';
-      }
-    });
-
-    // start task simply opens overlay with same behaviour
-    startBtn.addEventListener('click', ()=> {
-      // nothing extra for now; overlay already open from button
-      if(!currentUser) {
-        const go = confirm('You must be signed in to start a task. Sign in now?');
-        if(go) location.assign(withRepoPath('login.html'));
-        return;
-      }
-      toast('You can submit proof after completing the task.');
-    });
-
-    // ---------- search & filters ----------
-    searchInput.addEventListener('input', throttle(()=> renderList(adverts), 250));
-    filterPlatform.addEventListener('change', ()=> renderList(adverts));
-
-    function populatePlatformFilter(){
-      // clear and re-add
-      const prev = filterPlatform.value;
-      filterPlatform.innerHTML = '<option value="">All platforms</option>';
-      const arr = Array.from(platformsSet).sort();
-      arr.forEach(p => {
-        const opt = document.createElement('option'); opt.value = p; opt.textContent = p;
-        filterPlatform.appendChild(opt);
-      });
-      if(prev) filterPlatform.value = prev;
-    }
-
-    function throttle(fn, wait){
-      let t = null;
-      return (...args) => {
-        if(t) clearTimeout(t);
-        t = setTimeout(()=>{ fn(...args); t = null; }, wait);
+    // Create submission document
+    async function submitProof(advertId, text, imageUrl){
+      if (!currentUser) throw new Error('Not signed in');
+      // Add doc to advert_submissions
+      const payload = {
+        advertId,
+        userId: currentUser.uid,
+        textProof: text || '',
+        imageUrl: imageUrl || null,
+        status: 'pending',
+        createdAt: serverTimestamp()
       };
+      // use addDoc on collection 'advert_submissions'
+      await addDoc(collection(db, 'advert_submissions'), payload);
     }
 
-    // ---------- sign-in watcher ----------
-    onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
-      if(!user){
-        acctArea.innerHTML = `Not signed in — <a style="color:var(--accent-start)" href="${withRepoPath('login.html')}">Sign in</a>`;
-        // still start adverts listener so non-signed users can see tasks
-        if(!advertsUnsub) startAdvertsListener();
-        // clear userSubmitted
-        userSubmitted.clear();
-        renderList(adverts);
-        return;
+    // Safe update advert to completed inside transaction (if not already)
+    async function markAdvertCompletedIfNeeded(advertId){
+      const advertRef = doc(db, 'advertise_tasks', advertId);
+      try {
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(advertRef);
+          if (!snap.exists()) return;
+          const data = snap.data();
+          if (data.status === 'completed') return;
+          // re-count approved submissions server-side would be ideal, but we'll rely on client-side check:
+          // however for safety, check a flag or re-evaluate in transaction: here we just set status to completed
+          tx.update(advertRef, { status: 'completed', completedAt: serverTimestamp() });
+        });
+      } catch (e) {
+        console.warn('markAdvertCompletedIfNeeded failed', e);
       }
+    }
 
-      // signed in
-      acctArea.textContent = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
-      // load user's submissions
-      await loadUserSubmissions(user.uid);
-      // start adverts listener (if not running)
-      if(!advertsUnsub) startAdvertsListener();
-      // render updated list
-      renderList(adverts);
-    });
+    // ---------- listeners & rendering ----------
+    // Renders one advert card
+    function renderAdvertCard(ad) {
+      // ad: { id, data, _approvedCount, _userHasActiveSubmission }
+      const id = ad.id;
+      const data = ad.data;
+      // hide if completed or if user has active submission (pending/approved)
+      const workersRequested = Number(data.workers || data.worker_count || 0) || 0;
+      const approvedCount = Number(ad._approvedCount || 0);
+      const userHasActive = !!ad._userHasActiveSubmission;
+      if (data.status !== 'approved') return null;
+      if (userHasActive) return null; // hide for this user
 
-    // ---------- initial load & helpers ----------
-    // start listener immediately (will work for anonymous view until auth triggers)
-    startAdvertsListener();
+      const price = Math.round((Number(data.totalCost || data.total_cost || 0) || 0) * 0.7);
 
-    // back button behaviour
-    backBtn.addEventListener('click', (e)=>{ e.preventDefault(); location.assign(withRepoPath('dashboard.html')); });
+      const card = el('div', { class: 'card', dataset: { id } });
+      const thumb = el('img', { class: 'thumb', src: data.thumbnail || '', alt: data.title || '' });
+      if (!data.thumbnail) thumb.style.display = 'none';
+      thumb.addEventListener('click', () => {
+        if (data.thumbnail) openImageOverlay(data.thumbnail);
+      });
 
-    // make search also support Enter focusing specific doc id quickly
-    searchInput.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){
-        const val = (searchInput.value || '').trim();
-        if(!val) return;
-        // if user typed a doc id (approx length or contains -), attempt to open it
-        // we try to find advert with id equal to search value
-        const found = adverts.find(a => a.id === val);
-        if(found){
-          openOverlayForAdvertId(found.id);
-          return;
+      const h3 = el('h3', {}, data.title || '(no title)');
+      const meta = el('div', { class: 'meta' }, el('div', {}, data.platform || data.subcategory || ''), el('div', {}, formatNGN(price)));
+      const desc = el('div', { class: 'small' }, (data.description || '').slice(0, 140) + ((data.description || '').length > 140 ? '…' : ''));
+
+      const progressWrap = el('div', { class: 'progressWrap' },
+        el('div', { class: 'progressBar' }, el('div', { class: 'progressFill', style: `width:${workersRequested?Math.round((approvedCount/workersRequested)*100):0}%` })),
+        el('div', { class: 'progressText' }, `${approvedCount}/${workersRequested}`)
+      );
+
+      const actions = el('div', { class: 'actions' });
+      const startBtn = el('button', { class: 'btn' }, 'Start Task');
+      const detailsBtn = el('button', { class: 'btn ghost' }, 'Details');
+      actions.appendChild(startBtn);
+      actions.appendChild(detailsBtn);
+
+      // attach listeners
+      startBtn.addEventListener('click', () => {
+        // open overlay for this advert (submission form)
+        showOverlayForAdvert({ id, data, _approvedCount: approvedCount });
+      });
+      detailsBtn.addEventListener('click', () => {
+        showOverlayForAdvert({ id, data, _approvedCount: approvedCount });
+      });
+
+      card.appendChild(thumb);
+      card.appendChild(h3);
+      card.appendChild(meta);
+      card.appendChild(desc);
+      card.appendChild(progressWrap);
+      card.appendChild(actions);
+
+      return card;
+    }
+
+    // Rebuild grid from advertsCache (only adverts that should be visible)
+    function rebuildGrid() {
+      const q = (search.value || '').trim().toLowerCase();
+      grid.innerHTML = '';
+      let any = false;
+      for (const [id, ad] of advertsCache) {
+        // ad: { id, data, _approvedCount, _userHasActiveSubmission }
+        // only show approved adverts and not those hidden for user
+        if (!ad.data) continue;
+        if (ad.data.status !== 'approved') continue;
+        if (ad._userHasActiveSubmission) continue;
+        // if search text present, filter by title/platform/subcategory
+        if (q) {
+          const hay = ((ad.data.title || '') + ' ' + (ad.data.platform || '') + ' ' + (ad.data.subcategory || '')).toLowerCase();
+          if (!hay.includes(q)) continue;
         }
-        // otherwise normal search handled by input event
+        const node = renderAdvertCard(ad);
+        if (node) { grid.appendChild(node); any = true; }
+      }
+      if (!any) grid.innerHTML = `<div class="empty">No tasks available.</div>`;
+    }
+
+    // For each advert we need to listen to its submissions to compute approved count and whether current user has active/pending submission
+    function attachSubmissionsListener(advertId) {
+      if (submissionsListeners.has(advertId)) return;
+      const subQ = query(collection(db, 'advert_submissions'), where('advertId', '==', advertId));
+      const unsub = onSnapshot(subQ, snap => {
+        let approvedCount = 0;
+        let userHasActive = false;
+        snap.forEach(snapDoc => {
+          const d = snapDoc.data();
+          const st = (d.status||'').toLowerCase();
+          if (st === 'approved') approvedCount++;
+          if (currentUser && d.userId === currentUser.uid && st !== 'rejected') {
+            // user has pending or approved submission: hide the advert for them
+            userHasActive = true;
+          }
+        });
+        const ad = advertsCache.get(advertId) || {};
+        ad._approvedCount = approvedCount;
+        ad._userHasActiveSubmission = userHasActive;
+        advertsCache.set(advertId, ad);
+        // update advert card if present
+        rebuildGrid();
+
+        // If approvedCount reached workers requested, mark advert completed
+        const workersRequested = Number(ad.data?.workers || ad.data?.worker_count || 0) || 0;
+        if (workersRequested > 0 && approvedCount >= workersRequested) {
+          // set advert status to completed
+          (async () => {
+            try {
+              const advertRef = doc(db, 'advertise_tasks', advertId);
+              await runTransaction(db, async (tx) => {
+                const snap = await tx.get(advertRef);
+                if (!snap.exists()) return;
+                const cur = snap.data();
+                if (cur.status !== 'completed') {
+                  tx.update(advertRef, { status: 'completed', completedAt: serverTimestamp() });
+                }
+              });
+            } catch (e) {
+              console.warn('Failed to set advert completed', e);
+            }
+          })();
+        }
+      }, err => {
+        console.error('submissions listener err', err);
+      });
+
+      submissionsListeners.set(advertId, unsub);
+    }
+
+    function detachAllSubmissionListeners() {
+      for (const unsub of submissionsListeners.values()) {
+        try { unsub(); } catch (e) {}
+      }
+      submissionsListeners.clear();
+    }
+
+    // adverts listener
+    function startAdvertsListener() {
+      // stop existing
+      if (advertsListenerUnsub) { try { advertsListenerUnsub(); } catch(e){}; advertsListenerUnsub=null; }
+      detachAllSubmissionListeners();
+      grid.innerHTML = `<div class="empty">Loading tasks…</div>`;
+
+      const advertsQ = query(collection(db, 'advertise_tasks'), where('status','==','approved'));
+      advertsListenerUnsub = onSnapshot(advertsQ, async (snap) => {
+        advertsCache.clear();
+        const promises = [];
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          const id = docSnap.id;
+          advertsCache.set(id, { id, data, _approvedCount: 0, _userHasActiveSubmission: false });
+          // attach submissions listeners for each advert
+          attachSubmissionsListener(id);
+        });
+        // rebuild grid after attachments
+        rebuildGrid();
+      }, err => {
+        console.error('adverts listener err', err);
+        grid.innerHTML = `<div class="empty">Failed to load tasks</div>`;
+      });
+    }
+
+    // ---------- auth handling ----------
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      startAdvertsListener(); // start adverts listener even if null user; submissions logic depends on currentUser and will hide/show accordingly
+    });
+
+    // ---------- overlay controls ----------
+    closeOverlay.addEventListener('click', closeDetailsOverlay);
+    closeOverlayBtn.addEventListener('click', closeDetailsOverlay);
+    document.getElementById('d_thumb').addEventListener('click', () => {
+      if (d_thumb.src) openImageOverlay(d_thumb.src);
+    });
+
+    closeImgOverlay.addEventListener('click', closeImageOverlay);
+    imgOverlay.addEventListener('click', (e) => { if (e.target === imgOverlay) closeImageOverlay(); });
+
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDetailsOverlay(); });
+
+    // Submit proof flow
+    submitProofBtn.addEventListener('click', async () => {
+      if (!currentUser) return alert('Please sign in to submit proof.');
+      if (!activeAdvertId) return alert('No advert selected.');
+      const text = proofText.value.trim();
+      const file = proofImage.files && proofImage.files[0];
+      if (!text && !file) return alert('Please provide text proof or an image proof.');
+      submitProofBtn.disabled = true;
+      submitProofBtn.textContent = 'Submitting...';
+      try {
+        let imageUrl = null;
+        if (file) {
+          try {
+            imageUrl = await uploadImgur(file);
+          } catch (e) {
+            console.warn('Imgur upload failed', e);
+            const cont = confirm('Image upload failed. Continue and submit proof without image?');
+            if (!cont) throw e;
+          }
+        }
+        await submitProof(activeAdvertId, text, imageUrl);
+        alert('Proof submitted — status is pending review. You will not be able to perform this task again while it is pending/approved.');
+        closeDetailsOverlay();
+      } catch (e) {
+        console.error('submit proof failed', e);
+        alert('Failed to submit proof: ' + (e.message || e));
+      } finally {
+        submitProofBtn.disabled = false;
+        submitProofBtn.textContent = 'Submit Proof';
       }
     });
 
-    // small improvement: refresh approvedCounts and user submissions every 45s (keeps counts fairly fresh)
-    setInterval(async () => {
-      try{ if(adverts && adverts.length) await computeApprovedCounts(adverts); if(currentUser) await loadUserSubmissions(currentUser.uid); renderList(adverts); }catch(e){/* ignore */ }
-    }, 45000);
+    // refresh & search
+    refresh.addEventListener('click', () => startAdvertsListener());
+    search.addEventListener('input', () => rebuildGrid());
 
-    // initial UI done
+    // initialize UI: empty grid
+    grid.innerHTML = `<div class="empty">No tasks yet — check back soon.</div>`;
+
   </script>
 </body>
 </html>
