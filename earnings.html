@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Submissions — Beni-Wealth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1:#060511; --bg2:#0f0920;
+      --muted: rgba(255,255,255,0.65);
+      --text: #eaf2ff;
+      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --card: rgba(255,255,255,0.02);
+      --glass: rgba(255,255,255,0.03);
+      --radius:12px;
+      --max-width:1100px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
+    .shell{max-width:var(--max-width);margin:24px auto;padding:20px}
+
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{font-weight:700;font-size:1.1rem}
+    .back{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);text-decoration:none;color:var(--text)}
+    .muted{color:var(--muted);font-size:13px}
+
+    .controls{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+    .search{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+    .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+
+    .list{display:flex;flex-direction:column;gap:12px}
+    .item{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04);display:grid;grid-template-columns:1fr 220px;gap:12px;align-items:center}
+    .item .meta{color:var(--muted);font-size:13px}
+    .item .title{font-weight:700;margin-bottom:6px}
+    .item .proof{white-space:pre-wrap;color:var(--muted);margin-top:6px}
+    .thumb{width:180px;height:100px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.03)}
+    .status{font-weight:700;padding:6px 10px;border-radius:999px;font-size:13px;text-align:center}
+    .status.pending{background:#fff6d6;color:#6a4f00}
+    .status.approved{background:#bff0d9;color:#05461f}
+    .status.rejected{background:#ffdede;color:#6b0b0b}
+
+    .small{font-size:13px;color:var(--muted)}
+    .empty{padding:40px;text-align:center;color:var(--muted)}
+
+    /* viewer overlay */
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:999;padding:18px}
+    .panel{width:100%;max-width:920px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 120px rgba(0,0,0,0.8);}
+    .panel h2{margin:0 0 8px 0}
+    .closeX{float:right;background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
+    img.viewerImg{max-width:100%;display:block;margin:12px 0;border-radius:8px}
+
+    @media(max-width:820px){ .item{grid-template-columns:1fr} .thumb{width:100%;height:160px} }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <a class="back" href="dashboard.html">← Back</a>
+      <div style="text-align:right">
+        <div class="brand">My Task Submissions</div>
+        <div class="muted">All proofs you submitted and their review status</div>
+      </div>
+    </header>
+
+    <section class="controls">
+      <input id="search" class="search" placeholder="Search by advert title, status or id" />
+      <button id="refresh" class="btn ghost">Refresh</button>
+    </section>
+
+    <section id="list" class="list" aria-live="polite">
+      <div class="empty">Loading your submissions…</div>
+    </section>
+  </main>
+
+  <!-- overlay for image / full detail -->
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="panel" role="dialog" aria-modal="true">
+      <button id="closeOverlay" class="closeX">✕</button>
+      <div id="overlayContent"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getFirestore, collection, query, where, orderBy, onSnapshot, getDoc, doc, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const listEl = document.getElementById('list');
+    const searchEl = document.getElementById('search');
+    const refreshBtn = document.getElementById('refresh');
+    const overlay = document.getElementById('overlay');
+    const overlayContent = document.getElementById('overlayContent');
+    const closeOverlay = document.getElementById('closeOverlay');
+
+    let currentUser = null;
+    let unsub = null;
+    const advertCache = new Map(); // advertId -> {title, thumbnail}
+    let submissions = []; // local cache
+
+    function niceDate(ts){
+      try{ if(!ts) return '-'; if (ts.toDate) ts = ts.toDate(); const d=new Date(ts); return d.toLocaleString(); }catch(e){return '-'}
+    }
+
+    function statusClass(s){
+      const st = String(s||'').toLowerCase();
+      if(st==='pending') return 'status pending';
+      if(st==='approved') return 'status approved';
+      if(st==='rejected') return 'status rejected';
+      return 'status';
+    }
+
+    function renderList(items){
+      submissions = items;
+      const q = (searchEl.value||'').toLowerCase().trim();
+      const filtered = items.filter(it => {
+        if(!q) return true;
+        return (it.advertTitle||'').toLowerCase().includes(q) || (it.status||'').toLowerCase().includes(q) || it.id.toLowerCase().includes(q) || (it.advertId||'').toLowerCase().includes(q);
+      });
+      if(!filtered.length){ listEl.innerHTML = '<div class="empty">No submissions found.</div>'; return; }
+      listEl.innerHTML = '';
+      filtered.forEach(it => {
+        const item = document.createElement('div'); item.className='item';
+        const left = document.createElement('div');
+        const title = document.createElement('div'); title.className='title'; title.textContent = it.advertTitle || '(no title)';
+        const meta = document.createElement('div'); meta.className='meta'; meta.innerHTML = `Submitted: ${niceDate(it.createdAt)} • Submission ID: <code style="font-family:monospace;color:var(--muted)">${it.id}</code>`;
+        const proof = document.createElement('div'); proof.className='proof'; proof.textContent = it.textProof || '';
+        left.appendChild(title); left.appendChild(meta); left.appendChild(proof);
+
+        const right = document.createElement('div');
+        right.style.textAlign='right';
+        const thumb = document.createElement('img'); thumb.className='thumb';
+        if(it.imageUrl){ thumb.src = it.imageUrl; thumb.addEventListener('click', ()=> showOverlayFull(it)); } else { thumb.style.display='none'; }
+        const status = document.createElement('div'); status.className = statusClass(it.status); status.textContent = String(it.status||'pending').toUpperCase();
+        const advertId = document.createElement('div'); advertId.className='small'; advertId.style.marginTop='8px'; advertId.innerHTML = `Advert ID: <code style="font-family:monospace;color:var(--muted)">${it.advertId}</code>`;
+        right.appendChild(thumb); right.appendChild(status); right.appendChild(advertId);
+
+        item.appendChild(left); item.appendChild(right);
+        listEl.appendChild(item);
+      });
+    }
+
+    function showOverlayFull(item){
+      overlayContent.innerHTML = '';
+      const h = document.createElement('h2'); h.textContent = item.advertTitle || '(no title)';
+      const p1 = document.createElement('div'); p1.className='small'; p1.textContent = `Submission ID: ${item.id} • Advert ID: ${item.advertId} • Submitted: ${niceDate(item.createdAt)}`;
+      const st = document.createElement('div'); st.style.marginTop='8px'; st.innerHTML = `Status: <strong>${item.status||'pending'}</strong>`;
+      const txt = document.createElement('div'); txt.style.marginTop='12px'; txt.className='small'; txt.textContent = item.textProof || '(no text proof)';
+      overlayContent.appendChild(h); overlayContent.appendChild(p1); overlayContent.appendChild(st); overlayContent.appendChild(txt);
+      if(item.imageUrl){ const img = document.createElement('img'); img.className='viewerImg'; img.src = item.imageUrl; overlayContent.appendChild(img); }
+      overlay.style.display='flex'; overlay.setAttribute('aria-hidden','false');
+    }
+
+    closeOverlay.addEventListener('click', ()=>{ overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); overlayContent.innerHTML=''; });
+    overlay.addEventListener('click', (e)=>{ if(e.target===overlay){ overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); overlayContent.innerHTML=''; } });
+
+    // listen for current user's submissions
+    async function startListener(uid){
+      if(unsub){ try{ unsub(); }catch(e){}; unsub = null; }
+      listEl.innerHTML = '<div class="empty">Loading your submissions…</div>';
+      const subsQ = query(collection(db,'advert_submissions'), where('userId','==',uid), orderBy('createdAt','desc'));
+      unsub = onSnapshot(subsQ, async (snap) => {
+        const items = [];
+        const advertIdsToFetch = new Set();
+        snap.forEach(s => {
+          const d = s.data();
+          items.push({ id: s.id, advertId: d.advertId || '', textProof: d.textProof || '', imageUrl: d.imageUrl || '', status: d.status || 'pending', createdAt: d.createdAt || d.created_at || null });
+          if(d.advertId) advertIdsToFetch.add(d.advertId);
+        });
+
+        // fetch advert titles/thumbnails for all referenced adverts (cache)
+        const missing = Array.from(advertIdsToFetch).filter(aid => aid && !advertCache.has(aid));
+        await Promise.all(missing.map(async aid => {
+          try{
+            const snap = await getDoc(doc(db,'advertise_tasks',aid));
+            if(snap && snap.exists()){
+              const dd = snap.data();
+              advertCache.set(aid, { title: dd.title || '', thumbnail: dd.thumbnail || '' });
+            } else {
+              advertCache.set(aid, { title: '(deleted task)', thumbnail: '' });
+            }
+          }catch(e){ advertCache.set(aid, { title: '(error)', thumbnail: '' }); }
+        }));
+
+        // attach advertTitle for rendering
+        items.forEach(it => { const cached = advertCache.get(it.advertId) || {}; it.advertTitle = cached.title || '' });
+
+        renderList(items);
+      }, err => {
+        console.error('submissions listener error', err);
+        listEl.innerHTML = '<div class="empty">Failed to load submissions.</div>';
+      });
+    }
+
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      if(!user){ listEl.innerHTML = '<div class="empty">Please sign in to view your submissions.</div>'; return; }
+      startListener(user.uid);
+    });
+
+    refreshBtn.addEventListener('click', ()=>{ if(currentUser) startListener(currentUser.uid); });
+    searchEl.addEventListener('input', ()=> renderList(submissions));
+
+  </script>
+</body>
+</html>
