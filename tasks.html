@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Tasks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-1:#080415;
+      --bg-2:#0f0720;
+      --card: rgba(255,255,255,0.03);
+      --muted: rgba(255,255,255,0.62);
+      --accent-start: #2fe0b8;
+      --accent-end: #7a5fff;
+      --glass: rgba(255,255,255,0.02);
+      --radius: 14px;
+      --max-width: 1100px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;min-height:100vh;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;
+      background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color: #eaf2ff; -webkit-font-smoothing:antialiased;padding:20px; display:flex; justify-content:center;
+    }
+    .wrap { width:100%; max-width:var(--max-width) }
+
+    header.top { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px; }
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand img{ width:56px;height:56px;border-radius:10px;object-fit:cover }
+    .title{font-weight:700;font-size:18px}
+    .muted{color:var(--muted);font-size:13px}
+
+    .controls{display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+    .search{flex:1;min-width:220px}
+    .search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background: rgba(255,255,255,0.02);color:inherit}
+
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    @media(max-width:1100px){ .grid{grid-template-columns:repeat(2,1fr)} }
+    @media(max-width:680px){ .grid{grid-template-columns:1fr} }
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 12px 40px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:10px}
+    .thumb{width:100%;height:140px;border-radius:10px;object-fit:cover;background:linear-gradient(180deg,#0b0b0f,#0a0811);display:block;cursor:pointer}
+    .meta{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .meta .left{display:flex;flex-direction:column;gap:6px}
+    .tag{padding:6px 8px;border-radius:999px;font-size:12px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
+    .price{font-weight:800;font-size:18px;color:var(--accent-start)}
+
+    .progressWrap{height:10px;background:rgba(255,255,255,0.03);border-radius:8px;overflow:hidden;margin-top:8px}
+    .progressBar{height:100%;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));width:0%}
+
+    .actions{display:flex;gap:8px;margin-top:10px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .btn.primary{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219}
+
+    .empty{padding:28px;text-align:center;color:var(--muted);border-radius:12px;background:var(--card)}
+
+    /* overlay details */
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:999;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.8));padding:20px}
+    .panel{width:100%;max-width:920px;background:linear-gradient(180deg,#0b0f17,#06060a);border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 100px rgba(0,0,0,0.7);color:#eaf2ff;max-height:90vh;overflow:auto;position:relative}
+    .panel h2{margin:0 0 8px 0}
+    .panel .close{position:absolute;right:18px;top:14px;font-size:20px;background:transparent;border:none;color:var(--muted);cursor:pointer}
+
+    .two-col{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    @media(max-width:980px){ .two-col{grid-template-columns:1fr} }
+
+    label{display:block;font-size:13px;color:var(--muted);margin-top:10px}
+    textarea,input[type="text"],input[type="file"]{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background: rgba(255,255,255,0.02);color:inherit;font-size:14px}
+    textarea{min-height:120px;resize:vertical}
+    .proof-preview{width:100%;max-width:260px;margin-top:8px;border-radius:10px;display:block;object-fit:cover}
+
+    /* image viewer overlay */
+    .imgOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:1500}
+    .imgBox{max-width:95%;max-height:95%;border-radius:12px;overflow:hidden}
+    .imgBox img{display:block;max-width:100%;max-height:100%;object-fit:contain}
+
+    .topbar{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    .backBtn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:10px;color:var(--muted);cursor:pointer}
+
+    .toast{position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;padding:10px 14px;border-radius:10px;font-weight:700;z-index:2000}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top" aria-live="polite">
+      <div class="brand">
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth">
+        <div>
+          <div class="title">Available Tasks</div>
+          <div class="muted">Approved adverts open for workers</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="backBtn" class="backBtn" aria-label="Back to dashboard">← Back</button>
+        <div id="acctArea" class="muted" style="min-width:160px;text-align:right">Checking sign-in…</div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <div class="search"><input id="search" placeholder="Search title, platform, subcategory..." /></div>
+      <select id="filterPlatform" style="padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit">
+        <option value="">All platforms</option>
+      </select>
+    </div>
+
+    <div id="listArea" class="grid" aria-live="polite"><div class="empty">Loading tasks…</div></div>
+  </div>
+
+  <!-- details overlay -->
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+      <button id="closeOverlay" class="close" aria-label="Close details">✕</button>
+      <div class="topbar">
+        <h2 id="panelTitle">Task details</h2>
+        <div style="margin-left:auto" id="panelPrice" class="price">₦0</div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <img id="panelThumb" src="" alt="" style="width:140px;height:120px;border-radius:10px;object-fit:cover;background:rgba(255,255,255,0.02);cursor:pointer">
+            <div>
+              <div id="panelPlatform" style="font-weight:700"></div>
+              <div id="panelSub" class="muted" style="margin-top:6px"></div>
+              <div style="margin-top:8px" id="panelDesc" class="muted"></div>
+            </div>
+          </div>
+
+          <label>Task link</label>
+          <input id="panelLink" type="text" readonly />
+
+          <div style="margin-top:10px">
+            <label>Text proof (describe what you did)</label>
+            <textarea id="textProof" placeholder="Write your proof (e.g., screenshot description, caption, group link)"></textarea>
+          </div>
+
+          <div style="margin-top:10px">
+            <label>Image proof (optional)</label>
+            <input id="imageProof" type="file" accept="image/*" />
+            <img id="imagePreview" class="proof-preview" src="" alt="" style="display:none" />
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+            <button id="submitProof" class="btn primary">Submit proof</button>
+            <button id="startBtn" class="btn secondary">Start Task</button>
+            <div id="proofNote" class="muted" style="margin-left:auto">Reward: <span id="panelReward">₦0</span></div>
+          </div>
+
+          <div class="footer-note">After submitting proof, the advertiser will review it. Only <strong>approved</strong> proofs increase progress and pay out.</div>
+        </div>
+
+        <aside style="padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px">
+          <div style="font-weight:700">Quick info</div>
+          <div class="muted" style="margin-top:8px" id="panelWorkers">Workers: -</div>
+          <div class="muted" style="margin-top:6px" id="panelUnit">Unit price: -</div>
+          <div class="muted" style="margin-top:6px" id="panelTotal">Total cost: -</div>
+          <div style="height:10px"></div>
+          <div style="font-weight:700">Advert by</div>
+          <div id="panelOwner" class="muted" style="margin-top:6px">—</div>
+        </aside>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- image viewer overlay -->
+  <div id="imgOverlay" class="imgOverlay" style="display:none" aria-hidden="true">
+    <div style="position:absolute;right:18px;top:18px;z-index:1510"><button id="closeImg" class="backBtn">✕</button></div>
+    <div class="imgBox"><img id="imgLarge" src="" alt="Thumbnail"></div>
+  </div>
+
+  <script type="module">
+    // ---------- config ----------
+    const IMGUR_CLIENT_ID = 'fb533db21a59486'; // your Imgur client id
+    const REPO_BASE = '/Beni-Wealth';
+    function withRepoPath(target){ if(!target) return location.href; try { const maybe = new URL(target, location.href); if (maybe.origin === location.origin) { const pathname = maybe.pathname.replace(/\/+/g,'/'); if (pathname.indexOf(REPO_BASE) === 0) return maybe.origin + pathname + maybe.search + maybe.hash; } return maybe.href; } catch(e){} const clean = String(target).replace(/^\/+/,''); const repoClean = REPO_BASE.replace(/^\/+/,''); if (clean.indexOf(repoClean) === 0) return location.origin + '/' + clean; return location.origin + REPO_BASE + (clean ? '/' + clean : ''); }
+
+    // ---------- imports ----------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import {
+      getFirestore, collection, query, where, orderBy, onSnapshot,
+      addDoc, serverTimestamp, getDoc, doc, updateDoc, runTransaction
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+    // ---------- firebase config ----------
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // ---------- DOM ----------
+    const acctArea = document.getElementById('acctArea');
+    const listArea = document.getElementById('listArea');
+    const searchInput = document.getElementById('search');
+    const filterPlatform = document.getElementById('filterPlatform');
+    const backBtn = document.getElementById('backBtn');
+
+    const overlay = document.getElementById('overlay');
+    const closeOverlay = document.getElementById('closeOverlay');
+    const panelTitle = document.getElementById('panelTitle');
+    const panelThumb = document.getElementById('panelThumb');
+    const panelPlatform = document.getElementById('panelPlatform');
+    const panelSub = document.getElementById('panelSub');
+    const panelDesc = document.getElementById('panelDesc');
+    const panelLink = document.getElementById('panelLink');
+    const panelWorkers = document.getElementById('panelWorkers');
+    const panelUnit = document.getElementById('panelUnit');
+    const panelTotal = document.getElementById('panelTotal');
+    const panelOwner = document.getElementById('panelOwner');
+    const panelPrice = document.getElementById('panelPrice');
+    const panelReward = document.getElementById('panelReward');
+    const textProof = document.getElementById('textProof');
+    const imageProof = document.getElementById('imageProof');
+    const imagePreview = document.getElementById('imagePreview');
+    const submitProof = document.getElementById('submitProof');
+    const startBtn = document.getElementById('startBtn');
+
+    const imgOverlay = document.getElementById('imgOverlay');
+    const imgLarge = document.getElementById('imgLarge');
+    const closeImg = document.getElementById('closeImg');
+
+    // ---------- state ----------
+    let currentUser = null;
+    let adverts = [];                 // array of advert docs
+    let platformsSet = new Set();
+    const approvedCounts = new Map(); // advertId => number of approved proofs
+    const userSubmitted = new Set();  // advertId set where current user created any proof (pending/approved/rejected)
+
+    // ---------- helpers ----------
+    function toast(msg, ms=2200){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, ms); }
+    function fmtN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
+    function rewardOf(total){ return Math.round(Number(total || 0) * 0.7); }
+
+    async function uploadToImgur(file){
+      if(!file) return null;
+      const fd = new FormData(); fd.append('image', file);
+      const res = await fetch('https://api.imgur.com/3/image', {
+        method: 'POST',
+        headers: { Authorization: 'Client-ID ' + IMGUR_CLIENT_ID },
+        body: fd
+      });
+      const j = await res.json();
+      if(j && j.success && j.data && j.data.link) return j.data.link;
+      throw new Error('Imgur upload failed');
+    }
+
+    // ---------- rendering ----------
+    function renderList(items){
+      listArea.innerHTML = '';
+      if(!items.length){ listArea.innerHTML = '<div class="empty">No tasks available right now.</div>'; return; }
+
+      items.forEach(docSnap => {
+        const d = docSnap.data();
+        const id = docSnap.id;
+        // hide if user already submitted for this advert
+        if(userSubmitted.has(id)) return;  // disappears for this user
+
+        const thumb = d.thumbnail || '';
+        const title = d.title || 'Untitled';
+        const platform = d.platform || '-';
+        const sub = d.subcategory || '-';
+        const total = Number(d.totalCost || d.total || 0);
+        const price = rewardOf(total);
+
+        const approved = approvedCounts.get(id) || 0;
+        const workersNeeded = Number(d.workers || 0);
+        const pct = workersNeeded > 0 ? Math.min(100, Math.round((approved / workersNeeded) * 100)) : 0;
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <img class="thumb" src="${thumb || ''}" data-thumb="${thumb || ''}" data-id="${id}" onerror="this.style.display='none'">
+          <div class="meta">
+            <div class="left">
+              <div style="font-weight:800">${escapeHtml(title)}</div>
+              <div class="muted">${escapeHtml(platform)} · ${escapeHtml(sub)}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="tag">Task</div>
+              <div class="price" style="margin-top:10px">${fmtN(price)}</div>
+            </div>
+          </div>
+          <div class="muted" style="margin-top:8px">Posted: ${d.createdAt ? (d.createdAt.seconds ? new Date(d.createdAt.seconds*1000).toLocaleString() : new Date(d.createdAt).toLocaleString()) : '-'}</div>
+
+          <div class="progressWrap" aria-hidden="true">
+            <div class="progressBar" style="width:${pct}%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:6px;color:var(--muted)">
+            <div>${approved} approved</div>
+            <div>${workersNeeded} required</div>
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" data-action="start" data-id="${id}">Start Task</button>
+            <button class="btn secondary" data-action="details" data-id="${id}">Details</button>
+          </div>
+        `;
+        // attach dataset for later
+        card.dataset.advertId = id;
+        listArea.appendChild(card);
+      });
+    }
+
+    // escape-html small helper
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    // ---------- overlay behavior ----------
+    async function openOverlay(docSnap){
+      const d = docSnap.data();
+      panelTitle.textContent = d.title || 'Task details';
+      panelThumb.src = d.thumbnail || '';
+      panelPlatform.textContent = d.platform || '-';
+      panelSub.textContent = d.subcategory || '-';
+      panelDesc.textContent = d.description || '';
+      panelLink.value = d.taskLink || '';
+      panelWorkers.textContent = 'Workers: ' + (d.workers || '-');
+      panelUnit.textContent = 'Unit price: ' + fmtN(d.unitPrice || d.unit || 0);
+      panelTotal.textContent = 'Total cost: ' + fmtN(d.totalCost || d.total || 0);
+      panelOwner.textContent = d.createdBy || '-';
+      const reward = rewardOf(d.totalCost || d.total || 0);
+      panelPrice.textContent = fmtN(reward);
+      panelReward.textContent = fmtN(reward);
+
+      textProof.value = '';
+      imageProof.value = '';
+      imagePreview.style.display = 'none';
+      imagePreview.src = '';
+      overlay.dataset.advertId = docSnap.id;
+
+      overlay.style.display = 'flex';
+      overlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeOverlayFn(){ overlay.style.display = 'none'; overlay.setAttribute('aria-hidden','true'); document.body.style.overflow = ''; }
+
+    closeOverlay.addEventListener('click', closeOverlayFn);
+    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeOverlayFn(); });
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') { if(overlay.style.display === 'flex') closeOverlayFn(); if(imgOverlay.style.display === 'flex') closeImgFn(); } });
+
+    // thumbnail click to view image larger
+    document.addEventListener('click', (ev)=>{
+      const t = ev.target;
+      if(t.matches('.thumb') && t.dataset.thumb){
+        const url = t.dataset.thumb;
+        if(!url) return;
+        imgLarge.src = url;
+        imgOverlay.style.display = 'flex';
+        imgOverlay.setAttribute('aria-hidden','false');
+        document.body.style.overflow = 'hidden';
+      }
+    });
+    function closeImgFn(){ imgOverlay.style.display = 'none'; imgOverlay.setAttribute('aria-hidden','true'); imgLarge.src=''; document.body.style.overflow=''; }
+    closeImg.addEventListener('click', closeImgFn);
+    imgOverlay.addEventListener('click', (e)=>{ if(e.target === imgOverlay) closeImgFn(); });
+
+    // image proof preview
+    imageProof.addEventListener('change', (e)=>{
+      const f = e.target.files && e.target.files[0];
+      if(!f){ imagePreview.style.display='none'; imagePreview.src=''; return; }
+      if(f.size > 5*1024*1024){ alert('Image must be smaller than 5MB'); imageProof.value=''; return; }
+      imagePreview.src = URL.createObjectURL(f);
+      imagePreview.style.display = 'block';
+    });
+
+    // ---------- submission ----------
+    submitProof.addEventListener('click', async ()=>{
+      const adve
