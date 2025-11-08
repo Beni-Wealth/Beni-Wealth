@@ -59,7 +59,23 @@
     .detailCol{flex:1}
     textarea, input[type="file"], input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
     .submitProof{display:flex;gap:8px;align-items:center;margin-top:12px}
-    .thumbLarge{max-width:100%;border-radius:8px;display:block;margin:12px 0}
+    .thumbLarge{
+      display:block;
+      width:60%;            /* occupies 60% of the panel width */
+      max-width:480px;      /* but never wider than 480px */
+      height:auto;          /* keep natural aspect ratio */
+      border-radius:8px;
+      margin:12px auto;     /* center horizontally */
+      object-fit:cover;
+      cursor:pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+      transition: transform .18s ease;
+    }
+    .thumbLarge:hover{ transform: translateY(-4px); } /* subtle lift on hover */
+
+    @media (max-width:520px){
+      .thumbLarge{ width:80%; max-width:320px; }
+    }
 
   </style>
 </head>
