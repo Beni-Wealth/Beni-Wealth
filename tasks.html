@@ -51,30 +51,33 @@
     .empty{padding:40px;text-align:center;color:var(--muted)}
 
     /* overlays */
-    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:999;padding:18px}
-    .panel{width:100%;max-width:920px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 120px rgba(0,0,0,0.8);overflow:auto;max-height:90vh}
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);z-index:999;padding:18px}
+    /* PANEL: now has a solid, opaque background for better legibility */
+    .panel{width:100%;max-width:920px;background:#071022;border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.06);box-shadow:0 30px 120px rgba(2,6,23,0.9);overflow:auto;max-height:90vh;color:var(--text)}
     .panel .closeX{float:right;background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
     .panel h2{margin:6px 0 12px 0}
     .detailRow{display:flex;gap:12px;align-items:center;margin:8px 0}
     .detailCol{flex:1}
     textarea, input[type="file"], input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
     .submitProof{display:flex;gap:8px;align-items:center;margin-top:12px}
+    /* thumbnail preview inside the panel: intentionally smaller / cropped (not full-size) */
     .thumbLarge{
       display:block;
-      width:60%;            /* occupies 60% of the panel width */
-      max-width:480px;      /* but never wider than 480px */
-      height:auto;          /* keep natural aspect ratio */
+      width:40%;              /* show as a preview, not full image */
+      max-width:420px;
+      height:220px;           /* fixed height to crop */
       border-radius:8px;
-      margin:12px auto;     /* center horizontally */
+      margin:12px 18px 12px 0;
       object-fit:cover;
+      float:left;             /* text flows around it */
       cursor:pointer;
       box-shadow: 0 8px 20px rgba(0,0,0,0.6);
       transition: transform .18s ease;
     }
-    .thumbLarge:hover{ transform: translateY(-4px); } /* subtle lift on hover */
+    .thumbLarge:hover{ transform: translateY(-4px); } /* subtle lift */
 
-    @media (max-width:520px){
-      .thumbLarge{ width:80%; max-width:320px; }
+    @media (max-width:820px){
+      .thumbLarge{ width:60%; height:180px; margin:12px auto; float:none; display:block }
     }
 
   </style>
@@ -106,15 +109,17 @@
       <div id="detailContent">
         <h2 id="d_title">Title</h2>
         <div class="meta"><div id="d_platform" class="small">Platform</div><div id="d_price" class="price">₦0</div></div>
-        <img id="d_thumb" class="thumbLarge" src="" alt="thumbnail" style="display:none;cursor:pointer" />
+
+        <!-- smaller, cropped preview (not full display) -->
+        <img id="d_thumb" class="thumbLarge" src="" alt="thumbnail" style="display:none" />
         <div id="d_desc" class="small" style="white-space:pre-wrap"></div>
 
-        <div style="margin-top:12px">
+        <div style="margin-top:12px; overflow:auto">
           <div class="small">Task link</div>
           <div style="margin-top:6px"><a id="d_link" href="#" target="_blank" rel="noopener" class="small" style="color:var(--accent-start)"></a></div>
         </div>
 
-        <div style="margin-top:12px">
+        <div style="margin-top:12px; clear:both">
           <div class="small">Progress</div>
           <div class="progressWrap">
             <div class="progressBar"><div id="d_progress" class="progressFill" style="width:0%"></div></div>
@@ -141,7 +146,7 @@
     </div>
   </div>
 
-  <!-- thumbnail viewer overlay -->
+  <!-- thumbnail viewer overlay (full image) -->
   <div id="imgOverlay" class="overlay" aria-hidden="true">
     <div class="panel" style="max-width:900px; max-height:90vh;">
       <button id="closeImgOverlay" class="closeX">✕</button>
@@ -152,7 +157,7 @@
   <script type="module">
     // ---------- CONFIG ----------
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, query, where, onSnapshot, getDocs, addDoc, serverTimestamp, runTransaction, doc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, runTransaction, doc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     const firebaseConfig = {
@@ -202,7 +207,6 @@
     let advertsListenerUnsub = null;
     const submissionsListeners = new Map(); // advertId -> unsubscribe
     const advertsCache = new Map(); // advertId -> doc data
-    const userActiveSubmissionMap = new Map(); // advertId -> boolean (whether current user has pending/approved submission)
 
     let activeAdvertId = null; // which advert is open in overlay
 
@@ -221,18 +225,29 @@
     function formatNGN(n){ try { return '₦' + (Math.round(n).toLocaleString('en-NG')); } catch(e) { return '₦' + n; } }
     function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+    // compute unit price fallback: prefer unitPrice fields or fallback to totalCost/workers
+    function deriveUnitPrice(adData) {
+      const maybe = Number(adData?.unitPrice ?? adData?.unit_price ?? adData?.unit ?? NaN);
+      if (!isNaN(maybe) && maybe > 0) return maybe;
+      const total = Number(adData?.totalCost ?? adData?.total_cost ?? adData?.total ?? 0) || 0;
+      const workers = Number(adData?.workers || adData?.worker_count || 0) || 0;
+      if (workers > 0) return total / workers;
+      return 0;
+    }
+
     function showOverlayForAdvert(ad) {
       // ad: { id, data }
       activeAdvertId = ad.id;
       d_title.textContent = ad.title || ad.data?.title || 'Untitled';
       d_platform.textContent = ad.data?.platform || '';
-      // show 70% of totalCost
-      const totalCost = Number(ad.data?.totalCost ?? ad.data?.total_cost ?? ad.data?.total ?? 0) || 0;
-      const displayPrice = Math.round(totalCost * 0.7);
+      // show 70% of unit price
+      const unitPrice = deriveUnitPrice(ad.data);
+      const displayPrice = Math.round(unitPrice * 0.7);
       d_price.textContent = formatNGN(displayPrice);
       d_desc.textContent = ad.data?.description || '';
       d_link.href = ad.data?.taskLink || ad.data?.task_link || '#';
       d_link.textContent = ad.data?.taskLink || ad.data?.task_link || '';
+
       if (ad.data?.thumbnail) {
         d_thumb.src = ad.data.thumbnail;
         d_thumb.style.display = 'block';
@@ -241,7 +256,6 @@
       }
       // progress
       const workersRequested = Number(ad.data?.workers || ad.data?.worker_count || 0) || 0;
-      // We'll compute approved count from cached value updated by submissions listener
       const approvedCount = ad._approvedCount || 0;
       const pct = workersRequested === 0 ? 0 : Math.min(100, Math.round((approvedCount / workersRequested) * 100));
       d_progress.style.width = pct + '%';
@@ -288,7 +302,6 @@
     // Create submission document
     async function submitProof(advertId, text, imageUrl){
       if (!currentUser) throw new Error('Not signed in');
-      // Add doc to advert_submissions
       const payload = {
         advertId,
         userId: currentUser.uid,
@@ -297,42 +310,22 @@
         status: 'pending',
         createdAt: serverTimestamp()
       };
-      // use addDoc on collection 'advert_submissions'
       await addDoc(collection(db, 'advert_submissions'), payload);
     }
 
-    // Safe update advert to completed inside transaction (if not already)
-    async function markAdvertCompletedIfNeeded(advertId){
-      const advertRef = doc(db, 'advertise_tasks', advertId);
-      try {
-        await runTransaction(db, async (tx) => {
-          const snap = await tx.get(advertRef);
-          if (!snap.exists()) return;
-          const data = snap.data();
-          if (data.status === 'completed') return;
-          // re-count approved submissions server-side would be ideal, but we'll rely on client-side check:
-          // however for safety, check a flag or re-evaluate in transaction: here we just set status to completed
-          tx.update(advertRef, { status: 'completed', completedAt: serverTimestamp() });
-        });
-      } catch (e) {
-        console.warn('markAdvertCompletedIfNeeded failed', e);
-      }
-    }
-
     // ---------- listeners & rendering ----------
-    // Renders one advert card
     function renderAdvertCard(ad) {
-      // ad: { id, data, _approvedCount, _userHasActiveSubmission }
       const id = ad.id;
       const data = ad.data;
-      // hide if completed or if user has active submission (pending/approved)
       const workersRequested = Number(data.workers || data.worker_count || 0) || 0;
       const approvedCount = Number(ad._approvedCount || 0);
       const userHasActive = !!ad._userHasActiveSubmission;
       if (data.status !== 'approved') return null;
       if (userHasActive) return null; // hide for this user
 
-      const price = Math.round((Number(data.totalCost || data.total_cost || 0) || 0) * 0.7);
+      // now use 70% of unit price (not totalCost)
+      const unit = deriveUnitPrice(data);
+      const price = Math.round(unit * 0.7);
 
       const card = el('div', { class: 'card', dataset: { id } });
       const thumb = el('img', { class: 'thumb', src: data.thumbnail || '', alt: data.title || '' });
@@ -356,14 +349,8 @@
       actions.appendChild(startBtn);
       actions.appendChild(detailsBtn);
 
-      // attach listeners
-      startBtn.addEventListener('click', () => {
-        // open overlay for this advert (submission form)
-        showOverlayForAdvert({ id, data, _approvedCount: approvedCount });
-      });
-      detailsBtn.addEventListener('click', () => {
-        showOverlayForAdvert({ id, data, _approvedCount: approvedCount });
-      });
+      startBtn.addEventListener('click', () => showOverlayForAdvert({ id, data, _approvedCount: approvedCount }));
+      detailsBtn.addEventListener('click', () => showOverlayForAdvert({ id, data, _approvedCount: approvedCount }));
 
       card.appendChild(thumb);
       card.appendChild(h3);
@@ -375,18 +362,14 @@
       return card;
     }
 
-    // Rebuild grid from advertsCache (only adverts that should be visible)
     function rebuildGrid() {
       const q = (search.value || '').trim().toLowerCase();
       grid.innerHTML = '';
       let any = false;
       for (const [id, ad] of advertsCache) {
-        // ad: { id, data, _approvedCount, _userHasActiveSubmission }
-        // only show approved adverts and not those hidden for user
         if (!ad.data) continue;
         if (ad.data.status !== 'approved') continue;
         if (ad._userHasActiveSubmission) continue;
-        // if search text present, filter by title/platform/subcategory
         if (q) {
           const hay = ((ad.data.title || '') + ' ' + (ad.data.platform || '') + ' ' + (ad.data.subcategory || '')).toLowerCase();
           if (!hay.includes(q)) continue;
@@ -397,7 +380,6 @@
       if (!any) grid.innerHTML = `<div class="empty">No tasks available.</div>`;
     }
 
-    // For each advert we need to listen to its submissions to compute approved count and whether current user has active/pending submission
     function attachSubmissionsListener(advertId) {
       if (submissionsListeners.has(advertId)) return;
       const subQ = query(collection(db, 'advert_submissions'), where('advertId', '==', advertId));
@@ -409,7 +391,6 @@
           const st = (d.status||'').toLowerCase();
           if (st === 'approved') approvedCount++;
           if (currentUser && d.userId === currentUser.uid && st !== 'rejected') {
-            // user has pending or approved submission: hide the advert for them
             userHasActive = true;
           }
         });
@@ -417,13 +398,10 @@
         ad._approvedCount = approvedCount;
         ad._userHasActiveSubmission = userHasActive;
         advertsCache.set(advertId, ad);
-        // update advert card if present
         rebuildGrid();
 
-        // If approvedCount reached workers requested, mark advert completed
         const workersRequested = Number(ad.data?.workers || ad.data?.worker_count || 0) || 0;
         if (workersRequested > 0 && approvedCount >= workersRequested) {
-          // set advert status to completed
           (async () => {
             try {
               const advertRef = doc(db, 'advertise_tasks', advertId);
@@ -440,9 +418,7 @@
             }
           })();
         }
-      }, err => {
-        console.error('submissions listener err', err);
-      });
+      }, err => { console.error('submissions listener err', err); });
 
       submissionsListeners.set(advertId, unsub);
     }
@@ -454,25 +430,20 @@
       submissionsListeners.clear();
     }
 
-    // adverts listener
     function startAdvertsListener() {
-      // stop existing
       if (advertsListenerUnsub) { try { advertsListenerUnsub(); } catch(e){}; advertsListenerUnsub=null; }
       detachAllSubmissionListeners();
       grid.innerHTML = `<div class="empty">Loading tasks…</div>`;
 
       const advertsQ = query(collection(db, 'advertise_tasks'), where('status','==','approved'));
-      advertsListenerUnsub = onSnapshot(advertsQ, async (snap) => {
+      advertsListenerUnsub = onSnapshot(advertsQ, (snap) => {
         advertsCache.clear();
-        const promises = [];
         snap.forEach(docSnap => {
           const data = docSnap.data();
           const id = docSnap.id;
           advertsCache.set(id, { id, data, _approvedCount: 0, _userHasActiveSubmission: false });
-          // attach submissions listeners for each advert
           attachSubmissionsListener(id);
         });
-        // rebuild grid after attachments
         rebuildGrid();
       }, err => {
         console.error('adverts listener err', err);
@@ -483,15 +454,13 @@
     // ---------- auth handling ----------
     onAuthStateChanged(auth, user => {
       currentUser = user;
-      startAdvertsListener(); // start adverts listener even if null user; submissions logic depends on currentUser and will hide/show accordingly
+      startAdvertsListener();
     });
 
     // ---------- overlay controls ----------
     closeOverlay.addEventListener('click', closeDetailsOverlay);
     closeOverlayBtn.addEventListener('click', closeDetailsOverlay);
-    document.getElementById('d_thumb').addEventListener('click', () => {
-      if (d_thumb.src) openImageOverlay(d_thumb.src);
-    });
+    d_thumb.addEventListener('click', () => { if (d_thumb.src) openImageOverlay(d_thumb.src); });
 
     closeImgOverlay.addEventListener('click', closeImageOverlay);
     imgOverlay.addEventListener('click', (e) => { if (e.target === imgOverlay) closeImageOverlay(); });
@@ -534,7 +503,7 @@
     refresh.addEventListener('click', () => startAdvertsListener());
     search.addEventListener('input', () => rebuildGrid());
 
-    // initialize UI: empty grid
+    // initialize UI
     grid.innerHTML = `<div class="empty">No tasks yet — check back soon.</div>`;
 
   </script>
