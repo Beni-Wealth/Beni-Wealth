@@ -3,69 +3,88 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Withdrawal Records — Beni-Wealth</title>
+  <title>My Submissions — Beni-Wealth</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>body{font-family:'Poppins',sans-serif} .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(6px)}</style>
+  <style>
+    :root{
+      --bg1:#060511; --bg2:#0f0920;
+      --muted: rgba(255,255,255,0.65);
+      --text: #eaf2ff;
+      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --card: rgba(255,255,255,0.02);
+      --glass: rgba(255,255,255,0.03);
+      --radius:12px;
+      --max-width:1100px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
+    .shell{max-width:var(--max-width);margin:24px auto;padding:20px}
+
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{font-weight:700;font-size:1.1rem}
+    .back{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);text-decoration:none;color:var(--text)}
+    .muted{color:var(--muted);font-size:13px}
+
+    .controls{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+    .search{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+    .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+
+    .list{display:flex;flex-direction:column;gap:12px}
+    .item{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04);display:grid;grid-template-columns:1fr 220px;gap:12px;align-items:center}
+    .item .meta{color:var(--muted);font-size:13px}
+    .item .title{font-weight:700;margin-bottom:6px}
+    .item .proof{white-space:pre-wrap;color:var(--muted);margin-top:6px}
+    .thumb{width:180px;height:100px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.03)}
+    .status{font-weight:700;padding:6px 10px;border-radius:999px;font-size:13px;text-align:center}
+    .status.pending{background:#fff6d6;color:#6a4f00}
+    .status.approved{background:#bff0d9;color:#05461f}
+    .status.rejected{background:#ffdede;color:#6b0b0b}
+
+    .small{font-size:13px;color:var(--muted)}
+    .empty{padding:40px;text-align:center;color:var(--muted)}
+
+    /* viewer overlay */
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:999;padding:18px}
+    .panel{width:100%;max-width:920px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 120px rgba(0,0,0,0.8);}
+    .panel h2{margin:0 0 8px 0}
+    .closeX{float:right;background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
+    img.viewerImg{max-width:100%;display:block;margin:12px 0;border-radius:8px}
+
+    @media(max-width:820px){ .item{grid-template-columns:1fr} .thumb{width:100%;height:160px} }
+  </style>
 </head>
-<body class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-gray-900 text-slate-100 p-6">
-  <main class="max-w-6xl mx-auto">
-    <div class="glass border border-white/6 rounded-2xl p-6 shadow-2xl">
-      <header class="flex items-center justify-between gap-4 mb-6">
-        <div class="flex items-center gap-4">
-          <a href="dashboard.html" id="backBtn" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/6 text-sm">
-            <!-- simple back arrow -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0L3.586 10l4.707-4.707a1 1 0 011.414 1.414L6.414 9H17a1 1 0 110 2H6.414l3.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
-            Back
-          </a>
-          <div>
-            <h1 class="text-2xl font-semibold">Withdrawal Records</h1>
-            <p class="text-sm text-slate-400 mt-1">Your withdrawal requests — pulled from Firestore.</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3 w-full sm:w-auto">
-          <a href="withdrawal.html" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm shadow">New Withdrawal</a>
-        </div>
-      </header>
-
-      <section class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center gap-3 w-full sm:w-1/2">
-          <input id="search" type="search" placeholder="Search by name, account number, bank, uid or status" class="w-full rounded-lg bg-white/5 border border-white/6 py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500" />
-        </div>
-        <div class="flex items-center gap-3">
-          <button id="refreshBtn" class="px-3 py-2 rounded-lg bg-white/5 text-sm">Refresh</button>
-          <button id="exportBtn" class="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm">Export CSV</button>
-        </div>
-      </section>
-
-      <div class="overflow-x-auto">
-        <table id="recordsTable" class="min-w-full table-auto divide-y divide-white/6">
-          <thead class="bg-white/3">
-            <tr class="text-left text-sm text-slate-300">
-              <th class="px-4 py-3">Account name</th>
-              <th class="px-4 py-3">Account number</th>
-              <th class="px-4 py-3">Amount</th>
-              <th class="px-4 py-3">Bank</th>
-              <th class="px-4 py-3">Date</th>
-              <th class="px-4 py-3">UID</th>
-              <th class="px-4 py-3">Status</th>
-            </tr>
-          </thead>
-          <tbody id="tbody" class="bg-transparent divide-y divide-white/6">
-            <tr><td colspan="7" class="p-6 text-center text-slate-400">Loading…</td></tr>
-          </tbody>
-        </table>
+<body>
+  <main class="shell">
+    <header>
+      <a class="back" href="dashboard.html">← Back</a>
+      <div style="text-align:right">
+        <div class="brand">My Task Submissions</div>
+        <div class="muted">All proofs you submitted and their review status</div>
       </div>
+    </header>
 
-      <div id="emptyState" class="hidden p-6 text-center text-slate-400">No records found.</div>
-    </div>
+    <section class="controls">
+      <input id="search" class="search" placeholder="Search by advert title, status or id" />
+      <button id="refresh" class="btn ghost">Refresh</button>
+    </section>
 
-    <footer class="mt-6 text-center text-slate-400 text-xs">© Beni-Wealth</footer>
+    <section id="list" class="list" aria-live="polite">
+      <div class="empty">Loading your submissions…</div>
+    </section>
   </main>
+
+  <!-- overlay for image / full detail -->
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="panel" role="dialog" aria-modal="true">
+      <button id="closeOverlay" class="closeX" aria-label="Close">✕</button>
+      <div id="overlayContent"></div>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, query, where, orderBy, onSnapshot, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getFirestore, collection, query, where, orderBy, onSnapshot, getDoc, doc, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     const firebaseConfig = {
@@ -82,157 +101,246 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    const tbody = document.getElementById('tbody');
+    const listEl = document.getElementById('list');
     const searchEl = document.getElementById('search');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const emptyState = document.getElementById('emptyState');
+    const refreshBtn = document.getElementById('refresh');
+    const overlay = document.getElementById('overlay');
+    const overlayContent = document.getElementById('overlayContent');
+    const closeOverlay = document.getElementById('closeOverlay');
 
-    let unsubscribe = null;
-    let recordsCache = [];
+    let currentUser = null;
+    let unsub = null;
+    const advertCache = new Map(); // advertId -> {title, thumbnail}
+    let submissions = []; // local cache
 
-    function formatDate(ts) {
-      try {
-        if (!ts) return '-';
+    function niceDate(ts){
+      try{
+        if(!ts) return '-';
         if (ts.toDate) ts = ts.toDate();
         const d = new Date(ts);
-        return d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-      } catch (e) { return '-'; }
+        return d.toLocaleString();
+      } catch(e){ return '-' }
     }
 
-    function formatAmount(n) {
-      if (n == null || n === '') return '-';
-      try {
-        return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(Number(n));
-      } catch (e) { return '₦' + n; }
+    function statusClass(s){
+      const st = String(s||'').toLowerCase();
+      if(st==='pending') return 'status pending';
+      if(st==='approved') return 'status approved';
+      if(st==='rejected') return 'status rejected';
+      return 'status';
     }
 
-    function escapeHtml(text) {
-      if (text == null) return '';
-      return String(text).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-    }
-
-    function statusPill(status) {
-      const s = (status || '').toLowerCase();
-      if (s === 'pending') return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-yellow-400 text-slate-900">Pending</span>`;
-      if (s === 'successful' || s === 'success') return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-600 text-white">Successful</span>`;
-      if (s === 'failed' || s === 'rejected') return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-red-600 text-white">${escapeHtml(status)}</span>`;
-      return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-slate-200">${escapeHtml(status || '-')}</span>`;
-    }
-
-    function renderTable(rows) {
-      recordsCache = rows || [];
-      const q = (searchEl.value || '').trim().toLowerCase();
-      const filtered = recordsCache.filter(r => {
-        if (!q) return true;
-        return [r.accountName, r.accountNumber, String(r.amount), r.bank, r.requestedBy, r.status].join(' ').toLowerCase().includes(q);
+    function renderList(items){
+      submissions = items.slice();
+      const q = (searchEl.value||'').toLowerCase().trim();
+      const filtered = items.filter(it => {
+        if(!q) return true;
+        return (it.advertTitle||'').toLowerCase().includes(q)
+          || (it.status||'').toLowerCase().includes(q)
+          || (it.id||'').toLowerCase().includes(q)
+          || (it.advertId||'').toLowerCase().includes(q);
       });
-
-      if (!filtered || filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">No records match your search.</td></tr>';
-        emptyState.classList.remove('hidden');
+      if(!filtered.length){
+        listEl.innerHTML = '<div class="empty">No submissions found.</div>';
         return;
-      } else {
-        emptyState.classList.add('hidden');
       }
+      listEl.innerHTML = '';
+      filtered.forEach(it => {
+        const item = document.createElement('div'); item.className='item';
+        const left = document.createElement('div');
+        const title = document.createElement('div'); title.className='title'; title.textContent = it.advertTitle || '(no title)';
+        const meta = document.createElement('div'); meta.className='meta';
+        meta.innerHTML = `Submitted: ${niceDate(it.createdAt)} • Submission ID: <code style="font-family:monospace;color:var(--muted)">${it.id}</code>`;
+        const proof = document.createElement('div'); proof.className='proof'; proof.textContent = it.textProof || '';
+        left.appendChild(title); left.appendChild(meta); left.appendChild(proof);
 
-      tbody.innerHTML = filtered.map(r => `
-        <tr class="hover:bg-white/2">
-          <td class="px-4 py-3">${escapeHtml(r.accountName)}</td>
-          <td class="px-4 py-3">${escapeHtml(r.accountNumber)}</td>
-          <td class="px-4 py-3 font-medium">${formatAmount(r.amount)}</td>
-          <td class="px-4 py-3">${escapeHtml(r.bank)}</td>
-          <td class="px-4 py-3">${formatDate(r.createdAt)}</td>
-          <td class="px-4 py-3 text-sm text-slate-400">${escapeHtml(r.requestedBy || '-')}</td>
-          <td class="px-4 py-3">${statusPill(r.status)}</td>
-        </tr>
-      `).join('');
-    }
-
-    async function fetchInitialAndSubscribe(uid) {
-      // build query
-      const col = collection(db, 'withdrawal');
-      const q = query(col, where('requestedBy', '==', uid), orderBy('createdAt', 'desc'));
-
-      // try a one-time get first so the UI doesn't stay stuck on "Loading…"
-      try {
-        const snap = await getDocs(q);
-        const rows = [];
-        snap.forEach(doc => rows.push({ id: doc.id, ...doc.data() }));
-        if (rows.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">You have no withdrawal records yet.</td></tr>';
-          recordsCache = [];
-          emptyState.classList.remove('hidden');
+        const right = document.createElement('div'); right.style.textAlign='right';
+        const thumb = document.createElement('img'); thumb.className='thumb';
+        if(it.imageUrl){
+          thumb.src = it.imageUrl;
+          thumb.addEventListener('click', ()=> showOverlayFull(it));
         } else {
-          renderTable(rows);
+          thumb.style.display='none';
         }
-      } catch (err) {
-        console.error('Initial fetch error', err);
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-400">Error loading records: ${escapeHtml(err.message || String(err))}</td></tr>`;
-        return;
-      }
+        const status = document.createElement('div'); status.className = statusClass(it.status); status.textContent = String(it.status||'pending').toUpperCase();
+        const advertId = document.createElement('div'); advertId.className='small'; advertId.style.marginTop='8px';
+        advertId.innerHTML = `Advert ID: <code style="font-family:monospace;color:var(--muted)">${it.advertId}</code>`;
+        right.appendChild(thumb); right.appendChild(status); right.appendChild(advertId);
 
-      // attach realtime listener for live updates
-      if (unsubscribe) unsubscribe();
-      unsubscribe = onSnapshot(q, snap => {
-        const rows = [];
-        snap.forEach(doc => rows.push({ id: doc.id, ...doc.data() }));
-        renderTable(rows);
-      }, err => {
-        console.error('Realtime listener error', err);
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-400">Realtime error: ${escapeHtml(err.message || String(err))}</td></tr>`;
+        item.appendChild(left); item.appendChild(right);
+        listEl.appendChild(item);
       });
     }
 
-    onAuthStateChanged(auth, async (user) => {
-      // clear table while we decide
-      tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">Loading…</td></tr>';
-      if (!user) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">Please sign in to see your withdrawal records.</td></tr>';
+    function showOverlayFull(item){
+      overlayContent.innerHTML = '';
+      const h = document.createElement('h2'); h.textContent = item.advertTitle || '(no title)';
+      const p1 = document.createElement('div'); p1.className='small'; p1.textContent = `Submission ID: ${item.id} • Advert ID: ${item.advertId} • Submitted: ${niceDate(item.createdAt)}`;
+      const st = document.createElement('div'); st.style.marginTop='8px'; st.innerHTML = `Status: <strong>${item.status||'pending'}</strong>`;
+      const txt = document.createElement('div'); txt.style.marginTop='12px'; txt.className='small'; txt.textContent = item.textProof || '(no text proof)';
+      overlayContent.appendChild(h); overlayContent.appendChild(p1); overlayContent.appendChild(st); overlayContent.appendChild(txt);
+      if(item.imageUrl){
+        const img = document.createElement('img'); img.className='viewerImg'; img.src = item.imageUrl; overlayContent.appendChild(img);
+      }
+      overlay.style.display='flex'; overlay.setAttribute('aria-hidden','false');
+    }
+
+    closeOverlay.addEventListener('click', ()=>{ overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); overlayContent.innerHTML=''; });
+    overlay.addEventListener('click', (e)=>{ if(e.target===overlay){ overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); overlayContent.innerHTML=''; } });
+
+    // Attempt to fetch advert doc from a list of possible collection names
+    async function fetchAdvertMeta(aid){
+      if(!aid) return { title: '', thumbnail: '' };
+      if(advertCache.has(aid)) return advertCache.get(aid);
+      const candidates = ['advert', 'advertise_tasks', 'adverts', 'advertise', 'advertisements', 'advert_task', 'advert_task_list'];
+      for(const col of candidates){
+        try{
+          const ref = doc(db, col, aid);
+          const snap = await getDoc(ref);
+          if(snap && snap.exists()){
+            const d = snap.data() || {};
+            const meta = { title: d.title || d.name || d.adTitle || '', thumbnail: d.thumbnail || d.thumb || d.imageUrl || '' };
+            advertCache.set(aid, meta);
+            return meta;
+          }
+        }catch(e){
+          // continue to next candidate
+          console.warn('fetchAdvertMeta try failed for', col, aid, e);
+        }
+      }
+      // not found
+      const fallback = { title: '(task not found)', thumbnail: '' };
+      advertCache.set(aid, fallback);
+      return fallback;
+    }
+
+    // Start real-time listener for user's submissions from the correct collection ('advert_submission')
+    async function startListener(uid){
+      // tear down previous
+      if(unsub){ try{ unsub(); }catch(e){}; unsub = null; }
+      listEl.innerHTML = '<div class="empty">Loading your submissions…</div>';
+
+      // primary collection name user indicated:
+      const submissionsCollectionName = 'advert_submission';
+
+      const qRef = query(collection(db, submissionsCollectionName), where('userId','==', uid), orderBy('createdAt','desc'));
+      try{
+        unsub = onSnapshot(qRef, async (snap) => {
+          const items = [];
+          const advertIds = new Set();
+          snap.forEach(s => {
+            const d = s.data() || {};
+            items.push({
+              id: s.id,
+              advertId: d.advertId || d.advertID || d.taskId || d.task_id || '',
+              textProof: d.textProof || d.text_proof || d.proofText || '',
+              imageUrl: d.imageUrl || d.image_url || d.image || '',
+              status: d.status || 'pending',
+              createdAt: d.createdAt || d.created_at || d.timestamp || null
+            });
+            const aid = d.advertId || d.advertID || d.taskId || d.task_id || '';
+            if(aid) advertIds.add(aid);
+          });
+
+          // fetch advert titles for referenced adverts
+          const missing = Array.from(advertIds).filter(aid => aid && !advertCache.has(aid));
+          await Promise.all(missing.map(aid => fetchAdvertMeta(aid)));
+
+          // attach advertTitle to items
+          items.forEach(it => {
+            const cached = advertCache.get(it.advertId) || {};
+            it.advertTitle = cached.title || '';
+            if(!it.imageUrl && cached.thumbnail) it.imageUrl = cached.thumbnail;
+          });
+
+          renderList(items);
+        }, async (err) => {
+          console.error('Realtime listener failed: ', err);
+          // fallback: one-time fetch (try to still show data)
+          try{
+            const snapOnce = await getDocs(qRef);
+            const items = [];
+            const advertIds = new Set();
+            snapOnce.forEach(s => {
+              const d = s.data() || {};
+              items.push({
+                id: s.id,
+                advertId: d.advertId || d.advertID || d.taskId || d.task_id || '',
+                textProof: d.textProof || d.text_proof || d.proofText || '',
+                imageUrl: d.imageUrl || d.image_url || d.image || '',
+                status: d.status || 'pending',
+                createdAt: d.createdAt || d.created_at || d.timestamp || null
+              });
+              const aid = d.advertId || d.advertID || d.taskId || d.task_id || '';
+              if(aid) advertIds.add(aid);
+            });
+            const missing = Array.from(advertIds).filter(aid => aid && !advertCache.has(aid));
+            await Promise.all(missing.map(aid => fetchAdvertMeta(aid)));
+            items.forEach(it => {
+              const cached = advertCache.get(it.advertId) || {};
+              it.advertTitle = cached.title || '';
+              if(!it.imageUrl && cached.thumbnail) it.imageUrl = cached.thumbnail;
+            });
+            renderList(items);
+          }catch(e){
+            console.error('Fallback fetch failed', e);
+            listEl.innerHTML = '<div class="empty">Failed to load submissions.</div>';
+          }
+        });
+      }catch(e){
+        console.error('startListener error', e);
+        // final fallback: getDocs attempt with some flexibility in field names (userId / requestedBy)
+        try{
+          // try userId field
+          const q1 = query(collection(db, submissionsCollectionName), where('userId','==', uid), orderBy('createdAt','desc'));
+          let snap = await getDocs(q1);
+          if(snap.empty){
+            // try requestedBy
+            const q2 = query(collection(db, submissionsCollectionName), where('requestedBy','==', uid), orderBy('createdAt','desc'));
+            snap = await getDocs(q2);
+          }
+          const items = [];
+          const advertIds = new Set();
+          snap.forEach(s => {
+            const d = s.data() || {};
+            items.push({
+              id: s.id,
+              advertId: d.advertId || d.advertID || d.taskId || d.task_id || '',
+              textProof: d.textProof || d.text_proof || d.proofText || '',
+              imageUrl: d.imageUrl || d.image_url || d.image || '',
+              status: d.status || 'pending',
+              createdAt: d.createdAt || d.created_at || d.timestamp || null
+            });
+            const aid = d.advertId || d.advertID || d.taskId || d.task_id || '';
+            if(aid) advertIds.add(aid);
+          });
+          const missing = Array.from(advertIds).filter(aid => aid && !advertCache.has(aid));
+          await Promise.all(missing.map(aid => fetchAdvertMeta(aid)));
+          items.forEach(it => {
+            const cached = advertCache.get(it.advertId) || {};
+            it.advertTitle = cached.title || '';
+            if(!it.imageUrl && cached.thumbnail) it.imageUrl = cached.thumbnail;
+          });
+          renderList(items);
+        }catch(err){
+          console.error('final fallback error', err);
+          listEl.innerHTML = '<div class="empty">Failed to load submissions.</div>';
+        }
+      }
+    }
+
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      if(!user){
+        listEl.innerHTML = '<div class="empty">Please sign in to view your submissions.</div>';
         return;
       }
-
-      // fetch initial set and subscribe for realtime updates
-      await fetchInitialAndSubscribe(user.uid);
+      // start listening to this user's submissions
+      startListener(user.uid);
     });
 
-    refreshBtn.addEventListener('click', async () => {
-      const user = auth.currentUser;
-      if (!user) { alert('Please sign in first'); return; }
-      tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">Refreshing…</td></tr>';
-      await fetchInitialAndSubscribe(user.uid);
-    });
-
-    searchEl.addEventListener('input', () => renderTable(recordsCache));
-
-    exportBtn.addEventListener('click', () => {
-      if (!recordsCache || recordsCache.length === 0) {
-        alert('No records to export');
-        return;
-      }
-      const rows = recordsCache.map(r => ({
-        accountName: r.accountName || '',
-        accountNumber: r.accountNumber || '',
-        amount: r.amount || '',
-        bank: r.bank || '',
-        createdAt: formatDate(r.createdAt),
-        requestedBy: r.requestedBy || '',
-        status: r.status || ''
-      }));
-
-      const header = ['Account name','Account number','Amount','Bank','Date','UID','Status'];
-      const csv = [header.join(',')].concat(rows.map(r => [r.accountName, r.accountNumber, r.amount, r.bank, `"${r.createdAt}"`, r.requestedBy, r.status].map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(','))).join('
-');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'withdrawal-records.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    });
+    refreshBtn.addEventListener('click', ()=>{ if(currentUser) startListener(currentUser.uid); });
+    searchEl.addEventListener('input', ()=> renderList(submissions));
   </script>
 </body>
 </html>
