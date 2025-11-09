@@ -258,7 +258,7 @@
         alert('No referral code available to copy.');
         return;
       }
-      const url = `https://beni-wealth.github.io/Beni-Wealth/register.html?ref=${encodeURIComponent(code)}`;
+      const url = `https://beni-wealth.netlify.app/register.html?ref=${encodeURIComponent(code)}`;
       navigator.clipboard.writeText(url).then(()=>{
         const prev = copyBtn.textContent;
         copyBtn.textContent='Copied';
