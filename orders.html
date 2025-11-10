@@ -44,7 +44,7 @@
     .details-inner{padding:12px;border-top:1px dashed rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:0 0 10px 10px}
     .submission{display:flex;gap:12px;align-items:flex-start;padding:8px;border-radius:8px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)}
     .sub-left{flex:1}
-    .sub-thumb{width:120px;height:72px;object-fit:cover;border-radius:6px}
+    .sub-thumb{max-width:100%;width:140px;height:auto;object-fit:contain;border-radius:6px;border:1px solid rgba(255,255,255,0.03);background:#000}
     .sub-meta{color:var(--muted);font-size:12px;margin-bottom:6px}
     .empty{padding:28px;text-align:center;color:var(--muted)}
     .diag{color:var(--muted);font-size:13px;margin-bottom:12px}
@@ -54,7 +54,7 @@
     .viewer{width:100%;max-width:880px;background:#000;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;align-items:center}
     .viewer img{max-width:100%;height:auto;display:block}
     .viewer .meta{padding:12px;background:rgba(0,0,0,0.5);color:var(--muted);width:100%;display:flex;justify-content:space-between}
-    @media(max-width:520px){ .thumb{width:78px;height:60px} .sub-thumb{width:90px;height:56px} }
+    @media(max-width:520px){ .thumb{width:78px;height:60px} .sub-thumb{width:100%;height:auto} }
   </style>
 </head>
 <body>
@@ -96,7 +96,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import {
       getFirestore, collection, query, where, onSnapshot, getDocs, doc, getDoc,
-      updateDoc, runTransaction, serverTimestamp, writeBatch
+      runTransaction, serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
@@ -188,7 +188,6 @@
       let any = false;
       for(const [id, item] of advertsMap){
         const data = item.data || {};
-        // filter
         if(q){
           const hay = ((data.title||'') + ' ' + (data.platform||'') + ' ' + (data.subcategory||'') + ' ' + (data.status||'')).toLowerCase();
           if(!hay.includes(q)) continue;
@@ -200,15 +199,15 @@
       if(!any) grid.innerHTML = '<div class="empty">You have no adverts yet.</div>';
     }
 
-    // build card (no "Open full" button — only Details)
+    // build card (only Details button)
     function buildCard(id, data){
       const head = el('div',{class:'card-head'});
       const left = el('div',{style:'display:flex;gap:12px;align-items:center'});
-      const thumb = el('img',{class:'thumb', src: data.thumbnail || data.thumb || data.image || '', alt: data.title || ''});
-      if(!data.thumbnail && !data.thumb && !data.image) thumb.style.display = 'none';
+      const thumbSrc = data.thumbnail || data.thumb || data.image || '';
+      const thumb = el('img',{class:'thumb', src: thumbSrc, alt: data.title || ''});
+      if(!thumbSrc) thumb.style.display = 'none';
       thumb.addEventListener('click', ()=>{
-        const src = data.thumbnail || data.thumb || data.image || '';
-        if(src) openImageViewer(src);
+        if(thumbSrc) openImageViewer(thumbSrc);
       });
 
       const txt = el('div', {},
@@ -227,22 +226,25 @@
 
       const body = el('div',{class:'card-body'}, data.description ? (data.description.slice(0,220) + (data.description.length>220? '…':'')) : el('span',{},'No description'));
 
-      // actions — only Details remains
       const actions = el('div',{class:'actions'});
       const detailsBtn = el('button',{class:'btn ghost'}, 'Details');
       actions.appendChild(detailsBtn);
 
-      // collapsed submissions area
-      const collapse = el('div',{class:'details-collapse', id:`collapse-${id}`},
-        el('div',{class:'details-inner'}, el('div',{class:'small muted'}, 'Loading submissions…'))
-      );
+      const collapseInner = el('div',{class:'details-inner'}, el('div',{class:'small muted'}, 'Loading submissions…'));
+      const collapse = el('div',{class:'details-collapse', id:`collapse-${id}`}, collapseInner);
 
+      // improved expand/collapse using measured height so images + content not clipped
       let expanded = false;
       detailsBtn.addEventListener('click', async () => {
         expanded = !expanded;
         if(expanded){
-          collapse.style.maxHeight = '700px';
-          await attachSubmissionsListener(id, collapse.querySelector('.details-inner'));
+          // ensure content is rendered and then set maxHeight to scrollHeight
+          await attachSubmissionsListener(id, collapseInner);
+          // give layout a tick to render images/sizes
+          requestAnimationFrame(()=> {
+            const sh = collapseInner.scrollHeight;
+            collapse.style.maxHeight = (sh + 24) + 'px'; // extra padding
+          });
         } else {
           collapse.style.maxHeight = '0';
           detachSubmissionsListener(id);
@@ -253,12 +255,14 @@
       return card;
     }
 
-    // attach realtime submissions listener for advertId and render into containerEl
+    // attach submissions listener for advertId and render into containerEl
     function attachSubmissionsListener(advertId, containerEl){
+      // avoid duplicate
       if(submissionsListeners.has(advertId)) return;
+
       containerEl.innerHTML = '<div class="small muted">Loading submissions…</div>';
 
-      // collection name used in your site
+      // collection name
       const subColName = 'advert_submissions';
       const q = query(collection(db, subColName), where('advertId', '==', advertId));
 
@@ -272,7 +276,8 @@
             textProof: d.textProof || d.text_proof || d.proofText || '',
             imageUrl: d.imageUrl || d.image_url || d.image || '',
             status: d.status || 'pending',
-            createdAt: d.createdAt || d.created_at || null
+            createdAt: d.createdAt || d.created_at || null,
+            paidAmount: d.paidAmount || d.paid_amount || d.paid || null
           });
         });
 
@@ -295,61 +300,82 @@
               el('div',{}, s.textProof || el('em',{}, '(no text proof)'))
             );
 
-            const right = el('div',{style:'min-width:140px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px'});
+            const right = el('div',{style:'min-width:160px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px'});
 
             if(s.imageUrl){
               const img = el('img',{class:'sub-thumb', src:s.imageUrl, alt:'proof'});
-              img.style.cursor = 'pointer';
               img.addEventListener('click', ()=> openImageViewer(s.imageUrl));
               right.appendChild(img);
             }
 
-            // status badge
             const stLower = (s.status||'').toLowerCase();
             const statusBadge = el('div',{class:`pill ${stLower==='approved' ? 'approved' : stLower==='completed' ? 'completed' : 'pending' }`}, (s.status||'PENDING').toString().toUpperCase());
             right.appendChild(statusBadge);
 
-            // If current user is the advert owner, show approve / reject
+            // owner-only controls
             const advert = advertsMap.get(advertId);
             const advertOwnerId = advert?.data ? (advert.data.createdBy || advert.data.owner || advert.data.userId || advert.data.uid || advert.data.requestedBy || advert.data.creator || advert.data.ownerUid || advert.data.user || null) : null;
             const unitPrice = getUnitPrice(advert?.data || {});
             const payAmount = Math.round(unitPrice * 0.7);
 
             if(currentUser && advertOwnerId && currentUser.uid === advertOwnerId){
+              // dynamic control set depending on status
               const controls = el('div',{style:'display:flex;gap:6px;flex-direction:row;'});
-              const approveBtn = el('button',{class:'btn'}, `Approve (₦${payAmount.toLocaleString()})`);
-              const rejectBtn = el('button',{class:'btn ghost'}, 'Reject');
+              const approveBtn = el('button',{class:'btn'}, '');
+              const rejectBtn = el('button',{class:'btn ghost'}, '');
 
-              // disable approve if already approved
-              if((s.status||'').toLowerCase() === 'approved') approveBtn.disabled = true;
+              // set label and disabled state according to current submission status
+              if(stLower === 'approved'){
+                approveBtn.textContent = `Unapprove`;
+                rejectBtn.textContent = `Reject`;
+                // IMPORTANT: once approved, *rejecting is not allowed* — disable reject button
+                rejectBtn.disabled = true;
+                rejectBtn.title = 'Cannot reject an already-approved submission';
+              } else if(stLower === 'rejected'){
+                approveBtn.textContent = `Approve (₦${payAmount.toLocaleString()})`;
+                rejectBtn.textContent = `Unreject`;
+                rejectBtn.disabled = false;
+                rejectBtn.title = '';
+              } else {
+                approveBtn.textContent = `Approve (₦${payAmount.toLocaleString()})`;
+                rejectBtn.textContent = `Reject`;
+                rejectBtn.disabled = false;
+                rejectBtn.title = '';
+              }
 
+              // approve/unapprove handler
               approveBtn.addEventListener('click', async ()=>{
-                if(approveBtn.disabled) return;
-                const ok = confirm(`Approve submission and credit user ₦${payAmount.toLocaleString()}?`);
-                if(!ok) return;
                 approveBtn.disabled = true;
-                approveBtn.textContent = 'Approving…';
-                try{
-                  await approveSubmission(advertId, s.id, s.userId, payAmount);
-                  // UI will update via snapshot
-                }catch(e){
-                  console.error('approve failed', e);
-                  alert('Approve failed: ' + (e.message || e));
-                } finally {
-                  approveBtn.disabled = false;
-                  approveBtn.textContent = `Approve (₦${payAmount.toLocaleString()})`;
-                }
+                try {
+                  if(stLower === 'approved'){
+                    // move back to pending (undo approval) — allowed
+                    await setSubmissionStatusWithPaymentAdjustment(s.id, 'pending');
+                  } else {
+                    // approve
+                    await setSubmissionStatusWithPaymentAdjustment(s.id, 'approved');
+                  }
+                } catch(e){
+                  console.error('approve/unapprove failed', e);
+                  alert('Action failed: ' + (e.message || e));
+                } finally { approveBtn.disabled = false; }
               });
 
+              // reject/unreject handler
               rejectBtn.addEventListener('click', async ()=>{
-                const ok = confirm('Reject this submission?');
-                if(!ok) return;
-                try{
-                  await rejectSubmission(s.id);
-                }catch(e){
-                  console.error('reject failed', e);
-                  alert('Reject failed: ' + (e.message || e));
-                }
+                if (rejectBtn.disabled) { return; } // safety guard
+                rejectBtn.disabled = true;
+                try {
+                  if(stLower === 'rejected'){
+                    // move back to pending
+                    await setSubmissionStatusWithPaymentAdjustment(s.id, 'pending');
+                  } else {
+                    // reject
+                    await setSubmissionStatusWithPaymentAdjustment(s.id, 'rejected');
+                  }
+                } catch(e){
+                  console.error('reject/unreject failed', e);
+                  alert('Action failed: ' + (e.message || e));
+                } finally { rejectBtn.disabled = false; }
               });
 
               controls.appendChild(approveBtn);
@@ -363,19 +389,18 @@
           }
         }
 
-        // after rendering, compute approved count and if needed mark advert completed
+        // try to mark advert completed if approved count >= workers (best effort)
         const approvedCount = list.filter(it => (it.status||'').toLowerCase() === 'approved').length;
-        const workersRequested = Number(advert?.data?.workers || advert?.data?.worker_count || advert?.data?.requested_workers || advert?.data?.maxWorkers || 0) || 0;
-        // if enough approved, attempt to mark advert completed
+        const advertData = advert?.data || {};
+        const workersRequested = Number(advertData.workers || advertData.worker_count || advertData.requested_workers || advertData.maxWorkers || 0) || 0;
         if(workersRequested > 0 && approvedCount >= workersRequested){
           try{
-            // update advert doc status -> completed (best-effort)
             const advertRef = doc(db, 'advertise_tasks', advertId);
             await runTransaction(db, async (tx) => {
               const snap = await tx.get(advertRef);
               if(!snap.exists()) return;
               const cur = snap.data() || {};
-              if((cur.status||'') !== 'completed'){
+              if((cur.status || '') !== 'completed'){
                 tx.update(advertRef, { status: 'completed', completedAt: serverTimestamp() });
               }
             });
@@ -405,65 +430,110 @@
       submissionsListeners.clear();
     }
 
-    // Approve submission: transactionally update submission and credit user's balance
-    async function approveSubmission(advertId, submissionId, submitterUid, amount){
+    // CENTRAL function to set status and adjust payment (approve -> credit, pending/unapprove -> reverse payment, rejected -> mark)
+    // ENFORCEMENT: approved -> rejected is NOT allowed (transaction will throw)
+    async function setSubmissionStatusWithPaymentAdjustment(submissionId, targetStatus){
       if(!submissionId) throw new Error('Invalid submission id');
-      if(!submitterUid) throw new Error('Invalid submitter id');
       const submissionRef = doc(db, 'advert_submissions', submissionId);
-      const userRef = doc(db, 'users', submitterUid);
-      // transaction: ensure submission not already approved then update submission and user balance
+
       await runTransaction(db, async (tx) => {
         const subSnap = await tx.get(submissionRef);
         if(!subSnap.exists()) throw new Error('Submission not found');
-        const subData = subSnap.data() || {};
-        const curStatus = (subData.status || '').toLowerCase();
-        if(curStatus === 'approved') throw new Error('Already approved');
-        // credit user
-        const userSnap = await tx.get(userRef);
-        if(userSnap.exists()){
-          const u = userSnap.data() || {};
-          // try to pick a sensible balance field
-          const balanceFields = ['balance','wallet','funds','walletBalance'];
-          let currentBalance = null, chosenField = null;
-          for(const f of balanceFields){
-            if(typeof u[f] !== 'undefined' && u[f] !== null && !isNaN(Number(u[f]))){
-              currentBalance = Number(u[f]);
-              chosenField = f;
-              break;
-            }
-          }
-          if(chosenField){
-            const newBal = Number(currentBalance || 0) + Number(amount || 0);
-            const up = {}; up[chosenField] = newBal;
-            tx.update(userRef, up);
-          } else {
-            // no predictable field — set `balance`
-            tx.update(userRef, { balance: (Number(u.balance || 0) + Number(amount || 0)) });
-          }
-        } else {
-          // user doc missing — create with balance
-          tx.set(userRef, { balance: Number(amount || 0) }, { merge: true });
+        const sub = subSnap.data() || {};
+        const curStatus = (sub.status || 'pending').toLowerCase();
+        const target = (targetStatus || '').toLowerCase();
+        if(curStatus === target) return; // nothing to do
+
+        // ENFORCE: an approved submission cannot be changed to rejected
+        if(curStatus === 'approved' && target === 'rejected'){
+          throw new Error('Operation not allowed: an approved submission cannot be changed to rejected.');
         }
-        // update submission doc to approved and annotate payment
-        tx.update(submissionRef, {
-          status: 'approved',
-          approvedAt: serverTimestamp(),
-          paidAmount: Number(amount || 0),
-          paidBy: currentUser ? currentUser.uid : null
-        });
+
+        // gather submitter id and paidAmount existing
+        const submitterUid = sub.userId || sub.user || sub.requestedBy || sub.workerId || null;
+        const paidAmountExisting = Number(sub.paidAmount ?? sub.paid_amount ?? sub.paid || 0);
+
+        // find advert id and advert doc to compute unit price (inside transaction if possible)
+        const advertId = sub.advertId || sub.advertID || sub.taskId || sub.task_id || null;
+        let unitPrice = 0;
+        if(advertId){
+          try {
+            const advertRef = doc(db, 'advertise_tasks', advertId);
+            const advSnap = await tx.get(advertRef); // inside transaction
+            if(advSnap.exists()){
+              const adv = advSnap.data() || {};
+              unitPrice = getUnitPrice(adv);
+            }
+          } catch(e){
+            // ignore and continue
+          }
+        }
+
+        const payAmount = Math.round((unitPrice || 0) * 0.7);
+
+        // Transitions
+        if(target === 'approved'){
+          if(curStatus !== 'approved'){
+            if(!submitterUid) throw new Error('Submission missing submitter id');
+            const userRef = doc(db, 'users', submitterUid);
+            const userSnap = await tx.get(userRef);
+            if(userSnap.exists()){
+              const u = userSnap.data() || {};
+              const balanceFields = ['balance','wallet','funds','walletBalance'];
+              let chosen = null;
+              let currentBalance = 0;
+              for(const f of balanceFields){ if(typeof u[f] !== 'undefined' && u[f] !== null && !isNaN(Number(u[f]))){ chosen = f; currentBalance = Number(u[f]); break; } }
+              if(chosen){
+                const newBal = Number(currentBalance || 0) + Number(payAmount || 0);
+                const upd = {}; upd[chosen] = newBal;
+                tx.update(userRef, upd);
+              } else {
+                tx.update(userRef, { balance: Number(u.balance || 0) + Number(payAmount || 0) });
+              }
+            } else {
+              tx.set(doc(db,'users',submitterUid), { balance: Number(payAmount || 0) }, { merge: true });
+            }
+            tx.update(submissionRef, {
+              status: 'approved',
+              approvedAt: serverTimestamp(),
+              paidAmount: Number(payAmount || 0),
+              paidBy: currentUser ? currentUser.uid : null
+            });
+          }
+        } else if(target === 'rejected'){
+          // If the current status is approved -> rejected is forbidden by earlier guard.
+          // For non-approved -> rejected flow simply mark as rejected (no money reversal).
+          tx.update(submissionRef, { status: 'rejected', rejectedAt: serverTimestamp() });
+        } else if(target === 'pending'){
+          // moving to pending: if current was approved and paidAmountExisting>0, reverse payment
+          if(curStatus === 'approved' && paidAmountExisting > 0){
+            if(!submitterUid) throw new Error('Submission missing submitter id');
+            const userRef = doc(db, 'users', submitterUid);
+            const userSnap = await tx.get(userRef);
+            if(userSnap.exists()){
+              const u = userSnap.data() || {};
+              const balanceFields = ['balance','wallet','funds','walletBalance'];
+              let chosen = null;
+              let currentBalance = 0;
+              for(const f of balanceFields){ if(typeof u[f] !== 'undefined' && u[f] !== null && !isNaN(Number(u[f]))){ chosen = f; currentBalance = Number(u[f]); break; } }
+              if(chosen){
+                const newBal = Math.max(0, Number(currentBalance || 0) - Number(paidAmountExisting || 0));
+                const upd = {}; upd[chosen] = newBal;
+                tx.update(userRef, upd);
+              } else {
+                tx.update(userRef, { balance: Math.max(0, Number(u.balance || 0) - Number(paidAmountExisting || 0)) });
+              }
+            }
+            tx.update(submissionRef, { status: 'pending', updatedAt: serverTimestamp(), refunded: true });
+          } else {
+            tx.update(submissionRef, { status: 'pending', updatedAt: serverTimestamp() });
+          }
+        }
       });
     }
 
-    // Reject submission: simple update
-    async function rejectSubmission(submissionId){
-      if(!submissionId) throw new Error('Invalid submission id');
-      const submissionRef = doc(db, 'advert_submissions', submissionId);
-      await updateDoc(submissionRef, { status: 'rejected', rejectedAt: serverTimestamp() });
-    }
-
-    // start adverts listeners to capture adverts created by current user
+    // start adverts listeners to display adverts created by current user
     function startAdvertsListeners(uid){
-      // cleanup
       advertsMap.clear();
       for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
       advertsUnsubs.length = 0;
@@ -473,8 +543,6 @@
       diag.textContent = 'Listening for adverts you created…';
 
       const primaryCol = 'advertise_tasks';
-
-      // set up listeners on candidate owner fields within primary collection
       for(const field of OWNER_FIELDS){
         try{
           const q = query(collection(db, primaryCol), where(field, '==', uid));
@@ -494,11 +562,10 @@
         }
       }
 
-      // Fallback: also listen to adverts where owner stored in 'ownerUid' array (if used)
+      // optional broad listener to catch other patterns
       try{
-        const qAll = query(collection(db, primaryCol), where('status','in',['pending','approved','completed'])); // broad listener
+        const qAll = query(collection(db, primaryCol), where('status','in',['pending','approved','completed']));
         const unsubAll = onSnapshot(qAll, snap => {
-          // merge but only include docs that match uid in common fields (safe)
           snap.forEach(docSnap => {
             const d = docSnap.data() || {};
             const possible = [d.createdBy,d.owner,d.userId,d.uid,d.requestedBy,d.creator,d.ownerUid];
@@ -508,7 +575,6 @@
           });
           rebuildGrid();
         }, err => {
-          // if this too noisy, it's fine — we've got primary per-field listeners above
           console.warn('broad adverts listener error', err);
         });
         advertsUnsubs.push(unsubAll);
