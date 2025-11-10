@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>My Submissions — Beni-Wealth (Debug)</title>
+  <title>My Submissions — Beni-Wealth</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -12,7 +12,9 @@
       --text: #eaf2ff;
       --accent-start:#2fe0b8; --accent-end:#7a5fff;
       --card: rgba(255,255,255,0.02);
-      --radius:12px; --max-width:1100px;
+      --glass: rgba(255,255,255,0.03);
+      --radius:12px;
+      --max-width:1100px;
     }
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
@@ -37,8 +39,7 @@
     .status.rejected{background:#ffdede;color:#6b0b0b}
     .small{font-size:13px;color:var(--muted)}
     .empty{padding:40px;text-align:center;color:var(--muted)}
-    .errorBox{background:#2b0b0f;color:#ffdede;padding:12px;border-radius:10px;margin-bottom:12px;border:1px solid rgba(255,0,0,0.08)}
-    /* viewer overlay */
+    .diag{margin-bottom:12px;color:var(--muted);font-size:13px}
     .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:999;padding:18px}
     .panel{width:100%;max-width:920px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 120px rgba(0,0,0,0.8);}
     .panel h2{margin:0 0 8px 0}
@@ -57,7 +58,7 @@
       </div>
     </header>
 
-    <div id="diag" aria-live="polite"></div>
+    <div id="diag" class="diag">Starting...</div>
 
     <section class="controls">
       <input id="search" class="search" placeholder="Search by advert title, status or id" />
@@ -69,7 +70,7 @@
     </section>
   </main>
 
-  <!-- overlay for image / full detail -->
+  <!-- overlay -->
   <div id="overlay" class="overlay" aria-hidden="true">
     <div class="panel" role="dialog" aria-modal="true">
       <button id="closeOverlay" class="closeX" aria-label="Close">✕</button>
@@ -80,8 +81,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import {
-      getFirestore, collection, query, where, orderBy,
-      onSnapshot, getDoc, doc, getDocs
+      getFirestore, collection, query, where, onSnapshot, getDocs, doc, getDoc, limit
     } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
@@ -109,54 +109,29 @@
 
     let currentUser = null;
     let unsub = null;
-    const advertCache = new Map();
     let submissions = [];
+    const advertCache = new Map();
 
-    // candidate collection names to try for submission docs
+    // candidates (short list first)
     const SUB_COLLECTION_CANDIDATES = [
-      'advert_submissions','advert_submission','advert-submissions','advert-submits',
-      'submissions','task_submissions','advertises_submissions','submission','submits','advert_submission_v2'
+      'advert_submissions','advert_submission','advert_submits','submissions','task_submissions','advert_submission_v2'
     ];
+    const AD_COLLECTION_CANDIDATES = ['advertise_tasks','advert','adverts','advertise','advertisements','tasks'];
 
-    // candidate advertisement collections (to fetch advert title/thumbnail)
-    const AD_COLLECTION_CANDIDATES = [
-      'advertise_tasks','advert','adverts','advertise','advertisements','advert_task','tasks','advert_tasks'
-    ];
-
-    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function niceDate(ts){
-      try{
-        if(!ts) return '-';
-        if (ts.toDate) ts = ts.toDate();
-        const d = new Date(ts);
-        return d.toLocaleString();
-      } catch(e){ return '-' }
-    }
-
-    function statusClass(s){
-      const st = String(s||'').toLowerCase();
-      if(st==='pending') return 'status pending';
-      if(st==='approved') return 'status approved';
-      if(st==='rejected') return 'status rejected';
-      return 'status';
-    }
+    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function niceDate(ts){ try{ if(!ts) return '-'; if(ts.toDate) ts = ts.toDate(); return new Date(ts).toLocaleString(); }catch(e){return '-'} }
+    function statusClass(s){ const st = String(s||'').toLowerCase(); if(st==='pending') return 'status pending'; if(st==='approved') return 'status approved'; if(st==='rejected') return 'status rejected'; return 'status'; }
 
     function renderList(items){
       submissions = items.slice();
       const q = (searchEl.value||'').toLowerCase().trim();
-      const filtered = items.filter(it => {
+      const filtered = items.filter(it=>{
         if(!q) return true;
-        return (it.advertTitle||'').toLowerCase().includes(q)
-          || (it.status||'').toLowerCase().includes(q)
-          || (it.id||'').toLowerCase().includes(q)
-          || (it.advertId||'').toLowerCase().includes(q);
+        return (it.advertTitle||'').toLowerCase().includes(q) || (it.status||'').toLowerCase().includes(q) || (it.id||'').toLowerCase().includes(q) || (it.advertId||'').toLowerCase().includes(q);
       });
-      if(!filtered.length){
-        listEl.innerHTML = '<div class="empty">No submissions found.</div>';
-        return;
-      }
+      if(!filtered.length){ listEl.innerHTML = '<div class="empty">No submissions found.</div>'; return; }
       listEl.innerHTML = '';
-      filtered.forEach(it => {
+      filtered.forEach(it=>{
         const item = document.createElement('div'); item.className='item';
         const left = document.createElement('div');
         const title = document.createElement('div'); title.className='title'; title.textContent = it.advertTitle || '(no title)';
@@ -167,12 +142,7 @@
 
         const right = document.createElement('div'); right.style.textAlign='right';
         const thumb = document.createElement('img'); thumb.className='thumb';
-        if(it.imageUrl){
-          thumb.src = it.imageUrl;
-          thumb.addEventListener('click', ()=> showOverlayFull(it));
-        } else {
-          thumb.style.display='none';
-        }
+        if(it.imageUrl){ thumb.src = it.imageUrl; thumb.addEventListener('click', ()=> showOverlayFull(it)); } else thumb.style.display='none';
         const status = document.createElement('div'); status.className = statusClass(it.status); status.textContent = String(it.status||'pending').toUpperCase();
         const advertId = document.createElement('div'); advertId.className='small'; advertId.style.marginTop='8px';
         advertId.innerHTML = `Advert ID: <code style="font-family:monospace;color:var(--muted)">${escapeHtml(it.advertId)}</code>`;
@@ -190,15 +160,13 @@
       const st = document.createElement('div'); st.style.marginTop='8px'; st.innerHTML = `Status: <strong>${escapeHtml(item.status||'pending')}</strong>`;
       const txt = document.createElement('div'); txt.style.marginTop='12px'; txt.className='small'; txt.textContent = item.textProof || '(no text proof)';
       overlayContent.appendChild(h); overlayContent.appendChild(p1); overlayContent.appendChild(st); overlayContent.appendChild(txt);
-      if(item.imageUrl){
-        const img = document.createElement('img'); img.className='viewerImg'; img.src = item.imageUrl; overlayContent.appendChild(img);
-      }
+      if(item.imageUrl){ const img = document.createElement('img'); img.className='viewerImg'; img.src = item.imageUrl; overlayContent.appendChild(img); }
       overlay.style.display='flex'; overlay.setAttribute('aria-hidden','false');
     }
     closeOverlay.addEventListener('click', ()=>{ overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); overlayContent.innerHTML=''; });
     overlay.addEventListener('click', (e)=>{ if(e.target===overlay){ overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); overlayContent.innerHTML=''; } });
 
-    // fetch advert metadata from any of the candidate collections
+    // fetch advert metadata
     async function fetchAdvertMeta(aid){
       if(!aid) return { title:'', thumbnail:'' };
       if(advertCache.has(aid)) return advertCache.get(aid);
@@ -208,7 +176,7 @@
           const snap = await getDoc(ref);
           if(snap && snap.exists()){
             const d = snap.data() || {};
-            const meta = { title: d.title || d.name || d.adTitle || '', thumbnail: d.thumbnail || d.thumb || d.imageUrl || d.image || '' };
+            const meta = { title: d.title || d.name || '', thumbnail: d.thumbnail || d.thumb || d.imageUrl || d.image || '' };
             advertCache.set(aid, meta);
             return meta;
           }
@@ -221,178 +189,156 @@
       return fallback;
     }
 
-    // Try to attach an onSnapshot to a queries built for a candidate collection.
-    // If that fails, try a one-time getDocs for that collection. Return the first collection that returns data.
-    async function tryCollectionsForUserSubmissions(uid){
-      const errors = [];
-      for(const col of SUB_COLLECTION_CANDIDATES){
-        try {
-          // Try a realtime snapshot with orderBy(createdAt)
-          const qRef = query(collection(db, col), where('userId','==', uid), orderBy('createdAt','desc'));
-          try {
-            // set up a temporary listener; if it initializes, we keep it and return
-            if (unsub) { try { unsub(); } catch(e){}; unsub=null; }
-            unsub = onSnapshot(qRef, async (snap) => {
-              // collect items and populate advert meta
-              const items = [];
-              const advertIds = new Set();
-              snap.forEach(s => {
-                const d = s.data() || {};
-                const advertId = d.advertId || d.advertID || d.taskId || d.task_id || '';
-                items.push({
-                  id: s.id,
-                  advertId,
-                  textProof: d.textProof || d.text_proof || d.proofText || '',
-                  imageUrl: d.imageUrl || d.image_url || d.image || '',
-                  status: d.status || 'pending',
-                  createdAt: d.createdAt || d.created_at || d.timestamp || null
-                });
-                if(advertId) advertIds.add(advertId);
-              });
-
-              const missing = Array.from(advertIds).filter(a => a && !advertCache.has(a));
-              await Promise.all(missing.map(aid => fetchAdvertMeta(aid)));
-
-              items.forEach(it => {
-                const cached = advertCache.get(it.advertId) || {};
-                it.advertTitle = cached.title || '';
-                if(!it.imageUrl && cached.thumbnail) it.imageUrl = cached.thumbnail;
-              });
-
-              renderList(items);
-            }, (err) => {
-              console.warn('Realtime onSnapshot error for collection', col, err);
-              // We'll let fallback logic (below) handle it; unsub remains set and will be torn down by fallback if needed
-            });
-
-            // If we reach here we attached a listener — return success and note which collection used
-            diag.innerHTML = `<div class="small">Using collection <strong>${col}</strong> (realtime)</div>`;
-            console.log('Using submissions collection (realtime):', col);
-            return { ok:true, collection: col, mode:'realtime' };
-          } catch (errSnap) {
-            // couldn't attach realtime (index/permission etc.) - try fallback fetch for this col
-            console.warn('onSnapshot setup failed for', col, errSnap);
-            errors.push({ collection: col, reason: String(errSnap && errSnap.message ? errSnap.message : errSnap) });
-            // try one-time fetch without orderBy
-            try {
-              const qNoOrder = query(collection(db, col), where('userId','==', uid));
-              const snapOnce = await getDocs(qNoOrder);
-              if (!snapOnce.empty) {
-                const items = [];
-                const advertIds = new Set();
-                snapOnce.forEach(s => {
-                  const d = s.data() || {};
-                  const advertId = d.advertId || d.advertID || d.taskId || d.task_id || '';
-                  items.push({
-                    id: s.id,
-                    advertId,
-                    textProof: d.textProof || d.text_proof || d.proofText || '',
-                    imageUrl: d.imageUrl || d.image_url || d.image || '',
-                    status: d.status || 'pending',
-                    createdAt: d.createdAt || d.created_at || d.timestamp || null
-                  });
-                  if(advertId) advertIds.add(advertId);
-                });
-                const missing = Array.from(advertIds).filter(a => a && !advertCache.has(a));
-                await Promise.all(missing.map(aid => fetchAdvertMeta(aid)));
-                items.forEach(it => {
-                  const cached = advertCache.get(it.advertId) || {};
-                  it.advertTitle = cached.title || '';
-                  if(!it.imageUrl && cached.thumbnail) it.imageUrl = cached.thumbnail;
-                });
-                // sort client-side by createdAt when possible
-                items.sort((a,b)=>{
-                  const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?Date.parse(a.createdAt):0);
-                  const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?Date.parse(b.createdAt):0);
-                  return tb - ta;
-                });
-                renderList(items);
-                diag.innerHTML = `<div class="small">Using collection <strong>${col}</strong> (one-time fetch, sorted client-side)</div>`;
-                console.log('Using submissions collection (one-time):', col);
-                return { ok:true, collection: col, mode:'once' };
-              } else {
-                // try requestedBy fallback for this same col
-                const qReq = query(collection(db,col), where('requestedBy','==',uid));
-                const snapReq = await getDocs(qReq);
-                if(!snapReq.empty){
-                  const items = [];
-                  const advertIds = new Set();
-                  snapReq.forEach(s => {
-                    const d = s.data() || {};
-                    const advertId = d.advertId || d.advertID || d.taskId || d.task_id || '';
-                    items.push({
-                      id: s.id,
-                      advertId,
-                      textProof: d.textProof || d.text_proof || d.proofText || '',
-                      imageUrl: d.imageUrl || d.image_url || d.image || '',
-                      status: d.status || 'pending',
-                      createdAt: d.createdAt || d.created_at || d.timestamp || null
-                    });
-                    if(advertId) advertIds.add(advertId);
-                  });
-                  const missing = Array.from(advertIds).filter(a => a && !advertCache.has(a));
-                  await Promise.all(missing.map(aid => fetchAdvertMeta(aid)));
-                  items.forEach(it => {
-                    const cached = advertCache.get(it.advertId) || {};
-                    it.advertTitle = cached.title || '';
-                    if(!it.imageUrl && cached.thumbnail) it.imageUrl = cached.thumbnail;
-                  });
-                  items.sort((a,b)=>{
-                    const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?Date.parse(a.createdAt):0);
-                    const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?Date.parse(b.createdAt):0);
-                    return tb - ta;
-                  });
-                  renderList(items);
-                  diag.innerHTML = `<div class="small">Using collection <strong>${col}</strong> with field <strong>requestedBy</strong> (one-time)</div>`;
-                  console.log('Using submissions collection (requestedBy fallback):', col);
-                  return { ok:true, collection: col, mode:'once-requestedBy' };
-                }
-              }
-            } catch (errOne) {
-              console.warn('One-time fetch failed for', col, errOne);
-              errors.push({ collection: col, reason: String(errOne && errOne.message ? errOne.message : errOne) });
-            }
-          }
-        } catch (e) {
-          console.warn('Query construction failed for', col, e);
-          errors.push({ collection: col, reason: String(e && e.message ? e.message : e) });
+    // small helper to probe collection quickly (limit 1) with timeout
+    function probeCollectionOnce(colName, uid, msTimeout = 3000){
+      return new Promise(async (resolve) => {
+        let done = false;
+        const timer = setTimeout(()=>{ if(!done){ done=true; resolve({ ok:false, reason:'timeout' }); } }, msTimeout);
+        try{
+          const q = query(collection(db, colName), where('userId','==', uid), limit(1));
+          const snap = await getDocs(q);
+          if(done) return;
+          done = true;
+          clearTimeout(timer);
+          if(!snap.empty) resolve({ ok:true, found:true, collection:colName });
+          else resolve({ ok:true, found:false, collection:colName });
+        }catch(err){
+          if(done) return;
+          done = true;
+          clearTimeout(timer);
+          resolve({ ok:false, reason:err.message || String(err), collection:colName });
         }
-      } // end for
+      });
+    }
 
-      // If we reach here, none of the candidate collections returned data
-      const msg = ['Could not find submissions in any candidate collection. Attempts:'];
-      errors.forEach(er => msg.push(`${er.collection}: ${er.reason}`));
-      return { ok:false, errors };
+    // find a candidate collection quickly (parallel probes)
+    async function pickSubmissionsCollection(uid){
+      diag.textContent = 'Probing likely submission collections…';
+      const probes = SUB_COLLECTION_CANDIDATES.map(c => probeCollectionOnce(c, uid, 2500));
+      const results = await Promise.all(probes);
+      // pick first that returned found === true
+      const good = results.find(r => r && r.ok && r.found);
+      if(good) return { collection: good.collection, mode:'probe' };
+
+      // if none found by userId, try requestedBy in parallel
+      diag.textContent = 'No hits with userId — trying requestedBy fallback…';
+      const probes2 = SUB_COLLECTION_CANDIDATES.map(async c => {
+        // using limit(1) again
+        try{
+          const q = query(collection(db,c), where('requestedBy','==', uid), limit(1));
+          const snap = await getDocs(q);
+          if(!snap.empty) return { collection: c, found:true };
+          return { collection:c, found:false };
+        }catch(e){ return { collection:c, found:false, err: e.message || String(e) }; }
+      });
+      const res2 = await Promise.all(probes2);
+      const good2 = res2.find(r => r && r.found);
+      if(good2) return { collection: good2.collection, mode:'probe-requestedBy' };
+
+      // none found
+      return { collection: null };
+    }
+
+    // once we have the collection, fetch full list quickly (no orderBy) then attach onSnapshot without orderBy
+    async function attachForCollection(colName, uid){
+      if(unsub){ try{ unsub(); }catch(e){}; unsub = null; }
+      diag.textContent = `Loading submissions from "${colName}"…`;
+
+      try{
+        // one-time fetch for initial render (sort client-side)
+        const q = query(collection(db, colName), where('userId','==', uid));
+        const snap = await getDocs(q);
+        const list = [];
+        const advertIds = new Set();
+        snap.forEach(s => {
+          const d = s.data() || {};
+          const advertId = d.advertId || d.advertID || d.taskId || d.task_id || '';
+          list.push({
+            id: s.id,
+            advertId,
+            textProof: d.textProof || d.text_proof || d.proofText || '',
+            imageUrl: d.imageUrl || d.image_url || d.image || '',
+            status: d.status || 'pending',
+            createdAt: d.createdAt || d.created_at || d.timestamp || null
+          });
+          if(advertId) advertIds.add(advertId);
+        });
+
+        // fetch advert metadata
+        const missing = Array.from(advertIds).filter(a => a && !advertCache.has(a));
+        await Promise.all(missing.map(aid => fetchAdvertMeta(aid)));
+        list.forEach(it => { const cached = advertCache.get(it.advertId) || {}; it.advertTitle = cached.title || ''; if(!it.imageUrl && cached.thumbnail) it.imageUrl = cached.thumbnail; });
+
+        // sort client-side by createdAt when possible
+        list.sort((a,b)=>{
+          const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?Date.parse(a.createdAt):0);
+          const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?Date.parse(b.createdAt):0);
+          return tb - ta;
+        });
+
+        renderList(list);
+
+        // attach live listener WITHOUT orderBy to avoid requiring indexes
+        const snapQ = query(collection(db, colName), where('userId','==', uid));
+        unsub = onSnapshot(snapQ, async (s) => {
+          const items = [];
+          const advertIds2 = new Set();
+          s.forEach(docSnap => {
+            const d = docSnap.data() || {};
+            const advertId = d.advertId || d.advertID || d.taskId || d.task_id || '';
+            items.push({
+              id: docSnap.id,
+              advertId,
+              textProof: d.textProof || d.text_proof || d.proofText || '',
+              imageUrl: d.imageUrl || d.image_url || d.image || '',
+              status: d.status || 'pending',
+              createdAt: d.createdAt || d.created_at || d.timestamp || null
+            });
+            if(advertId) advertIds2.add(advertId);
+          });
+          const missing2 = Array.from(advertIds2).filter(a => a && !advertCache.has(a));
+          await Promise.all(missing2.map(aid => fetchAdvertMeta(aid)));
+          items.forEach(it => { const cached = advertCache.get(it.advertId) || {}; it.advertTitle = cached.title || ''; if(!it.imageUrl && cached.thumbnail) it.imageUrl = cached.thumbnail; });
+          // sort and render
+          items.sort((a,b)=> {
+            const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?Date.parse(a.createdAt):0);
+            const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?Date.parse(b.createdAt):0);
+            return tb - ta;
+          });
+          renderList(items);
+        }, (err) => {
+          console.warn('Realtime listener error (non-fatal)', err);
+          diag.textContent = `Realtime updates unavailable for "${colName}" — showing latest snapshot. (${escapeHtml(err.message||String(err))})`;
+        });
+
+        diag.textContent = `Showing submissions from "${colName}".`;
+      }catch(e){
+        console.error('attachForCollection failed', e);
+        diag.textContent = `Failed to load from "${colName}": ${e.message || e}`;
+        listEl.innerHTML = '<div class="empty">Failed to load submissions.</div>';
+      }
     }
 
     async function startListener(uid){
-      // teardown previous
       if(unsub){ try{ unsub(); }catch(e){}; unsub = null; }
       listEl.innerHTML = '<div class="empty">Loading your submissions…</div>';
-      diag.innerHTML = '';
+      diag.textContent = 'Detecting submissions collection quickly…';
 
-      const result = await tryCollectionsForUserSubmissions(uid);
-      if(!result.ok){
-        console.error('All collection attempts failed', result.errors);
-        const html = ['<div class="errorBox"><strong>Failed to load submissions</strong><div style="margin-top:8px">I tried multiple collection names but none returned results. Diagnostics (first few):</div><ul style="margin-top:8px">'];
-        result.errors.slice(0,6).forEach(er => {
-          html.push(`<li><strong>${escapeHtml(er.collection)}</strong>: ${escapeHtml(er.reason)}</li>`);
-        });
-        html.push('</ul><div style="margin-top:8px" class="small">Suggestions: confirm the collection name in Firestore console, check security rules allow reads for the logged-in user, and ensure ` +
-          '`createdAt` is present if you want ordered realtime snapshots. If you want, send me the console error text and I\'ll diagnose.</div></div>');
-        diag.innerHTML = html.join('');
-        listEl.innerHTML = '<div class="empty">Failed to load submissions.</div>';
-      } else {
-        // success; note: onSnapshot handler or one-time fetch will have rendered items
-        console.log('startListener succeeded with', result);
+      const pick = await pickSubmissionsCollection(uid);
+      if(!pick.collection){
+        diag.innerHTML = `No submissions found in common collections. Tried: ${SUB_COLLECTION_CANDIDATES.join(', ')}.<br>Check Firestore collection name or rules.`;
+        listEl.innerHTML = '<div class="empty">No submissions found.</div>';
+        return;
       }
+      // attach to chosen collection (use userId mode or requestedBy if detection used that)
+      await attachForCollection(pick.collection, uid);
     }
 
     onAuthStateChanged(auth, user => {
       currentUser = user;
       if(!user){
         listEl.innerHTML = '<div class="empty">Please sign in to view your submissions.</div>';
-        diag.innerHTML = '';
+        diag.textContent = '';
         return;
       }
       startListener(user.uid);
