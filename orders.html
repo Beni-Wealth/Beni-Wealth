@@ -20,7 +20,6 @@
   <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
-
   <style>
     :root{
       --bg1:#060511; --bg2:#0f0920;
@@ -43,7 +42,6 @@
     .search{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
     .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .danger{background:linear-gradient(90deg,#ff7a7a,#ff4c4c);color:#041219}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
     .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 18px 60px rgba(0,0,0,0.55);display:flex;flex-direction:column;gap:12px}
     .card-head{display:flex;gap:12px;align-items:center;justify-content:space-between}
@@ -149,7 +147,7 @@
     const advertsUnsubs = []; // listeners for adverts
 
     // candidate owner fields
-    const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator'];
+    const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator','ownerUid','user'];
 
     // helper utils
     function el(tag, attrs = {}, ...children){
@@ -407,7 +405,7 @@
 
         // try to mark advert completed if approved count >= workers (best effort)
         const approvedCount = list.filter(it => (it.status||'').toLowerCase() === 'approved').length;
-        const advertData = advert?.data || {};
+        const advertData = advertsMap.get(advertId)?.data || {};
         const workersRequested = Number(advertData.workers || advertData.worker_count || advertData.requested_workers || advertData.maxWorkers || 0) || 0;
         if(workersRequested > 0 && approvedCount >= workersRequested){
           try{
@@ -517,7 +515,6 @@
             });
           }
         } else if(target === 'rejected'){
-          // If the current status is approved -> rejected is forbidden by earlier guard.
           // For non-approved -> rejected flow simply mark as rejected (no money reversal).
           tx.update(submissionRef, { status: 'rejected', rejectedAt: serverTimestamp() });
         } else if(target === 'pending'){
@@ -549,56 +546,124 @@
     }
 
     // start adverts listeners to display adverts created by current user
-    function startAdvertsListeners(uid){
+    async function startAdvertsListeners(uid){
       advertsMap.clear();
+      // tear down previous listeners
       for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
       advertsUnsubs.length = 0;
       detachAllSubmissionListeners();
 
       grid.innerHTML = '<div class="empty">Loading your adverts…</div>';
-      diag.textContent = 'Listening for adverts you created…';
+      diag.textContent = 'Looking up adverts you created…';
 
       const primaryCol = 'advertise_tasks';
-      for(const field of OWNER_FIELDS){
-        try{
-          const q = query(collection(db, primaryCol), where(field, '==', uid));
-          const unsub = onSnapshot(q, snap => {
+      let foundAny = false;
+
+      // First: do a one-time probe (getDocs) across likely owner fields so UI won't stay stuck.
+      try {
+        for(const field of OWNER_FIELDS){
+          try {
+            const q = query(collection(db, primaryCol), where(field, '==', uid));
+            const snap = await getDocs(q);
             snap.forEach(docSnap => {
-              const id = docSnap.id;
+              advertsMap.set(docSnap.id, { id: docSnap.id, data: docSnap.data() });
+              foundAny = true;
+            });
+          } catch(e){
+            // likely permission/index issue on this field — continue probing other fields
+            console.warn('probe query failed for field', field, e);
+          }
+        }
+
+        // If still not found, do a broad one-time scan (limited) and inspect owner-like fields inside each doc.
+        if(!foundAny){
+          try{
+            const snapAll = await getDocs(query(collection(db, primaryCol)));
+            snapAll.forEach(docSnap => {
               const d = docSnap.data() || {};
-              advertsMap.set(id, { id, data: d });
+              const possible = OWNER_FIELDS.some(f => {
+                const v = d[f];
+                return v === uid || (Array.isArray(v) && v.includes && v.includes(uid));
+              });
+              if(possible){
+                advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
+                foundAny = true;
+              }
+            });
+          } catch(e){
+            console.warn('broad one-time probe failed', e);
+          }
+        }
+
+        // Rebuild the grid with any results from probe
+        rebuildGrid();
+
+      } catch(e){
+        console.warn('initial probe failed', e);
+      }
+
+      // Attach realtime onSnapshot listeners (per-owner-field) so updates flow in
+      try {
+        for(const field of OWNER_FIELDS){
+          try{
+            const q = query(collection(db, primaryCol), where(field, '==', uid));
+            const unsub = onSnapshot(q, snap => {
+              snap.forEach(docSnap => {
+                advertsMap.set(docSnap.id, { id: docSnap.id, data: docSnap.data() });
+              });
+              rebuildGrid();
+            }, err => {
+              console.warn('adverts listener error for field', field, err);
+              // show a diagnostic message but keep other listeners alive
+              diag.textContent = `Listening for adverts — partial listeners error for ${field}`;
+            });
+            advertsUnsubs.push(unsub);
+          } catch(e){
+            console.warn('failed to attach listener for field', field, e);
+          }
+        }
+
+        // broad listener to catch status changes for adverts owned by the user (best-effort)
+        try {
+          const qAll = query(collection(db, primaryCol));
+          const unsubAll = onSnapshot(qAll, snap => {
+            snap.forEach(docSnap => {
+              const d = docSnap.data() || {};
+              const possible = OWNER_FIELDS.some(f => {
+                const v = d[f];
+                return v === uid || (Array.isArray(v) && v.includes && v.includes(uid));
+              });
+              if(possible){
+                advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
+              }
             });
             rebuildGrid();
           }, err => {
-            console.warn('adverts listener error for field', field, err);
+            console.warn('broad adverts listener error', err);
           });
-          advertsUnsubs.push(unsub);
-        }catch(e){
-          console.warn('failed setting adverts listener for', field, e);
+          advertsUnsubs.push(unsubAll);
+        } catch(e){
+          console.warn('failed to attach broad listener', e);
         }
+
+      } catch(e){
+        console.warn('failed attaching realtime listeners', e);
       }
 
-      // optional broad listener to catch other patterns
-      try{
-        const qAll = query(collection(db, primaryCol), where('status','in',['pending','approved','completed']));
-        const unsubAll = onSnapshot(qAll, snap => {
-          snap.forEach(docSnap => {
-            const d = docSnap.data() || {};
-            const possible = [d.createdBy,d.owner,d.userId,d.uid,d.requestedBy,d.creator,d.ownerUid];
-            if(possible.some(x => x === uid || (Array.isArray(x) && x.includes && x.includes(uid)))){
-              advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
-            }
-          });
+      // After a short delay, if advertsMap still empty, show helpful message instead of indefinite loading
+      setTimeout(() => {
+        if(advertsMap.size === 0){
+          grid.innerHTML = '<div class="empty">You have no adverts yet.</div>';
+          diag.textContent = 'No adverts found for your account (or insufficient read permissions).';
+        } else {
+          diag.textContent = `Found ${advertsMap.size} adverts`;
           rebuildGrid();
-        }, err => {
-          console.warn('broad adverts listener error', err);
-        });
-        advertsUnsubs.push(unsubAll);
-      }catch(e){ /* ignore */ }
+        }
+      }, 2200);
     }
 
     // auth init
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       if(!user){
         diag.textContent = 'Please sign in to view your adverts.';
