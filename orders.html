@@ -1,1 +1,397 @@
-TEST
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Adverts — Beni-Wealth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1:#060511; --bg2:#0f0920;
+      --muted: rgba(255,255,255,0.62);
+      --text: #eaf2ff;
+      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --card: rgba(255,255,255,0.02);
+      --glass: rgba(255,255,255,0.03);
+      --radius:12px;
+      --max-width:1200px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
+    .shell{max-width:var(--max-width);margin:20px auto;padding:20px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{font-weight:700;font-size:1.1rem}
+    .back{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);text-decoration:none;color:var(--text)}
+    .muted{color:var(--muted);font-size:13px}
+    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+    .search{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+    .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 18px 60px rgba(0,0,0,0.55);display:flex;flex-direction:column;gap:12px}
+    .card-head{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .title{font-weight:700}
+    .meta{color:var(--muted);font-size:13px}
+    .thumb{width:96px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+    .pill{padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
+    .pill.pending{background:#fff6d6;color:#6a4f00}
+    .pill.approved{background:#bff0d9;color:#05461f}
+    .pill.completed{background:#dbe9ff;color:#05304a}
+    .card-body{color:var(--muted);font-size:14px;min-height:42px}
+    .actions{display:flex;gap:8px;margin-top:6px}
+    .details-collapse{overflow:hidden;max-height:0;transition:max-height .28s ease;padding-top:0}
+    .details-inner{padding:12px;border-top:1px dashed rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:0 0 10px 10px}
+    .submission{display:flex;gap:12px;align-items:flex-start;padding:8px;border-radius:8px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)}
+    .sub-left{flex:1}
+    .sub-thumb{width:120px;height:72px;object-fit:cover;border-radius:6px}
+    .sub-meta{color:var(--muted);font-size:12px;margin-bottom:6px}
+    .empty{padding:28px;text-align:center;color:var(--muted)}
+    .diag{color:var(--muted);font-size:13px;margin-bottom:12px}
+    @media(max-width:520px){ .thumb{width:78px;height:60px} .sub-thumb{width:90px;height:56px} }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <a class="back" href="dashboard.html">← Back</a>
+      <div style="text-align:right">
+        <div class="brand">My Adverts</div>
+        <div class="muted">All adverts you created — track approvals and view submissions</div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <input id="search" class="search" placeholder="Search by title, platform or status" />
+      <button id="refresh" class="btn ghost">Refresh</button>
+    </div>
+
+    <div id="diag" class="diag">Connecting…</div>
+
+    <div id="grid" class="grid" aria-live="polite">
+      <div class="empty">Loading your adverts…</div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import {
+      getFirestore, collection, query, where, onSnapshot, getDocs, doc, getDoc
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+    // YOUR FIREBASE CONFIG (from your project)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // DOM
+    const grid = document.getElementById('grid');
+    const diag = document.getElementById('diag');
+    const search = document.getElementById('search');
+    const refreshBtn = document.getElementById('refresh');
+
+    // State
+    let currentUser = null;
+    const advertsMap = new Map(); // advertId -> {id, data, _subCount}
+    const submissionsListeners = new Map(); // advertId -> unsubscribe fn
+
+    // candidate owner fields (some apps use different names)
+    const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator'];
+
+    // helper utilities
+    function el(tag, attrs = {}, ...children){
+      const e = document.createElement(tag);
+      for(const k in attrs){
+        if(k === 'class') e.className = attrs[k];
+        else if(k === 'dataset') Object.assign(e.dataset, attrs[k]);
+        else e.setAttribute(k, attrs[k]);
+      }
+      children.forEach(c => { if(typeof c === 'string') e.appendChild(document.createTextNode(c)); else if(c) e.appendChild(c); });
+      return e;
+    }
+    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function niceDate(ts){ try{ if(!ts) return '-'; if(ts.toDate) ts = ts.toDate(); return new Date(ts).toLocaleString(); }catch(e){ return '-'; } }
+    function statusClass(status){ const s = String(status||'').toLowerCase(); if(s==='pending') return 'pill pending'; if(s==='approved') return 'pill approved'; if(s==='completed') return 'pill completed'; return 'pill pending'; }
+
+    // render UI from advertsMap
+    function rebuildGrid(){
+      const q = (search.value || '').trim().toLowerCase();
+      grid.innerHTML = '';
+      let any = false;
+      for(const [id, item] of advertsMap){
+        const data = item.data || {};
+        // filter by search
+        if(q){
+          const hay = ((data.title||'') + ' ' + (data.platform||'') + ' ' + (data.subcategory||'') + ' ' + (data.status||'')).toLowerCase();
+          if(!hay.includes(q)) continue;
+        }
+        const card = buildCard(id, data);
+        grid.appendChild(card);
+        any = true;
+      }
+      if(!any) grid.innerHTML = '<div class="empty">You have no adverts yet.</div>';
+    }
+
+    // create a card element for an advert
+    function buildCard(id, data){
+      const head = el('div',{class:'card-head'});
+      const left = el('div',{style:'display:flex;gap:12px;align-items:center'});
+      const thumb = el('img',{class:'thumb', src: data.thumbnail || '', alt: data.title || ''});
+      if(!data.thumbnail) thumb.style.display = 'none';
+      thumb.addEventListener('click', ()=>{
+        // open full sized in new tab if exists
+        if(data.thumbnail) window.open(data.thumbnail,'_blank','noopener');
+      });
+
+      const txt = el('div', {},
+        el('div',{class:'title'}, data.title || '(untitled)'),
+        el('div',{class:'meta'}, `${escapeHtml(String(data.platform||data.subcategory||''))} • ${escapeHtml(String(data.workers||data.worker_count||data.requested_workers||0))} workers`)
+      );
+      left.appendChild(thumb);
+      left.appendChild(txt);
+
+      const right = el('div', {});
+      const pill = el('div',{class: statusClass(data.status)}, (data.status||'PENDING').toString().toUpperCase());
+      right.appendChild(pill);
+
+      head.appendChild(left);
+      head.appendChild(right);
+
+      const body = el('div',{class:'card-body'}, data.description ? data.description.slice(0,220) + (data.description.length>220? '…':'') : el('span',{},'No description'));
+
+      // actions
+      const actions = el('div',{class:'actions'});
+      const detailsBtn = el('button',{class:'btn ghost'}, 'Details');
+      const openBtn = el('button',{class:'btn'}, 'Open full');
+      actions.appendChild(openBtn);
+      actions.appendChild(detailsBtn);
+
+      openBtn.addEventListener('click', ()=> {
+        // go to advert detail page if you have one, fallback to opening doc url (if stored)
+        if(data.detailUrl) return location.href = data.detailUrl;
+        // else try advert edit page pattern
+        location.href = `advert-detail.html?aid=${id}`;
+      });
+
+      // collapsed area for submissions
+      const collapse = el('div',{class:'details-collapse', id:`collapse-${id}`},
+        el('div',{class:'details-inner'}, el('div',{class:'small muted'}, 'Loading submissions…'))
+      );
+
+      // wire details toggle: expand/collapse and attach submissions listener when expanded
+      let expanded = false;
+      detailsBtn.addEventListener('click', async () => {
+        expanded = !expanded;
+        if(expanded){
+          // expand visually
+          collapse.style.maxHeight = '600px'; // enough for content
+          // load submissions and subscribe
+          await attachSubmissionsListener(id, collapse.querySelector('.details-inner'));
+        } else {
+          // collapse
+          collapse.style.maxHeight = '0';
+          detachSubmissionsListener(id);
+        }
+      });
+
+      const card = el('article',{class:'card', dataset:{id}}, head, body, actions, collapse);
+
+      return card;
+    }
+
+    // attach real-time submissions listener for a specific advert inside a container element
+    function attachSubmissionsListener(advertId, containerEl){
+      // avoid double attach
+      if(submissionsListeners.has(advertId)) return;
+
+      // show loader
+      containerEl.innerHTML = '<div class="small muted">Loading submissions…</div>';
+
+      const submissionsCol = collection(db, 'advert_submissions');
+      const q = query(submissionsCol, where('advertId','==', advertId));
+      const unsub = onSnapshot(q, async (snap) => {
+        // build submissions list
+        const list = [];
+        snap.forEach(s => {
+          const d = s.data() || {};
+          list.push({
+            id: s.id,
+            userId: d.userId || d.user || d.requestedBy || d.workerId || '',
+            textProof: d.textProof || d.text_proof || d.proofText || '',
+            imageUrl: d.imageUrl || d.image_url || d.image || '',
+            status: d.status || 'pending',
+            createdAt: d.createdAt || d.created_at || null
+          });
+        });
+
+        // sort newest first
+        list.sort((a,b)=>{
+          const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?Date.parse(a.createdAt):0);
+          const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?Date.parse(b.createdAt):0);
+          return tb - ta;
+        });
+
+        // render
+        if(list.length === 0){
+          containerEl.innerHTML = '<div class="empty small muted">No submissions yet.</div>';
+        } else {
+          containerEl.innerHTML = '';
+          for(const s of list){
+            const sub = el('div',{class:'submission'});
+            const left = el('div',{class:'sub-left'},
+              el('div',{class:'sub-meta'}, `Submitted: ${niceDate(s.createdAt)} • ID: ${s.id} • By: ${escapeHtml(s.userId||'-')}`),
+              el('div',{}, s.textProof || el('em',{}, '(no text proof)'))
+            );
+
+            const right = el('div',{style:'min-width:120px;text-align:right'},
+              s.imageUrl ? el('img',{class:'sub-thumb', src:s.imageUrl, alt:'proof'}) : el('div',{}, '')
+            );
+
+            // status badge
+            const statusBadge = el('div',{class:`${s.status==='approved' ? 'pill approved' : s.status==='rejected' ? 'pill rejected' : 'pill pending' }`, style:'display:inline-block;margin-top:8px;font-size:12px'}, (s.status||'PENDING').toUpperCase());
+
+            const bottom = el('div',{style:'margin-top:8px;display:flex;justify-content:space-between;align-items:center'}, statusBadge, el('div',{class:'small muted'}, `Submission ID: ${s.id}`));
+
+            sub.appendChild(left);
+            sub.appendChild(right);
+            sub.appendChild(bottom);
+
+            // preview image click: open in new tab
+            if(s.imageUrl){
+              const img = sub.querySelector('.sub-thumb');
+              img && img.addEventListener('click', ()=> window.open(s.imageUrl, '_blank','noopener'));
+            }
+
+            containerEl.appendChild(sub);
+          }
+        }
+
+      }, err => {
+        console.error('submissions listen error', err);
+        containerEl.innerHTML = `<div class="empty">Failed to load submissions: ${escapeHtml(err.message || String(err))}</div>`;
+      });
+
+      submissionsListeners.set(advertId, unsub);
+    }
+
+    function detachSubmissionsListener(advertId){
+      const unsub = submissionsListeners.get(advertId);
+      if(unsub){ try{ unsub(); } catch(e){} }
+      submissionsListeners.delete(advertId);
+    }
+
+    function detachAllSubmissionListeners(){
+      for(const [k, unsub] of submissionsListeners.entries()){
+        try{ unsub(); } catch(e){}
+      }
+      submissionsListeners.clear();
+    }
+
+    // query adverts where any of the owner-like fields equals current user
+    // we attach a listener per field and merge results to advertsMap
+    const advertsUnsubs = [];
+    function startAdvertsListeners(uid){
+      // clean previous
+      advertsMap.clear();
+      for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
+      advertsUnsubs.length = 0;
+      detachAllSubmissionListeners();
+      grid.innerHTML = '<div class="empty">Loading your adverts…</div>';
+      diag.textContent = 'Listening for adverts you created…';
+
+      // listen on single collection that you use (advertise_tasks) as primary
+      const primaryCol = 'advertise_tasks';
+      const firstQuery = query(collection(db, primaryCol), where('createdBy','==', uid));
+      const mapLocal = new Map();
+
+      // helper to merge doc into advertsMap (avoid duplicates)
+      function mergeDoc(docSnap){
+        const d = docSnap.data();
+        const id = docSnap.id;
+        // store
+        advertsMap.set(id, { id, data: d });
+        rebuildGrid();
+      }
+
+      // we'll set up listeners for multiple fields but primarily for advertise_tasks collection
+      // create a listener for each candidate owner field inside advertise_tasks
+      const ownerFields = OWNER_FIELDS.slice(); // copy
+      ownerFields.forEach(field => {
+        try{
+          const q = query(collection(db, primaryCol), where(field, '==', uid));
+          const unsub = onSnapshot(q, snap => {
+            snap.forEach(docSnap => mergeDoc(docSnap));
+            // remove deleted docs from map if changed? we rely on merging, but we'll rebuild grid after each snapshot
+            rebuildGrid();
+          }, err => {
+            console.warn('adverts listener (field) error for', field, err);
+          });
+          advertsUnsubs.push(unsub);
+        }catch(e){
+          console.warn('failed setting adverts listener for field', field, e);
+        }
+      });
+
+      // also try a single listener that pulls all docs where advertiser uid matches stored 'ownerUid' list (if you have such an array)
+      // No further action needed; rebuildGrid will update as docs arrive.
+    }
+
+    // small utility to find likely owner field and do a one-time probe if needed (not required for realtime path above)
+    async function probeAdvertPresence(uid){
+      try{
+        // quick probe: look up advertise_tasks where any candidate equals uid (first hit)
+        for(const field of OWNER_FIELDS){
+          try{
+            const q = query(collection(db,'advertise_tasks'), where(field,'==', uid));
+            const snap = await getDocs(q);
+            if(!snap.empty) return true;
+          }catch(e){ /* ignore field errors and continue */ }
+        }
+      }catch(e){}
+      return false;
+    }
+
+    // init auth
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if(!user){
+        diag.textContent = 'Please sign in to view your adverts.';
+        grid.innerHTML = '<div class="empty">Sign in to see your adverts.</div>';
+        return;
+      }
+      diag.textContent = `Signed in as ${user.email || user.displayName || user.uid.slice(0,8)}`;
+      // start listening
+      startAdvertsListeners(user.uid);
+    });
+
+    // search and refresh
+    search.addEventListener('input', () => rebuildGrid());
+    refreshBtn.addEventListener('click', () => {
+      if(!currentUser) return;
+      // tear down and restart listeners (safe)
+      for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
+      advertsUnsubs.length = 0;
+      advertsMap.clear();
+      detachAllSubmissionListeners();
+      startAdvertsListeners(currentUser.uid);
+    });
+
+    // cleanup on unload
+    window.addEventListener('beforeunload', () => {
+      for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
+      detachAllSubmissionListeners();
+    });
+
+  </script>
+</body>
+</html>
