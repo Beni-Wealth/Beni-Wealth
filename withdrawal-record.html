@@ -4,54 +4,231 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Withdrawal Records</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
   <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
 
-  <style>body{font-family:'Poppins',sans-serif} .glass{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));backdrop-filter:blur(6px)}</style>
+  <style>
+    :root{
+      --bg-1: #0b0613;
+      --bg-2: #0f0820;
+      --panel: rgba(255,255,255,0.03);
+      --muted: rgba(255,255,255,0.62);
+      --text: #eaf2ff;
+      --accent-a: #8446ff;
+      --accent-b: #6ce2c8;
+      --accent-grad: linear-gradient(135deg, var(--accent-a), #5b3bff 45%, var(--accent-b) 100%);
+      --glass: rgba(255,255,255,0.03);
+      --radius: 16px;
+      --container-w: 420px;
+      font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      min-height:100%;
+      background: radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent),
+                  radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.06), transparent),
+                  linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:20px;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+
+    /* phone container */
+    .phone {
+      width:100%;
+      max-width:var(--container-w);
+      min-height:680px;
+      border-radius:28px;
+      padding:18px 18px 120px; /* leave room for fixed bottom nav */
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+      overflow:auto;
+      position:relative;
+    }
+
+    .top {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .leftTop { display:flex; align-items:center; gap:12px; }
+    .btn-back {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px; border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.03);
+      color:var(--text); text-decoration:none; font-weight:700;
+      cursor:pointer;
+    }
+    .page-title { font-size:17px; font-weight:800; }
+    .page-sub { color:var(--muted); font-size:12px }
+
+    /* main panel */
+    .panel {
+      border-radius:18px;
+      padding:14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+    }
+
+    .status-line { color:var(--muted); font-size:13px; margin-bottom:12px; }
+    .empty-state {
+      text-align:center;
+      padding:36px 12px;
+      color:var(--muted);
+      border-radius:12px;
+      background: rgba(255,255,255,0.01);
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    .empty-state h3 { margin:0; font-size:16px; font-weight:700; color:#e8f3ff; }
+    .empty-state p { margin:8px 0 0 0; font-size:13px; color:var(--muted); }
+
+    /* records list */
+    .records { display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+    .record {
+      display:flex; justify-content:space-between; gap:12px; align-items:flex-start;
+      padding:12px; border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    .record-left { min-width:0; }
+    .amount { font-size:18px; font-weight:800; color:var(--accent-b); }
+    .meta { color:var(--muted); font-size:12px; margin-top:6px; }
+    .record-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+
+    .badge {
+      padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700;
+      color:#041219;
+    }
+    .badge.pending { background: #f6d365; color:#000; }
+    .badge.paid { background: #34d399; color:#042; }
+    .badge.rejected { background: #fb6b6b; color:#041219; }
+    .badge.default { background: #94a3b8; color:#041219; }
+
+    .ref { color:var(--muted); font-size:11px; }
+
+    /* bottom nav (fixed) */
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 20px;
+      height: 74px;
+      width: calc(min(var(--container-w), 100%) - 28px);
+      max-width: var(--container-w);
+      background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border-radius: 38px;
+      padding: 10px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.04);
+      z-index: 999;
+      backdrop-filter: blur(6px);
+    }
+    .nav-btn{ width:56px; text-align:center; color:var(--muted); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; user-select:none; }
+    .icon-wrap{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px; }
+
+    /* contact FAB */
+    .contact-fab {
+      position: fixed;
+      bottom: 110px;
+      left: 50%;
+      transform: translateX(calc(var(--container-w) / 2 - 72px));
+      width:56px; height:56px; border-radius:50%;
+      display:grid; place-items:center; font-size:20px;
+      background: linear-gradient(135deg,#35d6b1,#5e47ff);
+      color:#041219; box-shadow:0 18px 50px rgba(87,52,164,0.18);
+      z-index: 1200; text-decoration:none; border:none; cursor:pointer;
+    }
+
+    @media(max-width:480px){
+      body{ padding:14px; }
+      .phone{ min-height:calc(100vh - 40px); padding-bottom:140px; border-radius:20px; }
+      .bottom-nav { left:14px; right:14px; transform:none; width:auto; max-width: calc(100% - 28px); }
+      .contact-fab { left:auto; right:20px; transform:none; bottom:100px; }
+    }
+    @media(min-width:900px){
+      .phone{ max-width:480px; }
+      .contact-fab { transform: translateX(calc(var(--container-w) / 2 - 72px)); }
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-gray-900 text-slate-100 p-6">
-  <main class="max-w-4xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <button id="backBtn" aria-label="Back to dashboard" class="p-2 rounded-lg bg-white/6 hover:bg-white/8">← Back</button>
-        <h1 class="text-2xl font-semibold">Withdrawal Records</h1>
+<body>
+  <div class="phone" role="main" aria-live="polite">
+    <div class="top">
+      <div class="leftTop">
+        <button id="backBtn" class="btn-back" aria-label="Back to dashboard">← Back</button>
+        <div>
+          <div class="page-title">Withdrawal Records</div>
+          <div class="page-sub">Your withdrawal requests (live)</div>
+        </div>
       </div>
-      <div class="flex items-center gap-3">
-        <!-- intentionally compact header: removed refresh/new-request buttons -->
+      <div>
+        <!-- reserved for small controls (kept compact) -->
       </div>
     </div>
 
-    <section class="glass border border-white/6 rounded-2xl p-6 shadow-2xl">
-      <div id="statusLine" class="text-sm text-slate-400 mb-4">Showing your withdrawal requests (live).</div>
+    <section class="panel" aria-label="Withdrawal records panel">
+      <div id="statusLine" class="status-line">Showing your withdrawal requests (live).</div>
 
-      <div id="emptyState" class="text-center py-20 text-slate-400">
-        <div class="text-xl font-medium">No withdrawal requests yet</div>
-        <div class="mt-2">When you submit a withdrawal, it will appear here.</div>
-        <div class="mt-4"><a id="emptyNew" href="withdraw.html" class="inline-block px-4 py-2 bg-green-600 rounded-lg text-white">Request withdrawal</a></div>
+      <div id="emptyState" class="empty-state">
+        <h3>No withdrawal requests yet</h3>
+        <p>When you submit a withdrawal, it will appear here.</p>
+        <div style="margin-top:12px">
+          <a id="emptyNew" href="withdraw.html" class="btn-back" style="background:var(--accent-grad); color:#041219; border:none">Request withdrawal</a>
+        </div>
       </div>
 
-      <div id="records" class="space-y-4 hidden">
-        <!-- records will be injected here -->
-      </div>
+      <div id="records" class="records" style="display:none"></div>
     </section>
+  </div>
 
-    <footer class="mt-6 text-center text-slate-400 text-xs">© Beni-Wealth</footer>
-  </main>
+  <!-- bottom navigation & contact FAB -->
+  <div class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <div id="navHome" class="nav-btn" title="Home">
+      <div class="icon-wrap">🏠</div>
+      <div style="font-size:11px;color:var(--muted)">Home</div>
+    </div>
+
+    <div id="navConvert" class="nav-btn" title="Shortlinks">
+      <div class="icon-wrap">🔗</div>
+      <div style="font-size:11px;color:var(--muted)">shortlinks</div>
+    </div>
+
+    <div class="nav-center" style="flex:0 0 92px;display:flex;justify-content:center;align-items:center">
+      <button id="navCenter" class="icon-wrap" style="width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,#7a5fff,#35d6b1);transform:translateY(-18px);font-size:26px;display:grid;place-items:center;border:none;cursor:pointer">➕</button>
+    </div>
+
+    <div id="navNews" class="nav-btn" title="News">
+      <div class="icon-wrap">💬</div>
+      <div style="font-size:11px;color:var(--muted)">News</div>
+    </div>
+
+    <div id="navAssets" class="nav-btn" title="Assets">
+      <div class="icon-wrap">👤</div>
+      <div style="font-size:11px;color:var(--muted)">Assets</div>
+    </div>
+  </div>
+
+  <a id="contactFab" class="contact-fab" href="contact.html" title="Contact support" aria-label="Contact support">💬</a>
 
   <script type="module">
     // repo helper (keeps links repo-aware)
@@ -115,46 +292,41 @@
       return '-';
     }
 
-    function renderRecord(doc){
+    function createRecordElement(doc){
       const d = doc.data();
       const id = doc.id;
-      // normalize status to lower-case for matching (handles 'approved', 'Approved', etc.)
       const statusRaw = (d.status || 'pending');
       const status = String(statusRaw).toLowerCase();
-
-      // map statuses to badge styles
-      const badge = status === 'pending' ? 'bg-yellow-500 text-black'
-        : (status === 'paid' || status === 'approved' || status === 'completed') ? 'bg-green-600'
-        : (status === 'rejected' || status === 'cancelled' || status === 'declined') ? 'bg-red-600'
-        : 'bg-gray-500';
-
       const created = fmtDate(d.createdAt);
 
-      const el = document.createElement('div');
-      el.className = 'p-4 bg-white/3 border border-white/6 rounded-lg flex items-center justify-between';
-      el.innerHTML = `
-        <div>
-          <div class="flex items-center gap-3">
-            <div class="text-lg font-semibold">₦${Number(d.amount || 0).toLocaleString()}</div>
-            <div class="text-sm text-slate-300">•</div>
-            <div class="text-sm text-slate-300">${d.bank || '-'} — ${d.accountName || '-'}</div>
-          </div>
-          <div class="text-xs text-slate-400 mt-1">Acct: ${d.accountNumber || '-'} • ${created}</div>
+      // badge class mapping
+      let badgeClass = 'badge default';
+      if (status === 'pending') badgeClass = 'badge pending';
+      else if (status === 'paid' || status === 'approved' || status === 'completed') badgeClass = 'badge paid';
+      else if (status === 'rejected' || status === 'cancelled' || status === 'declined') badgeClass = 'badge rejected';
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'record';
+      wrapper.innerHTML = `
+        <div class="record-left">
+          <div class="amount">₦${Number(d.amount || 0).toLocaleString('en-NG')}</div>
+          <div class="meta">${d.bank || '-'} — ${d.accountName || '-'} • Acct: ${d.accountNumber || '-'}</div>
+          <div class="meta" style="margin-top:6px">${created}</div>
         </div>
-        <div class="flex flex-col items-end gap-2">
-          <div class="px-3 py-1 rounded-full text-xs ${badge}">${String(statusRaw).toUpperCase()}</div>
-          <div class="text-xs text-slate-400">Ref: ${id.slice(0,8)}</div>
+        <div class="record-right">
+          <div class="${badgeClass}">${String(statusRaw).toUpperCase()}</div>
+          <div class="ref">Ref: ${id.slice(0,8)}</div>
         </div>
       `;
-      return el;
+      return wrapper;
     }
 
     async function attachListener(user){
       // teardown existing listener if any
       if(unsubscribe) { try { unsubscribe(); } catch(e){}; unsubscribe = null; }
       recordsEl.innerHTML = '';
-      recordsEl.classList.add('hidden');
-      emptyState.classList.remove('hidden');
+      recordsEl.style.display = 'none';
+      emptyState.style.display = '';
 
       if(!user){
         statusLine.textContent = 'Sign in to view your records.';
@@ -167,36 +339,32 @@
       try {
         const q = query(collection(db, 'withdrawal'), where('requestedBy','==', user.uid), orderBy('createdAt', 'desc'));
 
-        // primary: realtime listener
         unsubscribe = onSnapshot(q, (snap) => {
           if(!snap || snap.empty){
             recordsEl.innerHTML = '';
-            recordsEl.classList.add('hidden');
-            emptyState.classList.remove('hidden');
+            recordsEl.style.display = 'none';
+            emptyState.style.display = '';
             statusLine.textContent = 'You have no withdrawal requests yet.';
             return;
           }
 
-          emptyState.classList.add('hidden');
-          recordsEl.classList.remove('hidden');
+          emptyState.style.display = 'none';
+          recordsEl.style.display = 'flex';
           recordsEl.innerHTML = '';
 
           snap.forEach(doc => {
-            const row = renderRecord(doc);
-            recordsEl.appendChild(row);
+            recordsEl.appendChild(createRecordElement(doc));
           });
 
           statusLine.textContent = `Showing ${snap.size} request${snap.size===1 ? '' : 's'}.`;
         }, (err) => {
           console.error('snapshot err', err);
           statusLine.textContent = 'Unable to read records (listener). Falling back to one-time load.';
-          // fallback to one-time fetch
           fallbackFetch(user);
         });
       } catch (err) {
         console.error('attachListener error', err);
         statusLine.textContent = 'Unable to read records — check console.';
-        // fallback
         fallbackFetch(user);
       }
     }
@@ -207,15 +375,15 @@
         const snap = await getDocs(q);
         if(!snap || snap.empty){
           recordsEl.innerHTML = '';
-          recordsEl.classList.add('hidden');
-          emptyState.classList.remove('hidden');
+          recordsEl.style.display = 'none';
+          emptyState.style.display = '';
           statusLine.textContent = 'You have no withdrawal requests yet.';
           return;
         }
-        emptyState.classList.add('hidden');
-        recordsEl.classList.remove('hidden');
+        emptyState.style.display = 'none';
+        recordsEl.style.display = 'flex';
         recordsEl.innerHTML = '';
-        snap.forEach(doc => recordsEl.appendChild(renderRecord(doc)));
+        snap.forEach(doc => recordsEl.appendChild(createRecordElement(doc)));
         statusLine.textContent = `Showing ${snap.size} request${snap.size===1 ? '' : 's'} (loaded).`;
       }catch(e){
         console.error('fallbackFetch err', e);
@@ -228,7 +396,19 @@
       if(user) attachListener(user); else attachListener(null);
     });
 
-    // expose for debugging in console
+    // bottom nav actions
+    document.getElementById('navHome').addEventListener('click', () => location.href = withRepoPath('catalog.html'));
+    document.getElementById('navConvert').addEventListener('click', () => location.href = withRepoPath('convert.html'));
+    document.getElementById('navCenter').addEventListener('click', () => location.href = withRepoPath('center.html'));
+    document.getElementById('navNews').addEventListener('click', () => location.href = withRepoPath('news.html'));
+    document.getElementById('navAssets').addEventListener('click', () => location.href = withRepoPath('dashboard.html'));
+
+    // contact FAB keyboard support
+    document.getElementById('contactFab').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { location.href = withRepoPath('contact.html'); }
+    });
+
+    // expose debug
     window._bw_debug = { attachListener };
   </script>
 </body>
