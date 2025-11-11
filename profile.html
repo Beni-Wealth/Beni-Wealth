@@ -5,143 +5,147 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Profile</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
-
-  <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Social preview -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
 
   <style>
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.62);
-      --accent-start:#2fe0b8; --accent-end:#7a5fff; --glass:rgba(255,255,255,0.03);
-      --text:#e9f0ff;
+      --accent-a:#8446ff; --accent-b:#6ce2c8; --glass:rgba(255,255,255,0.03);
+      --text:#e9f0ff; --container-w:900px; --radius:18px; --bottom-nav-h:74px;
+      font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;
     }
     *{box-sizing:border-box}
-    /* increased bottom padding so fixed bottom-nav doesn't obscure content */
-    body{margin:0;padding:28px 28px 180px;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text)}
-    .wrap{max-width:980px;margin:0 auto}
-    h1{margin:0 0 6px;font-size:20px}
-    p.lead{margin:6px 0 18px;color:var(--muted)}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:18px;margin:12px 0;box-shadow:0 12px 36px rgba(0,0,0,0.6)}
+    html,body{height:100%;margin:0}
+    body{background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text);display:flex;justify-content:center;padding:28px;-webkit-font-smoothing:antialiased}
+
+    .phone{width:100%;max-width:var(--container-w);border-radius:24px;padding:22px 22px calc(var(--bottom-nav-h) + 64px);background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:0 28px 90px rgba(0,0,0,0.65);overflow:auto}
+
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand img{width:64px;height:64px;border-radius:12px;object-fit:cover}
+    .brand .title{font-weight:800;font-size:18px}
+    .brand .sub{font-size:12px;color:var(--muted)}
+
+    h1{font-size:20px;margin:6px 0 8px}
+    .lead{color:var(--muted);font-size:14px;margin-bottom:14px}
+
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+    @media(max-width:920px){.grid{grid-template-columns:1fr} }
+
+    .card{border-radius:16px;padding:16px;background:linear-gradient(180deg,rgba(255,255,255,0.014),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);box-shadow:0 18px 60px rgba(0,0,0,0.45)}
     .row{display:flex;gap:12px;align-items:center}
-    .label{width:160px;color:var(--muted);font-size:14px}
-    input[type="text"], input[type="email"], input[type="password"]{
-      flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--text);
-    }
-    .small{font-size:13px;color:var(--muted)}
-    .muted{color:var(--muted)}
-    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
-    .btn.primary{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
-    .actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
-    .hint{margin-top:8px;color:var(--muted);font-size:13px}
-    .toast{position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;padding:10px 14px;border-radius:10px;font-weight:700;box-shadow:0 12px 40px rgba(0,0,0,0.6);z-index:9999}
-    .bottom-nav{position:fixed;left:18px;right:18px;bottom:16px;background:linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));padding:10px 16px;border-radius:36px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 12px 32px rgba(2,6,23,0.55);backdrop-filter: blur(6px);opacity:0.98;}
-    .nav-btn{width:56px;text-align:center;color:var(--muted);font-size:11px;display:flex;flex-direction:column;align-items:center;cursor:pointer}
-    .nav-btn .icon-wrap{margin-bottom:6px;width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.04);display:grid;place-items:center;font-size:16px}
-    .nav-center{flex:0 0 86px;display:flex;justify-content:center}
-    .nav-center .center-btn{width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-size:24px;box-shadow:0 10px 30px rgba(61,46,111,0.28);transform:translateY(-18px)}
-    @media(max-width:520px){body{padding:16px 16px 140px} .nav-btn{width:50px} .nav-center .center-btn{width:60px;height:60px;transform:translateY(-14px)}}
+    .label{width:140px;color:var(--muted);font-size:14px}
+    input[type="text"], input[type="email"], input[type="password"]{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--text)}
+    input[readonly]{background:transparent;border:0;color:var(--muted);font-weight:700}
+
+    .avatar{width:84px;height:84px;border-radius:16px;display:grid;place-items:center;font-weight:900;font-size:28px;background:linear-gradient(135deg,var(--accent-b),var(--accent-a));color:#041219}
+
+    .btn{padding:10px 14px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-b),var(--accent-a));color:#041219;font-weight:800}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    .muted{color:var(--muted);font-size:13px}
+
+    .meta-list{display:flex;flex-direction:column;gap:8px}
+    .meta-row{display:flex;justify-content:space-between;padding:8px;border-radius:10px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)}
+
+    .bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;height:var(--bottom-nav-h);width:calc(min(var(--container-w),100%) - 24px);max-width:var(--container-w);background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-radius:38px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 18px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.04);z-index:999;backdrop-filter: blur(6px)}
+    .nav-btn{ width:56px; text-align:center; color:var(--muted); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer }
+    .icon-wrap{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px }
+    .nav-center .center-btn{ width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,var(--accent-b),var(--accent-a));display:grid;place-items:center;color:#041219;font-size:26px;transform:translateY(-22px) }
+
+    footer{margin-top:18px;text-align:center;color:rgba(255,255,255,0.35)}
+    @media(max-width:520px){body{padding:16px} .avatar{width:72px;height:72px;font-size:22px}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Profile & Settings</h1>
-    <p class="lead">Edit your profile, change password, and view account details.</p>
-
-    <div class="card" id="accountCard" aria-live="polite">
-      <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
-        <div style="width:72px;height:72px;border-radius:14px;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-weight:800;font-size:20px" id="avatar">U</div>
+  <div class="phone" role="main">
+    <header>
+      <div class="brand">
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
         <div>
-          <div id="displayName" style="font-weight:800;font-size:18px">—</div>
-          <div class="small muted" id="emailLine">—</div>
-          <div class="small muted" id="joinedLine">Joined: —</div>
+          <div class="title">Beni-Wealth</div>
+          <div class="sub">Profile & Settings</div>
         </div>
       </div>
+      <div style="text-align:right;color:var(--muted);font-size:13px">Need help? <a href="mailto:beniwealth70@gmail.com" style="color:var(--accent-b);text-decoration:underline">beniwealth70@gmail.com</a></div>
+    </header>
 
-      <!-- Username editing -->
-      <div style="margin-top:8px">
-        <div class="row" style="margin-bottom:8px">
-          <div class="label">Username</div>
-          <input id="usernameInput" type="text" placeholder="Enter username">
+    <h1>Profile</h1>
+    <p class="lead">View your account details and security settings. (Username is read-only)</p>
+
+    <div class="grid">
+      <section class="card">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+          <div class="avatar" id="avatar">U</div>
+          <div>
+            <div id="displayName" style="font-weight:800;font-size:18px">—</div>
+            <div class="muted" id="emailLine">—</div>
+            <div class="muted" id="joinedLine">Joined: —</div>
+          </div>
         </div>
-        <div class="actions">
-          <button id="saveNameBtn" class="btn primary" disabled>Save Username</button>
-          <button id="discardNameBtn" class="btn ghost" style="display:none">Cancel</button>
+
+        <!-- Username (read-only) -->
+        <div style="margin-top:8px">
+          <div class="row" style="margin-bottom:8px">
+            <div class="label">Username</div>
+            <input id="usernameInput" type="text" readonly aria-readonly="true" />
+          </div>
+          <div class="muted">Your username is set by the system and cannot be edited here. Contact support to request a change.</div>
         </div>
-        <div class="hint">Username will update your display name and users/{uid}.username in Firestore.</div>
-      </div>
+
+        <hr style="border:0;height:1px;background:rgba(255,255,255,0.02);margin:14px 0">
+
+        <!-- Password section -->
+        <div>
+          <div style="font-weight:700;margin-bottom:8px">Password</div>
+          <div class="muted">To change password you must provide your current password (reauthentication)</div>
+
+          <div style="margin-top:12px">
+            <div class="row" style="margin-bottom:8px">
+              <div class="label">Current password</div>
+              <input id="currentPass" type="password" autocomplete="current-password" placeholder="Current password">
+            </div>
+            <div class="row" style="margin-bottom:8px">
+              <div class="label">New password</div>
+              <input id="newPass" type="password" autocomplete="new-password" placeholder="New password (min 6)">
+            </div>
+            <div style="display:flex;gap:10px;margin-top:8px">
+              <button id="changePassBtn" class="btn">Change password</button>
+              <button id="signOutBtn" class="btn ghost">Sign out</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div style="font-weight:700;margin-bottom:8px">Account details</div>
+        <div class="meta-list">
+          <div class="meta-row"><div class="muted">Plan</div><div id="metaPlan">—</div></div>
+          <div class="meta-row"><div class="muted">Balance</div><div id="metaBalance">₦0.00</div></div>
+          <div class="meta-row"><div class="muted">Plan expiry</div><div id="metaExpiry">—</div></div>
+          <div class="meta-row"><div class="muted">User ID</div><div id="metaUid">—</div></div>
+        </div>
+
+        <div style="margin-top:12px;color:var(--muted);font-size:13px">If you need your username changed, contact support at <a href="mailto:beniwealth70@gmail.com" style="color:var(--accent-b);text-decoration:underline">beniwealth70@gmail.com</a></div>
+      </aside>
     </div>
 
-    <div class="card" id="securityCard">
-      <div style="font-weight:700;margin-bottom:8px">Password</div>
-      <div class="small muted">To change password you must provide your current password (reauthentication)</div>
-
-      <div style="margin-top:12px">
-        <div class="row" style="margin-bottom:8px">
-          <div class="label">Current password</div>
-          <input id="currentPass" type="password" autocomplete="current-password" placeholder="Current password">
-        </div>
-        <div class="row" style="margin-bottom:8px">
-          <div class="label">New password</div>
-          <input id="newPass" type="password" autocomplete="new-password" placeholder="New password (min 6)">
-        </div>
-
-        <div class="actions">
-          <button id="changePassBtn" class="btn primary">Change password</button>
-          <button id="signOutBtn" class="btn ghost">Sign out</button>
-        </div>
-
-        <div class="hint">If reauthentication is required and you cannot provide the current password, sign out and sign back in before changing password.</div>
-      </div>
-    </div>
-
-    <div class="card" id="metaCard">
-      <div style="font-weight:700;margin-bottom:8px">Account details</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div class="row"><div class="label">Plan</div><div id="metaPlan">Basic</div></div>
-        <div class="row"><div class="label">Balance</div><div id="metaBalance">₦0.00</div></div>
-        <div class="row"><div class="label">Plan expiry</div><div id="metaExpiry">—</div></div>
-        <div class="row"><div class="label">User ID</div><div id="metaUid">—</div></div>
-      </div>
-    </div>
-
+    <footer>© <span id="year"></span> Beni-Wealth</footer>
   </div>
 
-  <!-- spacer so content can scroll above the fixed nav (prevents obstruction) -->
-  <div style="height:140px;"></div>
-
-  <!-- bottom nav (compact spaced) -->
-  <div class="bottom-nav" role="navigation" aria-label="Main navigation">
+  <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
     <div class="nav-btn" id="navHome"><div class="icon-wrap">🏠</div><span>Home</span></div>
     <div class="nav-btn" id="navConvert"><div class="icon-wrap">🔁</div><span>Convert</span></div>
     <div class="nav-center"><div class="center-btn" id="navCenter">⚖️</div></div>
     <div class="nav-btn" id="navNews"><div class="icon-wrap">💬</div><span>News</span></div>
     <div class="nav-btn" id="navAssets"><div class="icon-wrap">👤</div><span>Assets</span></div>
-  </div>
+  </nav>
 
-  <!-- Firebase (modular v9) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import {
-      getAuth, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider, updateProfile, signOut
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-      getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Beni-Wealth config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -162,14 +166,10 @@
     const emailLine = document.getElementById('emailLine');
     const joinedLine = document.getElementById('joinedLine');
     const usernameInput = document.getElementById('usernameInput');
-    const saveNameBtn = document.getElementById('saveNameBtn');
-    const discardNameBtn = document.getElementById('discardNameBtn');
-
     const currentPass = document.getElementById('currentPass');
     const newPass = document.getElementById('newPass');
     const changePassBtn = document.getElementById('changePassBtn');
     const signOutBtn = document.getElementById('signOutBtn');
-
     const metaPlan = document.getElementById('metaPlan');
     const metaBalance = document.getElementById('metaBalance');
     const metaExpiry = document.getElementById('metaExpiry');
@@ -177,218 +177,91 @@
 
     let currentUser = null;
     let currentUid = null;
-    let initialUsername = '';
 
     function toast(msg){
-      const t = document.createElement('div');
-      t.className = 'toast';
-      t.textContent = msg;
-      document.body.appendChild(t);
-      setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, 3000);
+      const t = document.createElement('div'); t.className='toast'; t.textContent = msg; document.body.appendChild(t);
+      setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); },3000);
     }
 
     function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
 
-    // robust createdAt formatter
     function formatCreatedAt(value){
       if (!value) return '—';
       try {
-        // Firestore Timestamp instance (has toDate())
-        if (value && typeof value.toDate === 'function') {
-          const d = value.toDate();
-          return isNaN(d.getTime()) ? '—' : d.toLocaleString();
-        }
-        // plain object with seconds/nanoseconds
-        if (typeof value === 'object' && typeof value.seconds === 'number') {
-          const ms = value.seconds * 1000 + (value.nanoseconds || 0) / 1e6;
-          const d = new Date(ms);
-          return isNaN(d.getTime()) ? '—' : d.toLocaleString();
-        }
-        // ISO string
-        if (typeof value === 'string') {
-          const d = new Date(value);
-          return isNaN(d.getTime()) ? '—' : d.toLocaleString();
-        }
-        // If it's something else (server sentinel) show pending instead of Invalid Date
+        if (value && typeof value.toDate === 'function') { const d = value.toDate(); return isNaN(d.getTime()) ? '—' : d.toLocaleString(); }
+        if (typeof value === 'object' && typeof value.seconds === 'number') { const ms = value.seconds * 1000 + (value.nanoseconds || 0) / 1e6; const d = new Date(ms); return isNaN(d.getTime()) ? '—' : d.toLocaleString(); }
+        if (typeof value === 'string') { const d = new Date(value); return isNaN(d.getTime()) ? '—' : d.toLocaleString(); }
         return 'Pending…';
-      } catch (e) {
-        return '—';
-      }
+      } catch (e) { return '—'; }
     }
 
-    // Enable/disable save username button based on changes
-    usernameInput.addEventListener('input', () => {
-      const v = usernameInput.value.trim();
-      if(v && v !== initialUsername) {
-        saveNameBtn.disabled = false;
-        discardNameBtn.style.display = 'inline-block';
-      } else {
-        saveNameBtn.disabled = true;
-        discardNameBtn.style.display = 'none';
-      }
-    });
-
-    discardNameBtn.addEventListener('click', () => {
-      usernameInput.value = initialUsername || '';
-      saveNameBtn.disabled = true;
-      discardNameBtn.style.display = 'none';
-    });
-
-    // Save username -> update auth displayName and users/{uid}.username
-    saveNameBtn.addEventListener('click', async () => {
-      const newName = usernameInput.value.trim();
-      if(!newName) return toast('Username cannot be empty');
-      if(!currentUid) return toast('Not signed in');
-
-      saveNameBtn.disabled = true;
-      saveNameBtn.textContent = 'Saving...';
-
-      try {
-        // update auth displayName (best-effort)
-        try { await updateProfile(auth.currentUser, { displayName: newName }); } catch(e) { console.warn('updateProfile failed:', e); }
-
-        // update Firestore user doc and set updatedAt via serverTimestamp
-        const userRef = doc(db, 'users', currentUid);
-        await setDoc(userRef, { username: newName, updatedAt: serverTimestamp() }, { merge: true });
-
-        initialUsername = newName;
-        displayNameEl.textContent = newName;
-        avatar.textContent = newName.charAt(0).toUpperCase();
-        toast('Username saved');
-      } catch(err){
-        console.error('Failed to save username', err);
-        toast('Failed to save username');
-      } finally {
-        saveNameBtn.disabled = true;
-        saveNameBtn.textContent = 'Save Username';
-        discardNameBtn.style.display = 'none';
-      }
-    });
-
-    // Change password: reauthenticate then updatePassword
+    // Change password handler (reauth + update)
     changePassBtn.addEventListener('click', async () => {
       const cur = currentPass.value || '';
       const nxt = newPass.value || '';
-
       if(!currentUid) return toast('Not signed in');
       if(!cur || !nxt) return toast('Both current and new passwords are required');
       if(nxt.length < 6) return toast('New password should be at least 6 characters');
 
-      changePassBtn.disabled = true;
-      changePassBtn.textContent = 'Processing...';
-
-      try {
-        // reauthenticate
+      changePassBtn.disabled = true; changePassBtn.textContent = 'Processing...';
+      try{
         const cred = EmailAuthProvider.credential(auth.currentUser.email, cur);
         await reauthenticateWithCredential(auth.currentUser, cred);
-
-        // update password
         await updatePassword(auth.currentUser, nxt);
-        // record last password change time (serverTimestamp)
         const userRef = doc(db, 'users', currentUid);
         await updateDoc(userRef, { lastPasswordChangeAt: serverTimestamp() }).catch(()=>{});
-        toast('Password updated successfully');
-        currentPass.value = '';
-        newPass.value = '';
-      } catch(err){
+        toast('Password updated successfully'); currentPass.value = ''; newPass.value = '';
+      }catch(err){
         console.error('Password change failed', err);
-        if(err && err.code === 'auth/wrong-password') {
-          toast('Current password is incorrect');
-        } else if(err && err.code === 'auth/requires-recent-login') {
-          if(confirm('You need to re-login to change your password. Sign out now?')) {
-            try { await signOut(auth); window.location.href = 'login.html'; } catch(e){ window.location.href='login.html'; }
-          }
+        if(err && err.code === 'auth/wrong-password') toast('Current password is incorrect');
+        else if(err && err.code === 'auth/requires-recent-login'){
+          if(confirm('You need to re-login to change your password. Sign out now?')){ await signOut(auth); window.location.href='login.html'; }
         } else {
           toast(err && err.message ? err.message : 'Failed to change password');
         }
-      } finally {
-        changePassBtn.disabled = false;
-        changePassBtn.textContent = 'Change password';
-      }
+      } finally { changePassBtn.disabled = false; changePassBtn.textContent = 'Change password'; }
     });
 
-    // Sign out
     signOutBtn.addEventListener('click', async () => {
-      if(confirm('Sign out of this account?')) {
-        await signOut(auth);
-        window.location.href = 'index.html';
-      }
+      if(confirm('Sign out of this account?')){ await signOut(auth); window.location.href = 'index.html'; }
     });
 
-    // Bottom nav handlers (same IDs as other pages)
+    // nav wiring
     document.getElementById('navHome').addEventListener('click', ()=> window.location.href='catalog.html');
     document.getElementById('navConvert').addEventListener('click', ()=> window.location.href='convert.html');
     document.getElementById('navCenter').addEventListener('click', ()=> window.location.href='center.html');
     document.getElementById('navNews').addEventListener('click', ()=> window.location.href='news.html');
     document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='dashboard.html');
 
-    // Listen to auth and populate UI, ensuring createdAt is set in user doc (serverTimestamp)
+    // listen for auth state and populate UI; username is displayed but not editable
     onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
-      currentUid = user ? user.uid : null;
-
-      if(!user) {
-        displayNameEl.textContent = 'Guest';
-        emailLine.textContent = 'Not signed in';
-        joinedLine.textContent = 'Joined: —';
-        usernameInput.value = '';
-        initialUsername = '';
-        metaPlan.textContent = '—';
-        metaBalance.textContent = formatN(0);
-        metaExpiry.textContent = '—';
-        metaUid.textContent = '—';
-        avatar.textContent = 'U';
-        saveNameBtn.disabled = true;
+      currentUser = user; currentUid = user ? user.uid : null;
+      if(!user){
+        displayNameEl.textContent = 'Guest'; emailLine.textContent = 'Not signed in'; joinedLine.textContent = 'Joined: —'; usernameInput.value = ''; avatar.textContent = 'U'; metaPlan.textContent = '—'; metaBalance.textContent = formatN(0); metaExpiry.textContent = '—'; metaUid.textContent = '—';
         return;
       }
 
-      // show basic auth info first (fast)
       displayNameEl.textContent = user.displayName || user.email || 'User';
       emailLine.textContent = user.email || '—';
-      joinedLine.textContent = 'Joined: loading...';
       avatar.textContent = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
       metaUid.textContent = user.uid.slice(0,10);
 
-      // fetch user doc
-      try {
+      try{
         const userRef = doc(db, 'users', user.uid);
         let snap = await getDoc(userRef);
         let data = snap.exists ? snap.data() : null;
 
-        // if no doc, create minimal doc with createdAt serverTimestamp and poll for resolved timestamp
-        if(!data) {
-          await setDoc(userRef, {
-            username: user.displayName || null,
-            plan: 'Basic',
-            balance: 0,
-            createdAt: serverTimestamp()
-          }, { merge: true });
-
-          // poll a few times (total ~3s) to let serverTimestamp resolve and avoid "Invalid Date"
-          for (let i = 0; i < 6; i++) {
-            await new Promise(r => setTimeout(r, 500));
-            snap = await getDoc(userRef);
-            if (snap.exists && snap.data() && snap.data().createdAt) {
-              data = snap.data();
-              break;
-            }
-          }
-
-          // final fallback: attempt one last read
-          if (!data) {
-            snap = await getDoc(userRef);
-            data = snap.exists ? snap.data() : null;
-          }
+        // if user doc doesn't exist, create minimal doc and wait for createdAt to resolve
+        if(!data){
+          await setDoc(userRef, { username: user.displayName || null, plan: 'Basic', balance: 0, createdAt: serverTimestamp() }, { merge: true });
+          for(let i=0;i<6;i++){ await new Promise(r=>setTimeout(r,500)); snap = await getDoc(userRef); if(snap.exists && snap.data().createdAt){ data = snap.data(); break; } }
+          if(!data){ snap = await getDoc(userRef); data = snap.exists ? snap.data() : null; }
         }
 
-        // fill fields (using createdAt from Firestore if present)
-        const username = data?.username || user.displayName || '';
+        const username = data?.username || user.displayName || (user.email ? user.email.split('@')[0] : '');
         usernameInput.value = username;
-        initialUsername = username;
-        saveNameBtn.disabled = true;
-        discardNameBtn.style.display = 'none';
 
-        // joined date: prefer users/{uid}.createdAt (Firestore serverTimestamp), fall back to auth metadata
+        // joined date: prefer Firestore createdAt
         const createdAt = data?.createdAt || data?.createdAtISO || (user.metadata && user.metadata.creationTime) || null;
         joinedLine.textContent = 'Joined: ' + (createdAt ? formatCreatedAt(createdAt) : '—');
 
@@ -396,18 +269,15 @@
         metaBalance.textContent = formatN(Number(data?.balance || 0));
         metaExpiry.textContent = data?.planExpiryAt ? formatCreatedAt(data.planExpiryAt) : '—';
 
-        // update display also
-        displayNameEl.textContent = username || (user.displayName || user.email || 'User');
-        avatar.textContent = (username || user.displayName || user.email || 'U').charAt(0).toUpperCase();
+        // ensure username input remains readonly (UI safeguard)
+        usernameInput.setAttribute('readonly', 'true'); usernameInput.disabled = true; usernameInput.style.opacity = '1'; usernameInput.style.color = 'var(--muted)';
 
-      } catch(err){
-        console.error('Failed to load user doc', err);
-        toast('Could not load profile data (see console)');
-        // fallback to auth metadata for joined date
-        joinedLine.textContent = user.metadata && user.metadata.creationTime ? `Joined: ${new Date(user.metadata.creationTime).toLocaleString()}` : 'Joined: —';
-      }
+      }catch(err){ console.error('Failed to load user doc', err); toast('Could not load profile data (see console)'); joinedLine.textContent = user.metadata?.creationTime ? `Joined: ${new Date(user.metadata.creationTime).toLocaleString()}` : 'Joined: —'; }
     });
+
+    function formatCreatedAt(value){ if(!value) return '—'; try{ if(value && typeof value.toDate === 'function'){ const d = value.toDate(); return isNaN(d.getTime()) ? '—' : d.toLocaleString(); } if(typeof value === 'object' && typeof value.seconds === 'number'){ const ms = value.seconds * 1000 + (value.nanoseconds||0)/1e6; const d = new Date(ms); return isNaN(d.getTime()) ? '—' : d.toLocaleString(); } if(typeof value === 'string'){ const d = new Date(value); return isNaN(d.getTime()) ? '—' : d.toLocaleString(); } return 'Pending…'; }catch(e){return '—';} }
+
+    document.getElementById('year').textContent = new Date().getFullYear();
   </script>
 </body>
-  </html>
-  
+</html>
