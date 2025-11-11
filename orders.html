@@ -4,7 +4,21 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Adverts — Beni-Wealth</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
+
+  <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
+
+  <!-- Favicons & Social preview -->
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
+  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
+  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#2fe0b8">
+
   <style>
     :root{
       --bg1:#060511; --bg2:#0f0920;
@@ -27,7 +41,6 @@
     .search{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
     .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .danger{background:linear-gradient(90deg,#ff7a7a,#ff4c4c);color:#041219}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
     .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 18px 60px rgba(0,0,0,0.55);display:flex;flex-direction:column;gap:12px}
     .card-head{display:flex;gap:12px;align-items:center;justify-content:space-between}
@@ -40,21 +53,25 @@
     .pill.completed{background:#dbe9ff;color:#05304a}
     .card-body{color:var(--muted);font-size:14px;min-height:42px}
     .actions{display:flex;gap:8px;margin-top:6px}
-    .details-collapse{overflow:hidden;max-height:0;transition:max-height .28s ease;padding-top:0}
-    .details-inner{padding:12px;border-top:1px dashed rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:0 0 10px 10px}
-    .submission{display:flex;gap:12px;align-items:flex-start;padding:8px;border-radius:8px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)}
+    /* details overlay (full panel) */
+    .details-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,#061018,#02040a);z-index:999;padding:22px}
+    .details-panel{width:100%;max-width:980px;background:linear-gradient(180deg,#081024,#02040a);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 140px rgba(0,0,0,0.8);color:var(--text);max-height:92vh;overflow:auto}
+    .details-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .closeX{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
+    .sub-list{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+    .submission{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border:1px solid rgba(255,255,255,0.03)}
     .sub-left{flex:1}
-    .sub-thumb{width:120px;height:72px;object-fit:cover;border-radius:6px}
-    .sub-meta{color:var(--muted);font-size:12px;margin-bottom:6px}
-    .empty{padding:28px;text-align:center;color:var(--muted)}
-    .diag{color:var(--muted);font-size:13px;margin-bottom:12px}
-    .small{font-size:13px;color:var(--muted)}
-    /* image overlay viewer */
-    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:999;padding:18px}
-    .viewer{width:100%;max-width:880px;background:#000;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;align-items:center}
-    .viewer img{max-width:100%;height:auto;display:block}
-    .viewer .meta{padding:12px;background:rgba(0,0,0,0.5);color:var(--muted);width:100%;display:flex;justify-content:space-between}
-    @media(max-width:520px){ .thumb{width:78px;height:60px} .sub-thumb{width:90px;height:56px} }
+    .sub-meta{color:var(--muted);font-size:13px;margin-bottom:8px}
+    .sub-text{color:var(--muted);white-space:pre-wrap}
+    .sub-image{max-width:320px;width:100%;height:auto;border-radius:8px;object-fit:contain;cursor:pointer;border:1px solid rgba(255,255,255,0.04)}
+    .controls{display:flex;gap:8px;margin-top:8px}
+    .disabled{opacity:.6;pointer-events:none}
+    /* big image viewer (separate overlay) */
+    .viewer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.9);z-index:1200;padding:18px}
+    .viewer-card{max-width:1100px;width:100%;background:#000;border-radius:10px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:12px}
+    .viewer-card img{max-width:100%;height:auto;border-radius:8px}
+    .viewer-meta{color:var(--muted);font-size:13px;display:flex;justify-content:space-between;width:100%}
+    @media (max-width:640px){ .sub-image{max-width:180px} .viewer-card{padding:8px} }
   </style>
 </head>
 <body>
@@ -63,7 +80,7 @@
       <a class="back" href="dashboard.html">← Back</a>
       <div style="text-align:right">
         <div class="brand">My Adverts</div>
-        <div class="muted">All adverts you created — track approvals and view submissions</div>
+        <div class="muted">All adverts you created — click Details to review submissions</div>
       </div>
     </header>
 
@@ -72,22 +89,44 @@
       <button id="refresh" class="btn ghost">Refresh</button>
     </div>
 
-    <div id="diag" class="diag">Connecting…</div>
+    <div id="diag" class="muted">Connecting…</div>
 
     <div id="grid" class="grid" aria-live="polite">
       <div class="empty">Loading your adverts…</div>
     </div>
   </main>
 
-  <!-- Image viewer overlay -->
-  <div id="viewerOverlay" class="overlay" aria-hidden="true">
-    <div class="viewer" role="dialog" aria-modal="true">
-      <img id="viewerImg" src="" alt="proof image" />
-      <div class="meta">
-        <div id="viewerMeta" class="small"></div>
+  <!-- Details overlay -->
+  <div id="detailsOverlay" class="details-overlay" aria-hidden="true">
+    <div class="details-panel" role="dialog" aria-modal="true">
+      <div class="details-head">
         <div>
-          <button id="viewerClose" class="btn ghost">Close</button>
+          <div id="advTitle" style="font-weight:800;font-size:18px">Advert title</div>
+          <div id="advMeta" class="muted" style="margin-top:6px;font-size:13px">meta</div>
         </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="closeDetails" class="closeX" aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      <div id="advDescription" style="margin-top:12px;color:var(--muted);white-space:pre-wrap"></div>
+
+      <div style="margin-top:12px">
+        <div style="font-weight:700;margin-bottom:8px">Submissions</div>
+        <div id="subList" class="sub-list">
+          <div class="muted">Loading submissions…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Big image viewer -->
+  <div id="bigViewer" class="viewer" aria-hidden="true">
+    <div class="viewer-card" role="dialog" aria-modal="true">
+      <img id="bigImg" src="" alt="proof image" />
+      <div class="viewer-meta">
+        <div id="bigMeta" class="muted small"></div>
+        <div><button id="closeBig" class="btn ghost">Close</button></div>
       </div>
     </div>
   </div>
@@ -95,12 +134,12 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import {
-      getFirestore, collection, query, where, onSnapshot, getDocs, doc, getDoc,
-      updateDoc, runTransaction, serverTimestamp, writeBatch
+      getFirestore, collection, query, where, onSnapshot, getDocs, doc,
+      runTransaction, serverTimestamp, updateDoc
     } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
-    // FIREBASE CONFIG
+    // Firebase config (your project)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -121,105 +160,90 @@
     const search = document.getElementById('search');
     const refreshBtn = document.getElementById('refresh');
 
-    const viewerOverlay = document.getElementById('viewerOverlay');
-    const viewerImg = document.getElementById('viewerImg');
-    const viewerMeta = document.getElementById('viewerMeta');
-    const viewerClose = document.getElementById('viewerClose');
+    const detailsOverlay = document.getElementById('detailsOverlay');
+    const closeDetails = document.getElementById('closeDetails');
+    const advTitle = document.getElementById('advTitle');
+    const advMeta = document.getElementById('advMeta');
+    const advDescription = document.getElementById('advDescription');
+    const subList = document.getElementById('subList');
+
+    const bigViewer = document.getElementById('bigViewer');
+    const bigImg = document.getElementById('bigImg');
+    const bigMeta = document.getElementById('bigMeta');
+    const closeBig = document.getElementById('closeBig');
 
     // state
     let currentUser = null;
-    const advertsMap = new Map(); // advertId -> {id, data}
-    const submissionsListeners = new Map(); // advertId -> unsubscribe fn
-    const advertsUnsubs = []; // listeners for adverts
+    let advertsMap = new Map(); // advertId -> {id, data}
+    let advertsUnsub = null;    // single broad listener handle
+    let activeAdvertId = null;
+    let submissionsUnsub = null; // listener for active advert's submissions
 
-    // candidate owner fields
-    const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator'];
+    // owner-like fields to match on doc client-side
+    const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator','ownerUid','user'];
 
-    // helper utils
+    // helpers
     function el(tag, attrs = {}, ...children){
       const e = document.createElement(tag);
       for(const k in attrs){
         if(k === 'class') e.className = attrs[k];
         else if(k === 'dataset') Object.assign(e.dataset, attrs[k]);
+        else if(k === 'style') e.style.cssText = attrs[k];
         else e.setAttribute(k, attrs[k]);
       }
       children.forEach(c => { if(typeof c === 'string') e.appendChild(document.createTextNode(c)); else if(c) e.appendChild(c); });
       return e;
     }
-    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function niceDate(ts){ try{ if(!ts) return '-'; if(ts.toDate) ts = ts.toDate(); return new Date(ts).toLocaleString(); }catch(e){ return '-'; } }
-    function statusClass(status){ const s = String(status||'').toLowerCase(); if(s==='pending') return 'pill pending'; if(s==='approved') return 'pill approved'; if(s==='completed') return 'pill completed'; return 'pill pending'; }
-
-    // show image overlay
-    function openImageViewer(url){
-      viewerImg.src = url;
-      viewerMeta.textContent = url;
-      viewerOverlay.style.display = 'flex';
-      viewerOverlay.setAttribute('aria-hidden','false');
-      document.body.style.overflow = 'hidden';
+    function niceDate(ts){
+      try{ if(!ts) return '-'; if(ts.toDate) ts = ts.toDate(); return new Date(ts).toLocaleString(); } catch(e){ return '-'; }
     }
-    function closeImageViewer(){
-      viewerOverlay.style.display = 'none';
-      viewerOverlay.setAttribute('aria-hidden','true');
-      viewerImg.src = '';
-      document.body.style.overflow = '';
-    }
-    viewerClose.addEventListener('click', closeImageViewer);
-    viewerOverlay.addEventListener('click', (e)=>{ if(e.target === viewerOverlay) closeImageViewer(); });
-
-    // compute unit price from advert doc data (defensive)
     function getUnitPrice(adData){
       if(!adData) return 0;
       const candidates = ['unitPrice','unit_price','price','per','unit','amount'];
       for(const k of candidates){
         if(typeof adData[k] !== 'undefined' && adData[k] !== null && !isNaN(Number(adData[k]))) return Number(adData[k]);
       }
-      // if totalCost present and workers present, compute unit
       const total = Number(adData.totalCost ?? adData.total_cost ?? adData.total ?? 0) || 0;
-      const workers = Number(adData.workers ?? adData.worker_count ?? adData.requested_workers ?? adData.maxWorkers ?? 0) || 0;
+      const workers = Number(adData.workers ?? adData.worker_count ?? adData.requested_workers ?? 0) || 0;
       if(workers > 0 && total > 0) return total / workers;
       return 0;
     }
 
-    // render adverts grid
+    // UI: build adverts grid
     function rebuildGrid(){
       const q = (search.value || '').trim().toLowerCase();
       grid.innerHTML = '';
       let any = false;
-      for(const [id, item] of advertsMap){
+      for(const [id, item] of advertsMap.entries()){
         const data = item.data || {};
-        // filter
         if(q){
           const hay = ((data.title||'') + ' ' + (data.platform||'') + ' ' + (data.subcategory||'') + ' ' + (data.status||'')).toLowerCase();
           if(!hay.includes(q)) continue;
         }
-        const node = buildCard(id, data);
-        grid.appendChild(node);
+        const card = buildCard(id, data);
+        grid.appendChild(card);
         any = true;
       }
       if(!any) grid.innerHTML = '<div class="empty">You have no adverts yet.</div>';
     }
 
-    // build card (no "Open full" button — only Details)
     function buildCard(id, data){
       const head = el('div',{class:'card-head'});
       const left = el('div',{style:'display:flex;gap:12px;align-items:center'});
-      const thumb = el('img',{class:'thumb', src: data.thumbnail || data.thumb || data.image || '', alt: data.title || ''});
-      if(!data.thumbnail && !data.thumb && !data.image) thumb.style.display = 'none';
-      thumb.addEventListener('click', ()=>{
-        const src = data.thumbnail || data.thumb || data.image || '';
-        if(src) openImageViewer(src);
-      });
+      const thumbSrc = data.thumbnail || data.thumb || data.image || '';
+      const thumb = el('img',{class:'thumb', src: thumbSrc, alt: data.title || ''});
+      if(!thumbSrc) thumb.style.display = 'none';
+      else thumb.addEventListener('click', ()=> { openDetails(id); });
 
       const txt = el('div', {},
         el('div',{class:'title'}, data.title || '(untitled)'),
-        el('div',{class:'meta'}, `${escapeHtml(String(data.platform||data.subcategory||''))} • ${escapeHtml(String(data.workers||data.worker_count||data.requested_workers||0))} workers`)
+        el('div',{class:'meta'}, `${data.platform || data.subcategory || ''} • ${Number(data.workers||data.worker_count||data.requested_workers||0)} workers`)
       );
       left.appendChild(thumb);
       left.appendChild(txt);
 
       const right = el('div', {});
-      const pill = el('div',{class: statusClass(data.status)}, (data.status||'PENDING').toString().toUpperCase());
+      const pill = el('div',{class: `pill ${ (''+ (data.status||'pending')).toLowerCase() }`}, (data.status||'PENDING').toString().toUpperCase());
       right.appendChild(pill);
 
       head.appendChild(left);
@@ -227,42 +251,70 @@
 
       const body = el('div',{class:'card-body'}, data.description ? (data.description.slice(0,220) + (data.description.length>220? '…':'')) : el('span',{},'No description'));
 
-      // actions — only Details remains
       const actions = el('div',{class:'actions'});
       const detailsBtn = el('button',{class:'btn ghost'}, 'Details');
+      detailsBtn.addEventListener('click', ()=> openDetails(id));
       actions.appendChild(detailsBtn);
 
-      // collapsed submissions area
-      const collapse = el('div',{class:'details-collapse', id:`collapse-${id}`},
-        el('div',{class:'details-inner'}, el('div',{class:'small muted'}, 'Loading submissions…'))
-      );
-
-      let expanded = false;
-      detailsBtn.addEventListener('click', async () => {
-        expanded = !expanded;
-        if(expanded){
-          collapse.style.maxHeight = '700px';
-          await attachSubmissionsListener(id, collapse.querySelector('.details-inner'));
-        } else {
-          collapse.style.maxHeight = '0';
-          detachSubmissionsListener(id);
-        }
-      });
-
-      const card = el('article',{class:'card', dataset:{id}}, head, body, actions, collapse);
+      const card = el('article',{class:'card', dataset:{id}}, head, body, actions);
       return card;
     }
 
-    // attach realtime submissions listener for advertId and render into containerEl
-    function attachSubmissionsListener(advertId, containerEl){
-      if(submissionsListeners.has(advertId)) return;
-      containerEl.innerHTML = '<div class="small muted">Loading submissions…</div>';
+    // Open details overlay for advertId
+    function openDetails(advertId){
+      activeAdvertId = advertId;
+      const advert = advertsMap.get(advertId);
+      if(!advert){ alert('Advert not found locally'); return; }
+      const d = advert.data || {};
+      advTitle.textContent = d.title || '(untitled)';
+      advMeta.textContent = `${d.platform || d.subcategory || ''} — ${Number(d.workers||d.worker_count||d.requested_workers||0)} workers • status: ${(d.status||'pending').toUpperCase()}`;
+      advDescription.textContent = d.description || '';
+      // attach submissions listener for this advert
+      attachSubmissionsListener(advertId);
+      detailsOverlay.style.display = 'flex';
+      detailsOverlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
 
-      // collection name used in your site
-      const subColName = 'advert_submissions';
-      const q = query(collection(db, subColName), where('advertId', '==', advertId));
+    function closeDetailsOverlay(){
+      detailsOverlay.style.display = 'none';
+      detailsOverlay.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+      // detach submissions listener
+      detachSubmissionsListener();
+      activeAdvertId = null;
+      subList.innerHTML = '<div class="muted">Loading submissions…</div>';
+    }
 
-      const unsub = onSnapshot(q, async (snap) => {
+    closeDetails.addEventListener('click', closeDetailsOverlay);
+    detailsOverlay.addEventListener('click', (e) => { if(e.target === detailsOverlay) closeDetailsOverlay(); });
+
+    // Big image viewer
+    function openBigViewer(src, metaText = '') {
+      bigImg.src = src;
+      bigMeta.textContent = metaText;
+      bigViewer.style.display = 'flex';
+      bigViewer.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeBigViewer(){
+      bigViewer.style.display = 'none';
+      bigViewer.setAttribute('aria-hidden','true');
+      bigImg.src = '';
+      document.body.style.overflow = '';
+    }
+    closeBig.addEventListener('click', closeBigViewer);
+    bigViewer.addEventListener('click', (e) => { if(e.target === bigViewer) closeBigViewer(); });
+
+    // Submissions listener (attached only when details open)
+    function attachSubmissionsListener(advertId){
+      // detach previous if any
+      if(submissionsUnsub){ try { submissionsUnsub(); } catch(e){}; submissionsUnsub = null; }
+      subList.innerHTML = '<div class="muted">Loading submissions…</div>';
+
+      const subCol = 'advert_submissions';
+      const q = query(collection(db, subCol), where('advertId', '==', advertId));
+      submissionsUnsub = onSnapshot(q, snap => {
         const list = [];
         snap.forEach(s => {
           const d = s.data() || {};
@@ -271,251 +323,261 @@
             userId: d.userId || d.user || d.requestedBy || d.workerId || '',
             textProof: d.textProof || d.text_proof || d.proofText || '',
             imageUrl: d.imageUrl || d.image_url || d.image || '',
-            status: d.status || 'pending',
+            status: (d.status || 'pending').toLowerCase(),
             createdAt: d.createdAt || d.created_at || null
           });
         });
-
-        // sort newest first
-        list.sort((a,b)=>{
+        // newest first
+        list.sort((a,b) => {
           const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?Date.parse(a.createdAt):0);
           const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?Date.parse(b.createdAt):0);
           return tb - ta;
         });
-
-        // render
-        if(list.length === 0){
-          containerEl.innerHTML = '<div class="empty small muted">No submissions yet.</div>';
-        } else {
-          containerEl.innerHTML = '';
-          for(const s of list){
-            const sub = el('div',{class:'submission'});
-            const left = el('div',{class:'sub-left'},
-              el('div',{class:'sub-meta'}, `Submitted: ${niceDate(s.createdAt)} • ID: ${s.id} • By: ${escapeHtml(s.userId||'-')}`),
-              el('div',{}, s.textProof || el('em',{}, '(no text proof)'))
-            );
-
-            const right = el('div',{style:'min-width:140px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px'});
-
-            if(s.imageUrl){
-              const img = el('img',{class:'sub-thumb', src:s.imageUrl, alt:'proof'});
-              img.style.cursor = 'pointer';
-              img.addEventListener('click', ()=> openImageViewer(s.imageUrl));
-              right.appendChild(img);
-            }
-
-            // status badge
-            const stLower = (s.status||'').toLowerCase();
-            const statusBadge = el('div',{class:`pill ${stLower==='approved' ? 'approved' : stLower==='completed' ? 'completed' : 'pending' }`}, (s.status||'PENDING').toString().toUpperCase());
-            right.appendChild(statusBadge);
-
-            // If current user is the advert owner, show approve / reject
-            const advert = advertsMap.get(advertId);
-            const advertOwnerId = advert?.data ? (advert.data.createdBy || advert.data.owner || advert.data.userId || advert.data.uid || advert.data.requestedBy || advert.data.creator || advert.data.ownerUid || advert.data.user || null) : null;
-            const unitPrice = getUnitPrice(advert?.data || {});
-            const payAmount = Math.round(unitPrice * 0.7);
-
-            if(currentUser && advertOwnerId && currentUser.uid === advertOwnerId){
-              const controls = el('div',{style:'display:flex;gap:6px;flex-direction:row;'});
-              const approveBtn = el('button',{class:'btn'}, `Approve (₦${payAmount.toLocaleString()})`);
-              const rejectBtn = el('button',{class:'btn ghost'}, 'Reject');
-
-              // disable approve if already approved
-              if((s.status||'').toLowerCase() === 'approved') approveBtn.disabled = true;
-
-              approveBtn.addEventListener('click', async ()=>{
-                if(approveBtn.disabled) return;
-                const ok = confirm(`Approve submission and credit user ₦${payAmount.toLocaleString()}?`);
-                if(!ok) return;
-                approveBtn.disabled = true;
-                approveBtn.textContent = 'Approving…';
-                try{
-                  await approveSubmission(advertId, s.id, s.userId, payAmount);
-                  // UI will update via snapshot
-                }catch(e){
-                  console.error('approve failed', e);
-                  alert('Approve failed: ' + (e.message || e));
-                } finally {
-                  approveBtn.disabled = false;
-                  approveBtn.textContent = `Approve (₦${payAmount.toLocaleString()})`;
-                }
-              });
-
-              rejectBtn.addEventListener('click', async ()=>{
-                const ok = confirm('Reject this submission?');
-                if(!ok) return;
-                try{
-                  await rejectSubmission(s.id);
-                }catch(e){
-                  console.error('reject failed', e);
-                  alert('Reject failed: ' + (e.message || e));
-                }
-              });
-
-              controls.appendChild(approveBtn);
-              controls.appendChild(rejectBtn);
-              right.appendChild(controls);
-            }
-
-            sub.appendChild(left);
-            sub.appendChild(right);
-            containerEl.appendChild(sub);
-          }
-        }
-
-        // after rendering, compute approved count and if needed mark advert completed
-        const approvedCount = list.filter(it => (it.status||'').toLowerCase() === 'approved').length;
-        const workersRequested = Number(advert?.data?.workers || advert?.data?.worker_count || advert?.data?.requested_workers || advert?.data?.maxWorkers || 0) || 0;
-        // if enough approved, attempt to mark advert completed
-        if(workersRequested > 0 && approvedCount >= workersRequested){
-          try{
-            // update advert doc status -> completed (best-effort)
-            const advertRef = doc(db, 'advertise_tasks', advertId);
-            await runTransaction(db, async (tx) => {
-              const snap = await tx.get(advertRef);
-              if(!snap.exists()) return;
-              const cur = snap.data() || {};
-              if((cur.status||'') !== 'completed'){
-                tx.update(advertRef, { status: 'completed', completedAt: serverTimestamp() });
-              }
-            });
-          }catch(e){
-            console.warn('mark completed failed', e);
-          }
-        }
-
+        renderSubmissionsList(advertId, list);
       }, err => {
         console.error('submissions listen error', err);
-        containerEl.innerHTML = `<div class="empty">Failed to load submissions: ${escapeHtml(err.message || String(err))}</div>`;
+        subList.innerHTML = `<div class="empty">Failed to load submissions: ${err.message || err}</div>`;
+      });
+    }
+
+    function detachSubmissionsListener(){
+      if(submissionsUnsub){ try { submissionsUnsub(); } catch(e){}; submissionsUnsub = null; }
+    }
+
+    // Render submissions into overlay
+    function renderSubmissionsList(advertId, list){
+      subList.innerHTML = '';
+      if(!list || list.length === 0){
+        subList.innerHTML = '<div class="empty">No submissions yet.</div>';
+        return;
+      }
+      const advert = advertsMap.get(advertId);
+      const unitPrice = getUnitPrice(advert?.data || {});
+      const payAmount = Math.round(unitPrice * 0.7);
+
+      list.forEach(s => {
+        const sub = el('div',{class:'submission'});
+        const left = el('div',{class:'sub-left'},
+          el('div',{class:'sub-meta'}, `Submitted: ${niceDate(s.createdAt)} • ID: ${s.id} • By: ${s.userId || '-'}`),
+          el('div',{class:'sub-text'}, s.textProof || el('em',{}, '(no text proof)'))
+        );
+
+        const right = el('div',{style:'min-width:220px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px'});
+        if(s.imageUrl){
+          const img = el('img',{class:'sub-image', src:s.imageUrl, alt:'proof'});
+          img.addEventListener('click', ()=> openBigViewer(s.imageUrl, `Submission ID: ${s.id}`));
+          right.appendChild(img);
+        }
+
+        const badge = el('div', {class:`pill ${ s.status === 'approved' ? 'approved' : s.status === 'completed' ? 'completed' : 'pending' }`}, (s.status || 'PENDING').toUpperCase());
+        right.appendChild(badge);
+
+        // Only the advert owner can approve/reject; check client-side owner id
+        const advertData = advert?.data || {};
+        const advertOwnerId = advertData.createdBy || advertData.owner || advertData.userId || advertData.uid || advertData.requestedBy || advertData.creator || advertData.ownerUid || advertData.user || null;
+
+        if(currentUser && advertOwnerId && currentUser.uid === advertOwnerId){
+          // create approve/reject controls, but they should be disabled if status !== pending
+          const controls = el('div',{class:'controls'});
+          const approveBtn = el('button',{class:'btn'}, `Approve (₦${payAmount.toLocaleString()})`);
+          const rejectBtn = el('button',{class:'btn ghost'}, 'Reject');
+
+          const isPending = (s.status === 'pending');
+          if(!isPending){
+            // disable both if not pending
+            approveBtn.classList.add('disabled');
+            rejectBtn.classList.add('disabled');
+          }
+
+          approveBtn.addEventListener('click', async () => {
+            if(!isPending) return;
+            const ok = confirm(`Approve this submission and credit user ₦${payAmount.toLocaleString()}?`);
+            if(!ok) return;
+            // disable buttons immediately to prevent double-click
+            approveBtn.classList.add('disabled');
+            rejectBtn.classList.add('disabled');
+            try {
+              await setSubmissionStatusTransaction(submitActionApprovePayload(advertId, s.id, s.userId, payAmount));
+              // UI will be updated by snapshot listener; but keep buttons disabled
+            } catch(e){
+              console.error('approve failed', e);
+              alert('Approve failed: ' + (e.message || e));
+              // allow retry if appropriate
+              if(e && e.message && e.message.includes('not pending')) {
+                // reflect server-side changed status
+              } else {
+                approveBtn.classList.remove('disabled');
+                rejectBtn.classList.remove('disabled');
+              }
+            }
+          });
+
+          rejectBtn.addEventListener('click', async () => {
+            if(!isPending) return;
+            const ok = confirm('Reject this submission? This cannot be approved afterwards.');
+            if(!ok) return;
+            approveBtn.classList.add('disabled');
+            rejectBtn.classList.add('disabled');
+            try {
+              await setSubmissionStatusTransaction(submitActionRejectPayload(s.id));
+            } catch(e){
+              console.error('reject failed', e);
+              alert('Reject failed: ' + (e.message || e));
+              // allow retry if appropriate
+              if(!(e && e.message && e.message.includes('not pending'))){
+                approveBtn.classList.remove('disabled');
+                rejectBtn.classList.remove('disabled');
+              }
+            }
+          });
+
+          controls.appendChild(approveBtn);
+          controls.appendChild(rejectBtn);
+          right.appendChild(controls);
+        }
+
+        sub.appendChild(left);
+        sub.appendChild(right);
+        subList.appendChild(sub);
       });
 
-      submissionsListeners.set(advertId, unsub);
-    }
-
-    function detachSubmissionsListener(advertId){
-      const unsub = submissionsListeners.get(advertId);
-      if(unsub){ try{ unsub(); }catch(e){} }
-      submissionsListeners.delete(advertId);
-    }
-
-    function detachAllSubmissionListeners(){
-      for(const [k, unsub] of submissionsListeners.entries()){
-        try{ unsub(); } catch(e){}
+      // after rendering, check if advert should be marked completed
+      const approvedCount = list.filter(it => it.status === 'approved').length;
+      const workerCount = Number(advert?.data?.workers || advert?.data?.worker_count || advert?.data?.requested_workers || 0) || 0;
+      if(workerCount > 0 && approvedCount >= workerCount){
+        // best-effort mark advert completed
+        markAdvertCompleted(activeAdvertId).catch(e => console.warn('mark completed failed', e));
       }
-      submissionsListeners.clear();
     }
 
-    // Approve submission: transactionally update submission and credit user's balance
-    async function approveSubmission(advertId, submissionId, submitterUid, amount){
-      if(!submissionId) throw new Error('Invalid submission id');
-      if(!submitterUid) throw new Error('Invalid submitter id');
-      const submissionRef = doc(db, 'advert_submissions', submissionId);
-      const userRef = doc(db, 'users', submitterUid);
-      // transaction: ensure submission not already approved then update submission and user balance
-      await runTransaction(db, async (tx) => {
-        const subSnap = await tx.get(submissionRef);
-        if(!subSnap.exists()) throw new Error('Submission not found');
-        const subData = subSnap.data() || {};
-        const curStatus = (subData.status || '').toLowerCase();
-        if(curStatus === 'approved') throw new Error('Already approved');
-        // credit user
-        const userSnap = await tx.get(userRef);
-        if(userSnap.exists()){
-          const u = userSnap.data() || {};
-          // try to pick a sensible balance field
-          const balanceFields = ['balance','wallet','funds','walletBalance'];
-          let currentBalance = null, chosenField = null;
-          for(const f of balanceFields){
-            if(typeof u[f] !== 'undefined' && u[f] !== null && !isNaN(Number(u[f]))){
-              currentBalance = Number(u[f]);
-              chosenField = f;
-              break;
+    // Helper payload creators
+    function submitActionApprovePayload(advertId, submissionId, submitterUid, amount){
+      return { type: 'approve', advertId, submissionId, submitterUid, amount };
+    }
+    function submitActionRejectPayload(submissionId){
+      return { type: 'reject', submissionId };
+    }
+
+    // Core transaction function: approve (credit) or reject. ENFORCEMENT: only allow transition when current status is 'pending'.
+    async function setSubmissionStatusTransaction(payload){
+      if(!payload || !payload.type) throw new Error('Invalid payload');
+      if(payload.type === 'approve'){
+        const { submissionId, submitterUid, amount } = payload;
+        if(!submissionId) throw new Error('Invalid submission id');
+        if(!submitterUid) throw new Error('Invalid submitter id');
+        const subRef = doc(db, 'advert_submissions', submissionId);
+        const userRef = doc(db, 'users', submitterUid);
+
+        await runTransaction(db, async (tx) => {
+          const sSnap = await tx.get(subRef);
+          if(!sSnap.exists()) throw new Error('Submission not found');
+          const sData = sSnap.data() || {};
+          const cur = (sData.status || 'pending').toLowerCase();
+          if(cur !== 'pending') throw new Error('Submission is not pending; cannot approve (server enforces).');
+
+          // credit user
+          const uSnap = await tx.get(userRef);
+          if(uSnap.exists()){
+            const u = uSnap.data() || {};
+            const balanceFields = ['balance','wallet','funds','walletBalance'];
+            let chosen = null, currentBalance = 0;
+            for(const f of balanceFields){ if(typeof u[f] !== 'undefined' && u[f] !== null && !isNaN(Number(u[f]))){ chosen = f; currentBalance = Number(u[f]); break; } }
+            if(chosen){
+              const newBal = Number(currentBalance || 0) + Number(amount || 0);
+              const upd = {}; upd[chosen] = newBal;
+              tx.update(userRef, upd);
+            } else {
+              tx.update(userRef, { balance: Number(u.balance || 0) + Number(amount || 0) });
             }
-          }
-          if(chosenField){
-            const newBal = Number(currentBalance || 0) + Number(amount || 0);
-            const up = {}; up[chosenField] = newBal;
-            tx.update(userRef, up);
           } else {
-            // no predictable field — set `balance`
-            tx.update(userRef, { balance: (Number(u.balance || 0) + Number(amount || 0)) });
+            tx.set(userRef, { balance: Number(amount || 0) }, { merge: true });
           }
-        } else {
-          // user doc missing — create with balance
-          tx.set(userRef, { balance: Number(amount || 0) }, { merge: true });
-        }
-        // update submission doc to approved and annotate payment
-        tx.update(submissionRef, {
-          status: 'approved',
-          approvedAt: serverTimestamp(),
-          paidAmount: Number(amount || 0),
-          paidBy: currentUser ? currentUser.uid : null
+
+          // update submission
+          tx.update(subRef, {
+            status: 'approved',
+            approvedAt: serverTimestamp(),
+            paidAmount: Number(amount || 0),
+            paidBy: currentUser ? currentUser.uid : null
+          });
         });
+      } else if(payload.type === 'reject'){
+        const { submissionId } = payload;
+        if(!submissionId) throw new Error('Invalid submission id');
+        const subRef = doc(db, 'advert_submissions', submissionId);
+        await runTransaction(db, async (tx) => {
+          const sSnap = await tx.get(subRef);
+          if(!sSnap.exists()) throw new Error('Submission not found');
+          const sData = sSnap.data() || {};
+          const cur = (sData.status || 'pending').toLowerCase();
+          if(cur !== 'pending') throw new Error('Submission is not pending; cannot reject (server enforces).');
+          tx.update(subRef, { status: 'rejected', rejectedAt: serverTimestamp() });
+        });
+      } else {
+        throw new Error('Unknown action type');
+      }
+    }
+
+    // Mark advert completed if needed
+    async function markAdvertCompleted(advertId){
+      if(!advertId) return;
+      const advertRef = doc(db, 'advertise_tasks', advertId);
+      try {
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(advertRef);
+          if(!snap.exists()) return;
+          const data = snap.data() || {};
+          if((data.status || '').toLowerCase() === 'completed') return;
+          // set to completed
+          tx.update(advertRef, { status: 'completed', completedAt: serverTimestamp() });
+        });
+      } catch(e){
+        console.warn('markAdvertCompleted transaction failed', e);
+      }
+    }
+
+    /* ---------- adverts listener (single broad listener, client-side filtering) ---------- */
+    function startAdvertsListenerForOwner(uid){
+      // tear down previous listener
+      if(advertsUnsub){ try{ advertsUnsub(); } catch(e){}; advertsUnsub = null; }
+      advertsMap = new Map();
+      grid.innerHTML = '<div class="empty">Loading your adverts…</div>';
+      diag.textContent = 'Listening to advertise_tasks and filtering locally for your adverts…';
+
+      // single broad listener on advertise_tasks — minimizes scattered listeners
+      const primaryCol = collection(db, 'advertise_tasks');
+      advertsUnsub = onSnapshot(primaryCol, snap => {
+        // merge relevant docs
+        snap.forEach(docSnap => {
+          const d = docSnap.data() || {};
+          // check owner fields
+          const isOwner = OWNER_FIELDS.some(f => {
+            const v = d[f];
+            if(Array.isArray(v)) return v.includes(uid);
+            return v === uid;
+          });
+          if(isOwner){
+            advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
+          } else {
+            // remove any previously present doc that no longer matches
+            advertsMap.delete(docSnap.id);
+          }
+        });
+        // also remove any advertsMap entries that no longer exist in collection snapshot (to keep map tidy)
+        // (optional) we won't fully prune to avoid concurrency complexity; rebuild will reflect current map
+        rebuildGrid();
+        diag.textContent = `Found ${advertsMap.size} adverts`;
+      }, err => {
+        console.error('adverts listener error', err);
+        diag.textContent = 'Failed to listen to adverts: ' + (err.message || err);
+        grid.innerHTML = `<div class="empty">Failed to load adverts: ${escapeHtml(err.message || String(err))}</div>`;
       });
     }
 
-    // Reject submission: simple update
-    async function rejectSubmission(submissionId){
-      if(!submissionId) throw new Error('Invalid submission id');
-      const submissionRef = doc(db, 'advert_submissions', submissionId);
-      await updateDoc(submissionRef, { status: 'rejected', rejectedAt: serverTimestamp() });
-    }
+    // Escaping helper
+    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    // start adverts listeners to capture adverts created by current user
-    function startAdvertsListeners(uid){
-      // cleanup
-      advertsMap.clear();
-      for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
-      advertsUnsubs.length = 0;
-      detachAllSubmissionListeners();
-
-      grid.innerHTML = '<div class="empty">Loading your adverts…</div>';
-      diag.textContent = 'Listening for adverts you created…';
-
-      const primaryCol = 'advertise_tasks';
-
-      // set up listeners on candidate owner fields within primary collection
-      for(const field of OWNER_FIELDS){
-        try{
-          const q = query(collection(db, primaryCol), where(field, '==', uid));
-          const unsub = onSnapshot(q, snap => {
-            snap.forEach(docSnap => {
-              const id = docSnap.id;
-              const d = docSnap.data() || {};
-              advertsMap.set(id, { id, data: d });
-            });
-            rebuildGrid();
-          }, err => {
-            console.warn('adverts listener error for field', field, err);
-          });
-          advertsUnsubs.push(unsub);
-        }catch(e){
-          console.warn('failed setting adverts listener for', field, e);
-        }
-      }
-
-      // Fallback: also listen to adverts where owner stored in 'ownerUid' array (if used)
-      try{
-        const qAll = query(collection(db, primaryCol), where('status','in',['pending','approved','completed'])); // broad listener
-        const unsubAll = onSnapshot(qAll, snap => {
-          // merge but only include docs that match uid in common fields (safe)
-          snap.forEach(docSnap => {
-            const d = docSnap.data() || {};
-            const possible = [d.createdBy,d.owner,d.userId,d.uid,d.requestedBy,d.creator,d.ownerUid];
-            if(possible.some(x => x === uid || (Array.isArray(x) && x.includes && x.includes(uid)))){
-              advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
-            }
-          });
-          rebuildGrid();
-        }, err => {
-          // if this too noisy, it's fine — we've got primary per-field listeners above
-          console.warn('broad adverts listener error', err);
-        });
-        advertsUnsubs.push(unsubAll);
-      }catch(e){ /* ignore */ }
-    }
-
-    // auth init
+    // Auth init
     onAuthStateChanged(auth, user => {
       currentUser = user;
       if(!user){
@@ -524,25 +586,26 @@
         return;
       }
       diag.textContent = `Signed in as ${user.email || user.displayName || user.uid.slice(0,8)}`;
-      startAdvertsListeners(user.uid);
+      // start single broad listener and filter client-side to avoid multiple owner-field listeners
+      startAdvertsListenerForOwner(user.uid);
     });
 
-    // search & refresh
+    // UI events
     search.addEventListener('input', () => rebuildGrid());
     refreshBtn.addEventListener('click', () => {
       if(!currentUser) return;
-      for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
-      advertsUnsubs.length = 0;
-      advertsMap.clear();
-      detachAllSubmissionListeners();
-      startAdvertsListeners(currentUser.uid);
+      // restart adverts listener
+      if(advertsUnsub){ try{ advertsUnsub(); } catch(e){}; advertsUnsub = null; }
+      advertsMap = new Map();
+      startAdvertsListenerForOwner(currentUser.uid);
     });
 
-    // cleanup
+    // cleanup listeners on unload
     window.addEventListener('beforeunload', () => {
-      for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
-      detachAllSubmissionListeners();
+      if(advertsUnsub){ try{ advertsUnsub(); } catch(e){}; }
+      if(submissionsUnsub){ try{ submissionsUnsub(); } catch(e){}; }
     });
+
   </script>
 </body>
 </html>
