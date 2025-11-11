@@ -4,22 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Deposit History</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-  <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Social preview -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#2fe0b8">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600,700&display=swap" rel="stylesheet">
 
   <style>
     :root{
@@ -53,7 +38,7 @@
 
     /* table */
     .table-wrap{overflow:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-    table{width:100%;border-collapse:collapse;min-width:860px}
+    table{width:100%;border-collapse:collapse;min-width:960px}
     thead th{position:sticky;top:0;background:linear-gradient(90deg, rgba(47,224,184,0.06), rgba(122,95,255,0.04));color:var(--text);padding:14px;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.03);font-size:13px}
     tbody td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.02);font-size:15px;color:var(--text);vertical-align:middle}
     tbody tr{transition:background .18s,transform .12s}
@@ -99,7 +84,7 @@
 
     <section class="card" aria-labelledby="title">
       <div class="controls" role="toolbar" aria-label="controls">
-        <input id="q" class="search" placeholder="Search sender name, status, proof URL, id or bank..." />
+        <input id="q" class="search" placeholder="Search sender name, status, proof URL, id, bank or amount..." />
         <button id="refreshBtn" class="btn ghost">Refresh</button>
         <div class="small" id="countText">—</div>
       </div>
@@ -111,12 +96,13 @@
               <th>ID</th>
               <th>Sender name</th>
               <th>Date</th>
+              <th>Amount (₦)</th>
               <th>Proof</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td colspan="5" class="small muted">Loading deposits…</td></tr>
+            <tr><td colspan="6" class="small muted">Loading deposits…</td></tr>
           </tbody>
         </table>
       </div>
@@ -231,20 +217,32 @@
     let depositsCache = []; // raw list
     let listenerUnsub = null;
 
+    function formatAmountFromDoc(doc){
+      // fallback across common field names
+      const raw = doc.amount ?? doc.amountPaid ?? doc.paidAmount ?? doc.value ?? doc.total ?? doc.amt ?? 0;
+      const n = Number(raw);
+      if(!isFinite(n)) return 0;
+      return n;
+    }
+
     function renderTable(list){
       if(!list || list.length === 0){
-        tbody.innerHTML = `<tr><td colspan="5" class="small muted">No deposits found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="small muted">No deposits found.</td></tr>`;
         countText.textContent = '0 deposits';
         return;
       }
       countText.textContent = `${list.length} deposit${list.length>1?'s':''}`;
       const rows = list.map(doc => {
         const id = escapeHtml(doc.id || '-');
-        const sender = escapeHtml(doc.accountNameEntered || doc.username || '-');
+        const sender = escapeHtml(doc.accountNameEntered || doc.username || doc.senderName || '-');
         const createdAt = niceDate(doc.createdAt);
-        const proofUrl = doc.proofUrl || '';
+        const proofUrl = doc.proofUrl || doc.proofURL || doc.proof || '';
         const status = doc.status || 'pending';
         const pillClass = statusClass(status);
+
+        const amountNum = formatAmountFromDoc(doc);
+        const amountStr = '₦' + amountNum.toLocaleString('en-NG');
+
         const proofCell = proofUrl
           ? `<a class="proof-link" data-proof="${escapeHtml(proofUrl)}" href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener noreferrer">View proof</a>`
           : `<span class="small muted">—</span>`;
@@ -253,6 +251,7 @@
           <td style="font-family:monospace">${id}</td>
           <td>${sender}</td>
           <td>${createdAt}</td>
+          <td style="font-weight:700">${escapeHtml(amountStr)}</td>
           <td>${proofCell}</td>
           <td><span class="status-pill ${pillClass}">${escapeHtml(String(status).toUpperCase())}</span></td>
         </tr>`;
@@ -272,17 +271,18 @@
       // teardown previous
       if(listenerUnsub) { try { listenerUnsub(); } catch(e){}; listenerUnsub = null; }
       depositsCache = [];
-      tbody.innerHTML = `<tr><td colspan="5" class="small muted">Loading deposits…</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="small muted">Loading deposits…</td></tr>`;
       countText.textContent = 'Loading…';
 
       if(!uid){
-        tbody.innerHTML = `<tr><td colspan="5" class="small muted">No user id provided.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="small muted">No user id provided.</td></tr>`;
         countText.textContent = '-';
         return;
       }
 
       try {
         const col = collection(db, 'deposits');
+        // orderBy createdAt requires index; fallback handled in onSnapshot error handler
         const q = query(col, where('userId','==', uid), orderBy('createdAt','desc'));
         listenerUnsub = onSnapshot(q, (snap) => {
           const docs = [];
@@ -302,18 +302,18 @@
               renderTable(depositsCache);
             }, (err2) => {
               console.error('fallback listener err', err2);
-              tbody.innerHTML = `<tr><td colspan="5" class="small muted">Unable to listen for deposits (check permissions/indexes).</td></tr>`;
+              tbody.innerHTML = `<tr><td colspan="6" class="small muted">Unable to listen for deposits (check permissions/indexes).</td></tr>`;
               countText.textContent = 'Error';
             });
           } catch(e){
             console.error('fallback attach failed', e);
-            tbody.innerHTML = `<tr><td colspan="5" class="small muted">Unable to listen for deposits.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="small muted">Unable to listen for deposits.</td></tr>`;
             countText.textContent = 'Error';
           }
         });
       } catch(e){
         console.error('attachListenerForUser failed', e);
-        tbody.innerHTML = `<tr><td colspan="5" class="small muted">Unable to load deposits.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="small muted">Unable to load deposits.</td></tr>`;
         countText.textContent = 'Error';
       }
     }
@@ -339,12 +339,22 @@
 
     // ----------------- search/filter -----------------
     qInput.addEventListener('input', (e)=>{
-      const q = (e.target.value || '').toLowerCase().trim();
-      if(!q) return renderTable(depositsCache);
+      const qRaw = (e.target.value || '').toLowerCase().trim();
+      if(!qRaw) return renderTable(depositsCache);
+
+      // allow numeric searches to match amounts (strip non-digits)
+      const numQuery = qRaw.replace(/[^\d]/g, '');
       const filtered = depositsCache.filter(d=>{
-        const name = String(d.accountNameEntered || d.username || '').toLowerCase();
+        const name = String(d.accountNameEntered || d.username || d.senderName || '').toLowerCase();
         const status = String(d.status || '').toLowerCase();
-        return name.includes(q) || status.includes(q) || (d.proofUrl || '').toLowerCase().includes(q) || (d.id || '').toLowerCase().includes(q) || (d.bank || '').toLowerCase().includes(q);
+        const proof = String(d.proofUrl || d.proof || '').toLowerCase();
+        const bank = String(d.bank || d.bankName || '').toLowerCase();
+        const id = String(d.id || '').toLowerCase();
+        const amt = String(formatAmountFromDoc(d)).toLowerCase();
+
+        const matchText = name.includes(qRaw) || status.includes(qRaw) || proof.includes(qRaw) || bank.includes(qRaw) || id.includes(qRaw);
+        const matchAmount = numQuery && amt.includes(numQuery);
+        return matchText || matchAmount;
       });
       renderTable(filtered);
     });
@@ -359,7 +369,7 @@
     onAuthStateChanged(auth, async (user) => {
       if(!user){
         acctDisplay.innerHTML = `Not signed in — <a style="color:var(--accent-start)" href="${withRepoPath('login.html')}">Sign in</a>`;
-        tbody.innerHTML = `<tr><td colspan="5" class="small muted">Sign in to view your deposit history.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="small muted">Sign in to view your deposit history.</td></tr>`;
         countText.textContent = '-';
         currentUser = null;
         if(listenerUnsub){ try{ listenerUnsub(); }catch(e){}; listenerUnsub = null; }
@@ -382,7 +392,7 @@
       setTimeout(()=> {
         if(!currentUser){
           acctDisplay.innerHTML = `Not signed in — <a style="color:var(--accent-start)" href="${withRepoPath('login.html')}">Sign in</a>`;
-          tbody.innerHTML = `<tr><td colspan="5" class="small muted">Sign in to view your deposit history.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="small muted">Sign in to view your deposit history.</td></tr>`;
           countText.textContent = '-';
         }
       }, 4000);
