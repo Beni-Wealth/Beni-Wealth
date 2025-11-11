@@ -20,7 +20,7 @@
     --accent-grad: linear-gradient(135deg, var(--accent-a), #5b3bff 45%, var(--accent-b) 100%);
     --card-pad: 18px;
     --radius: 16px;
-    --container-w: 420px;
+    --container-w: 1140px;
     font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   }
   *{box-sizing:border-box}
@@ -40,13 +40,13 @@
     align-items:flex-start;
   }
 
-  /* phone container */
+  /* page container */
   .phone {
     width:100%;
-    max-width:1140px; /* allow wider layout for policy pages but still centered */
+    max-width:var(--container-w);
     min-height:720px;
     border-radius:28px;
-    padding:22px 22px 120px;
+    padding:22px 22px 60px;
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
     box-shadow: 0 20px 80px rgba(0,0,0,0.6);
     overflow:auto;
@@ -97,73 +97,16 @@
   }
   .side .block { margin-bottom:14px; padding:14px; border-radius:12px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); }
   .label { font-weight:800; color:var(--muted); font-size:13px; margin-bottom:8px; display:block; }
-
-  /* appeal form */
-  form.appeal { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
-  input[type="text"], input[type="email"], textarea {
-    width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.03);
-    background: rgba(255,255,255,0.01); color:var(--text); font-size:14px;
-  }
-  textarea { min-height:100px; resize:vertical; }
-  .row { display:flex; gap:8px; }
-  .btn {
-    display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    padding:10px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:800;
-    background: linear-gradient(90deg,var(--accent-b),var(--accent-a));
-    color:#041219;
-  }
-  .btn.ghost { background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted); }
   .note { font-size:13px; color:var(--muted); }
-
-  .status { font-size:13px; color:var(--muted); min-height:20px; margin-top:6px; }
 
   footer { margin-top:22px; color:rgba(255,255,255,0.38); font-size:13px; text-align:center; }
 
-  /* bottom nav */
-  .bottom-nav {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 20px;
-    height: 74px;
-    width: calc(min(420px, 100%) - 28px + 420px); /* keep narrow appearance on very small screens */
-    max-width: 420px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-    border-radius: 38px;
-    padding: 10px 14px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-    border: 1px solid rgba(255,255,255,0.04);
-    z-index: 999;
-    backdrop-filter: blur(6px);
-  }
-  .nav-btn{ width:56px; text-align:center; color:var(--muted); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; user-select:none; }
-  .icon-wrap{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px; }
-
-  /* contact FAB */
-  .contact-fab {
-    position: fixed;
-    bottom: 110px;
-    right: calc(50% - 210px); /* align near left of bottom nav in wide layout */
-    width:56px; height:56px; border-radius:50%;
-    display:grid; place-items:center; font-size:20px;
-    background: linear-gradient(135deg,#35d6b1,#5e47ff);
-    color:#041219; box-shadow:0 18px 50px rgba(87,52,164,0.18);
-    z-index: 1200; text-decoration:none; border:none; cursor:pointer;
-  }
-
   @media(max-width:1100px){
     .grid { grid-template-columns: 1fr 360px; gap:16px; }
-    .contact-fab { right: 22px; }
   }
   @media(max-width:900px){
     .grid { grid-template-columns: 1fr; }
     .side { position:relative; top:auto; }
-    .contact-fab { right: 22px; bottom: 100px; }
-    .bottom-nav { left:14px; right:14px; transform:none; width:auto; max-width: calc(100% - 28px); }
   }
 </style>
 </head>
@@ -227,7 +170,7 @@
           <p>Incorrect, fraudulent, or abusive task submissions may attract a fine. Fines will normally be deducted from the user’s account balance and will be applied at the platform’s discretion. The specific fine amount may vary depending on the severity and frequency of the violation. Repeated offences can lead to higher fines, temporary suspension, or permanent account deactivation.</p>
 
           <h3>Disabled accounts & reactivation</h3>
-          <p>Disabled or suspended accounts can be re-enabled following review and resolution of the underlying issue. To request reactivation, contact Support (see Contact section) or use the appeal form on this page. We may require identity verification, completion of corrective actions, payment of outstanding fines, or other remedial steps before reactivating the account. Beni-Wealth reserves the right to refuse reactivation in cases of severe or repeated abuse.</p>
+          <p>Disabled or suspended accounts can be re-enabled following review and resolution of the underlying issue. To request reactivation, contact Support (see Contact section). We may require identity verification, completion of corrective actions, payment of outstanding fines, or other remedial steps before reactivating the account. Beni-Wealth reserves the right to refuse reactivation in cases of severe or repeated abuse.</p>
 
           <h2>5. Data Security</h2>
           <p>We use technical and organizational measures to protect your personal data, including encryption in transit, access controls, and secure hosting. You should keep your login credentials private. While we aim to secure data, no system is 100% secure; we will follow applicable laws and notify users if a breach affects personal data.</p>
@@ -260,7 +203,7 @@
 
           <h2>11. Enforcement, Appeals & Refunds</h2>
           <p><strong>Enforcement:</strong> We will investigate suspected breaches of policy (device rule, task fraud). If we find a violation, we may deduct fines, temporarily suspend access, permanently disable accounts, reverse suspect rewards, and block devices or IPs.</p>
-          <p><strong>Appeals:</strong> If you disagree with a decision (fine, suspension, deactivation), you may appeal by contacting Support or using the appeal form below. Include relevant evidence. We will review appeals and respond within a reasonable time.</p>
+          <p><strong>Appeals:</strong> If you disagree with a decision (fine, suspension, deactivation), you may contact Support. Include relevant evidence. We will review appeals and respond within a reasonable time.</p>
           <p><strong>Refunds:</strong> Refunds for fines or balances will be handled case-by-case. Funds deducted as fines are typically final unless an appeal reverses the decision.</p>
 
           <h2>12. International Transfers</h2>
@@ -276,37 +219,12 @@
         </div>
       </section>
 
-      <!-- right: appeals & quick info -->
+      <!-- right: summary & quick links -->
       <aside class="side">
         <div class="card">
           <div class="block">
             <div class="label">Policy summary</div>
-            <div><strong>One device = one account</strong><br><span class="note">Violations may be fined or suspended. Use the appeal form below if you need review.</span></div>
-          </div>
-
-          <div class="block" aria-labelledby="appealHeading">
-            <div id="appealHeading" class="label">Submit an Appeal</div>
-            <div class="note" style="margin-bottom:8px">If your account was disabled or fined and you want a review, submit an appeal here.</div>
-
-            <!-- appeal form (fields referenced by script) -->
-            <form id="appealForm" class="appeal" novalidate>
-              <label class="sr-only" style="display:none">UID</label>
-              <input id="appealUid" type="text" placeholder="Your UID (optional)" aria-label="UID" />
-
-              <label class="sr-only" style="display:none">Email</label>
-              <input id="appealEmail" type="email" placeholder="Email (required)" required aria-label="Email" />
-
-              <input id="appealName" type="text" placeholder="Full name (optional)" aria-label="Full name" />
-              <textarea id="appealMessage" placeholder="Describe your issue (required)" aria-label="Appeal message" required></textarea>
-              <input id="appealTxn" type="text" placeholder="Transaction ID / Reference (optional)" aria-label="Transaction reference" />
-
-              <div style="display:flex; gap:8px; align-items:center; margin-top:6px">
-                <button id="appealBtn" type="button" class="btn">Submit Appeal</button>
-                <button id="clearBtn" type="button" class="btn ghost">Clear</button>
-              </div>
-
-              <div id="appealStatus" class="status" aria-live="polite"></div>
-            </form>
+            <div><strong>One device = one account</strong><br><span class="note">Violations may be fined or suspended. Contact Support for help.</span></div>
           </div>
 
           <div class="block">
@@ -324,121 +242,9 @@
     </footer>
   </div>
 
-  <!-- bottom nav & contact FAB -->
-  <div class="bottom-nav" role="navigation" aria-label="Main navigation">
-    <div id="navHome" class="nav-btn" title="Home"><div class="icon-wrap">🏠</div><div style="font-size:11px;color:var(--muted)">Home</div></div>
-    <div id="navConvert" class="nav-btn" title="Shortlinks"><div class="icon-wrap">🔗</div><div style="font-size:11px;color:var(--muted)">shortlinks</div></div>
-    <div style="flex:0 0 92px;display:flex;justify-content:center;align-items:center">
-      <button id="navCenter" class="icon-wrap" style="width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,#7a5fff,#35d6b1);transform:translateY(-18px);font-size:26px;display:grid;place-items:center;border:none;cursor:pointer">➕</button>
-    </div>
-    <div id="navNews" class="nav-btn" title="News"><div class="icon-wrap">💬</div><div style="font-size:11px;color:var(--muted)">News</div></div>
-    <div id="navAssets" class="nav-btn" title="Assets"><div class="icon-wrap">👤</div><div style="font-size:11px;color:var(--muted)">Assets</div></div>
-  </div>
-
-  <a class="contact-fab" href="contact.html" title="Contact support" aria-label="Contact support">💬</a>
-
-  <!-- Firebase + appeal submission script -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
-
-    // your firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-      authDomain: "beni-wealths.firebaseapp.com",
-      projectId: "beni-wealths",
-      storageBucket: "beni-wealths.firebasestorage.app",
-      messagingSenderId: "807950483822",
-      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-      measurementId: "G-Z2XP3YN6NS"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // DOM refs
-    const yearEl = document.getElementById('year'); yearEl.textContent = new Date().getFullYear();
-    const uidInput = document.getElementById('appealUid');
-    const emailInput = document.getElementById('appealEmail');
-    const nameInput = document.getElementById('appealName');
-    const msgInput = document.getElementById('appealMessage');
-    const txnInput = document.getElementById('appealTxn');
-    const appealBtn = document.getElementById('appealBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const appealStatus = document.getElementById('appealStatus');
-
-    // Pre-fill UID/email when signed in
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        uidInput.value = user.uid || '';
-        emailInput.value = user.email || '';
-      }
-    });
-
-    // Submit appeal
-    appealBtn.addEventListener('click', async () => {
-      appealStatus.textContent = '';
-      const uid = (uidInput.value || '').trim();
-      const email = (emailInput.value || '').trim();
-      const name = (nameInput.value || '').trim();
-      const message = (msgInput.value || '').trim();
-      const txn = (txnInput.value || '').trim();
-
-      if (!email || !message) {
-        appealStatus.textContent = 'Please provide at least your email and a description of the issue.';
-        return;
-      }
-
-      appealBtn.disabled = true;
-      appealBtn.textContent = 'Submitting...';
-
-      try {
-        await addDoc(collection(db, 'appeals'), {
-          uid: uid || null,
-          email,
-          name: name || null,
-          message,
-          transactionId: txn || null,
-          createdAt: serverTimestamp(),
-          status: 'pending'
-        });
-
-        appealStatus.textContent = 'Appeal submitted. Our support team will review and contact you.';
-        // reset non-essential fields, keep email/uid
-        nameInput.value = '';
-        msgInput.value = '';
-        txnInput.value = '';
-      } catch (err) {
-        console.error('appeal submit error', err);
-        appealStatus.textContent = 'Unable to submit appeal right now. Try again later.';
-      } finally {
-        appealBtn.disabled = false;
-        appealBtn.textContent = 'Submit Appeal';
-      }
-    });
-
-    clearBtn.addEventListener('click', () => {
-      nameInput.value = '';
-      msgInput.value = '';
-      txnInput.value = '';
-      appealStatus.textContent = '';
-    });
-
-    // bottom-nav actions (update as needed)
-    document.getElementById('navHome').addEventListener('click', () => location.href = 'catalog.html');
-    document.getElementById('navConvert').addEventListener('click', () => location.href = 'convert.html');
-    document.getElementById('navCenter').addEventListener('click', () => location.href = 'center.html');
-    document.getElementById('navNews').addEventListener('click', () => location.href = 'news.html');
-    document.getElementById('navAssets').addEventListener('click', () => location.href = 'dashboard.html');
-
-    // accessibility: allow Enter on FAB
-    document.querySelector('.contact-fab').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') location.href = 'contact.html';
-    });
-
-    // Note: ensure your Firestore rules permit writing to "appeals" collection for the intended users.
+  <script>
+    // simple UI script: set year
+    document.getElementById('year').textContent = new Date().getFullYear();
   </script>
 </body>
 </html>
