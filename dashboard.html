@@ -258,7 +258,7 @@
       cursor:pointer;
     }
 
-    /* chat floating action button (prominent chat access) */
+    /* contact floating action button (prominent access) */
     .chat-fab {
       position: fixed;
       bottom: 110px;
@@ -373,7 +373,7 @@
 
     <button id="logoutBtn" class="logout">Log out</button>
 
-    <!-- bottom navigation (fixed) -->
+    <!-- bottom navigation (fixed) - Chat item removed -->
     <div class="bottom-nav" role="navigation" aria-label="Main navigation">
       <div id="navHome" class="nav-btn" title="Home">
         <div class="icon-wrap">🏠</div>
@@ -394,19 +394,14 @@
         <div style="font-size:11px;color:var(--muted)">News</div>
       </div>
 
-      <div id="navChat" class="nav-btn" title="Chat">
-        <div class="icon-wrap">🗨️</div>
-        <div style="font-size:11px;color:var(--muted)">Chat</div>
-      </div>
-
       <div id="navAssets" class="nav-btn" title="Assets">
         <div class="icon-wrap">👤</div>
         <div style="font-size:11px;color:var(--muted)">Assets</div>
       </div>
     </div>
 
-    <!-- floating chat button (also redirects to chat.html) -->
-    <a id="chatFab" class="chat-fab" href="chat.html" title="Chat with support" aria-label="Open chat">💬</a>
+    <!-- floating contact button (redirects to contact.html) -->
+    <a id="chatFab" class="chat-fab" href="contact.html" title="Contact support" aria-label="Contact support">💬</a>
   </div>
 
   <script type="module">
@@ -455,7 +450,6 @@
     const navCenter = document.getElementById('navCenter');
     const navNews = document.getElementById('navNews');
     const navAssets = document.getElementById('navAssets');
-    const navChat = document.getElementById('navChat');
     const chatFab = document.getElementById('chatFab');
 
     // utilities
@@ -528,7 +522,8 @@
     navCenter.addEventListener('click', ()=> window.location.href = 'center.html');
     navNews.addEventListener('click', ()=> window.location.href = 'news.html');
     navAssets.addEventListener('click', ()=> window.location.href = 'dashboard.html');
-    // the FAB is an <a href="chat.html">, so it already navigates; add keyboard support
+
+    // FAB keyboard support (the anchor already navigates on click)
     chatFab.addEventListener('keydown', (e) => {
       if(e.key === 'Enter' || e.key === ' ') { window.location.href = 'contact.html'; }
     });
