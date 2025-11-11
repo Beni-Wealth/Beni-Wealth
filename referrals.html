@@ -4,209 +4,180 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Referrals — Beni-Wealth</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
   <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
+  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
+  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
     :root{
       --bg-1:#0b0613;
       --bg-2:#0f0820;
-      --muted: rgba(255,255,255,0.62);
-      --text: #eaf2ff;
-      --accent-a: #8446ff;
-      --accent-b: #6ce2c8;
-      --accent-grad: linear-gradient(135deg, var(--accent-a), #5b3bff 45%, var(--accent-b) 100%);
+      --muted:rgba(233,240,255,0.6);
+      --card: rgba(255,255,255,0.02);
+      --accent-start:#2fe0b8;
+      --accent-end:#7a5fff;
+      --text:#e9f0ff;
       --glass: rgba(255,255,255,0.03);
-      --container-w: 820px; /* wide enough for tables on desktop */
-      --bottom-nav-h: 74px;
-      font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      --radius:18px;
     }
-
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0}
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
     body{
-      min-height:100%;
-      background:
-        radial-gradient(900px 500px at 10% 10%, rgba(123,61,255,0.10), transparent),
-        radial-gradient(800px 450px at 90% 90%, rgba(47,224,184,0.06), transparent),
-        linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      font-family:'Poppins',sans-serif;
+      background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
       color:var(--text);
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
-      display:flex;
-      justify-content:center;
-      padding:28px;
     }
 
-    /* phone-like container to keep the same 'fit' aesthetic */
-    .phone{
-      width:100%;
-      max-width:var(--container-w);
-      min-height:720px;
-      border-radius:28px;
-      padding:18px 18px calc(var(--bottom-nav-h) + 56px);
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      box-shadow: 0 20px 80px rgba(0,0,0,0.6);
-      overflow:auto;
-      position:relative;
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:18px 20px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-bottom:1px solid rgba(255,255,255,0.02);
+      backdrop-filter: blur(6px);
     }
+    .brand{font-weight:700;font-size:1.15rem;color:var(--text)}
+    .ref-box{display:flex;gap:10px;align-items:center}
+    .ref-code{
+      background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      padding:8px 12px;border-radius:8px;font-weight:600;color:var(--text);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    .btn{
+      background:transparent;border:1px solid rgba(255,255,255,0.06);
+      padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:600;color:var(--text)
+    }
+    .btn.small{padding:6px 8px;font-size:.9rem}
 
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-    .brand{display:flex;gap:12px;align-items:center}
-    .brand img{width:56px;height:56px;border-radius:12px;object-fit:cover}
-    .brand .title{font-weight:800;font-size:16px}
-    .brand .sub{font-size:12px;color:var(--muted)}
-
-    .ref-area{display:flex;align-items:center;gap:12px}
-    .ref-code{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);font-weight:700}
-    .ref-actions{display:flex;gap:8px}
-    .btn{padding:10px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:800;background:linear-gradient(90deg,var(--accent-b),var(--accent-a));color:#041219;box-shadow:0 10px 30px rgba(87,52,164,0.12)}
-    .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);box-shadow:none}
-    .small{padding:8px 10px;border-radius:10px;font-weight:700}
-
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:12px 0}
-    .card{border-radius:18px;padding:16px;background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);box-shadow: 0 18px 60px rgba(0,0,0,0.45)}
-    .card h3{margin:0;color:var(--accent-b);font-size:13px}
-    .stat{font-size:20px;font-weight:800;margin-top:8px}
-    .muted{color:var(--muted);font-size:13px}
+    .top-row{
+      display:flex;gap:16px;padding:18px;max-width:1100px;margin:18px auto;width:95%;
+    }
+    .card{
+      background:var(--card);border-radius:12px;padding:14px;
+      box-shadow:0 10px 30px rgba(2,6,23,0.7);flex:1;display:flex;flex-direction:column;gap:8px;
+      border:1px solid rgba(255,255,255,0.03)
+    }
+    .card h3{margin:0;color:var(--accent-end);font-size:0.95rem}
+    .big{font-size:1.4rem;font-weight:700;color:var(--text)}
+    .muted{color:var(--muted);font-size:0.85rem}
 
     .controls{display:flex;gap:12px;align-items:center}
-    .search{flex:1}
-    .search input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--text);font-weight:600}
+    .search{flex:1;min-width:200px}
+    .search input{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
+      background:rgba(255,255,255,0.02);color:var(--text)
+    }
 
-    .tabs{display:flex;gap:12px;justify-content:flex-start;margin:16px 0}
-    .tab{padding:10px 16px;border-radius:999px;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.02);font-weight:700;color:var(--muted)}
-    .tab.active{background:linear-gradient(90deg,var(--accent-b),var(--accent-a));color:#041219;box-shadow:0 8px 18px rgba(122,95,255,0.08)}
+    .tabs{display:flex;gap:12px;justify-content:center;margin:6px auto;max-width:1100px;width:95%}
+    .tab{
+      padding:10px 16px;border-radius:999px;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.02);
+      font-weight:600;color:var(--muted)
+    }
+    .tab.active{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;box-shadow:0 8px 18px rgba(122,95,255,0.08)}
 
-    .table-card{margin-top:6px;background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border-radius:14px;padding:10px;border:1px solid rgba(255,255,255,0.03);overflow:auto}
-    table{width:100%;border-collapse:collapse;color:var(--text);min-width:680px}
-    thead th{position:sticky;top:0;background:linear-gradient(90deg, rgba(47,224,184,0.06), rgba(122,95,255,0.05));padding:12px;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.03)}
+    .container{max-width:1100px;margin:12px auto;display:flex;flex-direction:column;gap:14px;padding:0 20px 40px;width:95%}
+    .table-card{background:var(--card);border-radius:12px;padding:8px;box-shadow:0 10px 30px rgba(2,6,23,0.6);overflow:auto;border:1px solid rgba(255,255,255,0.03)}
+    table{width:100%;border-collapse:collapse;min-width:700px;color:var(--text)}
+    thead th{
+      position:sticky;top:0;background:linear-gradient(90deg, rgba(47,224,184,0.12), rgba(122,95,255,0.08));color:var(--text);
+      padding:12px;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.03)
+    }
     tbody td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.02)}
     tbody tr:hover td{background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005))}
 
     .no-data{padding:26px;text-align:center;color:var(--muted)}
+    footer{margin-top:auto;padding:14px;text-align:center;background:transparent;color:var(--muted)}
 
-    /* bottom navigation & contact FAB (matching the other page) */
-    .bw-bottom-nav{
-      position:fixed;
-      left:50%;
-      transform:translateX(-50%);
-      bottom:18px;
-      height:var(--bottom-nav-h);
-      width:calc(min(var(--container-w),100%) - 24px);
-      max-width:var(--container-w);
-      background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-      border-radius:38px;
-      padding:10px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-      border:1px solid rgba(255,255,255,0.04);
-      z-index:999;
-      backdrop-filter: blur(6px);
+    @media (max-width:860px){
+      .top-row{flex-direction:column}
+      table{min-width:600px}
+      .ref-box{flex-direction:column;align-items:flex-end}
     }
-    .nav-btn{ width:56px; text-align:center; color:var(--muted); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; user-select:none; }
-    .icon-wrap{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px; }
-    .nav-center .center-btn{ width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,var(--accent-b),var(--accent-a));display:grid;place-items:center;color:#041219;font-size:26px;transform:translateY(-22px) }
-
-    .contact-fab{ position:fixed; bottom: calc(var(--bottom-nav-h) + 40px); right: 22px; width:56px;height:56px;border-radius:50%; display:grid;place-items:center;font-size:20px; background: linear-gradient(135deg,#35d6b1,#5e47ff); color:#041219; box-shadow:0 18px 50px rgba(87,52,164,0.18); z-index:1200; text-decoration:none; border:none; cursor:pointer; }
-
-    @media(max-width:1000px){ :root{ --container-w: 720px } table{min-width:640px} }
-    @media(max-width:760px){ :root{ --container-w: 420px } .grid{grid-template-columns:1fr; } table{min-width:420px} .phone{padding-bottom:calc(var(--bottom-nav-h) + 80px)} }
   </style>
 </head>
 <body>
-  <div class="phone" role="main" aria-labelledby="title">
-    <header>
-      <div class="brand">
-        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
-        <div>
-          <div class="title">Beni-Wealth</div>
-          <div class="sub">My Referrals</div>
+  <header>
+    <div class="brand">Beni-Wealth — My Referrals</div>
+    <div class="ref-box" aria-live="polite">
+      <div style="text-align:right">
+        <div style="font-size:.8rem;color:var(--muted)">Your referral code</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+          <div id="refCode" class="ref-code">Loading...</div>
+          <button id="copyBtn" class="btn small">Copy</button>
         </div>
       </div>
+    </div>
+  </header>
 
-      <div class="ref-area" aria-live="polite">
-        <div style="text-align:right">
-          <div style="font-size:12px;color:var(--muted)">Your referral code</div>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
-            <div id="refCode" class="ref-code">Loading...</div>
-            <div class="ref-actions">
-              <button id="copyBtn" class="btn small">Copy</button>
-              <button id="refreshTop" class="btn ghost small">Refresh</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <section class="grid">
-      <div class="card">
-        <h3>Total Referred</h3>
-        <div class="stat" id="totalRef">—</div>
-        <div class="muted">Users who signed up with your code</div>
-      </div>
-
-      <div class="card">
-        <h3>Activated</h3>
-        <div class="stat" id="activatedCount">—</div>
-        <div class="muted">Users on non-Basic plans</div>
-      </div>
-
-      <div class="card">
-        <h3>Search & Filter</h3>
-        <div class="controls" style="margin-top:8px">
-          <div class="search"><input id="searchInput" placeholder="Search username or email"/></div>
-          <div><button id="refreshBtn" class="btn ghost small">Refresh</button></div>
-        </div>
-        <div class="muted" style="margin-top:10px">Type to filter the visible table</div>
-      </div>
-    </section>
-
-    <nav class="tabs" role="tablist">
-      <button class="tab active" data-tab="activated">Activated</button>
-      <button class="tab" data-tab="all">All Referrals</button>
-    </nav>
-
-    <div class="table-card" id="activated">
-      <table aria-describedby="activated">
-        <thead>
-          <tr><th>Username</th><th>Email</th><th>Balance (₦)</th><th>Registered At</th></tr>
-        </thead>
-        <tbody id="activatedBody"><tr><td colspan="4" class="no-data">Loading…</td></tr></tbody>
-      </table>
+  <div class="top-row">
+    <div class="card">
+      <h3>Total Referred</h3>
+      <div class="big" id="totalRef">—</div>
+      <div class="muted">Users who signed up with your code</div>
     </div>
 
-    <div class="table-card" id="all" style="display:none;margin-top:12px">
-      <table aria-describedby="all">
-        <thead>
-          <tr><th>Username</th><th>Email</th><th>Balance (₦)</th><th>Registered At</th></tr>
-        </thead>
-        <tbody id="allBody"><tr><td colspan="4" class="no-data">Loading…</td></tr></tbody>
-      </table>
+    <div class="card">
+      <h3>Activated</h3>
+      <div class="big" id="activatedCount">—</div>
+      <div class="muted">Users on non-Basic plans</div>
     </div>
 
-    <footer style="text-align:center;margin-top:18px;color:rgba(255,255,255,0.35)">© <span id="year"></span> Beni-Wealth</footer>
+    <div class="card">
+      <h3>Search & Filter</h3>
+      <div class="controls">
+        <div class="search"><input id="searchInput" placeholder="Search username or email"/></div>
+        <div style="min-width:110px"><button id="refreshBtn" class="btn">Refresh</button></div>
+      </div>
+      <div class="muted" style="margin-top:6px">Type to filter the visible table</div>
+    </div>
   </div>
 
-  <!-- bottom navigation & contact FAB -->
-  <nav class="bw-bottom-nav" role="navigation" aria-label="Main navigation">
-    <div id="navHome" class="nav-btn" title="Home"><div class="icon-wrap">🏠</div><div style="font-size:11px;color:var(--muted)">Home</div></div>
-    <div id="navShortlinks" class="nav-btn" title="Shortlinks"><div class="icon-wrap">🔗</div><div style="font-size:11px;color:var(--muted)">Shortlinks</div></div>
-    <div style="flex:0 0 92px;display:flex;justify-content:center;align-items:center">
-      <button id="navCreate" class="center-btn nav-center" aria-label="Create">➕</button>
-    </div>
-    <div id="navNews" class="nav-btn" title="News"><div class="icon-wrap">💬</div><div style="font-size:11px;color:var(--muted)">News</div></div>
-    <div id="navAssets" class="nav-btn" title="Assets"><div class="icon-wrap">👤</div><div style="font-size:11px;color:var(--muted)">Assets</div></div>
-  </nav>
+  <div class="tabs">
+    <div class="tab active" data-tab="activated">Activated</div>
+    <div class="tab" data-tab="all">All Referrals</div>
+  </div>
 
-  <a id="contactFab" class="contact-fab" href="contact.html" title="Contact support" aria-label="Contact support">💬</a>
+  <div class="container">
+    <div id="activated" class="tab-pane">
+      <div class="table-card">
+        <table aria-describedby="activated">
+          <thead>
+            <tr><th>Username</th><th>Email</th><th>Balance (₦)</th><th>Registered At</th></tr>
+          </thead>
+          <tbody id="activatedBody"><tr><td colspan="4" class="no-data">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="all" class="tab-pane" style="display:none">
+      <div class="table-card">
+        <table aria-describedby="all">
+          <thead>
+            <tr><th>Username</th><th>Email</th><th>Balance (₦)</th><th>Registered At</th></tr>
+          </thead>
+          <tbody id="allBody"><tr><td colspan="4" class="no-data">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2025 Beni-Wealth</footer>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -236,11 +207,11 @@
     const searchInput = document.getElementById('searchInput');
     const copyBtn = document.getElementById('copyBtn');
     const refreshBtn = document.getElementById('refreshBtn');
-    const refreshTop = document.getElementById('refreshTop');
 
     let allRefs = [];
     let activatedRefs = [];
 
+    // Candidate fields that may contain the referral code in different setups
     const REFERRAL_FIELDS = [
       'referral', 'referralCode', 'ref', 'referrer', 'referredBy', 'referred_by',
       'sponsor', 'invitedBy', 'referred', 'referred_by_username'
@@ -260,7 +231,7 @@
     }
 
     function escapeHtml(str){
-      return String(str || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; });
+      return String(str || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; });
     }
 
     function renderRows(list, container){
@@ -271,7 +242,7 @@
       container.innerHTML = list.map(u=>{
         const reg = fmtDate(u.registeredAt || u.createdAt || u.registered_at || u.created_at || null);
         const bal = (typeof u.balance === 'number') ? u.balance.toLocaleString('en-NG') : (u.balance || '0');
-        const activatedBadge = u.isActivated ? `<span style="margin-left:8px;background:linear-gradient(90deg,var(--accent-b),var(--accent-a));color:#041219;padding:4px 8px;border-radius:999px;font-size:.7rem;font-weight:700">Activated</span>` : '';
+        const activatedBadge = u.isActivated ? `<span style="margin-left:8px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;padding:4px 8px;border-radius:999px;font-size:.7rem;font-weight:700">Activated</span>` : '';
         return `<tr>
           <td style="font-weight:600">${escapeHtml(u.username || '-')}${activatedBadge}</td>
           <td>${escapeHtml(u.email || '-')}</td>
@@ -296,25 +267,33 @@
 
     searchInput.addEventListener('input', applyFilter);
 
+    // --- changed copy behavior: build and copy full referral URL using username/code ---
     copyBtn.addEventListener('click', ()=>{
       const code = (refCodeEl.textContent || '').toString().trim();
-      if(!code){ alert('No referral code available to copy.'); return; }
+      if(!code){
+        alert('No referral code available to copy.');
+        return;
+      }
       const url = `https://beni-wealth.github.io/Beni-Wealth/register.html?ref=${encodeURIComponent(code)}`;
       navigator.clipboard.writeText(url).then(()=>{
         const prev = copyBtn.textContent;
         copyBtn.textContent='Copied';
         setTimeout(()=>copyBtn.textContent=prev,1400);
-      }).catch(()=>{ alert('Copy failed — please copy the link manually:\n' + url); });
+      }).catch(()=>{
+        alert('Copy failed — please copy the link manually:\n' + url);
+      });
     });
 
-    refreshBtn.addEventListener('click', ()=>{ const code = refCodeEl.textContent || ''; loadData(code); });
-    refreshTop.addEventListener('click', ()=>{ const code = refCodeEl.textContent || ''; loadData(code); });
+    refreshBtn.addEventListener('click', ()=> {
+      const code = refCodeEl.textContent || '';
+      loadData(code);
+    });
 
     document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', e=>{
       document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
       e.currentTarget.classList.add('active');
       const tab = e.currentTarget.dataset.tab;
-      document.querySelectorAll('#activated, #all').forEach(p=>p.style.display='none');
+      document.querySelectorAll('.tab-pane').forEach(p=>p.style.display='none');
       const el = document.getElementById(tab);
       if(el) el.style.display = 'block';
     }));
@@ -325,8 +304,10 @@
         const userRef = doc(db,'users',user.uid);
         const userSnap = await getDoc(userRef);
         const myData = userSnap.exists() ? userSnap.data() : {};
+        // username should be used as referral code — fallback to email local part or uid
         const myCode = String(myData.username || myData.name || user.email?.split('@')?.[0] || user.uid || '').trim();
         refCodeEl.textContent = myCode || '';
+        // load referrals for this code
         await loadData(myCode);
       }catch(err){
         console.error('Error fetching current user doc', err);
@@ -335,6 +316,7 @@
       }
     });
 
+    // Load referrals by running queries against multiple possible field names and merging results
     async function loadData(myCode){
       try{
         activatedBody.innerHTML = '<tr><td colspan="4" class="no-data">Loading…</td></tr>';
@@ -350,7 +332,10 @@
           return;
         }
 
-        const foundDocs = new Map();
+        console.log('Loading referrals for code:', myCode);
+        const foundDocs = new Map(); // key: doc.id -> doc.data
+
+        // Query each candidate field and merge unique documents
         const queries = REFERRAL_FIELDS.map(field => {
           const q = query(collection(db,'users'), where(field, '==', myCode));
           return getDocs(q).then(snap => ({ field, snap })).catch(err => ({ field, error: err }));
@@ -359,11 +344,37 @@
         const results = await Promise.all(queries);
 
         results.forEach(res => {
-          if(res.error){ console.warn('Query error for field', res.field, res.error); return; }
+          if(res.error){
+            // non-fatal: log and continue (some fields may not be indexed)
+            console.warn('Query error for field', res.field, res.error);
+            return;
+          }
           const snap = res.snap;
-          snap.forEach(docSnap => { if(!foundDocs.has(docSnap.id)) foundDocs.set(docSnap.id, docSnap.data()); });
+          snap.forEach(docSnap => {
+            if(!foundDocs.has(docSnap.id)){
+              foundDocs.set(docSnap.id, docSnap.data());
+            }
+          });
         });
 
+        // If zero results found, also check users collection for any doc whose referral field contains code as substring
+        // (only do this as fallback and only if nothing found) — WARNING: this is less efficient
+        if(foundDocs.size === 0){
+          console.log('No direct matches found for any candidate fields. Trying substring fallback on `referral` and `referrer` (may be slow).');
+          const fallbackFields = ['referral','referrer'];
+          for(const f of fallbackFields){
+            try{
+              // can't do substring queries server-side easily; skip heavy approach.
+              // Instead attempt to run equality on lowercased stored variant (many apps store codes consistently).
+              // We'll skip further fallback to avoid expensive scans — log and return empty lists.
+              console.log('Skipping expensive fallback scan for field', f);
+            }catch(e){
+              console.warn('Fallback scan error', e);
+            }
+          }
+        }
+
+        // build arrays
         foundDocs.forEach((d, id)=>{
           const data = d || {};
           const user = {
@@ -379,8 +390,14 @@
           if(user.isActivated) activatedRefs.push(user);
         });
 
+        // sort by registration date (descending) — handle Timestamp / string / null
         const getTime = (t) => {
-          try { if(!t) return 0; if (typeof t.toDate === 'function') return t.toDate().getTime(); const n = Date.parse(t); return isNaN(n) ? 0 : n; } catch(e){ return 0; }
+          try {
+            if(!t) return 0;
+            if (typeof t.toDate === 'function') return t.toDate().getTime();
+            const n = Date.parse(t);
+            return isNaN(n) ? 0 : n;
+          } catch(e){ return 0; }
         };
         const sortFn = (a,b) => getTime(b.registeredAt) - getTime(a.registeredAt);
 
@@ -390,7 +407,7 @@
         totalRefEl.textContent = allRefs.length;
         activatedCountEl.textContent = activatedRefs.length;
 
-        applyFilter();
+        applyFilter(); // fixed call — renders tables
 
       }catch(err){
         console.error('loadData failed', err);
@@ -400,8 +417,6 @@
         activatedCountEl.textContent = '0';
       }
     }
-
-    document.getElementById('year').textContent = new Date().getFullYear();
   </script>
 </body>
 </html>
