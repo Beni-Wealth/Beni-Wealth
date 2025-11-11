@@ -3,228 +3,179 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Deposit — SAQ 1</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
-
-  <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Social preview -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
+  <title>Deposit — SAQ 1 · Beni‑Wealth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
     :root{
-      --bg1:#0b0613; --bg2:#120521;
-      --muted: rgba(255,255,255,0.64);
-      --text: #eaf2ff;
-      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --bg-1:#0b0613; --bg-2:#0f0820;
+      --text:#eaf2ff; --muted:rgba(255,255,255,0.62);
+      --accent-a:#8446ff; --accent-b:#6ce2c8;
       --glass: rgba(255,255,255,0.03);
-      --radius:16px;
-      --bottom-nav-h:72px;
-      --page-pad:28px;
+      --container-w:820px; --radius:18px; --bottom-nav-h:74px;
+      font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-    .shell{max-width:980px;margin:0 auto;padding:var(--page-pad) 20px calc(var(--bottom-nav-h) + 48px)}
-    header.appbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand img{width:62px;height:62px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,0.6);flex-shrink:0}
-    .brand .title{font-weight:700;font-size:18px}
-    .brand .sub{color:var(--muted);font-size:13px;margin-top:4px}
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:18px;padding:28px;border:1px solid rgba(255,255,255,0.04);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.6); margin: 12px 0;
-    }
-    .muted{color:var(--muted)}
-    .field{display:flex;gap:12px;align-items:center;margin-top:12px}
-    label{min-width:140px;color:var(--muted);font-weight:600}
-    input[type="text"], input[type="number"], textarea {
-      flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--text);
-      outline:none;font-size:14px;
-    }
-    .provider-block{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-    .provider-id{font-weight:900;color:var(--accent-start);font-size:20px;letter-spacing:0.2px}
-    /* New styles for account name & number (highlighted like bank name) */
-    .provider-acc{font-weight:800;color:var(--accent-start);font-size:17px}
-    .provider-acc small{display:block;color:var(--muted);font-weight:600;font-size:13px;margin-top:2px}
-    .hint{color:var(--muted);font-size:13px;margin-top:8px}
-    .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700;margin-top:14px}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .status{margin-top:12px;font-size:14px;color:var(--muted)} .status.error{color:#ffb3b3} .status.success{color:#bff0d9}
-    progress{width:100%;height:8px;border-radius:6px;overflow:hidden}
-    .small{font-size:13px;color:var(--muted)}
-    /* bottom nav */
-    .bw-bottom-nav{position:fixed;left:18px;right:18px;bottom:16px;height:var(--bottom-nav-h);display:flex;align-items:center;justify-content:space-between;padding:10px;background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));border-radius:40px;box-shadow:0 14px 40px rgba(2,6,23,0.6);backdrop-filter: blur(6px);z-index:120}
-    .bw-bottom-nav a{ text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; font-size:12px; text-align:center; user-select:none }
-    .bw-bottom-nav .icon-wrap{ width:44px; height:44px; border-radius:10px; background: rgba(255,255,255,0.04); display:grid;place-items:center; font-size:18px }
-    .nav-center .center-btn{ width:82px; height:82px; border-radius:50%; background: linear-gradient(135deg,var(--accent-start),var(--accent-end)); display:grid; place-items:center; color:#041219; font-size:26px; box-shadow:0 12px 36px rgba(61,46,111,0.35); transform:translateY(-22px) }
-    footer{margin-top:18px;color:rgba(255,255,255,0.3);font-size:13px;text-align:center}
 
-    /* Responsive: stack label + field on smaller screens and reduce paddings/sizes */
-    @media (max-width: 760px) {
-      .shell{padding:20px 14px calc(var(--bottom-nav-h) + 56px)}
-      header.appbar{align-items:flex-start;gap:10px}
-      .brand img{width:54px;height:54px}
-      .brand .title{font-size:16px}
-      .card{padding:20px}
-      label{min-width:0; width:100%; display:block; margin-bottom:8px}
-      .field{flex-direction:column;align-items:stretch}
-      input[type="text"], input[type="number"], textarea{font-size:15px}
-      .provider-id{font-size:18px}
-      .provider-acc{font-size:16px}
-      .btn{width:100%}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      min-height:100%;
+      background:
+        radial-gradient(700px 350px at 10% 8%, rgba(132,70,255,0.06), transparent),
+        radial-gradient(700px 350px at 90% 92%, rgba(44,220,185,0.04), transparent),
+        linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:var(--text);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      display:flex;justify-content:center;padding:26px;
     }
-    @media (max-width:420px){
-      .brand img{width:48px;height:48px}
-      .provider-id{font-size:16px}
-      .provider-acc{font-size:15px}
+
+    .phone{
+      width:100%;max-width:var(--container-w);border-radius:22px;padding:20px 20px calc(var(--bottom-nav-h) + 64px);background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));box-shadow: 0 28px 90px rgba(0,0,0,0.65);overflow:auto;
     }
+
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand img{width:64px;height:64px;border-radius:12px;object-fit:cover}
+    .brand .title{font-weight:800;font-size:16px}
+    .brand .sub{font-size:12px;color:var(--muted)}
+
+    h1{margin:6px 0 8px;font-size:18px}
+    .lead{color:var(--muted);font-size:14px;margin-bottom:12px}
+
+    .card{border-radius:16px;padding:18px;background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);box-shadow: 0 18px 60px rgba(0,0,0,0.45)}
+
+    .provider{display:flex;gap:14px;align-items:center}
+    .provider .badge{width:72px;height:72px;border-radius:14px;background:linear-gradient(90deg,var(--accent-b),var(--accent-a));display:grid;place-items:center;color:#041219;font-weight:900;font-size:20px}
+    .provider .meta{display:flex;flex-direction:column}
+    .provider .meta .bank{font-weight:900;color:var(--accent-b);font-size:16px}
+    .provider .meta .acc{font-weight:800;color:var(--accent-b);font-size:15px;margin-top:6px}
+    .provider .meta .note{color:var(--muted);font-size:13px;margin-top:4px}
+
+    form{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+    .row{display:flex;gap:12px;align-items:center}
+    label{min-width:150px;color:var(--muted);font-weight:700}
+    input[type='text'], input[type='number'], input[type='file']{flex:1;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--text);font-weight:600}
+    input[readonly]{background:transparent;border:0;color:var(--muted)}
+    .controls{display:flex;gap:10px;align-items:center}
+    .btn{padding:10px 14px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-b),var(--accent-a));color:#041219;font-weight:800}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+
+    .small{font-size:13px;color:var(--muted)}
+    .status{margin-top:8px;color:var(--muted);min-height:20px}
+    .status.error{color:#ffb3b3}
+    .status.success{color:#bff0d9}
+
+    progress{width:100%;height:8px;border-radius:6px;overflow:hidden}
+
+    /* bottom nav */
+    .bw-bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;height:var(--bottom-nav-h);width:calc(min(var(--container-w),100%) - 24px);max-width:var(--container-w);background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-radius:38px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow: 0 18px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.04);z-index:999;backdrop-filter: blur(6px)}
+    .nav-btn{ width:56px; text-align:center; color:var(--muted); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer }
+    .icon-wrap{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px }
+    .nav-center .center-btn{ width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,var(--accent-b),var(--accent-a));display:grid;place-items:center;color:#041219;font-size:26px;transform:translateY(-22px) }
+
+    @media(max-width:760px){ .phone{padding-bottom:calc(var(--bottom-nav-h) + 80px)} label{min-width:120px} .provider .meta .bank{font-size:15px} }
   </style>
 </head>
 <body>
-  <main class="shell" role="main" aria-labelledby="title">
-    <header class="appbar">
+  <main class="phone" role="main" aria-labelledby="title">
+    <header>
       <div class="brand">
-        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo" />
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni‑Wealth logo">
         <div>
-          <div class="title">Beni-Wealth</div>
+          <div class="title">Beni‑Wealth</div>
           <div class="sub">Deposit — SAQ 1</div>
         </div>
       </div>
-      <div style="text-align:right;color:var(--muted);font-size:13px">
-        Need help? <a href="mailto:beniwealth70@gmail.com" style="color:var(--accent-start);text-decoration:underline">beniwealth70@gmail.com</a>
-      </div>
+
+      <div style="text-align:right; color:var(--muted); font-size:13px">Need help? <a href="mailto:beniwealth70@gmail.com" style="color:var(--accent-b); text-decoration:underline">beniwealth70@gmail.com</a></div>
     </header>
 
     <section class="card" aria-labelledby="title">
-      <h2 id="title">Deposit — SAQ 1</h2>
-      <p class="muted">Send payment to the account below, then upload proof here for verification.</p>
+      <h1 id="title">Send payment — SAQ 1</h1>
+      <p class="lead">Use the account below for bank/mobile transfers. After payment, upload proof here so we can verify and credit your account.</p>
 
-      <div class="provider-block" aria-hidden="false">
-        <div class="small">Provider</div>
-        <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-          <div>
-            <div class="provider-id">BANK NAME - Moniepoint</div>
-            <!-- account name and number highlighted like the bank name -->
-            <div class="provider-acc">ACCT NAME - Beinmote Benjamin Owana-Omubo</div>
-            <div class="provider-acc">ACCT NO - 5792230881</div>
-          </div>
+      <div class="provider">
+        <div class="badge">BANK</div>
+        <div class="meta">
+          <div class="bank">Moniepoint</div>
+          <div class="acc">Beinmote Benjamin Owana‑Omubo</div>
+          <div class="acc">5792230881</div>
+          <div class="note">Use exact account name & number. For quick verification, include transaction reference in your message.</div>
         </div>
       </div>
 
-      <form id="depositForm" onsubmit="return false" style="margin-top:12px">
-        <div class="field">
+      <form id="depositForm" onsubmit="return false" aria-describedby="hint">
+        <div class="row">
           <label for="depositorName">Your account name</label>
-          <input id="depositorName" type="text" placeholder="Name on your bank mobile/transfer" required />
+          <input id="depositorName" name="depositorName" type="text" placeholder="Name on your bank/mobile" required />
         </div>
 
-        <div class="field">
+        <div class="row">
           <label for="amount">Amount (₦)</label>
-          <input id="amount" type="number" placeholder="e.g. 1500" min="1" required />
+          <input id="amount" name="amount" type="number" placeholder="e.g. 1500" min="1" required />
         </div>
 
-        <div class="field" style="align-items:flex-start;">
+        <div class="row" style="align-items:flex-start">
           <label for="proofFile">Upload proof</label>
           <div style="flex:1;display:flex;flex-direction:column;gap:8px">
-            <input id="proofFile" type="file" accept="image/*" />
-            <div class="small">Accepted: jpg, png — max recommended 8MB</div>
+            <input id="proofFile" name="proofFile" type="file" accept="image/*" aria-label="Upload proof image" />
+            <div class="small">Accepted: JPG/PNG. Max recommended 8MB.</div>
             <progress id="uploadProgress" value="0" max="100" style="display:none"></progress>
           </div>
         </div>
 
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-          <button id="submitBtn" class="btn">Submit deposit</button>
+        <div class="controls">
+          <button id="submitBtn" class="btn" type="button">Submit deposit</button>
           <button id="clearBtn" class="btn ghost" type="button">Clear</button>
         </div>
 
         <div id="status" class="status" aria-live="polite"></div>
-      </form>
 
-      <div class="hint">After you submit, our support team will verify the payment and credit your account within 6hrs. Status will be shown in your deposits list.</div>
+        <div id="hint" class="small">After submission our team will usually verify within a few hours. Check your deposit history for status updates.</div>
+      </form>
     </section>
 
-    <footer>© <span id="year"></span> Beni-Wealth</footer>
+    <footer style="text-align:center;margin-top:12px;color:rgba(255,255,255,0.35)">© <span id="year"></span> Beni‑Wealth</footer>
   </main>
 
-  <!-- bottom nav -->
   <nav class="bw-bottom-nav" role="navigation" aria-label="Main navigation">
-    <a id="navHome"><div class="icon-wrap">🏠</div><div>Home</div></a>
-    <a id="navShortlinks"><div class="icon-wrap">🔗</div><div>Shortlinks</div></a>
-    <div class="nav-center"><a id="navCreate" class="center-btn" aria-label="Create">➕</a></div>
-    <a id="navNews"><div class="icon-wrap">💬</div><div>News</div></a>
-    <a id="navAssets"><div class="icon-wrap">👤</div><div>Assets</div></a>
+    <div id="navHome" class="nav-btn"><div class="icon-wrap">🏠</div><div style="font-size:11px;color:var(--muted)">Home</div></div>
+    <div id="navShortlinks" class="nav-btn"><div class="icon-wrap">🔗</div><div style="font-size:11px;color:var(--muted)">Shortlinks</div></div>
+    <div style="flex:0 0 92px;display:flex;justify-content:center;align-items:center"><button id="navCreate" class="center-btn nav-center" aria-label="Create">➕</button></div>
+    <div id="navNews" class="nav-btn"><div class="icon-wrap">💬</div><div style="font-size:11px;color:var(--muted)">News</div></div>
+    <div id="navAssets" class="nav-btn"><div class="icon-wrap">👤</div><div style="font-size:11px;color:var(--muted)">Assets</div></div>
   </nav>
 
   <script type="module">
     // repo helper
     const REPO_BASE = '/Beni-Wealth';
-    function withRepoPath(target){
-      if(!target) return location.href;
-      try {
-        const maybe = new URL(target, location.href);
-        if (maybe.origin === location.origin) {
-          const pathname = maybe.pathname.replace(/\/+/g, '/');
-          if (pathname.indexOf(REPO_BASE) === 0) return maybe.origin + pathname + maybe.search + maybe.hash;
-        }
-        return maybe.href;
-      } catch(e){}
-      const clean = String(target).replace(/^\/+/, '');
-      const repoClean = REPO_BASE.replace(/^\/+/, '');
-      if (clean.indexOf(repoClean) === 0) return location.origin + '/' + clean;
-      return location.origin + REPO_BASE + (clean ? '/' + clean : '');
-    }
+    function withRepoPath(target){ if(!target) return location.href; try{ const maybe = new URL(target, location.href); if(maybe.origin === location.origin){ const pathname = maybe.pathname.replace(/\/+/g,'/'); if(pathname.indexOf(REPO_BASE) === 0) return maybe.origin + pathname + maybe.search + maybe.hash;} return maybe.href;}catch(e){} const clean = String(target).replace(/^\/+/,''); const repoClean = REPO_BASE.replace(/^\/+/,''); if(clean.indexOf(repoClean)===0) return location.origin + '/' + clean; return location.origin + REPO_BASE + (clean ? '/' + clean : ''); }
 
-    // ---------- Imgur helper ----------
-    async function uploadToImgur(file, onProgress) {
+    // Imgur upload helper - lightweight base64 upload
+    async function uploadToImgur(file, onProgress){
       const clientId = 'fb533db21a59486';
       const endpoint = 'https://api.imgur.com/3/image';
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve,reject)=>{
         const reader = new FileReader();
-        reader.onload = () => {
+        reader.onload = ()=>{
           const base64 = reader.result.split(',')[1];
-          const form = new FormData();
-          form.append('image', base64);
-          form.append('type', 'base64');
-
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', endpoint);
-          xhr.setRequestHeader('Authorization', 'Client-ID ' + clientId);
-          xhr.upload.onprogress = evt => {
-            if (evt.lengthComputable) onProgress(Math.round(evt.loaded / evt.total * 100));
-          };
-          xhr.onload = () => {
-            try {
-              const res = JSON.parse(xhr.responseText);
-              if (res.success) resolve(res.data.link);
-              else reject(res.data.error || 'Imgur upload failed');
-            } catch (e) {
-              reject('Invalid JSON from Imgur');
-            }
-          };
-          xhr.onerror = () => reject('Network error uploading to Imgur');
-          xhr.send(form);
+          const form = new FormData(); form.append('image', base64); form.append('type','base64');
+          const xhr = new XMLHttpRequest(); xhr.open('POST', endpoint);
+          xhr.setRequestHeader('Authorization','Client-ID '+clientId);
+          xhr.upload.onprogress = evt => { if(evt.lengthComputable) onProgress(Math.round(evt.loaded/evt.total*100)); };
+          xhr.onload = ()=>{ try{ const res = JSON.parse(xhr.responseText); if(res && res.success) resolve(res.data.link); else reject(res.data?.error || 'Imgur upload failed'); }catch(e){ reject('Invalid JSON from Imgur'); }};
+          xhr.onerror = ()=> reject('Network error uploading to Imgur'); xhr.send(form);
         };
-        reader.onerror = () => reject('File read error');
-        reader.readAsDataURL(file);
+        reader.onerror = ()=> reject('File read error'); reader.readAsDataURL(file);
       });
     }
 
-    // Firebase imports (modular)
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    // Firebase modular imports
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
-    // Beni-Wealth Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -235,7 +186,7 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    if (!getApps().length) initializeApp(firebaseConfig);
+    if(!getApps().length) initializeApp(firebaseConfig);
     const auth = getAuth();
     const db = getFirestore();
 
@@ -248,63 +199,37 @@
     const statusEl = document.getElementById('status');
     const uploadProgress = document.getElementById('uploadProgress');
 
-    // provider details
-    const PROVIDER = {
-      providerName: 'Moniepoint',
-      accountNumber: '5792230881',
-      accountName: 'StarkTech'
-    };
+    // provider info (display-only)
+    const PROVIDER = { providerName:'Moniepoint', accountNumber:'5792230881', accountName:'Beinmote Benjamin Owana-Omubo' };
 
-    // show logged in username if available
-    const acctDisplay = document.querySelector('.appbar div[style]') || null;
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        if (acctDisplay) acctDisplay.textContent = 'Not signed in';
-        return;
-      }
-      const username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
-      if (acctDisplay) acctDisplay.textContent = username;
+    function setStatus(msg, type){ statusEl.textContent = msg || ''; statusEl.className = 'status' + (type? ' '+type : ''); }
+
+    clearBtn.addEventListener('click', ()=>{
+      depositorName.value = ''; amountInput.value = ''; proofFile.value = ''; uploadProgress.value = 0; uploadProgress.style.display = 'none'; setStatus('');
     });
 
-    function setStatus(msg, type){
-      statusEl.textContent = msg || '';
-      statusEl.className = 'status' + (type ? ' ' + type : '');
-    }
-
-    clearBtn.addEventListener('click', () => {
-      depositorName.value = '';
-      amountInput.value = '';
-      proofFile.value = '';
-      uploadProgress.style.display = 'none';
-      uploadProgress.value = 0;
-      setStatus('', '');
+    onAuthStateChanged(auth, (user)=>{
+      const right = document.querySelector('header .brand + div');
+      if(!user){ if(right) right.textContent = 'Not signed in'; return; }
+      if(right) right.textContent = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
     });
 
-    submitBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      setStatus('', '');
+    submitBtn.addEventListener('click', async (e)=>{
+      e.preventDefault(); setStatus('');
       const file = proofFile.files && proofFile.files[0];
       const depositor = (depositorName.value || '').trim();
       const amount = Number(amountInput.value || 0);
 
-      if (!depositor) { setStatus('Please enter your account name (name used for the transfer).', 'error'); return; }
-      if (!amount || amount <= 0) { setStatus('Please enter a valid amount.', 'error'); return; }
-      if (!file) { setStatus('Please select an image proof to upload.', 'error'); return; }
+      if(!depositor){ setStatus('Please enter the account name used for the transfer.', 'error'); return; }
+      if(!amount || amount <= 0){ setStatus('Please enter a valid amount.', 'error'); return; }
+      if(!file){ setStatus('Please upload a proof image before submitting.', 'error'); return; }
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Uploading proof...';
-      uploadProgress.style.display = 'block';
-      uploadProgress.value = 0;
+      submitBtn.disabled = true; submitBtn.textContent = 'Uploading proof...'; uploadProgress.style.display = 'block'; uploadProgress.value = 0;
 
-      try {
-        // upload image to Imgur
-        const imgUrl = await uploadToImgur(file, (pct) => {
-          uploadProgress.value = pct;
-        });
+      try{
+        const imgUrl = await uploadToImgur(file, (pct)=>{ uploadProgress.value = pct; });
+        setStatus('Image uploaded — saving deposit record...');
 
-        setStatus('Image uploaded — saving deposit record...', '');
-
-        // store deposit record in Firestore
         const user = auth.currentUser;
         const depositDoc = {
           userId: user ? user.uid : null,
@@ -319,43 +244,24 @@
           createdAt: serverTimestamp()
         };
 
-        await addDoc(collection(db, 'deposits'), depositDoc);
+        await addDoc(collection(db,'deposits'), depositDoc);
 
-        setStatus('Deposit submitted. Our team will verify and credit your account shortly.', 'success');
-
-        // reset form
-        depositorName.value = '';
-        amountInput.value = '';
-        proofFile.value = '';
-        uploadProgress.value = 0;
-        uploadProgress.style.display = 'none';
-      } catch (err) {
-        console.error('deposit submit error', err);
-        setStatus('Error submitting deposit: ' + (err.message || err), 'error');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit deposit';
-      }
+        setStatus('Deposit submitted. We will verify and credit your account shortly.', 'success');
+        depositorName.value = ''; amountInput.value = ''; proofFile.value = ''; uploadProgress.value = 0; uploadProgress.style.display = 'none';
+      }catch(err){ console.error('submit error',err); setStatus('Error submitting deposit: ' + (err.message || err), 'error'); }
+      finally{ submitBtn.disabled = false; submitBtn.textContent = 'Submit deposit'; }
     });
 
     // bottom nav wiring
-    document.getElementById('navHome').addEventListener('click',(e)=>{e.preventDefault();location.assign(withRepoPath('catalog.html'));});
-    document.getElementById('navShortlinks').addEventListener('click',(e)=>{e.preventDefault();location.assign(withRepoPath('convert.html'));});
-    document.getElementById('navCreate').addEventListener('click',(e)=>{e.preventDefault();location.assign(withRepoPath('center.html'));});
-    document.getElementById('navNews').addEventListener('click',(e)=>{e.preventDefault();location.assign(withRepoPath('news.html'));});
-    document.getElementById('navAssets').addEventListener('click',(e)=>{e.preventDefault();location.assign(withRepoPath('dashboard.html'));});
+    document.getElementById('navHome').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('catalog.html'));});
+    document.getElementById('navShortlinks').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('convert.html'));});
+    document.getElementById('navCreate').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('center.html'));});
+    document.getElementById('navNews').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('news.html'));});
+    document.getElementById('navAssets').addEventListener('click',(e)=>{e.preventDefault(); location.assign(withRepoPath('dashboard.html'));});
 
-    // ensure shell bottom padding
-    (function ensurePadding(){
-      const shell = document.querySelector('.shell');
-      const nav = document.querySelector('.bw-bottom-nav');
-      if(!shell || !nav) return;
-      const need = (nav.getBoundingClientRect().height || 72) + 24;
-      const cur = parseInt(getComputedStyle(shell).paddingBottom) || 0;
-      if(cur < need) shell.style.paddingBottom = need + 'px';
-    })();
+    // ensure padding
+    (function ensurePadding(){ const main = document.querySelector('.phone'); const nav = document.querySelector('.bw-bottom-nav'); if(!main||!nav) return; const need = (nav.getBoundingClientRect().height||72)+32; const cur = parseInt(getComputedStyle(main).paddingBottom)||0; if(cur < need) main.style.paddingBottom = need + 'px'; })();
 
-    // set year
     document.getElementById('year').textContent = new Date().getFullYear();
   </script>
 </body>
