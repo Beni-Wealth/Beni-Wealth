@@ -30,15 +30,16 @@
       --glass: rgba(255,255,255,0.03);
       --radius:12px;
       --max-width:1200px;
+      --debug-bg: rgba(255,255,255,0.02);
     }
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
     .shell{max-width:var(--max-width);margin:20px auto;padding:20px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
     .brand{font-weight:700;font-size:1.1rem}
     .back{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);text-decoration:none;color:var(--text)}
     .muted{color:var(--muted);font-size:13px}
-    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:12px}
     .search{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
     .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
@@ -68,6 +69,10 @@
     .viewer{width:100%;max-width:880px;background:#000;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;align-items:center}
     .viewer img{max-width:100%;height:auto;display:block}
     .viewer .meta{padding:12px;background:rgba(0,0,0,0.5);color:var(--muted);width:100%;display:flex;justify-content:space-between}
+    /* debug panel */
+    .debug {
+      margin-top:14px;padding:12px;border-radius:10px;background:var(--debug-bg);border:1px solid rgba(255,255,255,0.03);font-family:monospace;color:var(--muted);font-size:13px;line-height:1.45;white-space:pre-wrap;max-height:240px;overflow:auto;
+    }
     @media(max-width:520px){ .thumb{width:78px;height:60px} .sub-thumb{width:100%;height:auto} }
   </style>
 </head>
@@ -90,6 +95,10 @@
 
     <div id="grid" class="grid" aria-live="polite">
       <div class="empty">Loading your adverts…</div>
+    </div>
+
+    <div id="debug" class="debug" aria-live="polite" role="status">
+      Debug log — probe results and listener errors will appear here.
     </div>
   </main>
 
@@ -129,11 +138,13 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // DOM references
+    // DOM
     const grid = document.getElementById('grid');
     const diag = document.getElementById('diag');
     const search = document.getElementById('search');
     const refreshBtn = document.getElementById('refresh');
+    const debugEl = document.getElementById('debug');
+
     const viewerOverlay = document.getElementById('viewerOverlay');
     const viewerImg = document.getElementById('viewerImg');
     const viewerMeta = document.getElementById('viewerMeta');
@@ -141,14 +152,19 @@
 
     // state
     let currentUser = null;
-    const advertsMap = new Map();         // advertId -> { id, data }
-    const submissionsListeners = new Map(); // advertId -> unsubscribe
-    const advertsUnsubs = [];            // query unsubs
+    const advertsMap = new Map();
+    const submissionsListeners = new Map();
+    const advertsUnsubs = [];
 
-    // candidate owner fields to try (keeps this small and safe)
-    const OWNER_FIELDS = ['createdBy','owner','userId'];
+    // short list of collection names to probe (keeps it small, extend if you use another)
+    const CANDIDATE_COLLS = ['advertise_tasks', 'adverts', 'advert', 'advertise', 'advert_task', 'tasks'];
+    const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator','ownerUid','user'];
 
     // helpers
+    function debug(msg){
+      const time = new Date().toLocaleTimeString();
+      debugEl.textContent = `[${time}] ${msg}\n` + debugEl.textContent;
+    }
     function el(tag, attrs = {}, ...children){
       const e = document.createElement(tag);
       for(const k in attrs){
@@ -193,7 +209,7 @@
       return 0;
     }
 
-    // render grid
+    // render grid + card builder (same as earlier)
     function rebuildGrid(){
       const q = (search.value || '').trim().toLowerCase();
       grid.innerHTML = '';
@@ -211,7 +227,6 @@
       if(!any) grid.innerHTML = '<div class="empty">You have no adverts yet.</div>';
     }
 
-    // create card (Details only)
     function buildCard(id, data){
       const head = el('div',{class:'card-head'});
       const left = el('div',{style:'display:flex;gap:12px;align-items:center'});
@@ -262,7 +277,7 @@
       return card;
     }
 
-    // attach submissions listener for one advert
+    // attach submissions listener
     function attachSubmissionsListener(advertId, containerEl){
       if(submissionsListeners.has(advertId)) return;
       containerEl.innerHTML = '<div class="small muted">Loading submissions…</div>';
@@ -316,13 +331,14 @@
           const statusBadge = el('div',{class:`pill ${stLower==='approved' ? 'approved' : stLower==='completed' ? 'completed' : 'pending' }`}, (s.status||'PENDING').toString().toUpperCase());
           right.appendChild(statusBadge);
 
-          // owner controls
+          // owner controls (only visible to owner)
           const advert = advertsMap.get(advertId);
-          const advertOwnerId = advert?.data ? (advert.data.createdBy || advert.data.owner || advert.data.userId || null) : null;
+          const advertOwnerId = advert?.data ? (advert.data.createdBy || advert.data.owner || advert.data.userId || advert.data.uid || advert.data.requestedBy || advert.data.creator || advert.data.ownerUid || advert.data.user || null) : null;
           const unitPrice = getUnitPrice(advert?.data || {});
           const payAmount = Math.round(unitPrice * 0.7);
 
           if(currentUser && advertOwnerId && currentUser.uid === advertOwnerId){
+            // approval controls — same logic as before, with enforcement
             const controls = el('div',{style:'display:flex;gap:6px;flex-direction:row;'});
             const approveBtn = el('button',{class:'btn'}, '');
             const rejectBtn = el('button',{class:'btn ghost'}, '');
@@ -380,6 +396,7 @@
         }
       }, err => {
         console.error('submissions listen error', err);
+        debug(`submissions listen error for advert ${advertId}: ${err.message || err}`);
         containerEl.innerHTML = `<div class="empty">Failed to load submissions: ${escapeHtml(err.message || String(err))}</div>`;
       });
 
@@ -398,7 +415,7 @@
       submissionsListeners.clear();
     }
 
-    // transaction function (same enforcement: approved -> rejected forbidden)
+    // setSubmissionStatusWithPaymentAdjustment is same as before (keeps enforcement)
     async function setSubmissionStatusWithPaymentAdjustment(submissionId, targetStatus){
       if(!submissionId) throw new Error('Invalid submission id');
       const submissionRef = doc(db, 'advert_submissions', submissionId);
@@ -489,80 +506,139 @@
       });
     }
 
-    // Start listeners: attach a small set of safe query listeners on advertise_tasks
-    function startAdvertsListeners(uid){
-      // teardown previous
+    // PROBE collections for the user's adverts. returns chosen collection name and ownerField used
+    async function probeCollectionsForUser(uid){
+      debug(`Starting probe for user ${uid}...`);
+      for(const coll of CANDIDATE_COLLS){
+        try{
+          const colRef = collection(db, coll);
+          // try a small quick get (no where) to inspect fields if read allowed (catches permission errors quickly)
+          const snap = await getDocs(colRef);
+          if(!snap.empty){
+            debug(`Collection "${coll}" reachable — docs: ${snap.size}. Sample doc IDs: ${snap.docs.slice(0,3).map(d=>d.id).join(', ')}`);
+            // inspect first doc for a likely owner field
+            const sample = snap.docs[0].data() || {};
+            for(const f of OWNER_FIELDS){
+              if(typeof sample[f] !== 'undefined'){
+                // attempt a targeted query: where(f, '==', uid)
+                try{
+                  const q = query(collection(db, coll), where(f, '==', uid));
+                  const res = await getDocs(q);
+                  if(!res.empty){
+                    debug(`Found adverts in "${coll}" where ${f} == ${uid} — ${res.size} matching docs.`);
+                    return { collection: coll, ownerField: f };
+                  } else {
+                    debug(`No documents in "${coll}" matched ${f} == ${uid} (0 results).`);
+                  }
+                }catch(err){
+                  debug(`Query error in "${coll}" using field ${f}: ${err.message || err}`);
+                }
+              }
+            }
+            // no owner-field match on first doc — still record sample info for debugging
+            debug(`Inspected "${coll}" sample doc fields: ${Object.keys(sample).slice(0,12).join(', ')}`);
+          } else {
+            debug(`Collection "${coll}" reachable but empty.`);
+          }
+        }catch(err){
+          debug(`Cannot read "${coll}": ${err.message || err}`);
+        }
+      }
+      debug('Probe finished — no direct owner-field match found.');
+      return null;
+    }
+
+    // Start adverts listeners using the best collection/field found
+    async function startAdvertsListeners(uid){
       advertsMap.clear();
+      // teardown previous
       for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
       advertsUnsubs.length = 0;
       detachAllSubmissionListeners();
 
       grid.innerHTML = '<div class="empty">Loading your adverts…</div>';
-      diag.textContent = 'Listening for adverts you created…';
+      diag.textContent = 'Probing collections...';
+      debug(`--- probe start for user ${uid} ---`);
 
-      const collName = 'advertise_tasks';
-      let anyListenerAttached = false;
-
-      // attach a small set of listeners for the most likely owner fields
-      for(const field of OWNER_FIELDS){
+      const probe = await probeCollectionsForUser(uid);
+      if(probe && probe.collection){
+        const coll = probe.collection;
+        const field = probe.ownerField;
+        diag.textContent = `Listening for adverts in "${coll}" where ${field} == you`;
+        debug(`Attaching realtime listener on collection "${coll}" using owner field "${field}"`);
         try{
-          const q = query(collection(db, collName), where(field, '==', uid));
+          const q = query(collection(db, coll), where(field, '==', uid));
           const unsub = onSnapshot(q, snap => {
             snap.forEach(docSnap => {
               advertsMap.set(docSnap.id, { id: docSnap.id, data: docSnap.data() });
             });
-            // remove any adverts that were previously present but no longer match (optional)
-            // rebuild UI
             rebuildGrid();
+            diag.textContent = `Found ${advertsMap.size} adverts`;
+            debug(`Realtime snapshot from "${coll}" (${snap.size} docs).`);
           }, err => {
-            console.warn('query listener error for field', field, err);
-            // show diagnostic but don't block others
-            diag.textContent = `Listening (partial): error on field ${field} — ${err.message || err}`;
+            debug(`Realtime listener error for "${coll}": ${err.message || err}`);
+            diag.textContent = `Listener error: ${err.message || err}`;
           });
           advertsUnsubs.push(unsub);
-          anyListenerAttached = true;
+          // also attach a broad listener in background for statuses (optional)
+          try{
+            const qAll = query(collection(db, coll));
+            const unsubAll = onSnapshot(qAll, snapAll => {
+              snapAll.forEach(docSnap => {
+                const d = docSnap.data() || {};
+                // if doc likely belongs to this user, keep it
+                const ownerVal = d[field];
+                if(ownerVal === uid || (Array.isArray(ownerVal) && ownerVal.includes && ownerVal.includes(uid))){
+                  advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
+                }
+              });
+              rebuildGrid();
+            }, err => debug(`broad listener error for "${coll}": ${err.message || err}`));
+            advertsUnsubs.push(unsubAll);
+          }catch(e){ debug('Could not attach broad listener: ' + e.message); }
+
+          // done
+          return;
         }catch(e){
-          console.warn('failed to attach listener for', field, e);
+          debug(`Failed to attach realtime listener on "${coll}": ${e.message || e}`);
         }
       }
 
-      // If no query listener attached (due to permission/index problems), fall back to a single one-time getDocs to show something
-      if(!anyListenerAttached){
-        (async () => {
-          try {
-            const q = query(collection(db, collName));
-            const snap = await getDocs(q);
-            snap.forEach(docSnap => {
-              const d = docSnap.data() || {};
-              const possible = OWNER_FIELDS.some(f => {
-                const v = d[f];
-                return v === uid || (Array.isArray(v) && v.includes && v.includes(uid));
-              });
-              if(possible) advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
+      // If we get here, probe failed to find a query match or realtime attach failed — fall back to a one-time scan of 'advertise_tasks'
+      diag.textContent = 'No tailored collection found — falling back to a one-time scan.';
+      debug('Falling back to one-time scan of advertise_tasks (best-effort).');
+      try{
+        const fallbackSnap = await getDocs(collection(db, 'advertise_tasks'));
+        if(!fallbackSnap.empty){
+          fallbackSnap.forEach(docSnap => {
+            const d = docSnap.data() || {};
+            // keep docs that appear to belong to the user by checking owner-like fields
+            const possible = OWNER_FIELDS.some(f => {
+              const v = d[f];
+              return v === uid || (Array.isArray(v) && v.includes && v.includes(uid));
             });
+            if(possible) advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
+          });
+          if(advertsMap.size > 0){
+            diag.textContent = `Found ${advertsMap.size} adverts (fallback).`;
             rebuildGrid();
-            if(advertsMap.size === 0){
-              grid.innerHTML = '<div class="empty">No adverts found for your account (or insufficient permissions).</div>';
-              diag.textContent = 'No adverts found or listener blocked by security rules.';
-            } else {
-              diag.textContent = `Found ${advertsMap.size} adverts (read-only mode)`;
-            }
-          } catch(e){
-            console.error('fallback getDocs failed', e);
-            grid.innerHTML = '<div class="empty">Failed to load adverts (check Firestore rules).</div>';
-            diag.textContent = 'Failed: check Firestore rules/indexes or console logs.';
-          }
-        })();
-      } else {
-        // success: we have one or more query listeners attached — wait a short moment and update diag
-        setTimeout(() => {
-          if(advertsMap.size === 0){
-            diag.textContent = 'Listening — no adverts found yet (or you may lack read permission).';
-            grid.innerHTML = '<div class="empty">No adverts yet.</div>';
+            debug('Fallback one-time scan populated advertsMap.');
+            return;
           } else {
-            diag.textContent = `Found ${advertsMap.size} adverts`;
+            diag.textContent = 'No adverts found in fallback scan (or insufficient read permission).';
+            debug('Fallback scan returned no adverts belonging to user.');
+            grid.innerHTML = '<div class="empty">No adverts found for your account (or insufficient permissions).</div>';
+            return;
           }
-        }, 800);
+        } else {
+          diag.textContent = 'Fallback collection empty or not readable.';
+          debug('Fallback getDocs returned empty snapshot for advertise_tasks.');
+          grid.innerHTML = '<div class="empty">No adverts found (fallback empty).</div>';
+        }
+      }catch(e){
+        debug('Fallback scan failed: ' + (e.message || e));
+        diag.textContent = 'Failed to read adverts (check Firestore rules).';
+        grid.innerHTML = '<div class="empty">Failed to load adverts (see debug log).</div>';
       }
     }
 
@@ -578,10 +654,12 @@
       if(!user){
         diag.textContent = 'Please sign in to view your adverts.';
         grid.innerHTML = '<div class="empty">Sign in to see your adverts.</div>';
+        debug('User not signed in.');
         return;
       }
       diag.textContent = `Signed in as ${user.email || user.displayName || user.uid.slice(0,8)}`;
-      startAdvertsListeners(user.uid);
+      debug(`Authenticated as ${user.uid} (${user.email || 'no-email'})`);
+      startAdvertsListeners(user.uid).catch(e => debug('startAdvertsListeners error: ' + (e.message || e)));
     });
 
     // UI events
