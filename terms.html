@@ -6,131 +6,182 @@
 <title>Beni-Wealth — Terms & Conditions</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Social preview -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#2fe0b8">
+<!-- Favicons & Social preview -->
+<link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+<meta name="theme-color" content="#2fe0b8">
 
 <style>
   :root{
-    --bg1:#0b0613; --bg2:#120521;
-    --card-bg: rgba(255,255,255,0.03);
-    --glass: rgba(255,255,255,0.02);
-    --muted: rgba(255,255,255,0.6);
-    --text: #f3f6ff;
-    --accent-start:#2fe0b8; --accent-end:#7a5fff;
-    --accent:#0b63d6;
-    --radius:18px;
-    --card-pad:26px;
+    --bg-1:#0b0613; --bg-2:#120521;
+    --muted: rgba(255,255,255,0.62);
+    --text: #eaf2ff;
+    --accent-a: #8446ff;
+    --accent-b: #6ce2c8;
+    --accent-grad: linear-gradient(135deg, var(--accent-a), #5b3bff 45%, var(--accent-b) 100%);
+    --card-pad: 18px;
+    --radius: 16px;
+    --container-w: 420px;
+    font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   }
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:'Poppins',system-ui,Segoe UI,Arial;}
+  html,body{height:100%;margin:0}
   body{
-    background: linear-gradient(180deg,var(--bg1),var(--bg2));
+    min-height:100%;
+    background:
+      radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent),
+      radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.06), transparent),
+      linear-gradient(180deg,var(--bg-1),var(--bg-2));
     color:var(--text);
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
-    padding:36px 16px;
+    padding:20px;
     display:flex;
     justify-content:center;
+    align-items:flex-start;
   }
 
-  .shell { width:100%; max-width:1100px; }
-  header.appbar {
-    display:flex; align-items:center; gap:18px; margin-bottom:18px;
+  /* phone container */
+  .phone {
+    width:100%;
+    max-width:1140px; /* allow wider layout for policy pages but still centered */
+    min-height:720px;
+    border-radius:28px;
+    padding:22px 22px 120px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    box-shadow: 0 20px 80px rgba(0,0,0,0.6);
+    overflow:auto;
+    position:relative;
+  }
+
+  /* header */
+  .appbar {
+    display:flex;
+    gap:16px;
+    align-items:center;
+    margin-bottom:18px;
   }
   .logo {
-    width:72px; height:72px; border-radius:14px; display:grid; place-items:center;
-    background: linear-gradient(135deg,var(--accent-start),var(--accent-end));
-    color:#041219; font-weight:800; font-size:22px; position:relative; overflow:hidden;
+    width:64px; height:64px; border-radius:12px; display:grid; place-items:center;
+    background: var(--accent-grad); color:#041219; font-weight:800; font-size:20px;
+    overflow:hidden;
   }
-  .logo img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:14px; }
-  .logo .initials{ display:none; width:100%; height:100%; place-items:center; }
-  .app-title { font-size:20px; font-weight:700; color:var(--text); }
-  .app-sub { color:var(--muted); font-size:13px; margin-top:4px; }
+  .app-title { font-size:18px; font-weight:800; }
+  .app-sub { color:var(--muted); font-size:12px; }
 
   .grid {
     display:grid;
-    grid-template-columns: 1fr 420px;
-    gap:24px;
+    grid-template-columns: 1fr 360px;
+    gap:20px;
     align-items:start;
   }
 
   .card {
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius: var(--radius);
-    padding: var(--card-pad);
-    box-shadow: 0 18px 60px rgba(0,0,0,0.65);
-    border: 1px solid rgba(255,255,255,0.03);
-    backdrop-filter: blur(6px);
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+    border-radius:18px;
+    padding:var(--card-pad);
+    box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+    border:1px solid rgba(255,255,255,0.03);
+    color:var(--text);
   }
 
-  .content { max-height: 78vh; overflow:auto; padding-right:8px; }
-  h1 { margin:0 0 12px 0; font-size:22px; color:var(--text); }
-  h2 { margin-top:18px; color:var(--accent); font-size:16px; }
-  p, li { color: rgba(255,255,255,0.86); line-height:1.45; font-size:14px; }
+  .content { max-height:68vh; overflow:auto; padding-right:8px; }
+  h1 { margin:0 0 12px 0; font-size:20px; }
+  h2 { margin-top:18px; color:var(--accent-a); font-size:15px; }
+  p, li { color: rgba(255,255,255,0.9); line-height:1.45; font-size:14px; }
   ul { margin:8px 0 0 18px; }
   .muted { color:var(--muted); font-size:13px; margin-top:6px; }
 
-  /* right column styles */
-  .side-card {
+  /* right column */
+  .side {
     position:sticky; top:24px; align-self:start;
   }
-  .side-card .block { margin-bottom:14px; padding:16px; border-radius:12px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); }
-  .label { font-weight:700; color:var(--muted); font-size:13px; margin-bottom:8px; display:block; }
+  .side .block { margin-bottom:14px; padding:14px; border-radius:12px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); }
+  .label { font-weight:800; color:var(--muted); font-size:13px; margin-bottom:8px; display:block; }
 
   /* appeal form */
-  form { display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+  form.appeal { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
   input[type="text"], input[type="email"], textarea {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.03);
-    color:var(--text);
-    padding:10px 12px; border-radius:10px; font-size:14px;
+    width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.03);
+    background: rgba(255,255,255,0.01); color:var(--text); font-size:14px;
   }
   textarea { min-height:100px; resize:vertical; }
-  .row { display:flex; gap:10px; }
+  .row { display:flex; gap:8px; }
   .btn {
-    display:inline-flex; align-items:center; justify-content:center; gap:10px;
-    padding:10px 14px; border-radius:12px; border:none; cursor:pointer; font-weight:700;
-    background: linear-gradient(90deg,var(--accent-start),var(--accent-end)); color:#041219;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:10px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:800;
+    background: linear-gradient(90deg,var(--accent-b),var(--accent-a));
+    color:#041219;
   }
-  .btn.ghost { background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.03); }
+  .btn.ghost { background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted); }
   .note { font-size:13px; color:var(--muted); }
+
+  .status { font-size:13px; color:var(--muted); min-height:20px; margin-top:6px; }
 
   footer { margin-top:22px; color:rgba(255,255,255,0.38); font-size:13px; text-align:center; }
 
-  @media(max-width:980px){
+  /* bottom nav */
+  .bottom-nav {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 20px;
+    height: 74px;
+    width: calc(min(420px, 100%) - 28px + 420px); /* keep narrow appearance on very small screens */
+    max-width: 420px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+    border-radius: 38px;
+    padding: 10px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+    border: 1px solid rgba(255,255,255,0.04);
+    z-index: 999;
+    backdrop-filter: blur(6px);
+  }
+  .nav-btn{ width:56px; text-align:center; color:var(--muted); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; user-select:none; }
+  .icon-wrap{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px; }
+
+  /* contact FAB */
+  .contact-fab {
+    position: fixed;
+    bottom: 110px;
+    right: calc(50% - 210px); /* align near left of bottom nav in wide layout */
+    width:56px; height:56px; border-radius:50%;
+    display:grid; place-items:center; font-size:20px;
+    background: linear-gradient(135deg,#35d6b1,#5e47ff);
+    color:#041219; box-shadow:0 18px 50px rgba(87,52,164,0.18);
+    z-index: 1200; text-decoration:none; border:none; cursor:pointer;
+  }
+
+  @media(max-width:1100px){
+    .grid { grid-template-columns: 1fr 360px; gap:16px; }
+    .contact-fab { right: 22px; }
+  }
+  @media(max-width:900px){
     .grid { grid-template-columns: 1fr; }
-    .side-card { position:relative; top:auto; }
+    .side { position:relative; top:auto; }
+    .contact-fab { right: 22px; bottom: 100px; }
+    .bottom-nav { left:14px; right:14px; transform:none; width:auto; max-width: calc(100% - 28px); }
   }
 </style>
 </head>
 <body>
-  <main class="shell" role="main" aria-labelledby="policyTitle">
-    <header class="appbar">
-      <a href="/" class="logo-link" aria-label="Beni-Wealth home">
-        <div class="logo" aria-hidden="false" title="Beni-Wealth">
-          <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
-        </div>
-      </a>
+  <div class="phone" role="main" aria-labelledby="policyTitle">
+    <header class="appbar" aria-hidden="false">
+      <div class="logo" aria-hidden="true">
+        <img alt="Beni-Wealth" src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" style="width:100%;height:100%;object-fit:cover;border-radius:12px" />
+      </div>
       <div>
         <div class="app-title">Beni-Wealth</div>
+        <div class="app-sub">Terms & Conditions</div>
       </div>
-    </header>  
+    </header>
 
     <div class="grid">
       <!-- left: policy content -->
-      <section class="card" aria-label="Privacy policy">
+      <section class="card" aria-label="Terms and conditions">
         <div class="content">
           <h1 id="policyTitle">Terms — Beni-Wealth</h1>
           <p class="muted">Effective date: November 11, 2025 — Last updated: October 20, 2025</p>
@@ -162,6 +213,7 @@
 
           <h2>4. Account Rules & Device Policy (Important)</h2>
           <p>To protect fairness and prevent abuse on Beni-Wealth, the following account rules apply:</p>
+
           <h3>One account per device — mandatory</h3>
           <p>Each physical device (phone, tablet, PC) may be used for only one Beni-Wealth account. We use device identifiers, cookies, IP analysis and other signals to enforce this rule. Creating or using multiple accounts from the same device to manipulate rewards, referrals, or tasks is strictly prohibited.</p>
 
@@ -219,26 +271,49 @@
 
           <h2>14. Contact Us</h2>
           <p><strong>Beni-Wealth Support</strong><br>
-            📧 <a href="mailto:beniwealth70@gmail.com" style="color:var(--accent-start)">beniwealth70@gmail.com</a><br>
+            📧 <a href="mailto:beniwealth70@gmail.com" style="color:var(--accent-b)">beniwealth70@gmail.com</a><br>
             📞 08037402826 (WhatsApp available)</p>
         </div>
       </section>
 
       <!-- right: appeals & quick info -->
-      <aside class="side-card">
+      <aside class="side">
         <div class="card">
           <div class="block">
             <div class="label">Policy summary</div>
-            <div><strong>One device = one account</strong><br><span class="note">Violations may be fined or suspended. Appeals below.</span></div>
+            <div><strong>One device = one account</strong><br><span class="note">Violations may be fined or suspended. Use the appeal form below if you need review.</span></div>
           </div>
 
-          <div id="appealStatus" class="note" style="margin-top:8px"></div>
+          <div class="block" aria-labelledby="appealHeading">
+            <div id="appealHeading" class="label">Submit an Appeal</div>
+            <div class="note" style="margin-bottom:8px">If your account was disabled or fined and you want a review, submit an appeal here.</div>
+
+            <!-- appeal form (fields referenced by script) -->
+            <form id="appealForm" class="appeal" novalidate>
+              <label class="sr-only" style="display:none">UID</label>
+              <input id="appealUid" type="text" placeholder="Your UID (optional)" aria-label="UID" />
+
+              <label class="sr-only" style="display:none">Email</label>
+              <input id="appealEmail" type="email" placeholder="Email (required)" required aria-label="Email" />
+
+              <input id="appealName" type="text" placeholder="Full name (optional)" aria-label="Full name" />
+              <textarea id="appealMessage" placeholder="Describe your issue (required)" aria-label="Appeal message" required></textarea>
+              <input id="appealTxn" type="text" placeholder="Transaction ID / Reference (optional)" aria-label="Transaction reference" />
+
+              <div style="display:flex; gap:8px; align-items:center; margin-top:6px">
+                <button id="appealBtn" type="button" class="btn">Submit Appeal</button>
+                <button id="clearBtn" type="button" class="btn ghost">Clear</button>
+              </div>
+
+              <div id="appealStatus" class="status" aria-live="polite"></div>
             </form>
           </div>
 
-          <div class="block" style="margin-top:12px">
-            <div class="label">Policy quick links</div>
-            <div style="margin-top:8px"><a href="contact.html" style="color:var(--accent-start)">Support Center</a></div>
+          <div class="block">
+            <div class="label">Quick links</div>
+            <div style="margin-top:8px">
+              <a href="contact.html" style="color:var(--accent-b)">Support Center</a>
+            </div>
           </div>
         </div>
       </aside>
@@ -247,16 +322,28 @@
     <footer>
       © <span id="year"></span> Beni-Wealth — All rights reserved.
     </footer>
-  </main>
+  </div>
+
+  <!-- bottom nav & contact FAB -->
+  <div class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <div id="navHome" class="nav-btn" title="Home"><div class="icon-wrap">🏠</div><div style="font-size:11px;color:var(--muted)">Home</div></div>
+    <div id="navConvert" class="nav-btn" title="Shortlinks"><div class="icon-wrap">🔗</div><div style="font-size:11px;color:var(--muted)">shortlinks</div></div>
+    <div style="flex:0 0 92px;display:flex;justify-content:center;align-items:center">
+      <button id="navCenter" class="icon-wrap" style="width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,#7a5fff,#35d6b1);transform:translateY(-18px);font-size:26px;display:grid;place-items:center;border:none;cursor:pointer">➕</button>
+    </div>
+    <div id="navNews" class="nav-btn" title="News"><div class="icon-wrap">💬</div><div style="font-size:11px;color:var(--muted)">News</div></div>
+    <div id="navAssets" class="nav-btn" title="Assets"><div class="icon-wrap">👤</div><div style="font-size:11px;color:var(--muted)">Assets</div></div>
+  </div>
+
+  <a class="contact-fab" href="contact.html" title="Contact support" aria-label="Contact support">💬</a>
 
   <!-- Firebase + appeal submission script -->
   <script type="module">
-    // Firebase modular imports (v9)
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
     import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
-    // Beni-Wealth Firebase config (your project)
+    // your firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -267,12 +354,11 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    // init firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // DOM
+    // DOM refs
     const yearEl = document.getElementById('year'); yearEl.textContent = new Date().getFullYear();
     const uidInput = document.getElementById('appealUid');
     const emailInput = document.getElementById('appealEmail');
@@ -283,10 +369,9 @@
     const clearBtn = document.getElementById('clearBtn');
     const appealStatus = document.getElementById('appealStatus');
 
-    // Fill email & uid if user is signed in
+    // Pre-fill UID/email when signed in
     onAuthStateChanged(auth, user => {
       if (user) {
-        // prefer user.uid and email - but allow manual override
         uidInput.value = user.uid || '';
         emailInput.value = user.email || '';
       }
@@ -310,7 +395,6 @@
       appealBtn.textContent = 'Submitting...';
 
       try {
-        // Save to Firestore collection "appeals"
         await addDoc(collection(db, 'appeals'), {
           uid: uid || null,
           email,
@@ -318,11 +402,11 @@
           message,
           transactionId: txn || null,
           createdAt: serverTimestamp(),
-          status: 'pending' // pending | reviewed | resolved
+          status: 'pending'
         });
 
         appealStatus.textContent = 'Appeal submitted. Our support team will review and contact you.';
-        // Reset form (keep email/uid prefilled)
+        // reset non-essential fields, keep email/uid
         nameInput.value = '';
         msgInput.value = '';
         txnInput.value = '';
@@ -342,19 +426,19 @@
       appealStatus.textContent = '';
     });
 
-    // Note for implementer: Ensure Firestore rules allow authenticated users to write appeals,
-    // or adjust rules to allow unauthenticated writes with proper validation.
-    //
-    // Example minimal rule for collection "appeals" (NOT for production; refine before use):
-    //
-    // service cloud.firestore {
-    //   match /databases/{database}/documents {
-    //     match /appeals/{doc} {
-    //       allow create: if request.auth != null; // require auth
-    //       allow read, update, delete: if false;
-    //     }
-    //   }
-    // }
+    // bottom-nav actions (update as needed)
+    document.getElementById('navHome').addEventListener('click', () => location.href = 'catalog.html');
+    document.getElementById('navConvert').addEventListener('click', () => location.href = 'convert.html');
+    document.getElementById('navCenter').addEventListener('click', () => location.href = 'center.html');
+    document.getElementById('navNews').addEventListener('click', () => location.href = 'news.html');
+    document.getElementById('navAssets').addEventListener('click', () => location.href = 'dashboard.html');
+
+    // accessibility: allow Enter on FAB
+    document.querySelector('.contact-fab').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') location.href = 'contact.html';
+    });
+
+    // Note: ensure your Firestore rules permit writing to "appeals" collection for the intended users.
   </script>
 </body>
-  </html>
+</html>
