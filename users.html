@@ -408,9 +408,21 @@
     refreshBtn.addEventListener('click', ()=> loadUsers());
 
     // init + auth
-    onAuthStateChanged(auth, async (user)=>{
+    onAuthStateChanged(auth, async (user) => {
       if(!user){ alert('Please sign in as admin to access this page'); window.location.href = 'login.html'; return; }
-      // simple check for admin flag in user doc
+
+      // allow specific admin emails explicitly
+      const allowedAdmins = ['beniwealth70@gmail.com', 'owanaomubo76@gmail.com'];
+      const email = (user.email || '').toLowerCase();
+
+      if (allowedAdmins.includes(email)) {
+        // set a minimal currentAdmin object so actions can be audited with adminId
+        currentAdmin = { uid: user.uid, data: { email } };
+        await loadUsers();
+        return;
+      }
+
+      // fallback: simple check for admin flag in user doc
       const ok = await ensureAdmin();
       if(!ok || !(currentAdmin.data && currentAdmin.data.isAdmin)){
         alert('Access denied: you must be an admin to view this page.'); window.location.href = 'index.html'; return; }
