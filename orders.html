@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Adverts — Beni-Wealth</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg1:#060511; --bg2:#0f0920;
@@ -27,6 +27,7 @@
     .search{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
     .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .danger{background:linear-gradient(90deg,#ff7a7a,#ff4c4c);color:#041219}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
     .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 18px 60px rgba(0,0,0,0.55);display:flex;flex-direction:column;gap:12px}
     .card-head{display:flex;gap:12px;align-items:center;justify-content:space-between}
@@ -47,6 +48,12 @@
     .sub-meta{color:var(--muted);font-size:12px;margin-bottom:6px}
     .empty{padding:28px;text-align:center;color:var(--muted)}
     .diag{color:var(--muted);font-size:13px;margin-bottom:12px}
+    .small{font-size:13px;color:var(--muted)}
+    /* image overlay viewer */
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:999;padding:18px}
+    .viewer{width:100%;max-width:880px;background:#000;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;align-items:center}
+    .viewer img{max-width:100%;height:auto;display:block}
+    .viewer .meta{padding:12px;background:rgba(0,0,0,0.5);color:var(--muted);width:100%;display:flex;justify-content:space-between}
     @media(max-width:520px){ .thumb{width:78px;height:60px} .sub-thumb{width:90px;height:56px} }
   </style>
 </head>
@@ -72,14 +79,28 @@
     </div>
   </main>
 
+  <!-- Image viewer overlay -->
+  <div id="viewerOverlay" class="overlay" aria-hidden="true">
+    <div class="viewer" role="dialog" aria-modal="true">
+      <img id="viewerImg" src="" alt="proof image" />
+      <div class="meta">
+        <div id="viewerMeta" class="small"></div>
+        <div>
+          <button id="viewerClose" class="btn ghost">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import {
-      getFirestore, collection, query, where, onSnapshot, getDocs, doc, getDoc
+      getFirestore, collection, query, where, onSnapshot, getDocs, doc, getDoc,
+      updateDoc, runTransaction, serverTimestamp, writeBatch
     } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
-    // YOUR FIREBASE CONFIG (from your project)
+    // FIREBASE CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -100,15 +121,21 @@
     const search = document.getElementById('search');
     const refreshBtn = document.getElementById('refresh');
 
-    // State
-    let currentUser = null;
-    const advertsMap = new Map(); // advertId -> {id, data, _subCount}
-    const submissionsListeners = new Map(); // advertId -> unsubscribe fn
+    const viewerOverlay = document.getElementById('viewerOverlay');
+    const viewerImg = document.getElementById('viewerImg');
+    const viewerMeta = document.getElementById('viewerMeta');
+    const viewerClose = document.getElementById('viewerClose');
 
-    // candidate owner fields (some apps use different names)
+    // state
+    let currentUser = null;
+    const advertsMap = new Map(); // advertId -> {id, data}
+    const submissionsListeners = new Map(); // advertId -> unsubscribe fn
+    const advertsUnsubs = []; // listeners for adverts
+
+    // candidate owner fields
     const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator'];
 
-    // helper utilities
+    // helper utils
     function el(tag, attrs = {}, ...children){
       const e = document.createElement(tag);
       for(const k in attrs){
@@ -123,34 +150,65 @@
     function niceDate(ts){ try{ if(!ts) return '-'; if(ts.toDate) ts = ts.toDate(); return new Date(ts).toLocaleString(); }catch(e){ return '-'; } }
     function statusClass(status){ const s = String(status||'').toLowerCase(); if(s==='pending') return 'pill pending'; if(s==='approved') return 'pill approved'; if(s==='completed') return 'pill completed'; return 'pill pending'; }
 
-    // render UI from advertsMap
+    // show image overlay
+    function openImageViewer(url){
+      viewerImg.src = url;
+      viewerMeta.textContent = url;
+      viewerOverlay.style.display = 'flex';
+      viewerOverlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeImageViewer(){
+      viewerOverlay.style.display = 'none';
+      viewerOverlay.setAttribute('aria-hidden','true');
+      viewerImg.src = '';
+      document.body.style.overflow = '';
+    }
+    viewerClose.addEventListener('click', closeImageViewer);
+    viewerOverlay.addEventListener('click', (e)=>{ if(e.target === viewerOverlay) closeImageViewer(); });
+
+    // compute unit price from advert doc data (defensive)
+    function getUnitPrice(adData){
+      if(!adData) return 0;
+      const candidates = ['unitPrice','unit_price','price','per','unit','amount'];
+      for(const k of candidates){
+        if(typeof adData[k] !== 'undefined' && adData[k] !== null && !isNaN(Number(adData[k]))) return Number(adData[k]);
+      }
+      // if totalCost present and workers present, compute unit
+      const total = Number(adData.totalCost ?? adData.total_cost ?? adData.total ?? 0) || 0;
+      const workers = Number(adData.workers ?? adData.worker_count ?? adData.requested_workers ?? adData.maxWorkers ?? 0) || 0;
+      if(workers > 0 && total > 0) return total / workers;
+      return 0;
+    }
+
+    // render adverts grid
     function rebuildGrid(){
       const q = (search.value || '').trim().toLowerCase();
       grid.innerHTML = '';
       let any = false;
       for(const [id, item] of advertsMap){
         const data = item.data || {};
-        // filter by search
+        // filter
         if(q){
           const hay = ((data.title||'') + ' ' + (data.platform||'') + ' ' + (data.subcategory||'') + ' ' + (data.status||'')).toLowerCase();
           if(!hay.includes(q)) continue;
         }
-        const card = buildCard(id, data);
-        grid.appendChild(card);
+        const node = buildCard(id, data);
+        grid.appendChild(node);
         any = true;
       }
       if(!any) grid.innerHTML = '<div class="empty">You have no adverts yet.</div>';
     }
 
-    // create a card element for an advert
+    // build card (no "Open full" button — only Details)
     function buildCard(id, data){
       const head = el('div',{class:'card-head'});
       const left = el('div',{style:'display:flex;gap:12px;align-items:center'});
-      const thumb = el('img',{class:'thumb', src: data.thumbnail || '', alt: data.title || ''});
-      if(!data.thumbnail) thumb.style.display = 'none';
+      const thumb = el('img',{class:'thumb', src: data.thumbnail || data.thumb || data.image || '', alt: data.title || ''});
+      if(!data.thumbnail && !data.thumb && !data.image) thumb.style.display = 'none';
       thumb.addEventListener('click', ()=>{
-        // open full sized in new tab if exists
-        if(data.thumbnail) window.open(data.thumbnail,'_blank','noopener');
+        const src = data.thumbnail || data.thumb || data.image || '';
+        if(src) openImageViewer(src);
       });
 
       const txt = el('div', {},
@@ -167,60 +225,44 @@
       head.appendChild(left);
       head.appendChild(right);
 
-      const body = el('div',{class:'card-body'}, data.description ? data.description.slice(0,220) + (data.description.length>220? '…':'') : el('span',{},'No description'));
+      const body = el('div',{class:'card-body'}, data.description ? (data.description.slice(0,220) + (data.description.length>220? '…':'')) : el('span',{},'No description'));
 
-      // actions
+      // actions — only Details remains
       const actions = el('div',{class:'actions'});
       const detailsBtn = el('button',{class:'btn ghost'}, 'Details');
-      const openBtn = el('button',{class:'btn'}, 'Open full');
-      actions.appendChild(openBtn);
       actions.appendChild(detailsBtn);
 
-      openBtn.addEventListener('click', ()=> {
-        // go to advert detail page if you have one, fallback to opening doc url (if stored)
-        if(data.detailUrl) return location.href = data.detailUrl;
-        // else try advert edit page pattern
-        location.href = `advert-detail.html?aid=${id}`;
-      });
-
-      // collapsed area for submissions
+      // collapsed submissions area
       const collapse = el('div',{class:'details-collapse', id:`collapse-${id}`},
         el('div',{class:'details-inner'}, el('div',{class:'small muted'}, 'Loading submissions…'))
       );
 
-      // wire details toggle: expand/collapse and attach submissions listener when expanded
       let expanded = false;
       detailsBtn.addEventListener('click', async () => {
         expanded = !expanded;
         if(expanded){
-          // expand visually
-          collapse.style.maxHeight = '600px'; // enough for content
-          // load submissions and subscribe
+          collapse.style.maxHeight = '700px';
           await attachSubmissionsListener(id, collapse.querySelector('.details-inner'));
         } else {
-          // collapse
           collapse.style.maxHeight = '0';
           detachSubmissionsListener(id);
         }
       });
 
       const card = el('article',{class:'card', dataset:{id}}, head, body, actions, collapse);
-
       return card;
     }
 
-    // attach real-time submissions listener for a specific advert inside a container element
+    // attach realtime submissions listener for advertId and render into containerEl
     function attachSubmissionsListener(advertId, containerEl){
-      // avoid double attach
       if(submissionsListeners.has(advertId)) return;
-
-      // show loader
       containerEl.innerHTML = '<div class="small muted">Loading submissions…</div>';
 
-      const submissionsCol = collection(db, 'advert_submissions');
-      const q = query(submissionsCol, where('advertId','==', advertId));
+      // collection name used in your site
+      const subColName = 'advert_submissions';
+      const q = query(collection(db, subColName), where('advertId', '==', advertId));
+
       const unsub = onSnapshot(q, async (snap) => {
-        // build submissions list
         const list = [];
         snap.forEach(s => {
           const d = s.data() || {};
@@ -253,26 +295,92 @@
               el('div',{}, s.textProof || el('em',{}, '(no text proof)'))
             );
 
-            const right = el('div',{style:'min-width:120px;text-align:right'},
-              s.imageUrl ? el('img',{class:'sub-thumb', src:s.imageUrl, alt:'proof'}) : el('div',{}, '')
-            );
+            const right = el('div',{style:'min-width:140px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px'});
+
+            if(s.imageUrl){
+              const img = el('img',{class:'sub-thumb', src:s.imageUrl, alt:'proof'});
+              img.style.cursor = 'pointer';
+              img.addEventListener('click', ()=> openImageViewer(s.imageUrl));
+              right.appendChild(img);
+            }
 
             // status badge
-            const statusBadge = el('div',{class:`${s.status==='approved' ? 'pill approved' : s.status==='rejected' ? 'pill rejected' : 'pill pending' }`, style:'display:inline-block;margin-top:8px;font-size:12px'}, (s.status||'PENDING').toUpperCase());
+            const stLower = (s.status||'').toLowerCase();
+            const statusBadge = el('div',{class:`pill ${stLower==='approved' ? 'approved' : stLower==='completed' ? 'completed' : 'pending' }`}, (s.status||'PENDING').toString().toUpperCase());
+            right.appendChild(statusBadge);
 
-            const bottom = el('div',{style:'margin-top:8px;display:flex;justify-content:space-between;align-items:center'}, statusBadge, el('div',{class:'small muted'}, `Submission ID: ${s.id}`));
+            // If current user is the advert owner, show approve / reject
+            const advert = advertsMap.get(advertId);
+            const advertOwnerId = advert?.data ? (advert.data.createdBy || advert.data.owner || advert.data.userId || advert.data.uid || advert.data.requestedBy || advert.data.creator || advert.data.ownerUid || advert.data.user || null) : null;
+            const unitPrice = getUnitPrice(advert?.data || {});
+            const payAmount = Math.round(unitPrice * 0.7);
+
+            if(currentUser && advertOwnerId && currentUser.uid === advertOwnerId){
+              const controls = el('div',{style:'display:flex;gap:6px;flex-direction:row;'});
+              const approveBtn = el('button',{class:'btn'}, `Approve (₦${payAmount.toLocaleString()})`);
+              const rejectBtn = el('button',{class:'btn ghost'}, 'Reject');
+
+              // disable approve if already approved
+              if((s.status||'').toLowerCase() === 'approved') approveBtn.disabled = true;
+
+              approveBtn.addEventListener('click', async ()=>{
+                if(approveBtn.disabled) return;
+                const ok = confirm(`Approve submission and credit user ₦${payAmount.toLocaleString()}?`);
+                if(!ok) return;
+                approveBtn.disabled = true;
+                approveBtn.textContent = 'Approving…';
+                try{
+                  await approveSubmission(advertId, s.id, s.userId, payAmount);
+                  // UI will update via snapshot
+                }catch(e){
+                  console.error('approve failed', e);
+                  alert('Approve failed: ' + (e.message || e));
+                } finally {
+                  approveBtn.disabled = false;
+                  approveBtn.textContent = `Approve (₦${payAmount.toLocaleString()})`;
+                }
+              });
+
+              rejectBtn.addEventListener('click', async ()=>{
+                const ok = confirm('Reject this submission?');
+                if(!ok) return;
+                try{
+                  await rejectSubmission(s.id);
+                }catch(e){
+                  console.error('reject failed', e);
+                  alert('Reject failed: ' + (e.message || e));
+                }
+              });
+
+              controls.appendChild(approveBtn);
+              controls.appendChild(rejectBtn);
+              right.appendChild(controls);
+            }
 
             sub.appendChild(left);
             sub.appendChild(right);
-            sub.appendChild(bottom);
-
-            // preview image click: open in new tab
-            if(s.imageUrl){
-              const img = sub.querySelector('.sub-thumb');
-              img && img.addEventListener('click', ()=> window.open(s.imageUrl, '_blank','noopener'));
-            }
-
             containerEl.appendChild(sub);
+          }
+        }
+
+        // after rendering, compute approved count and if needed mark advert completed
+        const approvedCount = list.filter(it => (it.status||'').toLowerCase() === 'approved').length;
+        const workersRequested = Number(advert?.data?.workers || advert?.data?.worker_count || advert?.data?.requested_workers || advert?.data?.maxWorkers || 0) || 0;
+        // if enough approved, attempt to mark advert completed
+        if(workersRequested > 0 && approvedCount >= workersRequested){
+          try{
+            // update advert doc status -> completed (best-effort)
+            const advertRef = doc(db, 'advertise_tasks', advertId);
+            await runTransaction(db, async (tx) => {
+              const snap = await tx.get(advertRef);
+              if(!snap.exists()) return;
+              const cur = snap.data() || {};
+              if((cur.status||'') !== 'completed'){
+                tx.update(advertRef, { status: 'completed', completedAt: serverTimestamp() });
+              }
+            });
+          }catch(e){
+            console.warn('mark completed failed', e);
           }
         }
 
@@ -286,7 +394,7 @@
 
     function detachSubmissionsListener(advertId){
       const unsub = submissionsListeners.get(advertId);
-      if(unsub){ try{ unsub(); } catch(e){} }
+      if(unsub){ try{ unsub(); }catch(e){} }
       submissionsListeners.delete(advertId);
     }
 
@@ -297,72 +405,118 @@
       submissionsListeners.clear();
     }
 
-    // query adverts where any of the owner-like fields equals current user
-    // we attach a listener per field and merge results to advertsMap
-    const advertsUnsubs = [];
+    // Approve submission: transactionally update submission and credit user's balance
+    async function approveSubmission(advertId, submissionId, submitterUid, amount){
+      if(!submissionId) throw new Error('Invalid submission id');
+      if(!submitterUid) throw new Error('Invalid submitter id');
+      const submissionRef = doc(db, 'advert_submissions', submissionId);
+      const userRef = doc(db, 'users', submitterUid);
+      // transaction: ensure submission not already approved then update submission and user balance
+      await runTransaction(db, async (tx) => {
+        const subSnap = await tx.get(submissionRef);
+        if(!subSnap.exists()) throw new Error('Submission not found');
+        const subData = subSnap.data() || {};
+        const curStatus = (subData.status || '').toLowerCase();
+        if(curStatus === 'approved') throw new Error('Already approved');
+        // credit user
+        const userSnap = await tx.get(userRef);
+        if(userSnap.exists()){
+          const u = userSnap.data() || {};
+          // try to pick a sensible balance field
+          const balanceFields = ['balance','wallet','funds','walletBalance'];
+          let currentBalance = null, chosenField = null;
+          for(const f of balanceFields){
+            if(typeof u[f] !== 'undefined' && u[f] !== null && !isNaN(Number(u[f]))){
+              currentBalance = Number(u[f]);
+              chosenField = f;
+              break;
+            }
+          }
+          if(chosenField){
+            const newBal = Number(currentBalance || 0) + Number(amount || 0);
+            const up = {}; up[chosenField] = newBal;
+            tx.update(userRef, up);
+          } else {
+            // no predictable field — set `balance`
+            tx.update(userRef, { balance: (Number(u.balance || 0) + Number(amount || 0)) });
+          }
+        } else {
+          // user doc missing — create with balance
+          tx.set(userRef, { balance: Number(amount || 0) }, { merge: true });
+        }
+        // update submission doc to approved and annotate payment
+        tx.update(submissionRef, {
+          status: 'approved',
+          approvedAt: serverTimestamp(),
+          paidAmount: Number(amount || 0),
+          paidBy: currentUser ? currentUser.uid : null
+        });
+      });
+    }
+
+    // Reject submission: simple update
+    async function rejectSubmission(submissionId){
+      if(!submissionId) throw new Error('Invalid submission id');
+      const submissionRef = doc(db, 'advert_submissions', submissionId);
+      await updateDoc(submissionRef, { status: 'rejected', rejectedAt: serverTimestamp() });
+    }
+
+    // start adverts listeners to capture adverts created by current user
     function startAdvertsListeners(uid){
-      // clean previous
+      // cleanup
       advertsMap.clear();
       for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
       advertsUnsubs.length = 0;
       detachAllSubmissionListeners();
+
       grid.innerHTML = '<div class="empty">Loading your adverts…</div>';
       diag.textContent = 'Listening for adverts you created…';
 
-      // listen on single collection that you use (advertise_tasks) as primary
       const primaryCol = 'advertise_tasks';
-      const firstQuery = query(collection(db, primaryCol), where('createdBy','==', uid));
-      const mapLocal = new Map();
 
-      // helper to merge doc into advertsMap (avoid duplicates)
-      function mergeDoc(docSnap){
-        const d = docSnap.data();
-        const id = docSnap.id;
-        // store
-        advertsMap.set(id, { id, data: d });
-        rebuildGrid();
-      }
-
-      // we'll set up listeners for multiple fields but primarily for advertise_tasks collection
-      // create a listener for each candidate owner field inside advertise_tasks
-      const ownerFields = OWNER_FIELDS.slice(); // copy
-      ownerFields.forEach(field => {
+      // set up listeners on candidate owner fields within primary collection
+      for(const field of OWNER_FIELDS){
         try{
           const q = query(collection(db, primaryCol), where(field, '==', uid));
           const unsub = onSnapshot(q, snap => {
-            snap.forEach(docSnap => mergeDoc(docSnap));
-            // remove deleted docs from map if changed? we rely on merging, but we'll rebuild grid after each snapshot
+            snap.forEach(docSnap => {
+              const id = docSnap.id;
+              const d = docSnap.data() || {};
+              advertsMap.set(id, { id, data: d });
+            });
             rebuildGrid();
           }, err => {
-            console.warn('adverts listener (field) error for', field, err);
+            console.warn('adverts listener error for field', field, err);
           });
           advertsUnsubs.push(unsub);
         }catch(e){
-          console.warn('failed setting adverts listener for field', field, e);
+          console.warn('failed setting adverts listener for', field, e);
         }
-      });
+      }
 
-      // also try a single listener that pulls all docs where advertiser uid matches stored 'ownerUid' list (if you have such an array)
-      // No further action needed; rebuildGrid will update as docs arrive.
-    }
-
-    // small utility to find likely owner field and do a one-time probe if needed (not required for realtime path above)
-    async function probeAdvertPresence(uid){
+      // Fallback: also listen to adverts where owner stored in 'ownerUid' array (if used)
       try{
-        // quick probe: look up advertise_tasks where any candidate equals uid (first hit)
-        for(const field of OWNER_FIELDS){
-          try{
-            const q = query(collection(db,'advertise_tasks'), where(field,'==', uid));
-            const snap = await getDocs(q);
-            if(!snap.empty) return true;
-          }catch(e){ /* ignore field errors and continue */ }
-        }
-      }catch(e){}
-      return false;
+        const qAll = query(collection(db, primaryCol), where('status','in',['pending','approved','completed'])); // broad listener
+        const unsubAll = onSnapshot(qAll, snap => {
+          // merge but only include docs that match uid in common fields (safe)
+          snap.forEach(docSnap => {
+            const d = docSnap.data() || {};
+            const possible = [d.createdBy,d.owner,d.userId,d.uid,d.requestedBy,d.creator,d.ownerUid];
+            if(possible.some(x => x === uid || (Array.isArray(x) && x.includes && x.includes(uid)))){
+              advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
+            }
+          });
+          rebuildGrid();
+        }, err => {
+          // if this too noisy, it's fine — we've got primary per-field listeners above
+          console.warn('broad adverts listener error', err);
+        });
+        advertsUnsubs.push(unsubAll);
+      }catch(e){ /* ignore */ }
     }
 
-    // init auth
-    onAuthStateChanged(auth, async (user) => {
+    // auth init
+    onAuthStateChanged(auth, user => {
       currentUser = user;
       if(!user){
         diag.textContent = 'Please sign in to view your adverts.';
@@ -370,15 +524,13 @@
         return;
       }
       diag.textContent = `Signed in as ${user.email || user.displayName || user.uid.slice(0,8)}`;
-      // start listening
       startAdvertsListeners(user.uid);
     });
 
-    // search and refresh
+    // search & refresh
     search.addEventListener('input', () => rebuildGrid());
     refreshBtn.addEventListener('click', () => {
       if(!currentUser) return;
-      // tear down and restart listeners (safe)
       for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
       advertsUnsubs.length = 0;
       advertsMap.clear();
@@ -386,12 +538,11 @@
       startAdvertsListeners(currentUser.uid);
     });
 
-    // cleanup on unload
+    // cleanup
     window.addEventListener('beforeunload', () => {
       for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
       detachAllSubmissionListeners();
     });
-
   </script>
 </body>
 </html>
