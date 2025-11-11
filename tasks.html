@@ -17,8 +17,8 @@
       --panel: rgba(255,255,255,0.03);
       --muted: rgba(255,255,255,0.62);
       --text: #eaf2ff;
-      --accent-a: #8446ff;         /* purple */
-      --accent-b: #6ce2c8;         /* green */
+      --accent-a: #8446ff;
+      --accent-b: #6ce2c8;
       --accent-grad: linear-gradient(135deg, var(--accent-a), #5b3bff 45%, var(--accent-b) 100%);
       --glass: rgba(255,255,255,0.03);
       --radius: 16px;
@@ -43,165 +43,111 @@
       align-items:flex-start;
     }
 
-    /* phone-like centered container to match dashboard */
     .phone {
       width:100%;
       max-width:var(--container-w);
       min-height:740px;
       border-radius:28px;
-      padding:18px 18px 120px; /* bottom padding for fixed nav */
+      padding:18px 18px 120px;
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       box-shadow: 0 18px 60px rgba(0,0,0,0.6);
       overflow:auto;
       position:relative;
     }
 
-    /* page top */
-    .top {
-      display:flex;
-      gap:12px;
-      align-items:center;
-      margin-bottom:12px;
-    }
+    .top { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
     .back {
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 12px;
+      display:inline-flex; align-items:center; gap:8px; padding:8px 12px;
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:12px;
-      text-decoration:none;
-      color:var(--text);
-      border: 1px solid rgba(255,255,255,0.03);
-      font-weight:600;
-      font-size:13px;
+      border-radius:12px; text-decoration:none; color:var(--text);
+      border: 1px solid rgba(255,255,255,0.03); font-weight:600; font-size:13px;
     }
-    .title {
-      font-size:17px;
-      font-weight:800;
-      letter-spacing:0.2px;
-    }
+    .title { font-size:17px; font-weight:800; letter-spacing:0.2px; }
     .sub { color:var(--muted); font-size:12px; }
 
-    /* controls row */
-    .controls {
-      display:flex;
-      gap:10px;
-      align-items:center;
-      margin:12px 0 18px;
-    }
+    .controls { display:flex; gap:10px; align-items:center; margin:12px 0 18px; }
     .search {
-      flex:1;
-      min-width:120px;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,0.03);
-      background:rgba(255,255,255,0.01);
-      color:var(--text);
-      font-size:13px;
+      flex:1; min-width:120px; padding:10px 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,0.03); background:rgba(255,255,255,0.01);
+      color:var(--text); font-size:13px;
     }
     .btn {
-      padding:10px 12px;
-      border-radius:12px;
-      border:none;
+      padding:10px 12px; border-radius:12px; border:none;
       background: linear-gradient(90deg, var(--accent-b), var(--accent-a));
-      color:#041219;
-      font-weight:700;
-      cursor:pointer;
-      font-size:13px;
+      color:#041219; font-weight:700; cursor:pointer; font-size:13px;
       box-shadow: 0 8px 30px rgba(87,52,164,0.12);
     }
-    .btn.ghost {
-      background: transparent;
-      border:1px solid rgba(255,255,255,0.04);
-      color:var(--muted);
-      box-shadow:none;
-    }
+    .btn.ghost { background: transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); box-shadow:none; }
 
-    /* grid cards (single-column on phone-like container to match dashboard "fit") */
-    .grid {
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:12px;
-    }
+    .grid { display:grid; grid-template-columns: 1fr; gap:12px; }
 
     .card {
       background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
-      border-radius:14px;
-      padding:12px;
-      border:1px solid rgba(255,255,255,0.03);
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
-      box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+      border-radius:14px; padding:12px; border:1px solid rgba(255,255,255,0.03);
+      display:flex; gap:12px; align-items:flex-start; box-shadow: 0 18px 50px rgba(0,0,0,0.45);
     }
-
-    .thumb {
-      width:84px;
-      height:84px;
-      border-radius:10px;
-      object-fit:cover;
-      flex:0 0 84px;
-      background: rgba(255,255,255,0.02);
-      cursor:pointer;
-      border: 1px solid rgba(255,255,255,0.02);
-    }
-
+    .thumb { width:84px; height:84px; border-radius:10px; object-fit:cover; flex:0 0 84px; background: rgba(255,255,255,0.02); cursor:pointer; border: 1px solid rgba(255,255,255,0.02); }
     .card-body { flex:1; min-width:0; }
     .card h3 { margin:0 0 6px 0; font-size:15px; font-weight:700; color:#eaf2ff; }
-    .meta {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      color:var(--muted);
-      font-size:12px;
-      margin-bottom:8px;
-    }
+    .meta { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; margin-bottom:8px; }
     .price { font-weight:800; color:var(--accent-b); font-size:14px; }
-
     .small { font-size:12px; color:var(--muted); }
-
     .progressWrap { margin-top:8px; }
     .progressBar { height:8px; background:rgba(255,255,255,0.03); border-radius:999px; overflow:hidden; }
     .progressFill { height:100%; background: linear-gradient(90deg, var(--accent-b), var(--accent-a)); width:0%; transition:width .35s ease; }
     .progressText { font-size:11px; color:var(--muted); margin-top:6px; }
-
     .actions { display:flex; gap:8px; margin-top:10px; align-items:center; }
     .actions .btn { padding:8px 12px; font-size:13px; border-radius:10px; }
     .actions .btn.ghost { padding:8px 12px; }
-
     .empty { padding:40px; text-align:center; color:var(--muted) }
 
-    /* overlays (details & image) */
+    /* ========== CHANGES: overlay and panels are opaque and cover bottom nav ========== */
+
+    /* overlay now solid (almost opaque) and higher z-index so it covers the fixed bottom nav & FAB */
     .overlay {
-      position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-      background:rgba(0,0,0,0.6); z-index:999; padding:18px;
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(2,6,23,0.98); /* nearly opaque solid dark backdrop */
+      z-index: 2200; /* higher than bottom-nav and FAB */
+      padding:18px;
     }
+
+    /* panel changed to solid, fully opaque background for legibility */
     .panel {
       width:100%;
       max-width:420px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      background: #071022; /* solid dark panel */
       border-radius:14px;
       padding:16px;
-      border:1px solid rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.06);
       box-shadow: 0 30px 120px rgba(2,6,23,0.9);
       color:var(--text);
       max-height:92vh;
       overflow:auto;
     }
+
     .panel .closeX { float:right; background:transparent; border:1px solid rgba(255,255,255,0.04); padding:6px 10px; border-radius:8px; color:var(--muted); cursor:pointer; }
     .panel h2 { margin:6px 0 10px 0; font-size:18px; }
 
-    /* thumbLarge preview inside overlay */
-    .thumbLarge {
-      display:block; width:100%; height:180px; object-fit:cover; border-radius:10px; margin-bottom:12px; cursor:pointer;
-      border:1px solid rgba(255,255,255,0.03);
-    }
+    .thumbLarge { display:block; width:100%; height:180px; object-fit:cover; border-radius:10px; margin-bottom:12px; cursor:pointer; border:1px solid rgba(255,255,255,0.03); }
 
-    /* image viewer overlay */
+    /* image viewer overlay uses same opaque backdrop and higher z-index */
+    #imgOverlay {
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(2,6,23,0.98);
+      z-index: 2300;
+      padding:18px;
+    }
     #imgOverlay .panel { max-width:900px; }
 
-    /* bottom nav (fixed) - matches dashboard */
+    /* bottom nav left unchanged z-index so it's underneath overlays */
     .bottom-nav {
       position: fixed;
       left: 50%;
@@ -219,33 +165,15 @@
       gap:10px;
       box-shadow: 0 18px 60px rgba(0,0,0,0.45);
       border: 1px solid rgba(255,255,255,0.04);
-      z-index: 999;
+      z-index: 999; /* lower than overlays */
       backdrop-filter: blur(6px);
     }
-    .nav-btn{
-      width:56px;
-      text-align:center;
-      color:var(--muted);
-      font-size:11px;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:6px;
-      cursor:pointer;
-      user-select:none;
-    }
-    .icon-wrap{
-      width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px;
-    }
+    .nav-btn{ width:56px; text-align:center; color:var(--muted); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; user-select:none; }
+    .icon-wrap{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px; }
     .nav-center { flex:0 0 92px; display:flex; justify-content:center; align-items:center; }
-    .center-btn {
-      width:78px; height:78px; border-radius:50%;
-      background: linear-gradient(135deg,#7a5fff,#35d6b1);
-      display:grid; place-items:center; color:#041219; font-size:26px;
-      box-shadow:0 18px 60px rgba(87,52,164,0.2); transform:translateY(-18px); border:none; cursor:pointer;
-    }
+    .center-btn { width:78px; height:78px; border-radius:50%; background: linear-gradient(135deg,#7a5fff,#35d6b1); display:grid; place-items:center; color:#041219; font-size:26px; box-shadow:0 18px 60px rgba(87,52,164,0.2); transform:translateY(-18px); border:none; cursor:pointer; }
 
-    /* contact floating action button */
+    /* contact FAB is under overlays due to z-index */
     .contact-fab {
       position: fixed;
       bottom: 110px;
@@ -255,10 +183,10 @@
       display:grid; place-items:center; font-size:22px;
       background: linear-gradient(135deg,#35d6b1,#5e47ff);
       color:#041219; box-shadow:0 18px 50px rgba(87,52,164,0.18);
-      z-index: 1000; text-decoration:none; border:none; cursor:pointer;
+      z-index: 1200; text-decoration:none; border:none; cursor:pointer;
     }
 
-    /* responsive small screens: keep the same phone feel */
+    /* responsive adjustments */
     @media(max-width:480px){
       body{ padding:14px; }
       .phone{ min-height:calc(100vh - 40px); padding-bottom:120px; border-radius:20px; }
@@ -271,7 +199,6 @@
       .phone { max-width:480px; min-height:760px; }
       .contact-fab { transform: translateX(calc(var(--container-w) / 2 - 72px)); }
     }
-
   </style>
 </head>
 <body>
@@ -482,23 +409,29 @@
       proofImage.value = '';
       overlay.style.display = 'flex';
       overlay.setAttribute('aria-hidden', 'false');
+
+      // optional: prevent body scrolling while overlay is open
+      document.body.style.overflow = 'hidden';
     }
 
     function closeDetailsOverlay() {
       overlay.style.display = 'none';
       overlay.setAttribute('aria-hidden', 'true');
       activeAdvertId = null;
+      document.body.style.overflow = ''; // restore scrolling
     }
 
     function openImageOverlay(src){
       imgView.src = src;
       imgOverlay.style.display = 'flex';
       imgOverlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
     }
     function closeImageOverlay(){
       imgOverlay.style.display = 'none';
       imgOverlay.setAttribute('aria-hidden','true');
       imgView.src = '';
+      document.body.style.overflow = '';
     }
 
     // Imgur upload
