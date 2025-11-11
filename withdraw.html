@@ -3,59 +3,244 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth - withdraw</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <title>Beni-Wealth — Withdraw</title>
 
   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
-  <!-- Favicons & Social preview -->
+  <!-- Favicons & Theme -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
 
-  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body{font-family: 'Poppins',sans-serif}
-    .glass{background:rgba(255,255,255,0.06);backdrop-filter:blur(6px)}
+    :root{
+      --bg-1: #0b0613;
+      --bg-2: #0f0820;
+      --muted: rgba(255,255,255,0.62);
+      --text: #eaf2ff;
+      --accent-a: #8446ff;
+      --accent-b: #6ce2c8;
+      --accent-grad: linear-gradient(135deg, var(--accent-a), #5b3bff 45%, var(--accent-b) 100%);
+      --glass: rgba(255,255,255,0.03);
+      --container-w: 420px;
+      font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      min-height:100%;
+      background:
+        radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent),
+        radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.06), transparent),
+        linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex;
+      justify-content:center;
+      padding:20px;
+    }
+
+    /* phone container */
+    .phone {
+      width:100%;
+      max-width:var(--container-w);
+      min-height:760px;
+      border-radius:28px;
+      padding:18px 18px 120px; /* room for fixed nav */
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 20px 70px rgba(0,0,0,0.6);
+      overflow:auto;
+      position:relative;
+    }
+
+    /* header */
+    .top {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .leftTop { display:flex; gap:12px; align-items:center; }
+    .btn-back {
+      padding:10px 12px;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.03);
+      color:var(--text);
+      text-decoration:none;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .page-title { font-size:18px; font-weight:800; }
+    .page-sub { color:var(--muted); font-size:12px; }
+
+    /* main panel (glass) */
+    .panel {
+      border-radius:18px;
+      padding:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+    }
+
+    .header-row {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .balance { color:var(--muted); font-size:13px; }
+    .records-link {
+      padding:8px 12px;
+      border-radius:10px;
+      background: linear-gradient(90deg,var(--accent-b),var(--accent-a));
+      color:#041219;
+      font-weight:700;
+      text-decoration:none;
+      border:none;
+      cursor:pointer;
+    }
+
+    /* form */
+    form{ display:grid; gap:12px; margin-top:6px; }
+    label { display:block; }
+    .field-label { color:var(--muted); font-size:13px; margin-bottom:6px; }
+    input[type="text"], input[type="number"], select, textarea {
+      width:100%;
+      padding:12px 14px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.03);
+      background: rgba(255,255,255,0.01);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    input:focus, select:focus, textarea:focus { box-shadow: 0 8px 30px rgba(87,52,164,0.08); border-color: rgba(92,73,255,0.35); }
+
+    .note { font-size:12px; color:var(--muted); margin-top:6px; }
+
+    .form-row { display:flex; gap:10px; justify-content:space-between; align-items:center; }
+    .form-actions { display:flex; gap:8px; align-items:center; }
+
+    .btn-primary {
+      padding:10px 16px;
+      border-radius:12px;
+      background: linear-gradient(90deg,var(--accent-b),var(--accent-a));
+      color:#041219;
+      font-weight:800;
+      border:none;
+      cursor:pointer;
+      box-shadow: 0 10px 30px rgba(87,52,164,0.14);
+    }
+    .btn-ghost {
+      padding:10px 14px;
+      border-radius:12px;
+      background: transparent;
+      border:1px solid rgba(255,255,255,0.04);
+      color:var(--muted);
+      cursor:pointer;
+    }
+
+    .form-error { color:#fb6b6b; font-size:13px; min-height:18px; }
+    .toast {
+      position: fixed;
+      right:18px;
+      bottom:18px;
+      padding:12px 14px;
+      border-radius:10px;
+      color:#fff;
+      font-weight:700;
+      z-index:2000;
+      transform-origin:bottom right;
+    }
+
+    /* bottom nav */
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 20px;
+      height: 74px;
+      width: calc(min(var(--container-w), 100%) - 28px);
+      max-width: var(--container-w);
+      background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border-radius: 38px;
+      padding: 10px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.04);
+      z-index: 999;
+      backdrop-filter: blur(6px);
+    }
+    .nav-btn{ width:56px; text-align:center; color:var(--muted); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; user-select:none; }
+    .icon-wrap{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px; }
+
+    /* contact FAB */
+    .contact-fab {
+      position: fixed;
+      bottom: 110px;
+      left: 50%;
+      transform: translateX(calc(var(--container-w) / 2 - 72px));
+      width:56px; height:56px; border-radius:50%;
+      display:grid; place-items:center; font-size:20px;
+      background: linear-gradient(135deg,#35d6b1,#5e47ff);
+      color:#041219; box-shadow:0 18px 50px rgba(87,52,164,0.18);
+      z-index: 1200; text-decoration:none; border:none; cursor:pointer;
+    }
+
+    @media(max-width:480px){
+      body{ padding:14px; }
+      .phone{ min-height:calc(100vh - 40px); padding-bottom:140px; border-radius:20px; }
+      .bottom-nav { left:14px; right:14px; transform:none; width:auto; max-width: calc(100% - 28px); }
+      .contact-fab { left:auto; right:20px; transform:none; bottom:100px; }
+    }
+    @media(min-width:900px){
+      .phone{ max-width:480px; }
+      .contact-fab { transform: translateX(calc(var(--container-w) / 2 - 72px)); }
+    }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-gray-900 text-slate-100 flex items-center justify-center p-6">
-  <main class="max-w-3xl w-full">
-    <div class="glass border border-white/6 rounded-2xl p-8 shadow-2xl">
-      <header class="flex items-center justify-between mb-6">
+<body>
+  <div class="phone" role="main" aria-live="polite">
+    <div class="top">
+      <div class="leftTop">
+        <button id="backBtn" class="btn-back" aria-label="Back to dashboard">← Back</button>
         <div>
-          <h1 class="text-2xl font-semibold">Request Withdrawal</h1>
-          <p class="text-sm text-slate-400">Fill the details below to request a withdrawal.</p>
+          <div class="page-title">Request Withdrawal</div>
+          <div class="page-sub">Fill the details below to request a withdrawal.</div>
         </div>
-        <div class="text-right">
-          <div id="balanceDisplay" class="text-sm text-slate-300">Balance: ₦0</div>
-          <a id="recordsLink" href="withdrawal-record.html" class="inline-block mt-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm shadow">Records</a>
-        </div>
-      </header>
+      </div>
 
-      <form id="withdrawForm" class="grid grid-cols-1 gap-4">
-        <label class="block">
-          <span class="text-sm text-slate-300">Account name</span>
-          <input id="accountName" required type="text" placeholder="John Doe" class="mt-2 w-full rounded-lg bg-white/5 border border-white/6 py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500" />
+      <div style="text-align:right">
+        <div id="balanceDisplay" class="balance">Balance: ₦0</div>
+        <a id="recordsLink" href="withdrawal-record.html" class="records-link" style="display:inline-block;margin-top:8px">Records</a>
+      </div>
+    </div>
+
+    <section class="panel" aria-label="Withdraw form panel">
+      <form id="withdrawForm" novalidate>
+        <label>
+          <div class="field-label">Account name</div>
+          <input id="accountName" required type="text" placeholder="John Doe" />
         </label>
 
-        <label class="block">
-          <span class="text-sm text-slate-300">Account number</span>
-          <input id="accountNumber" required inputmode="numeric" type="text" maxlength="10" placeholder="0123456789" class="mt-2 w-full rounded-lg bg-white/5 border border-white/6 py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500" />
-          <p class="text-xs text-slate-400 mt-1">Most Nigerian banks use 10-digit account numbers — we'll validate this.</p>
+        <label>
+          <div class="field-label">Account number</div>
+          <input id="accountNumber" required inputmode="numeric" type="text" maxlength="10" placeholder="0123456789" />
+          <div class="note">Most Nigerian banks use 10-digit account numbers — we'll validate this.</div>
         </label>
 
-        <label class="block">
-          <span class="text-sm text-slate-300">Bank</span>
-          <select id="bank" required class="mt-2 w-full rounded-lg bg-white/5 border border-white/6 py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500">
+        <label>
+          <div class="field-label">Bank</div>
+          <select id="bank" required>
             <option value="">Select bank</option>
             <option>OPay</option>
             <option>Palmpay</option>
@@ -84,32 +269,60 @@
           </select>
         </label>
 
-        <label class="block">
-          <span class="text-sm text-slate-300">Amount (₦)</span>
-          <input id="amount" required type="number" min="1000" step="1" placeholder="1000" class="mt-2 w-full rounded-lg bg-white/5 border border-white/6 py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500" />
-          <p class="text-xs text-slate-400 mt-1">Minimum withdrawal amount is ₦1,000.</p>
+        <label>
+          <div class="field-label">Amount (₦)</div>
+          <input id="amount" required type="number" min="1000" step="1" placeholder="1000" />
+          <div class="note">Minimum withdrawal amount is ₦1,000.</div>
         </label>
 
-        <div class="flex items-center justify-between mt-2">
-          <div id="formMsg" class="text-sm"></div>
-          <div class="flex items-center gap-3">
-            <button id="submitBtn" type="submit" class="px-5 py-2 bg-green-600 rounded-lg shadow hover:bg-green-500">Request</button>
-            <button id="clearBtn" type="button" class="px-4 py-2 bg-white/5 rounded-lg">Clear</button>
+        <div class="form-row">
+          <div id="formMsg" class="form-error"></div>
+          <div class="form-actions">
+            <button id="submitBtn" type="submit" class="btn-primary">Request</button>
+            <button id="clearBtn" type="button" class="btn-ghost">Clear</button>
           </div>
         </div>
       </form>
 
-      <div id="statusToast" class="fixed right-6 bottom-6 invisible transform transition-all rounded-lg p-4 shadow-lg"></div>
+    </section>
+  </div>
+
+  <!-- bottom navigation & contact FAB -->
+  <div class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <div id="navHome" class="nav-btn" title="Home">
+      <div class="icon-wrap">🏠</div>
+      <div style="font-size:11px;color:var(--muted)">Home</div>
     </div>
 
-    <footer class="mt-6 text-center text-slate-400 text-xs">© Beni-Wealth</footer>
-  </main>
+    <div id="navConvert" class="nav-btn" title="Shortlinks">
+      <div class="icon-wrap">🔗</div>
+      <div style="font-size:11px;color:var(--muted)">shortlinks</div>
+    </div>
+
+    <div class="nav-center" style="flex:0 0 92px;display:flex;justify-content:center;align-items:center">
+      <button id="navCenter" class="icon-wrap" style="width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,#7a5fff,#35d6b1);transform:translateY(-18px);font-size:26px;display:grid;place-items:center;border:none;cursor:pointer">➕</button>
+    </div>
+
+    <div id="navNews" class="nav-btn" title="News">
+      <div class="icon-wrap">💬</div>
+      <div style="font-size:11px;color:var(--muted)">News</div>
+    </div>
+
+    <div id="navAssets" class="nav-btn" title="Assets">
+      <div class="icon-wrap">👤</div>
+      <div style="font-size:11px;color:var(--muted)">Assets</div>
+    </div>
+  </div>
+
+  <a id="contactFab" class="contact-fab" href="contact.html" title="Contact support" aria-label="Contact support">💬</a>
+
+  <div id="statusToast" class="toast" style="display:none"></div>
 
   <script type="module">
-    // ---------- FIREBASE CONFIG (from your saved config) ----------
+    // ---------- FIREBASE CONFIG ----------
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import {
-      getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, onSnapshot, getDoc
+      getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, onSnapshot
     } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
@@ -127,7 +340,7 @@
     const db = getFirestore();
     const auth = getAuth();
 
-    // ---------- UI helpers ----------
+    // ---------- UI refs ----------
     const form = document.getElementById('withdrawForm');
     const accountNameEl = document.getElementById('accountName');
     const accountNumberEl = document.getElementById('accountNumber');
@@ -138,45 +351,44 @@
     const clearBtn = document.getElementById('clearBtn');
     const statusToast = document.getElementById('statusToast');
     const balanceDisplay = document.getElementById('balanceDisplay');
+    const backBtn = document.getElementById('backBtn');
 
     let currentUser = null;
     let currentBalance = 0;
     const MIN_WITHDRAWAL = 1000;
+    let userUnsub = null;
 
-    function showToast(message, isError = false) {
+    function showToast(message, isError = false){
       statusToast.textContent = message;
-      statusToast.className = `fixed right-6 bottom-6 rounded-lg p-4 shadow-lg ${isError ? 'bg-red-600 text-white' : 'bg-green-600 text-white'} visible`;
-      setTimeout(() => {
-        statusToast.classList.remove('visible');
-        statusToast.style.opacity = '0';
-        statusToast.className = 'fixed right-6 bottom-6 invisible transform transition-all rounded-lg p-4 shadow-lg';
-      }, 3500);
+      statusToast.style.display = 'block';
+      statusToast.style.background = isError ? '#fb5560' : 'linear-gradient(90deg,var(--accent-b),var(--accent-a))';
+      statusToast.style.color = '#041219';
+      setTimeout(()=> { statusToast.style.display = 'none'; }, 3500);
     }
 
-    function setFormError(msg){ formMsg.textContent = msg; formMsg.className = 'text-sm text-red-400'; }
-    function clearFormError(){ formMsg.textContent = ''; formMsg.className = 'text-sm'; }
+    function setFormError(msg){ formMsg.textContent = msg; formMsg.className = 'form-error'; }
+    function clearFormError(){ formMsg.textContent = ''; formMsg.className = ''; }
 
     function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
 
-    // auth state: track user and user's balance (live via onSnapshot)
-    let userUnsub = null;
-    onAuthStateChanged(auth, async (user) => {
+    // auth state: subscribe to users/{uid} to get live balance
+    onAuthStateChanged(auth, (user) => {
       currentUser = user;
       if(user){
-        // subscribe to user doc to keep balance fresh
         const uRef = doc(db, 'users', user.uid);
         if(userUnsub) userUnsub();
-        userUnsub = onSnapshot(uRef, (snap)=>{
+        userUnsub = onSnapshot(uRef, (snap) => {
           const d = snap.exists() ? snap.data() : {};
           currentBalance = Number(d.balance || 0);
           balanceDisplay.textContent = `Balance: ${formatN(currentBalance)}`;
-          // enable/disable submit depending on balance and auth
           submitBtn.disabled = currentBalance < MIN_WITHDRAWAL;
-        }, (err)=>{ console.error('user doc listener err', err); });
+        }, (err) => {
+          console.error('user doc listener error', err);
+        });
       } else {
         if(userUnsub) userUnsub(); userUnsub = null;
         currentBalance = 0;
-        balanceDisplay.textContent = `Balance: ${formatN(0)} (sign in required)`;
+        balanceDisplay.textContent = `${formatN(0)} (sign in required)`;
         submitBtn.disabled = true;
       }
     });
@@ -206,11 +418,9 @@
 
       const { accountName, accountNumber, bank, amount } = check.data;
 
-      // optimistic UI: disable button
       submitBtn.disabled = true; submitBtn.textContent = 'Processing...';
 
       try {
-        // run transaction: ensure user has enough balance, deduct, create withdrawal and transaction docs
         const userRef = doc(db, 'users', currentUser.uid);
 
         await runTransaction(db, async (tx) => {
@@ -221,7 +431,6 @@
           if(bal < amount) throw new Error('INSUFFICIENT_FUNDS');
 
           const newBal = bal - amount;
-          // update balance and write a withdrawal request
           tx.set(userRef, { balance: newBal }, { merge: true });
 
           const withdrawRef = doc(collection(db, 'withdrawal'));
@@ -230,7 +439,6 @@
             status: 'pending', requestedBy: currentUser.uid, createdAt: serverTimestamp()
           });
 
-          // also create a transaction record
           const txRef = doc(collection(db, 'transactions'));
           tx.set(txRef, {
             userId: currentUser.uid,
@@ -260,6 +468,22 @@
     });
 
     clearBtn.addEventListener('click', () => form.reset());
+
+    // navigation controls
+    backBtn.addEventListener('click', () => location.href = 'dashboard.html');
+    document.getElementById('recordsLink').addEventListener('click', (e)=>{ /* default anchor works */ });
+
+    // bottom nav actions (update to your pages)
+    document.getElementById('navHome').addEventListener('click', ()=> location.href = 'catalog.html');
+    document.getElementById('navConvert').addEventListener('click', ()=> location.href = 'convert.html');
+    document.getElementById('navCenter').addEventListener('click', ()=> location.href = 'center.html');
+    document.getElementById('navNews').addEventListener('click', ()=> location.href = 'news.html');
+    document.getElementById('navAssets').addEventListener('click', ()=> location.href = 'dashboard.html');
+
+    // contact FAB keyboard support
+    document.getElementById('contactFab').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') window.location.href = 'contact.html';
+    });
   </script>
 </body>
-        </html>
+</html>
