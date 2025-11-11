@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — Users · Beni‑Wealth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#2fe0b8">
+  <style>
+    :root{
+      --bg-1:#060511; --bg-2:#0f0920; --muted:rgba(255,255,255,0.62);
+      --text:#eaf2ff; --accent-start:#2fe0b8; --accent-end:#7a5fff; --card:rgba(255,255,255,0.02);
+      --radius:14px; --container-w:1200px; --bottom-nav-h:74px;
+      font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:var(--container-w);margin:24px auto;padding:20px}
+
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand img{width:54px;height:54px;border-radius:12px}
+    .brand .title{font-weight:800}
+    .brand .sub{color:var(--muted);font-size:13px}
+
+    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+    .search{flex:1;min-width:220px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.005));color:var(--text)}
+    .btn{padding:10px 14px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    @media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:720px){.grid{grid-template-columns:1fr}}
+
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.015),rgba(255,255,255,0.01));border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 14px 40px rgba(0,0,0,0.6)}
+    .card .top{display:flex;gap:12px;align-items:center}
+    .avatar{width:56px;height:56px;border-radius:12px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;font-weight:900;color:#041219}
+    .meta{flex:1}
+    .meta .name{font-weight:800}
+    .meta .sub{color:var(--muted);font-size:13px}
+    .card .foot{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:10px}
+
+    /* overlay full-screen modal */
+    .overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.6),rgba(0,0,0,0.85));display:none;align-items:center;justify-content:center;z-index:9999;padding:28px}
+    .panel{width:100%;max-width:1000px;background:linear-gradient(180deg,rgba(255,255,255,0.015),rgba(255,255,255,0.01));border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 120px rgba(0,0,0,0.8);color:var(--text);overflow:auto}
+    .panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .panel .content{display:flex;gap:18px;margin-top:12px}
+    .left{flex:0 0 360px}
+    .right{flex:1;min-width:300px}
+
+    .field{margin-bottom:10px}
+    .label{color:var(--muted);font-size:13px;margin-bottom:6px}
+    input[type='text'], input[type='number'], select, textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--text)}
+
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left;font-size:13px}
+    th{color:var(--muted);font-weight:700}
+
+    .muted{color:var(--muted)}
+    .small{font-size:13px;color:var(--muted)}
+
+    .toast{position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;padding:8px 12px;border-radius:10px;font-weight:800;box-shadow:0 12px 40px rgba(0,0,0,0.6);z-index:10000}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth"/>
+        <div>
+          <div class="title">Admin — Users</div>
+          <div class="sub">Search, inspect and manage users</div>
+        </div>
+      </div>
+      <div>
+        <button id="refreshBtn" class="btn ghost">Refresh</button>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <input id="search" class="search" placeholder="Search username, uid or email" />
+      <select id="planFilter" style="min-width:160px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)">
+        <option value="">All plans</option>
+        <option>basic</option>
+        <option>bronze</option>
+        <option>silver</option>
+        <option>gold</option>
+        <option>platinum</option>
+      </select>
+      <div class="small" id="count">—</div>
+    </div>
+
+    <section id="grid" class="grid">
+      <!-- user cards inserted here -->
+    </section>
+  </div>
+
+  <!-- overlay detail -->
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+      <header>
+        <div>
+          <div id="panelTitle" style="font-weight:800">User details</div>
+          <div class="small muted" id="panelSub">UID: —</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="closePanel" class="btn ghost">Close</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="left">
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+            <div id="panelAvatar" class="avatar">U</div>
+            <div>
+              <div id="panelName" style="font-weight:900;font-size:16px">—</div>
+              <div id="panelEmail" class="small muted">—</div>
+              <div id="panelJoined" class="small muted">Joined: —</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:10px">
+            <div class="field"><div class="label">Referral code used</div><div id="panelReferral" class="small muted">—</div></div>
+            <div class="field"><div class="label">Current plan</div><select id="panelPlan"><option value="basic">basic</option><option value="bronze">bronze</option><option value="silver">silver</option><option value="gold">gold</option><option value="platinum">platinum</option></select></div>
+            <div class="field"><div class="label">Balance (₦)</div><input id="panelBalance" type="number" /></div>
+
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button id="saveUserBtn" class="btn">Save changes</button>
+              <button id="createAdjBtn" class="btn ghost">Create adjustment</button>
+            </div>
+            <div id="panelStatus" class="small muted" style="margin-top:8px">—</div>
+          </div>
+
+          <div style="margin-top:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <div style="font-weight:800">Recent transactions</div>
+              <div class="small muted">Showing latest 100</div>
+            </div>
+            <div style="max-height:320px;overflow:auto;background:transparent;border-radius:8px;padding:6px;border:1px solid rgba(255,255,255,0.03)">
+              <table id="txTable"><thead><tr><th>When</th><th>Type</th><th>Amount</th><th>Note</th></tr></thead><tbody><tr><td colspan="4" class="small muted">Loading…</td></tr></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <div class="right">
+          <div style="font-weight:800;margin-bottom:8px">Full user record</div>
+          <div class="card" style="padding:12px;max-height:760px;overflow:auto">
+            <pre id="rawUser" style="white-space:pre-wrap;color:var(--muted);font-size:13px">—</pre>
+          </div>
+
+          <div style="margin-top:14px">
+            <div style="font-weight:800;margin-bottom:8px">Adjustment / audit</div>
+            <div class="card" style="padding:12px">
+              <div class="field"><div class="label">Amount (positive to credit, negative to debit)</div><input id="adjAmount" type="number" placeholder="e.g. 1500" /></div>
+              <div class="field"><div class="label">Reason</div><input id="adjReason" type="text" placeholder="Optional reason or note" /></div>
+              <div style="display:flex;gap:8px;margin-top:8px"><button id="applyAdjBtn" class="btn">Apply adjustment</button><button id="cancelAdjBtn" class="btn ghost">Cancel</button></div>
+              <div id="adjStatus" class="small muted" style="margin-top:8px">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import {
+      getFirestore, collection, getDocs, doc, getDoc, updateDoc, runTransaction, serverTimestamp, query, where, orderBy, limit
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    if(!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // ui refs
+    const grid = document.getElementById('grid');
+    const search = document.getElementById('search');
+    const planFilter = document.getElementById('planFilter');
+    const count = document.getElementById('count');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    const overlay = document.getElementById('overlay');
+    const closePanel = document.getElementById('closePanel');
+    const panelTitle = document.getElementById('panelTitle');
+    const panelSub = document.getElementById('panelSub');
+    const panelAvatar = document.getElementById('panelAvatar');
+    const panelName = document.getElementById('panelName');
+    const panelEmail = document.getElementById('panelEmail');
+    const panelJoined = document.getElementById('panelJoined');
+
+    const panelReferral = document.getElementById('panelReferral');
+    const panelPlan = document.getElementById('panelPlan');
+    const panelBalance = document.getElementById('panelBalance');
+    const saveUserBtn = document.getElementById('saveUserBtn');
+    const createAdjBtn = document.getElementById('createAdjBtn');
+    const panelStatus = document.getElementById('panelStatus');
+
+    const rawUser = document.getElementById('rawUser');
+    const txTable = document.getElementById('txTable').querySelector('tbody');
+
+    const adjAmount = document.getElementById('adjAmount');
+    const adjReason = document.getElementById('adjReason');
+    const applyAdjBtn = document.getElementById('applyAdjBtn');
+    const cancelAdjBtn = document.getElementById('cancelAdjBtn');
+    const adjStatus = document.getElementById('adjStatus');
+
+    const toastEl = document.getElementById('toast');
+
+    let usersCache = [];
+    let selectedUserId = null;
+    let currentAdmin = null;
+
+    const REF_FIELDS = ['referredBy','referrer','referral','ref','referred_by','invitedBy','sponsor'];
+
+    function showToast(msg){ toastEl.textContent = msg; toastEl.style.display = 'block'; setTimeout(()=>toastEl.style.display='none',3000); }
+
+    function fmtDate(v){ try{ if(!v) return '-'; if(typeof v.toDate === 'function') return v.toDate().toLocaleString(); if(typeof v==='string') return new Date(v).toLocaleString(); if(typeof v.seconds==='number'){ return new Date(v.seconds*1000).toLocaleString(); } return '-'; }catch(e){ return '-'; } }
+
+    function getReferralFromDoc(d){ for(const f of REF_FIELDS){ if(d[f]) return d[f]; } return '' }
+
+    async function loadUsers(){
+      grid.innerHTML = '<div class="small muted">Loading users…</div>';
+      count.textContent = 'loading...';
+      try{
+        const snap = await getDocs(collection(db,'users'));
+        usersCache = [];
+        snap.forEach(s => { usersCache.push({ id: s.id, data: s.data() }); });
+        renderUsers(usersCache);
+      }catch(err){ console.error('loadUsers',err); grid.innerHTML = '<div class="small muted">Failed to load users — check console</div>'; count.textContent = '-'; }
+    }
+
+    function renderUsers(list){
+      const q = (search.value || '').toLowerCase().trim();
+      const planF = (planFilter.value || '').toLowerCase();
+      const filtered = list.filter(u=>{
+        const d = u.data || {};
+        const username = (d.username||d.name||'').toString().toLowerCase();
+        const email = (d.email||'').toString().toLowerCase();
+        const uid = (u.id||'').toString().toLowerCase();
+        const plan = (d.plan||'basic').toString().toLowerCase();
+        const matchesQ = !q || username.includes(q) || email.includes(q) || uid.includes(q);
+        const matchesPlan = !planF || plan === planF;
+        return matchesQ && matchesPlan;
+      });
+
+      count.textContent = `${filtered.length} user${filtered.length!==1?'s':''}`;
+      if(filtered.length === 0){ grid.innerHTML = '<div class="small muted">No users found</div>'; return; }
+      grid.innerHTML = filtered.map(u=>{
+        const d = u.data||{};
+        const name = d.username || d.name || (d.email? d.email.split('@')[0] : 'User');
+        const email = d.email || '-';
+        const plan = (d.plan || 'basic');
+        const balance = Number(d.balance || 0).toLocaleString('en-NG');
+        const ref = getReferralFromDoc(d) || '-';
+        const uid = u.id;
+        return `
+          <div class="card" data-uid="${uid}">
+            <div class="top">
+              <div class="avatar">${escapeHtml(name.charAt(0).toUpperCase()||'U')}</div>
+              <div class="meta">
+                <div class="name">${escapeHtml(name)}</div>
+                <div class="sub">${escapeHtml(email)}</div>
+                <div class="small muted">Plan: ${escapeHtml(plan)} · Balance: ₦${escapeHtml(balance)}</div>
+              </div>
+            </div>
+            <div class="foot">
+              <div class="small muted">Referred by: ${escapeHtml(ref)}</div>
+              <div>
+                <button class="btn ghost detailBtn">Detail</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // wire detail buttons
+      document.querySelectorAll('.detailBtn').forEach(b=>b.addEventListener('click', (e)=>{
+        const card = e.target.closest('.card');
+        const uid = card.getAttribute('data-uid');
+        openDetail(uid);
+      }));
+    }
+
+    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // open detail overlay
+    async function openDetail(uid){
+      selectedUserId = uid;
+      overlay.style.display = 'flex'; overlay.setAttribute('aria-hidden','false'); document.body.style.overflow = 'hidden';
+      panelStatus.textContent = 'Loading user...';
+
+      try{
+        const uRef = doc(db,'users',uid);
+        const snap = await getDoc(uRef);
+        if(!snap.exists()){ panelStatus.textContent = 'User not found'; return; }
+        const d = snap.data();
+        panelTitle.textContent = d.username || d.name || (d.email? d.email.split('@')[0] : 'User');
+        panelSub.textContent = 'UID: ' + uid;
+        panelAvatar.textContent = (panelTitle.textContent||'U').charAt(0).toUpperCase();
+        panelName.textContent = d.username || d.name || panelTitle.textContent;
+        panelEmail.textContent = d.email || '-';
+        panelJoined.textContent = 'Joined: ' + (d.createdAt ? fmtDate(d.createdAt) : (d.registeredAt ? fmtDate(d.registeredAt) : '-'));
+        panelPlan.value = (d.plan || 'basic').toString().toLowerCase();
+        panelBalance.value = Number(d.balance || 0);
+        panelReferral.textContent = getReferralFromDoc(d) || '-';
+        rawUser.textContent = JSON.stringify({ id: uid, ...d }, null, 2);
+        panelStatus.textContent = '';
+
+        // load transactions (latest 100)
+        txTable.innerHTML = '<tr><td colspan="4" class="small muted">Loading transactions…</td></tr>';
+        try{
+          const tcol = collection(db,'transactions');
+          const q = query(tcol, where('userId','==', uid), orderBy('createdAt','desc'), limit(100));
+          const snapTx = await getDocs(q);
+          const rows = [];
+          snapTx.forEach(t => {
+            const td = t.data();
+            rows.push(`<tr><td>${fmtDate(td.createdAt)}</td><td>${escapeHtml(td.type || td.source || '')}</td><td>₦${Number(td.amount||0).toLocaleString('en-NG')}</td><td class="small muted">${escapeHtml(td.source || td.note || td.reason || '')}</td></tr>`);
+          });
+          txTable.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="4" class="small muted">No transactions found</td></tr>';
+        }catch(err){ console.error('load tx',err); txTable.innerHTML = '<tr><td colspan="4" class="small muted">Unable to load transactions</td></tr>'; }
+
+      }catch(err){ console.error('openDetail',err); panelStatus.textContent = 'Error loading user'; }
+    }
+
+    closePanel.addEventListener('click', ()=>{ overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); document.body.style.overflow=''; selectedUserId = null; txTable.innerHTML = '<tr><td colspan="4" class="small muted">—</td></tr>'; });
+
+    // save basic edits (plan & balance direct set)
+    saveUserBtn.addEventListener('click', async ()=>{
+      if(!selectedUserId) return; saveUserBtn.disabled = true; panelStatus.textContent = 'Saving...';
+      try{
+        const uRef = doc(db,'users',selectedUserId);
+        const newPlan = (panelPlan.value || 'basic').toString();
+        const newBal = Number(panelBalance.value || 0);
+
+        // perform transaction to set balance safely (preserve concurrent updates)
+        await runTransaction(db, async (tx)=>{
+          const snap = await tx.get(uRef);
+          if(!snap.exists()) throw new Error('USER_NOT_FOUND');
+          const old = Number(snap.data().balance || 0);
+          // set new balance
+          tx.update(uRef, { plan: newPlan, balance: newBal, planUpdatedAt: serverTimestamp() });
+          // if balance changed, create admin_adjustment transaction
+          const delta = newBal - old;
+          if(delta !== 0){
+            const txRef = doc(collection(db,'transactions'));
+            tx.set(txRef, { userId: selectedUserId, type: 'admin_adjustment', amount: Math.abs(delta), adminId: currentAdmin ? currentAdmin.uid : null, delta: delta, note: 'Balance set by admin', createdAt: serverTimestamp() });
+          }
+        });
+
+        panelStatus.textContent = 'Saved successfully'; showToast('User updated');
+        // refresh local cache and UI
+        await loadUsers();
+      }catch(err){ console.error('saveUser',err); panelStatus.textContent = 'Failed to save: ' + (err.message||err); }
+      finally{ saveUserBtn.disabled = false; }
+    });
+
+    // create adjustment (quick flow: open adjustment UI area)
+    createAdjBtn.addEventListener('click', ()=>{
+      adjAmount.focus(); showToast('Enter adjustment amount below');
+    });
+
+    cancelAdjBtn.addEventListener('click', ()=>{ adjAmount.value=''; adjReason.value=''; adjStatus.textContent=''; });
+
+    applyAdjBtn.addEventListener('click', async ()=>{
+      if(!selectedUserId) return; const amt = Number(adjAmount.value || 0); const reason = (adjReason.value||'').trim();
+      if(!amt){ adjStatus.textContent = 'Enter non-zero amount'; return; }
+      applyAdjBtn.disabled = true; adjStatus.textContent = 'Applying...';
+      try{
+        const uRef = doc(db,'users',selectedUserId);
+        await runTransaction(db, async (tx)=>{
+          const s = await tx.get(uRef);
+          if(!s.exists()) throw new Error('USER_NOT_FOUND');
+          const old = Number(s.data().balance || 0);
+          const next = old + amt; // amt may be negative
+          tx.update(uRef, { balance: next, updatedAt: serverTimestamp() });
+          const txRef = doc(collection(db,'transactions'));
+          tx.set(txRef, { userId: selectedUserId, type:'admin_adjustment', amount: Math.abs(amt), adminId: currentAdmin ? currentAdmin.uid : null, delta: amt, reason: reason || 'manual adjustment', createdAt: serverTimestamp() });
+        });
+        adjStatus.textContent = 'Adjustment applied'; showToast('Adjustment recorded');
+        // refresh user panel & list
+        await openDetail(selectedUserId);
+        await loadUsers();
+      }catch(err){ console.error('applyAdj',err); adjStatus.textContent = 'Failed: ' + (err.message||err); }
+      finally{ applyAdjBtn.disabled = false; }
+    });
+
+    // helper to load admin user info (to record adminId)
+    async function ensureAdmin(){
+      const a = auth.currentUser; if(!a) return false; try{ const s = await getDoc(doc(db,'users',a.uid)); currentAdmin = { uid: a.uid, data: s.exists()? s.data() : null }; return true; }catch(e){ console.error('ensureAdmin',e); return false; } }
+
+    // wire search/filter
+    search.addEventListener('input', ()=>renderUsers(usersCache));
+    planFilter.addEventListener('change', ()=>renderUsers(usersCache));
+    refreshBtn.addEventListener('click', ()=> loadUsers());
+
+    // init + auth
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){ alert('Please sign in as admin to access this page'); window.location.href = 'login.html'; return; }
+      // simple check for admin flag in user doc
+      const ok = await ensureAdmin();
+      if(!ok || !(currentAdmin.data && currentAdmin.data.isAdmin)){
+        alert('Access denied: you must be an admin to view this page.'); window.location.href = 'index.html'; return; }
+      await loadUsers();
+    });
+
+    // initial placeholder
+    grid.innerHTML = '<div class="small muted">Waiting for auth…</div>';
+
+  </script>
+</body>
+</html>
