@@ -4,171 +4,276 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
 
   <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
 
   <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
     :root{
-      --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.62);
-      --accent-start:#2fe0b8; --accent-end:#7a5fff; --glass:rgba(255,255,255,0.03);
-      --text:#e9f0ff;
+      --bg-1: #0b0613;
+      --bg-2: #0f0820;
+      --panel: rgba(255,255,255,0.03);
+      --muted: rgba(255,255,255,0.62);
+      --text: #eaf2ff;
+      --accent-a: #8446ff;
+      --accent-b: #6ce2c8;
+      --accent-grad: linear-gradient(135deg, var(--accent-a), #5b3bff 45%, var(--accent-b) 100%);
+      --glass: rgba(255,255,255,0.03);
+      --radius: 16px;
+      --container-w: 420px;
+      font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
     *{box-sizing:border-box}
-    body{margin:0;padding:20px 18px 160px;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text)}
-    .header{display:flex;align-items:center;gap:14px;padding:6px 4px 18px}
-    .avatar{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:800;font-size:22px;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
-    .greet{flex:1}
-    .greet h1{margin:0;font-size:22px}
-    .greet p{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .plan-badge{display:inline-block;margin-top:8px;padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,#ffffff08,#ffffff06);color:var(--muted);font-weight:600;font-size:13px}
-    .icons{display:flex;gap:12px;align-items:center}
-    .icon-btn{width:44px;height:44px;border-radius:12px;background:var(--glass);display:grid;place-items:center;color:var(--text);cursor:pointer;border:0}
+    html,body{height:100%}
+    body{
+      margin:0;
+      min-height:100%;
+      background: radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent),
+                  radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.06), transparent),
+                  linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:20px;
+      display:flex;
+      justify-content:center;
+    }
 
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:20px;padding:18px 22px;margin:8px 0;box-shadow:0 16px 40px rgba(0,0,0,0.6)}
-    .small{font-size:14px;color:var(--muted)}
-    .balance-row{display:flex;align-items:center;gap:12px}
-    .big-balance{font-size:36px;font-weight:800;line-height:1}
-    .approx{margin-top:8px;color:var(--muted);font-size:14px}
+    .phone {
+      width:100%;
+      max-width:var(--container-w);
+      min-height:640px;
+      border-radius:28px;
+      padding:18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+      overflow:auto;
+    }
 
-    .buttons{display:flex;gap:14px;margin-top:16px}
-    .btn{flex:1;padding:12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;text-align:center}
-    .btn.primary{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+    .top {
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-bottom:18px;
+    }
+    .avatar {
+      width:56px;
+      height:56px;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      font-weight:800;
+      font-size:18px;
+      color:#041219;
+      background: var(--accent-grad);
+      box-shadow: 0 10px 34px rgba(87,52,164,0.26);
+      position:relative;
+    }
+    .avatar .presence {
+      position:absolute;
+      right:4px; bottom:4px;
+      width:12px; height:12px; border-radius:50%;
+      background:#00ff9d; border:2px solid rgba(0,0,0,0.22);
+    }
 
-    .list{margin-top:18px;display:flex;flex-direction:column;gap:14px; padding-bottom: 140px; /* ensure last item can scroll above fixed nav */ }
-    .list-item{background:rgba(255,255,255,0.02);border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:14px;cursor:pointer;border:1px solid rgba(255,255,255,0.02)}
-    .li-left{display:flex;gap:14px;align-items:center}
-    .li-icon{width:56px;height:56px;border-radius:12px;background:rgba(255,255,255,0.02);display:grid;place-items:center;font-size:22px}
-    .li-text h3{margin:0;color:var(--accent-end);font-size:18px}
-    .li-text p{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .greeting {
+      flex:1;
+    }
+    .greeting h2{
+      margin:0;
+      font-size:17px;
+      font-weight:700;
+      letter-spacing:0.2px;
+    }
+    .greeting p{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:12px;
+    }
 
-    .bottom-nav{position:fixed;left:18px;right:18px;bottom:16px;background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));padding:14px 18px;border-radius:40px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 14px 40px rgba(2,6,23,0.6);backdrop-filter: blur(6px);opacity: 0.98; transition: transform 280ms ease; z-index: 40;}
-    /* .lift class is used to trigger the transform, actual transform is applied inline for accurate dynamic lift */
-    .bottom-nav.lift { /* no static transform here */ }
+    /* Total assets card */
+    .asset-card{
+      margin:8px 0 16px;
+      border-radius:18px;
+      padding:14px;
+      position:relative;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.03);
+      overflow:hidden;
+    }
+    .asset-top {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .asset-left {
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .asset-sub {
+      color:var(--muted); font-size:12px;
+    }
+    .asset-amount {
+      font-size:28px;
+      font-weight:800;
+      line-height:1;
+      letter-spacing:0.6px;
+      margin-top:6px;
+    }
+    .asset-approx { color:var(--muted); font-size:12px; margin-top:6px; }
 
-    .nav-btn{width:64px;text-align:center;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;z-index:41}
-    .nav-btn .icon-wrap{display:block;margin-bottom:6px;width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.04);display:grid;place-items:center;font-size:18px}
-    .nav-center{flex:0 0 100px;display:flex;justify-content:center}
-    .nav-center .center-btn{width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-size:26px;box-shadow:0 12px 36px rgba(61,46,111,0.35);transform:translateY(-22px);z-index:42}
+    .eye-btn{
+      width:44px; height:44px; border-radius:12px; display:grid; place-items:center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.03);
+      cursor:pointer;
+    }
 
-    .plan-line{margin-top:10px;color:var(--muted);font-size:13px}
-    .plan-inline-strong{color:var(--accent-start);font-weight:800}
+    /* Recharge / Withdraw */
+    .action-row{ display:flex; gap:10px; margin-top:14px; }
+    .pill {
+      flex:1;
+      padding:12px;
+      border-radius:999px;
+      text-align:center;
+      font-weight:700;
+      cursor:pointer;
+      user-select:none;
+      border:1px solid rgba(255,255,255,0.04);
+    }
+    .pill.primary{
+      background: linear-gradient(90deg, #7a5fff, #5e47ff 40%, #35d6b1 100%);
+      color:#041219;
+      box-shadow: 0 8px 30px rgba(87,52,164,0.18);
+    }
+    .pill.ghost{
+      background: transparent;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,0.05);
+    }
 
-    .error{color:#ffb3b3;margin-bottom:12px}
-    @media(min-width:900px){body{padding:40px 80px}}
-    @media(max-width:360px){ .nav-btn{width:52px} .nav-center .center-btn{width:70px;height:70px} }
+    /* menu list */
+    .menu {
+      margin-top:18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .menu-item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      border:1px solid rgba(255,255,255,0.02);
+      cursor:pointer;
+    }
+    .menu-left{ display:flex; gap:12px; align-items:center; }
+    .menu-icon{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px; }
+    .menu-text h4{ margin:0; font-size:14px; color:#e7e9ff; text-transform:capitalize; }
+    .menu-text p{ margin:4px 0 0; color:var(--muted); font-size:12px; }
+
+    .logout {
+      margin-top:20px;
+      padding:12px;
+      border-radius:999px;
+      text-align:center;
+      font-weight:700;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.06);
+      color:var(--muted);
+      cursor:pointer;
+    }
+
+    /* responsive tweaks */
+    @media(min-width:900px){
+      body{ padding:40px; }
+      .phone{ min-height:720px; }
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="avatar" id="avatar">U</div>
-    <div class="greet">
-      <h1 id="greeting">Hello, User</h1>
-      <p id="uidline">UID: -</p>
-      <div class="plan-badge" id="planBadge">Plan: Basic</div>
-    </div>
-    <div class="icons">
-      <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
-      <button class="icon-btn" id="chatBtn" title="Chat">💬</button>
-    </div>
-  </div>
-
-  <div id="assetsError"></div>
-
-  <div class="card">
-    <div class="small">Total Assets (NGN)</div>
-    <div class="balance-row" style="justify-content:space-between;align-items:center">
-      <div>
-        <div class="big-balance" id="balance">₦0.00</div>
-        <div class="approx" id="approx">≈ ₦0.00</div>
-        <div class="plan-line">Your plan: <span id="userPlan" class="plan-inline-strong">Basic</span></div>
+  <div class="phone" role="main" aria-live="polite">
+    <div class="top">
+      <div class="avatar" id="avatar">U
+        <span class="presence" title="online"></span>
       </div>
-      <div style="margin-left:auto;">
-        <button class="icon-btn" id="eyeBtn" aria-pressed="false" aria-label="Hide balance" title="Hide/Show balance">👁️</button>
+      <div class="greeting">
+        <h2 id="greeting">Hi, User</h2>
+        <p id="uidline">UID: -</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        <button id="settingsBtn" title="Settings" class="eye-btn" aria-label="Settings">⚙️</button>
       </div>
     </div>
 
-    <div class="buttons">
-      <div class="btn primary" id="rechargeBtn">Recharge</div>
-      <div class="btn ghost" id="withdrawBtn">Withdraw</div>
-    </div>
-  </div>
-
-  <div class="list">
-    <div class="list-item" id="ordersItem" role="button" aria-label="My Orders">
-      <div class="li-left">
-        <div class="li-icon">📄</div>
-        <div class="li-text">
-          <h3>My Orders</h3>
-          <p class="small">orders overview</p>
+    <div class="asset-card" role="region" aria-label="Total assets">
+      <div class="asset-top">
+        <div class="asset-left">
+          <div class="asset-sub">Total Assets (NGN)</div>
+          <div class="asset-amount" id="balance">₦0.00</div>
+          <div class="asset-approx" id="approx">≈ ₦0.00</div>
         </div>
+        <button id="eyeBtn" class="eye-btn" aria-pressed="false" title="Hide/Show balance">👁️</button>
       </div>
-      <div>›</div>
+
+      <div class="action-row">
+        <div id="rechargeBtn" class="pill primary">Recharge</div>
+        <div id="withdrawBtn" class="pill ghost">Withdraw</div>
+      </div>
     </div>
 
-    <div class="list-item" id="tasksItem" role="button" aria-label="Available tasks">
-      <div class="li-left">
-        <div class="li-icon">🔎</div>
-        <div class="li-text">
-          <h3>available tasks</h3>
-          <p class="small">Market & promotions</p>
+    <nav class="menu" aria-label="Main menu">
+      <div id="ordersItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">📄</div>
+          <div class="menu-text"><h4>My Orders</h4><p>orders overview</p></div>
         </div>
+        <div>›</div>
       </div>
-      <div>›</div>
-    </div>
 
-    <div class="list-item" id="earningsItem" role="button" aria-label="Earnings Report">
-      <div class="li-left">
-        <div class="li-icon">📈</div>
-        <div class="li-text">
-          <h3>Earnings Report</h3>
-          <p class="small">Performance</p>
+      <div id="tasksItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">🔎</div>
+          <div class="menu-text"><h4>Available tasks</h4><p>market & promotions</p></div>
         </div>
+        <div>›</div>
       </div>
-      <div>›</div>
-    </div>
 
-    <div class="list-item" id="referralsItem" role="button" aria-label="Referrals">
-      <div class="li-left">
-        <div class="li-icon">👥</div>
-        <div class="li-text">
-          <h3>Referrals</h3>
-          <p class="small">Friends who joined through you</p>
+      <div id="earningsItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">📈</div>
+          <div class="menu-text"><h4>Earnings Report</h4><p>performance</p></div>
         </div>
+        <div>›</div>
       </div>
-      <div>›</div>
-    </div>
 
-  </div>
+      <div id="referralsItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">👥</div>
+          <div class="menu-text"><h4>Referrals</h4><p>friends who joined through you</p></div>
+        </div>
+        <div>›</div>
+      </div>
+    </nav>
 
-  <div class="bottom-nav" role="navigation" aria-label="Main navigation">
-    <div class="nav-btn" id="navHome"><div class="icon-wrap">🏠</div><span>Home</span></div>
-    <div class="nav-btn" id="navConvert"><div class="icon-wrap">🔗</div><span>shortlinks</span></div>
-    <div class="nav-center"><div class="center-btn" id="navCenter">➕</div></div>
-    <div class="nav-btn" id="navNews"><div class="icon-wrap">💬</div><span>News</span></div>
-    <div class="nav-btn" id="navAssets"><div class="icon-wrap">👤</div><span>Assets</span></div>
+    <button id="logoutBtn" class="logout">Log out</button>
   </div>
 
   <script type="module">
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import {
+      getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Beni-Wealth config
+    // FIREBASE config — same as yours
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -179,66 +284,34 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    if (!getApps().length) initializeApp(firebaseConfig);
+    if(!getApps().length) initializeApp(firebaseConfig);
     const auth = getAuth();
     const db = getFirestore();
 
-    // UI refs
+    // DOM refs
     const avatarEl = document.getElementById('avatar');
     const greetingEl = document.getElementById('greeting');
     const uidLine = document.getElementById('uidline');
     const balanceEl = document.getElementById('balance');
     const approxEl = document.getElementById('approx');
     const eyeBtn = document.getElementById('eyeBtn');
-    const assetsError = document.getElementById('assetsError');
-    const planBadge = document.getElementById('planBadge');
-    const userPlanEl = document.getElementById('userPlan');
+    const settingsBtn = document.getElementById('settingsBtn');
 
-    // Plan to reward mapping (kept for internal logic if you need rewards elsewhere)
-    const PLAN_REWARDS = { Bronze:100, Silver:175, Gold:270, Platinum:500, Basic:0 };
+    // menu & actions
+    const rechargeBtn = document.getElementById('rechargeBtn');
+    const withdrawBtn = document.getElementById('withdrawBtn');
+    const ordersItem = document.getElementById('ordersItem');
+    const tasksItem = document.getElementById('tasksItem');
+    const earningsItem = document.getElementById('earningsItem');
+    const referralsItem = document.getElementById('referralsItem');
+    const logoutBtn = document.getElementById('logoutBtn');
 
+    // utilities
     function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
     function gen5(){ return Math.floor(10000 + Math.random()*90000).toString(); }
-    function showAssetsError(msg){ assetsError.innerHTML = msg ? `<div class="error">${msg}</div>` : ''; }
-
     function makeHiddenKey(uid){ return `bw_balance_hidden_${uid || 'guest'}`; }
     function getPersistedHidden(uid){ try{ return localStorage.getItem(makeHiddenKey(uid)) === '1'; }catch(e){return false;} }
     function setPersistedHidden(uid, hidden){ try{ localStorage.setItem(makeHiddenKey(uid), hidden ? '1' : '0'); }catch(e){} }
-
-    function setBalanceVisibility(hidden, uid){
-      setPersistedHidden(uid, hidden);
-      eyeBtn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
-      eyeBtn.setAttribute('aria-label', hidden ? 'Show balance' : 'Hide balance');
-      eyeBtn.textContent = hidden ? '🙈' : '👁️';
-      if(hidden){
-        balanceEl.textContent = '₦••••';
-        approxEl.textContent = '≈ ₦••••';
-      } else {
-        balanceEl.textContent = balanceEl.dataset.realText || '₦0.00';
-        approxEl.textContent = approxEl.dataset.realText || `≈ ${balanceEl.dataset.realText || '₦0.00'}`;
-      }
-    }
-
-    eyeBtn.addEventListener('click', ()=>{
-      const uid = eyeBtn.dataset.uid || 'guest';
-      const hidden = getPersistedHidden(uid);
-      setBalanceVisibility(!hidden, uid);
-    });
-
-    // navigations
-    document.getElementById('settingsBtn').addEventListener('click', ()=> window.location.href='profile.html');
-    document.getElementById('chatBtn').addEventListener('click', ()=> window.location.href='contact.html');
-    document.getElementById('rechargeBtn').addEventListener('click', ()=> window.location.href='recharge.html');
-    document.getElementById('withdrawBtn').addEventListener('click', ()=> window.location.href='withdraw.html');
-    document.getElementById('navHome').addEventListener('click', ()=> window.location.href='catalog.html');
-    document.getElementById('navConvert').addEventListener('click', ()=> window.location.href='convert.html');
-    document.getElementById('navCenter').addEventListener('click', ()=> window.location.href='center.html');
-    document.getElementById('navNews').addEventListener('click', ()=> window.location.href='news.html');
-    document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='dashboard.html');
-
-    document.getElementById('ordersItem').addEventListener('click', ()=> window.location.href='orders.html');
-    document.getElementById('tasksItem').addEventListener('click', ()=> window.location.href='tasks.html');
-    document.getElementById('earningsItem').addEventListener('click', ()=> window.location.href='earnings.html');
 
     // fallback: try balances collection/doc if users/{uid} doesn't provide balance
     async function tryBalanceFallback(uid){
@@ -259,7 +332,47 @@
       return null;
     }
 
-    // live wiring: read users/{uid} and keep balance/plan stable
+    // show/hide balance
+    function setBalanceVisibility(hidden, uid){
+      setPersistedHidden(uid, hidden);
+      eyeBtn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+      eyeBtn.setAttribute('aria-label', hidden ? 'Show balance' : 'Hide balance');
+      eyeBtn.textContent = hidden ? '🙈' : '👁️';
+      if(hidden){
+        balanceEl.textContent = '₦••••';
+        approxEl.textContent = '≈ ₦••••';
+      } else {
+        balanceEl.textContent = balanceEl.dataset.realText || '₦0.00';
+        approxEl.textContent = approxEl.dataset.realText || `≈ ${balanceEl.dataset.realText || '₦0.00'}`;
+      }
+    }
+
+    eyeBtn.addEventListener('click', ()=>{
+      const uid = eyeBtn.dataset.uid || 'guest';
+      const hidden = getPersistedHidden(uid);
+      setBalanceVisibility(!hidden, uid);
+    });
+
+    // nav / btn handlers (keep same functionality)
+    settingsBtn.addEventListener('click', ()=> window.location.href='profile.html');
+    rechargeBtn.addEventListener('click', ()=> window.location.href='recharge.html');
+    withdrawBtn.addEventListener('click', ()=> window.location.href='withdraw.html');
+    ordersItem.addEventListener('click', ()=> window.location.href='orders.html');
+    tasksItem.addEventListener('click', ()=> window.location.href='tasks.html');
+    earningsItem.addEventListener('click', ()=> window.location.href='earnings.html');
+    referralsItem.addEventListener('click', (e) => {
+      // small lift effect then navigate
+      e.preventDefault();
+      const nav = document.querySelector('.phone');
+      // small visual nudge (client only)
+      nav.style.transform = 'translateY(-8px)';
+      setTimeout(()=> { nav.style.transform = ''; window.location.href = 'referrals.html'; }, 260);
+    });
+    logoutBtn.addEventListener('click', async ()=> {
+      try{ await signOut(auth); window.location.href = 'index.html'; }catch(e){ console.error('logout failed', e); alert('Logout failed'); }
+    });
+
+    // live wiring: read users/{uid} and keep balance stable
     let userUnsub = null;
     onAuthStateChanged(auth, async (user) => {
       // default to guest visibility
@@ -270,12 +383,10 @@
         const demo = gen5();
         uidLine.textContent = `UID: ${demo}`;
         greetingEl.textContent = 'Hello, User';
-        planBadge.textContent = 'Plan: Basic';
-        userPlanEl.textContent = 'Basic';
         balanceEl.dataset.realText = formatN(0);
         approxEl.dataset.realText = `≈ ${formatN(0)}`;
         setBalanceVisibility(getPersistedHidden('guest'), 'guest');
-        if(userUnsub){ userUnsub(); userUnsub = null; }
+        if(userUnsub){ try{ userUnsub(); }catch(e){}; userUnsub = null; }
         return;
       }
 
@@ -289,18 +400,16 @@
       if(userUnsub) { try{ userUnsub(); }catch(e){}; userUnsub = null; }
 
       userUnsub = onSnapshot(uRef, async (snap) => {
-        // if snapshot exists, use its values; if not, don't overwrite with zeros — try fallback instead
         try{
           if(!snap.exists()){
-            // don't create or overwrite user doc here. Instead, try fallback sources for balance/plan.
+            // fallback if no user doc
             const fb = await tryBalanceFallback(user.uid);
             const bal = fb !== null ? fb : 0;
             balanceEl.dataset.realText = formatN(bal);
             approxEl.dataset.realText = `≈ ${formatN(bal)}`;
             setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
-            // keep previous plan if any, otherwise set Basic without forcing db write
-            planBadge.textContent = planBadge.textContent || 'Plan: Basic';
-            userPlanEl.textContent = userPlanEl.textContent || 'Basic';
+            greetingEl.textContent = user.displayName || 'Hi, User';
+            avatarEl.textContent = (user.displayName || user.email || 'U')[0].toUpperCase();
             return;
           }
 
@@ -309,7 +418,7 @@
           if(username){ greetingEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); }
           else { greetingEl.textContent = 'Hello, User'; avatarEl.textContent = (user.email && user.email[0]) ? user.email[0].toUpperCase() : 'U'; }
 
-          // balance — only update if a numeric value exists in doc; otherwise try fallback
+          // balance — prefer numeric in doc, otherwise fallback
           const balNum = (data.balance !== undefined && data.balance !== null) ? Number(data.balance) : null;
           if(balNum !== null && !isNaN(balNum)){
             balanceEl.dataset.realText = formatN(balNum);
@@ -322,27 +431,24 @@
           }
           setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
 
-          // plan detection: prefer stored value, but do NOT inject reward text here
-          const plan = (data.plan || data.type || data.membership || data.tier || 'Basic');
-          planBadge.textContent = `Plan: ${plan}`;
-          userPlanEl.textContent = plan;
-
         }catch(e){
           console.error('onSnapshot handler error', e);
-          if(e && e.code === 'permission-denied'){
-            showAssetsError('Permission denied: check Firestore rules for users/{uid} read access.');
-          } else {
-            showAssetsError('Error reading user data — see console.');
+          // graceful fallback: attempt one-time read
+          try{
+            const oned = await getDoc(uRef);
+            if(oned && oned.exists()){
+              const d = oned.data()||{};
+              const bal = (d.balance !== undefined && d.balance !== null) ? Number(d.balance) : 0;
+              balanceEl.dataset.realText = formatN(bal);
+              approxEl.dataset.realText = `≈ ${formatN(bal)}`;
+              setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
+            }
+          }catch(err){
+            console.warn('fallback getDoc failed', err);
           }
         }
       }, async (err) => {
         console.warn('users/{uid} onSnapshot error', err);
-        if(err && err.code === 'permission-denied'){
-          showAssetsError('Permission denied: check Firestore rules for users/{uid} read access.');
-        } else {
-          showAssetsError('Could not get live updates — falling back to one-time reads (see console).');
-        }
-
         // fallback one-time read
         try{
           const uSnap = await getDoc(uRef);
@@ -352,9 +458,8 @@
             balanceEl.dataset.realText = formatN(bal);
             approxEl.dataset.realText = `≈ ${formatN(bal)}`;
             setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
-            const plan = d.plan || d.type || d.membership || d.tier || 'Basic';
-            planBadge.textContent = `Plan: ${plan}`;
-            userPlanEl.textContent = plan;
+            greetingEl.textContent = d.username || user.displayName || 'Hi, User';
+            avatarEl.textContent = (d.username || user.displayName || 'U')[0]?.toUpperCase() || 'U';
           } else {
             const fb = await tryBalanceFallback(user.uid);
             const val = fb !== null ? fb : 0;
@@ -366,45 +471,10 @@
       });
     });
 
-    // --- Updated referrals handler that lifts the bottom-nav and scrolls referrals into view ---
-    const referralsEl = document.getElementById('referralsItem');
-    if(referralsEl){
-      referralsEl.addEventListener('click', (e) => {
-        // prevent immediate navigation so we can show the lift + scroll
-        e.preventDefault();
-
-        const nav = document.querySelector('.bottom-nav');
-        // compute lift amount dynamically (nav height + small gap)
-        const gap = 18; // comfortable gap
-        const navHeight = nav ? nav.offsetHeight : 80;
-        const liftAmount = navHeight + gap;
-
-        // apply lift (use class to trigger transition and inline transform for precision)
-        if(nav){
-          nav.classList.add('lift');
-          // set precise transform inline (negative translateY to lift)
-          nav.style.transform = `translateY(-${liftAmount}px)`;
-        }
-
-        // Smooth scroll the referrals element into view, centered
-        referralsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // After animation + scroll, remove lift and navigate.
-        // Duration should match transition + scroll allowance
-        const totalDelay = 420;
-        setTimeout(() => {
-          if(nav){
-            // remove inline transform and class so it returns smoothly
-            nav.style.transform = '';
-            nav.classList.remove('lift');
-          }
-          // Navigate to referrals
-          window.location.href = 'referrals.html';
-        }, totalDelay);
-      });
-    }
-
-    // cleanup: nothing else required
+    // cleanup listeners on unload
+    window.addEventListener('beforeunload', () => {
+      if(userUnsub){ try{ userUnsub(); } catch(e){}; userUnsub = null; }
+    });
   </script>
 </body>
 </html>
