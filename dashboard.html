@@ -528,12 +528,9 @@
     navCenter.addEventListener('click', ()=> window.location.href = 'center.html');
     navNews.addEventListener('click', ()=> window.location.href = 'news.html');
     navAssets.addEventListener('click', ()=> window.location.href = 'dashboard.html');
-
-    // chat actions (nav + FAB)
-    navChat.addEventListener('click', ()=> window.location.href = 'chat.html');
     // the FAB is an <a href="chat.html">, so it already navigates; add keyboard support
     chatFab.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter' || e.key === ' ') { window.location.href = 'chat.html'; }
+      if(e.key === 'Enter' || e.key === ' ') { window.location.href = 'contact.html'; }
     });
 
     // live wiring: read users/{uid} and keep balance stable
