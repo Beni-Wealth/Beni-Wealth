@@ -193,9 +193,8 @@
     const assetsError = document.getElementById('assetsError');
     const planBadge = document.getElementById('planBadge');
     const userPlanEl = document.getElementById('userPlan');
-    const planRewardEl = document.getElementById('planRewardEl');
 
-    // Plan to reward mapping
+    // Plan to reward mapping (kept for internal logic if you need rewards elsewhere)
     const PLAN_REWARDS = { Bronze:100, Silver:175, Gold:270, Platinum:500, Basic:0 };
 
     function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
@@ -273,7 +272,6 @@
         greetingEl.textContent = 'Hello, User';
         planBadge.textContent = 'Plan: Basic';
         userPlanEl.textContent = 'Basic';
-        if(planRewardEl) planRewardEl.textContent = '₦0';
         balanceEl.dataset.realText = formatN(0);
         approxEl.dataset.realText = `≈ ${formatN(0)}`;
         setBalanceVisibility(getPersistedHidden('guest'), 'guest');
@@ -324,12 +322,10 @@
           }
           setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
 
-          // plan detection: be conservative and prefer stored value, but don't overwrite client-hidden plan
+          // plan detection: prefer stored value, but do NOT inject reward text here
           const plan = (data.plan || data.type || data.membership || data.tier || 'Basic');
-          const reward = PLAN_REWARDS[plan] || 0;
-          planBadge.textContent = `Plan: ${plan} • Reward: ₦${reward.toLocaleString()}`;
+          planBadge.textContent = `Plan: ${plan}`;
           userPlanEl.textContent = plan;
-          if(planRewardEl) planRewardEl.textContent = `₦${reward}`;
 
         }catch(e){
           console.error('onSnapshot handler error', e);
@@ -357,10 +353,8 @@
             approxEl.dataset.realText = `≈ ${formatN(bal)}`;
             setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
             const plan = d.plan || d.type || d.membership || d.tier || 'Basic';
-            const reward = PLAN_REWARDS[plan] || 0;
-            planBadge.textContent = `Plan: ${plan} • Reward: ₦${reward.toLocaleString()}`;
+            planBadge.textContent = `Plan: ${plan}`;
             userPlanEl.textContent = plan;
-            if(planRewardEl) planRewardEl.textContent = `₦${reward}`;
           } else {
             const fb = await tryBalanceFallback(user.uid);
             const val = fb !== null ? fb : 0;
@@ -410,10 +404,7 @@
       });
     }
 
-    // If you want other list items to auto-scroll into view when tapped and covered,
-    // you could add similar handlers (not necessary now).
-    // ------------------------------------------------------------------------
-
+    // cleanup: nothing else required
   </script>
 </body>
 </html>
