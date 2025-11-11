@@ -4,22 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Adverts — Beni-Wealth</title>
-
-  <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Social preview -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#2fe0b8">
-
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg1:#060511; --bg2:#0f0920;
@@ -30,16 +15,15 @@
       --glass: rgba(255,255,255,0.03);
       --radius:12px;
       --max-width:1200px;
-      --debug-bg: rgba(255,255,255,0.02);
     }
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
     .shell{max-width:var(--max-width);margin:20px auto;padding:20px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
     .brand{font-weight:700;font-size:1.1rem}
     .back{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);text-decoration:none;color:var(--text)}
     .muted{color:var(--muted);font-size:13px}
-    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:18px}
     .search{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
     .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
@@ -59,21 +43,11 @@
     .details-inner{padding:12px;border-top:1px dashed rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:0 0 10px 10px}
     .submission{display:flex;gap:12px;align-items:flex-start;padding:8px;border-radius:8px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)}
     .sub-left{flex:1}
-    .sub-thumb{max-width:100%;width:140px;height:auto;object-fit:contain;border-radius:6px;border:1px solid rgba(255,255,255,0.03);background:#000}
+    .sub-thumb{width:120px;height:72px;object-fit:cover;border-radius:6px}
     .sub-meta{color:var(--muted);font-size:12px;margin-bottom:6px}
     .empty{padding:28px;text-align:center;color:var(--muted)}
     .diag{color:var(--muted);font-size:13px;margin-bottom:12px}
-    .small{font-size:13px;color:var(--muted)}
-    /* image overlay viewer */
-    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:999;padding:18px}
-    .viewer{width:100%;max-width:880px;background:#000;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;align-items:center}
-    .viewer img{max-width:100%;height:auto;display:block}
-    .viewer .meta{padding:12px;background:rgba(0,0,0,0.5);color:var(--muted);width:100%;display:flex;justify-content:space-between}
-    /* debug panel */
-    .debug {
-      margin-top:14px;padding:12px;border-radius:10px;background:var(--debug-bg);border:1px solid rgba(255,255,255,0.03);font-family:monospace;color:var(--muted);font-size:13px;line-height:1.45;white-space:pre-wrap;max-height:240px;overflow:auto;
-    }
-    @media(max-width:520px){ .thumb{width:78px;height:60px} .sub-thumb{width:100%;height:auto} }
+    @media(max-width:520px){ .thumb{width:78px;height:60px} .sub-thumb{width:90px;height:56px} }
   </style>
 </head>
 <body>
@@ -96,34 +70,16 @@
     <div id="grid" class="grid" aria-live="polite">
       <div class="empty">Loading your adverts…</div>
     </div>
-
-    <div id="debug" class="debug" aria-live="polite" role="status">
-      Debug log — probe results and listener errors will appear here.
-    </div>
   </main>
-
-  <!-- Image viewer overlay -->
-  <div id="viewerOverlay" class="overlay" aria-hidden="true">
-    <div class="viewer" role="dialog" aria-modal="true">
-      <img id="viewerImg" src="" alt="proof image" />
-      <div class="meta">
-        <div id="viewerMeta" class="small"></div>
-        <div>
-          <button id="viewerClose" class="btn ghost">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import {
-      getFirestore, collection, query, where, onSnapshot, getDocs, doc,
-      runTransaction, serverTimestamp
+      getFirestore, collection, query, where, onSnapshot, getDocs, doc, getDoc
     } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
-    // FIREBASE CONFIG
+    // YOUR FIREBASE CONFIG (from your project)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -143,28 +99,16 @@
     const diag = document.getElementById('diag');
     const search = document.getElementById('search');
     const refreshBtn = document.getElementById('refresh');
-    const debugEl = document.getElementById('debug');
 
-    const viewerOverlay = document.getElementById('viewerOverlay');
-    const viewerImg = document.getElementById('viewerImg');
-    const viewerMeta = document.getElementById('viewerMeta');
-    const viewerClose = document.getElementById('viewerClose');
-
-    // state
+    // State
     let currentUser = null;
-    const advertsMap = new Map();
-    const submissionsListeners = new Map();
-    const advertsUnsubs = [];
+    const advertsMap = new Map(); // advertId -> {id, data, _subCount}
+    const submissionsListeners = new Map(); // advertId -> unsubscribe fn
 
-    // short list of collection names to probe (keeps it small, extend if you use another)
-    const CANDIDATE_COLLS = ['advertise_tasks', 'adverts', 'advert', 'advertise', 'advert_task', 'tasks'];
-    const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator','ownerUid','user'];
+    // candidate owner fields (some apps use different names)
+    const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator'];
 
-    // helpers
-    function debug(msg){
-      const time = new Date().toLocaleTimeString();
-      debugEl.textContent = `[${time}] ${msg}\n` + debugEl.textContent;
-    }
+    // helper utilities
     function el(tag, attrs = {}, ...children){
       const e = document.createElement(tag);
       for(const k in attrs){
@@ -179,61 +123,35 @@
     function niceDate(ts){ try{ if(!ts) return '-'; if(ts.toDate) ts = ts.toDate(); return new Date(ts).toLocaleString(); }catch(e){ return '-'; } }
     function statusClass(status){ const s = String(status||'').toLowerCase(); if(s==='pending') return 'pill pending'; if(s==='approved') return 'pill approved'; if(s==='completed') return 'pill completed'; return 'pill pending'; }
 
-    // viewer
-    function openImageViewer(url){
-      viewerImg.src = url;
-      viewerMeta.textContent = url;
-      viewerOverlay.style.display = 'flex';
-      viewerOverlay.setAttribute('aria-hidden','false');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeImageViewer(){
-      viewerOverlay.style.display = 'none';
-      viewerOverlay.setAttribute('aria-hidden','true');
-      viewerImg.src = '';
-      document.body.style.overflow = '';
-    }
-    viewerClose.addEventListener('click', closeImageViewer);
-    viewerOverlay.addEventListener('click', (e)=> { if(e.target === viewerOverlay) closeImageViewer(); });
-
-    // compute unit price defensively
-    function getUnitPrice(adData){
-      if(!adData) return 0;
-      const candidates = ['unitPrice','unit_price','price','per','unit','amount'];
-      for(const k of candidates){
-        if(typeof adData[k] !== 'undefined' && adData[k] !== null && !isNaN(Number(adData[k]))) return Number(adData[k]);
-      }
-      const total = Number(adData.totalCost ?? adData.total_cost ?? adData.total ?? 0) || 0;
-      const workers = Number(adData.workers ?? adData.worker_count ?? adData.requested_workers ?? 0) || 0;
-      if(workers > 0 && total > 0) return total / workers;
-      return 0;
-    }
-
-    // render grid + card builder (same as earlier)
+    // render UI from advertsMap
     function rebuildGrid(){
       const q = (search.value || '').trim().toLowerCase();
       grid.innerHTML = '';
       let any = false;
       for(const [id, item] of advertsMap){
         const data = item.data || {};
+        // filter by search
         if(q){
           const hay = ((data.title||'') + ' ' + (data.platform||'') + ' ' + (data.subcategory||'') + ' ' + (data.status||'')).toLowerCase();
           if(!hay.includes(q)) continue;
         }
-        const node = buildCard(id, data);
-        grid.appendChild(node);
+        const card = buildCard(id, data);
+        grid.appendChild(card);
         any = true;
       }
       if(!any) grid.innerHTML = '<div class="empty">You have no adverts yet.</div>';
     }
 
+    // create a card element for an advert
     function buildCard(id, data){
       const head = el('div',{class:'card-head'});
       const left = el('div',{style:'display:flex;gap:12px;align-items:center'});
-      const thumbSrc = data.thumbnail || data.thumb || data.image || '';
-      const thumb = el('img',{class:'thumb', src: thumbSrc, alt: data.title || ''});
-      if(!thumbSrc) thumb.style.display = 'none';
-      thumb.addEventListener('click', ()=> { if(thumbSrc) openImageViewer(thumbSrc); });
+      const thumb = el('img',{class:'thumb', src: data.thumbnail || '', alt: data.title || ''});
+      if(!data.thumbnail) thumb.style.display = 'none';
+      thumb.addEventListener('click', ()=>{
+        // open full sized in new tab if exists
+        if(data.thumbnail) window.open(data.thumbnail,'_blank','noopener');
+      });
 
       const txt = el('div', {},
         el('div',{class:'title'}, data.title || '(untitled)'),
@@ -249,43 +167,60 @@
       head.appendChild(left);
       head.appendChild(right);
 
-      const body = el('div',{class:'card-body'}, data.description ? (data.description.slice(0,220) + (data.description.length>220? '…':'')) : el('span',{},'No description'));
+      const body = el('div',{class:'card-body'}, data.description ? data.description.slice(0,220) + (data.description.length>220? '…':'') : el('span',{},'No description'));
 
+      // actions
       const actions = el('div',{class:'actions'});
       const detailsBtn = el('button',{class:'btn ghost'}, 'Details');
+      const openBtn = el('button',{class:'btn'}, 'Open full');
+      actions.appendChild(openBtn);
       actions.appendChild(detailsBtn);
 
-      const collapseInner = el('div',{class:'details-inner'}, el('div',{class:'small muted'}, 'Loading submissions…'));
-      const collapse = el('div',{class:'details-collapse', id:`collapse-${id}`}, collapseInner);
+      openBtn.addEventListener('click', ()=> {
+        // go to advert detail page if you have one, fallback to opening doc url (if stored)
+        if(data.detailUrl) return location.href = data.detailUrl;
+        // else try advert edit page pattern
+        location.href = `advert-detail.html?aid=${id}`;
+      });
 
+      // collapsed area for submissions
+      const collapse = el('div',{class:'details-collapse', id:`collapse-${id}`},
+        el('div',{class:'details-inner'}, el('div',{class:'small muted'}, 'Loading submissions…'))
+      );
+
+      // wire details toggle: expand/collapse and attach submissions listener when expanded
       let expanded = false;
       detailsBtn.addEventListener('click', async () => {
         expanded = !expanded;
         if(expanded){
-          await attachSubmissionsListener(id, collapseInner);
-          requestAnimationFrame(()=> {
-            const sh = collapseInner.scrollHeight;
-            collapse.style.maxHeight = (sh + 24) + 'px';
-          });
+          // expand visually
+          collapse.style.maxHeight = '600px'; // enough for content
+          // load submissions and subscribe
+          await attachSubmissionsListener(id, collapse.querySelector('.details-inner'));
         } else {
+          // collapse
           collapse.style.maxHeight = '0';
           detachSubmissionsListener(id);
         }
       });
 
       const card = el('article',{class:'card', dataset:{id}}, head, body, actions, collapse);
+
       return card;
     }
 
-    // attach submissions listener
+    // attach real-time submissions listener for a specific advert inside a container element
     function attachSubmissionsListener(advertId, containerEl){
+      // avoid double attach
       if(submissionsListeners.has(advertId)) return;
+
+      // show loader
       containerEl.innerHTML = '<div class="small muted">Loading submissions…</div>';
 
-      const subCol = 'advert_submissions';
-      const q = query(collection(db, subCol), where('advertId','==', advertId));
-
-      const unsub = onSnapshot(q, (snap) => {
+      const submissionsCol = collection(db, 'advert_submissions');
+      const q = query(submissionsCol, where('advertId','==', advertId));
+      const unsub = onSnapshot(q, async (snap) => {
+        // build submissions list
         const list = [];
         snap.forEach(s => {
           const d = s.data() || {};
@@ -295,108 +230,54 @@
             textProof: d.textProof || d.text_proof || d.proofText || '',
             imageUrl: d.imageUrl || d.image_url || d.image || '',
             status: d.status || 'pending',
-            createdAt: d.createdAt || d.created_at || null,
-            paidAmount: d.paidAmount || d.paid_amount || d.paid || null
+            createdAt: d.createdAt || d.created_at || null
           });
         });
 
+        // sort newest first
         list.sort((a,b)=>{
           const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?Date.parse(a.createdAt):0);
           const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?Date.parse(b.createdAt):0);
           return tb - ta;
         });
 
-        if(list.length === 0) {
+        // render
+        if(list.length === 0){
           containerEl.innerHTML = '<div class="empty small muted">No submissions yet.</div>';
-          return;
-        }
+        } else {
+          containerEl.innerHTML = '';
+          for(const s of list){
+            const sub = el('div',{class:'submission'});
+            const left = el('div',{class:'sub-left'},
+              el('div',{class:'sub-meta'}, `Submitted: ${niceDate(s.createdAt)} • ID: ${s.id} • By: ${escapeHtml(s.userId||'-')}`),
+              el('div',{}, s.textProof || el('em',{}, '(no text proof)'))
+            );
 
-        containerEl.innerHTML = '';
-        for(const s of list){
-          const sub = el('div',{class:'submission'});
-          const left = el('div',{class:'sub-left'},
-            el('div',{class:'sub-meta'}, `Submitted: ${niceDate(s.createdAt)} • ID: ${s.id} • By: ${escapeHtml(s.userId||'-')}`),
-            el('div',{}, s.textProof || el('em',{}, '(no text proof)'))
-          );
+            const right = el('div',{style:'min-width:120px;text-align:right'},
+              s.imageUrl ? el('img',{class:'sub-thumb', src:s.imageUrl, alt:'proof'}) : el('div',{}, '')
+            );
 
-          const right = el('div',{style:'min-width:160px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px'});
+            // status badge
+            const statusBadge = el('div',{class:`${s.status==='approved' ? 'pill approved' : s.status==='rejected' ? 'pill rejected' : 'pill pending' }`, style:'display:inline-block;margin-top:8px;font-size:12px'}, (s.status||'PENDING').toUpperCase());
 
-          if(s.imageUrl){
-            const img = el('img',{class:'sub-thumb', src:s.imageUrl, alt:'proof'});
-            img.addEventListener('click', ()=> openImageViewer(s.imageUrl));
-            right.appendChild(img);
-          }
+            const bottom = el('div',{style:'margin-top:8px;display:flex;justify-content:space-between;align-items:center'}, statusBadge, el('div',{class:'small muted'}, `Submission ID: ${s.id}`));
 
-          const stLower = (s.status||'').toLowerCase();
-          const statusBadge = el('div',{class:`pill ${stLower==='approved' ? 'approved' : stLower==='completed' ? 'completed' : 'pending' }`}, (s.status||'PENDING').toString().toUpperCase());
-          right.appendChild(statusBadge);
+            sub.appendChild(left);
+            sub.appendChild(right);
+            sub.appendChild(bottom);
 
-          // owner controls (only visible to owner)
-          const advert = advertsMap.get(advertId);
-          const advertOwnerId = advert?.data ? (advert.data.createdBy || advert.data.owner || advert.data.userId || advert.data.uid || advert.data.requestedBy || advert.data.creator || advert.data.ownerUid || advert.data.user || null) : null;
-          const unitPrice = getUnitPrice(advert?.data || {});
-          const payAmount = Math.round(unitPrice * 0.7);
-
-          if(currentUser && advertOwnerId && currentUser.uid === advertOwnerId){
-            // approval controls — same logic as before, with enforcement
-            const controls = el('div',{style:'display:flex;gap:6px;flex-direction:row;'});
-            const approveBtn = el('button',{class:'btn'}, '');
-            const rejectBtn = el('button',{class:'btn ghost'}, '');
-
-            if(stLower === 'approved'){
-              approveBtn.textContent = `Unapprove`;
-              rejectBtn.textContent = `Reject`;
-              rejectBtn.disabled = true;
-              rejectBtn.title = 'Cannot reject an already-approved submission';
-            } else if(stLower === 'rejected'){
-              approveBtn.textContent = `Approve (₦${payAmount.toLocaleString()})`;
-              rejectBtn.textContent = `Unreject`;
-            } else {
-              approveBtn.textContent = `Approve (₦${payAmount.toLocaleString()})`;
-              rejectBtn.textContent = `Reject`;
+            // preview image click: open in new tab
+            if(s.imageUrl){
+              const img = sub.querySelector('.sub-thumb');
+              img && img.addEventListener('click', ()=> window.open(s.imageUrl, '_blank','noopener'));
             }
 
-            approveBtn.addEventListener('click', async ()=>{
-              approveBtn.disabled = true;
-              try {
-                if(stLower === 'approved'){
-                  await setSubmissionStatusWithPaymentAdjustment(s.id, 'pending');
-                } else {
-                  await setSubmissionStatusWithPaymentAdjustment(s.id, 'approved');
-                }
-              } catch(e){
-                console.error(e);
-                alert('Action failed: ' + (e.message || e));
-              } finally { approveBtn.disabled = false; }
-            });
-
-            rejectBtn.addEventListener('click', async ()=>{
-              if(rejectBtn.disabled) return;
-              rejectBtn.disabled = true;
-              try {
-                if(stLower === 'rejected'){
-                  await setSubmissionStatusWithPaymentAdjustment(s.id, 'pending');
-                } else {
-                  await setSubmissionStatusWithPaymentAdjustment(s.id, 'rejected');
-                }
-              } catch(e){
-                console.error(e);
-                alert('Action failed: ' + (e.message || e));
-              } finally { rejectBtn.disabled = false; }
-            });
-
-            controls.appendChild(approveBtn);
-            controls.appendChild(rejectBtn);
-            right.appendChild(controls);
+            containerEl.appendChild(sub);
           }
-
-          sub.appendChild(left);
-          sub.appendChild(right);
-          containerEl.appendChild(sub);
         }
+
       }, err => {
         console.error('submissions listen error', err);
-        debug(`submissions listen error for advert ${advertId}: ${err.message || err}`);
         containerEl.innerHTML = `<div class="empty">Failed to load submissions: ${escapeHtml(err.message || String(err))}</div>`;
       });
 
@@ -405,277 +286,112 @@
 
     function detachSubmissionsListener(advertId){
       const unsub = submissionsListeners.get(advertId);
-      if(unsub){ try{ unsub(); }catch(e){} }
+      if(unsub){ try{ unsub(); } catch(e){} }
       submissionsListeners.delete(advertId);
     }
+
     function detachAllSubmissionListeners(){
       for(const [k, unsub] of submissionsListeners.entries()){
-        try{ unsub(); }catch(e){}
+        try{ unsub(); } catch(e){}
       }
       submissionsListeners.clear();
     }
 
-    // setSubmissionStatusWithPaymentAdjustment is same as before (keeps enforcement)
-    async function setSubmissionStatusWithPaymentAdjustment(submissionId, targetStatus){
-      if(!submissionId) throw new Error('Invalid submission id');
-      const submissionRef = doc(db, 'advert_submissions', submissionId);
-
-      await runTransaction(db, async (tx) => {
-        const subSnap = await tx.get(submissionRef);
-        if(!subSnap.exists()) throw new Error('Submission not found');
-        const sub = subSnap.data() || {};
-        const curStatus = (sub.status || 'pending').toLowerCase();
-        const target = (targetStatus || '').toLowerCase();
-        if(curStatus === target) return;
-
-        if(curStatus === 'approved' && target === 'rejected'){
-          throw new Error('Operation not allowed: an approved submission cannot be changed to rejected.');
-        }
-
-        const submitterUid = sub.userId || sub.user || sub.requestedBy || sub.workerId || null;
-        const paidAmountExisting = Number(sub.paidAmount ?? sub.paid_amount ?? sub.paid || 0);
-
-        const advertId = sub.advertId || sub.advertID || sub.taskId || sub.task_id || null;
-        let unitPrice = 0;
-        if(advertId){
-          try {
-            const advertRef = doc(db, 'advertise_tasks', advertId);
-            const advSnap = await tx.get(advertRef);
-            if(advSnap.exists()){
-              const adv = advSnap.data() || {};
-              unitPrice = getUnitPrice(adv);
-            }
-          } catch(e){ /* ignore */ }
-        }
-        const payAmount = Math.round((unitPrice || 0) * 0.7);
-
-        if(target === 'approved'){
-          if(curStatus !== 'approved'){
-            if(!submitterUid) throw new Error('Submission missing submitter id');
-            const userRef = doc(db, 'users', submitterUid);
-            const userSnap = await tx.get(userRef);
-            if(userSnap.exists()){
-              const u = userSnap.data() || {};
-              const balanceFields = ['balance','wallet','funds','walletBalance'];
-              let chosen = null;
-              let currentBalance = 0;
-              for(const f of balanceFields){ if(typeof u[f] !== 'undefined' && u[f] !== null && !isNaN(Number(u[f]))){ chosen = f; currentBalance = Number(u[f]); break; } }
-              if(chosen){
-                const newBal = Number(currentBalance || 0) + Number(payAmount || 0);
-                const upd = {}; upd[chosen] = newBal;
-                tx.update(userRef, upd);
-              } else {
-                tx.update(userRef, { balance: Number(u.balance || 0) + Number(payAmount || 0) });
-              }
-            } else {
-              tx.set(doc(db,'users',submitterUid), { balance: Number(payAmount || 0) }, { merge: true });
-            }
-            tx.update(submissionRef, {
-              status: 'approved',
-              approvedAt: serverTimestamp(),
-              paidAmount: Number(payAmount || 0),
-              paidBy: currentUser ? currentUser.uid : null
-            });
-          }
-        } else if(target === 'rejected'){
-          tx.update(submissionRef, { status: 'rejected', rejectedAt: serverTimestamp() });
-        } else if(target === 'pending'){
-          if(curStatus === 'approved' && paidAmountExisting > 0){
-            if(!submitterUid) throw new Error('Submission missing submitter id');
-            const userRef = doc(db, 'users', submitterUid);
-            const userSnap = await tx.get(userRef);
-            if(userSnap.exists()){
-              const u = userSnap.data() || {};
-              const balanceFields = ['balance','wallet','funds','walletBalance'];
-              let chosen = null;
-              let currentBalance = 0;
-              for(const f of balanceFields){ if(typeof u[f] !== 'undefined' && u[f] !== null && !isNaN(Number(u[f]))){ chosen = f; currentBalance = Number(u[f]); break; } }
-              if(chosen){
-                const newBal = Math.max(0, Number(currentBalance || 0) - Number(paidAmountExisting || 0));
-                const upd = {}; upd[chosen] = newBal;
-                tx.update(userRef, upd);
-              } else {
-                tx.update(userRef, { balance: Math.max(0, Number(u.balance || 0) - Number(paidAmountExisting || 0)) });
-              }
-            }
-            tx.update(submissionRef, { status: 'pending', updatedAt: serverTimestamp(), refunded: true });
-          } else {
-            tx.update(submissionRef, { status: 'pending', updatedAt: serverTimestamp() });
-          }
-        }
-      });
-    }
-
-    // PROBE collections for the user's adverts. returns chosen collection name and ownerField used
-    async function probeCollectionsForUser(uid){
-      debug(`Starting probe for user ${uid}...`);
-      for(const coll of CANDIDATE_COLLS){
-        try{
-          const colRef = collection(db, coll);
-          // try a small quick get (no where) to inspect fields if read allowed (catches permission errors quickly)
-          const snap = await getDocs(colRef);
-          if(!snap.empty){
-            debug(`Collection "${coll}" reachable — docs: ${snap.size}. Sample doc IDs: ${snap.docs.slice(0,3).map(d=>d.id).join(', ')}`);
-            // inspect first doc for a likely owner field
-            const sample = snap.docs[0].data() || {};
-            for(const f of OWNER_FIELDS){
-              if(typeof sample[f] !== 'undefined'){
-                // attempt a targeted query: where(f, '==', uid)
-                try{
-                  const q = query(collection(db, coll), where(f, '==', uid));
-                  const res = await getDocs(q);
-                  if(!res.empty){
-                    debug(`Found adverts in "${coll}" where ${f} == ${uid} — ${res.size} matching docs.`);
-                    return { collection: coll, ownerField: f };
-                  } else {
-                    debug(`No documents in "${coll}" matched ${f} == ${uid} (0 results).`);
-                  }
-                }catch(err){
-                  debug(`Query error in "${coll}" using field ${f}: ${err.message || err}`);
-                }
-              }
-            }
-            // no owner-field match on first doc — still record sample info for debugging
-            debug(`Inspected "${coll}" sample doc fields: ${Object.keys(sample).slice(0,12).join(', ')}`);
-          } else {
-            debug(`Collection "${coll}" reachable but empty.`);
-          }
-        }catch(err){
-          debug(`Cannot read "${coll}": ${err.message || err}`);
-        }
-      }
-      debug('Probe finished — no direct owner-field match found.');
-      return null;
-    }
-
-    // Start adverts listeners using the best collection/field found
-    async function startAdvertsListeners(uid){
+    // query adverts where any of the owner-like fields equals current user
+    // we attach a listener per field and merge results to advertsMap
+    const advertsUnsubs = [];
+    function startAdvertsListeners(uid){
+      // clean previous
       advertsMap.clear();
-      // teardown previous
       for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
       advertsUnsubs.length = 0;
       detachAllSubmissionListeners();
-
       grid.innerHTML = '<div class="empty">Loading your adverts…</div>';
-      diag.textContent = 'Probing collections...';
-      debug(`--- probe start for user ${uid} ---`);
+      diag.textContent = 'Listening for adverts you created…';
 
-      const probe = await probeCollectionsForUser(uid);
-      if(probe && probe.collection){
-        const coll = probe.collection;
-        const field = probe.ownerField;
-        diag.textContent = `Listening for adverts in "${coll}" where ${field} == you`;
-        debug(`Attaching realtime listener on collection "${coll}" using owner field "${field}"`);
+      // listen on single collection that you use (advertise_tasks) as primary
+      const primaryCol = 'advertise_tasks';
+      const firstQuery = query(collection(db, primaryCol), where('createdBy','==', uid));
+      const mapLocal = new Map();
+
+      // helper to merge doc into advertsMap (avoid duplicates)
+      function mergeDoc(docSnap){
+        const d = docSnap.data();
+        const id = docSnap.id;
+        // store
+        advertsMap.set(id, { id, data: d });
+        rebuildGrid();
+      }
+
+      // we'll set up listeners for multiple fields but primarily for advertise_tasks collection
+      // create a listener for each candidate owner field inside advertise_tasks
+      const ownerFields = OWNER_FIELDS.slice(); // copy
+      ownerFields.forEach(field => {
         try{
-          const q = query(collection(db, coll), where(field, '==', uid));
+          const q = query(collection(db, primaryCol), where(field, '==', uid));
           const unsub = onSnapshot(q, snap => {
-            snap.forEach(docSnap => {
-              advertsMap.set(docSnap.id, { id: docSnap.id, data: docSnap.data() });
-            });
+            snap.forEach(docSnap => mergeDoc(docSnap));
+            // remove deleted docs from map if changed? we rely on merging, but we'll rebuild grid after each snapshot
             rebuildGrid();
-            diag.textContent = `Found ${advertsMap.size} adverts`;
-            debug(`Realtime snapshot from "${coll}" (${snap.size} docs).`);
           }, err => {
-            debug(`Realtime listener error for "${coll}": ${err.message || err}`);
-            diag.textContent = `Listener error: ${err.message || err}`;
+            console.warn('adverts listener (field) error for', field, err);
           });
           advertsUnsubs.push(unsub);
-          // also attach a broad listener in background for statuses (optional)
-          try{
-            const qAll = query(collection(db, coll));
-            const unsubAll = onSnapshot(qAll, snapAll => {
-              snapAll.forEach(docSnap => {
-                const d = docSnap.data() || {};
-                // if doc likely belongs to this user, keep it
-                const ownerVal = d[field];
-                if(ownerVal === uid || (Array.isArray(ownerVal) && ownerVal.includes && ownerVal.includes(uid))){
-                  advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
-                }
-              });
-              rebuildGrid();
-            }, err => debug(`broad listener error for "${coll}": ${err.message || err}`));
-            advertsUnsubs.push(unsubAll);
-          }catch(e){ debug('Could not attach broad listener: ' + e.message); }
-
-          // done
-          return;
         }catch(e){
-          debug(`Failed to attach realtime listener on "${coll}": ${e.message || e}`);
+          console.warn('failed setting adverts listener for field', field, e);
         }
-      }
+      });
 
-      // If we get here, probe failed to find a query match or realtime attach failed — fall back to a one-time scan of 'advertise_tasks'
-      diag.textContent = 'No tailored collection found — falling back to a one-time scan.';
-      debug('Falling back to one-time scan of advertise_tasks (best-effort).');
+      // also try a single listener that pulls all docs where advertiser uid matches stored 'ownerUid' list (if you have such an array)
+      // No further action needed; rebuildGrid will update as docs arrive.
+    }
+
+    // small utility to find likely owner field and do a one-time probe if needed (not required for realtime path above)
+    async function probeAdvertPresence(uid){
       try{
-        const fallbackSnap = await getDocs(collection(db, 'advertise_tasks'));
-        if(!fallbackSnap.empty){
-          fallbackSnap.forEach(docSnap => {
-            const d = docSnap.data() || {};
-            // keep docs that appear to belong to the user by checking owner-like fields
-            const possible = OWNER_FIELDS.some(f => {
-              const v = d[f];
-              return v === uid || (Array.isArray(v) && v.includes && v.includes(uid));
-            });
-            if(possible) advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
-          });
-          if(advertsMap.size > 0){
-            diag.textContent = `Found ${advertsMap.size} adverts (fallback).`;
-            rebuildGrid();
-            debug('Fallback one-time scan populated advertsMap.');
-            return;
-          } else {
-            diag.textContent = 'No adverts found in fallback scan (or insufficient read permission).';
-            debug('Fallback scan returned no adverts belonging to user.');
-            grid.innerHTML = '<div class="empty">No adverts found for your account (or insufficient permissions).</div>';
-            return;
-          }
-        } else {
-          diag.textContent = 'Fallback collection empty or not readable.';
-          debug('Fallback getDocs returned empty snapshot for advertise_tasks.');
-          grid.innerHTML = '<div class="empty">No adverts found (fallback empty).</div>';
+        // quick probe: look up advertise_tasks where any candidate equals uid (first hit)
+        for(const field of OWNER_FIELDS){
+          try{
+            const q = query(collection(db,'advertise_tasks'), where(field,'==', uid));
+            const snap = await getDocs(q);
+            if(!snap.empty) return true;
+          }catch(e){ /* ignore field errors and continue */ }
         }
-      }catch(e){
-        debug('Fallback scan failed: ' + (e.message || e));
-        diag.textContent = 'Failed to read adverts (check Firestore rules).';
-        grid.innerHTML = '<div class="empty">Failed to load adverts (see debug log).</div>';
-      }
+      }catch(e){}
+      return false;
     }
 
-    // teardown helpers
-    function stopAllAdvertsListeners(){
-      for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
-      advertsUnsubs.length = 0;
-    }
-
-    // auth
-    onAuthStateChanged(auth, user => {
+    // init auth
+    onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       if(!user){
         diag.textContent = 'Please sign in to view your adverts.';
         grid.innerHTML = '<div class="empty">Sign in to see your adverts.</div>';
-        debug('User not signed in.');
         return;
       }
       diag.textContent = `Signed in as ${user.email || user.displayName || user.uid.slice(0,8)}`;
-      debug(`Authenticated as ${user.uid} (${user.email || 'no-email'})`);
-      startAdvertsListeners(user.uid).catch(e => debug('startAdvertsListeners error: ' + (e.message || e)));
+      // start listening
+      startAdvertsListeners(user.uid);
     });
 
-    // UI events
+    // search and refresh
     search.addEventListener('input', () => rebuildGrid());
     refreshBtn.addEventListener('click', () => {
       if(!currentUser) return;
-      stopAllAdvertsListeners();
+      // tear down and restart listeners (safe)
+      for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
+      advertsUnsubs.length = 0;
       advertsMap.clear();
       detachAllSubmissionListeners();
       startAdvertsListeners(currentUser.uid);
     });
 
+    // cleanup on unload
     window.addEventListener('beforeunload', () => {
-      stopAllAdvertsListeners();
+      for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
       detachAllSubmissionListeners();
     });
+
   </script>
 </body>
 </html>
