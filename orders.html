@@ -4,10 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Adverts — Beni-Wealth</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
 
   <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
 
   <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
@@ -20,6 +19,7 @@
   <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
+
   <style>
     :root{
       --bg1:#060511; --bg2:#0f0920;
@@ -110,7 +110,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import {
       getFirestore, collection, query, where, onSnapshot, getDocs, doc, getDoc,
-      runTransaction, serverTimestamp
+      runTransaction, serverTimestamp, onSnapshot as docOnSnapshot
     } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
@@ -144,12 +144,16 @@
     let currentUser = null;
     const advertsMap = new Map(); // advertId -> {id, data}
     const submissionsListeners = new Map(); // advertId -> unsubscribe fn
-    const advertsUnsubs = []; // listeners for adverts
+    const docListeners = new Map(); // advertId -> unsubscribe for doc snapshots
+    const advertsUnsubs = []; // generic unsubs
 
     // candidate owner fields
     const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator','ownerUid','user'];
 
-    // helper utils
+    // possible alternate advert collection names to probe
+    const ALT_ADVERT_COLLECTIONS = ['advertise_tasks','advertise','advert','adverts','advertisements','advert_task','advert_task_list'];
+
+    // helpers
     function el(tag, attrs = {}, ...children){
       const e = document.createElement(tag);
       for(const k in attrs){
@@ -164,7 +168,7 @@
     function niceDate(ts){ try{ if(!ts) return '-'; if(ts.toDate) ts = ts.toDate(); return new Date(ts).toLocaleString(); }catch(e){ return '-'; } }
     function statusClass(status){ const s = String(status||'').toLowerCase(); if(s==='pending') return 'pill pending'; if(s==='approved') return 'pill approved'; if(s==='completed') return 'pill completed'; return 'pill pending'; }
 
-    // show image overlay
+    // viewer functions
     function openImageViewer(url){
       viewerImg.src = url;
       viewerMeta.textContent = url;
@@ -181,21 +185,20 @@
     viewerClose.addEventListener('click', closeImageViewer);
     viewerOverlay.addEventListener('click', (e)=>{ if(e.target === viewerOverlay) closeImageViewer(); });
 
-    // compute unit price from advert doc data (defensive)
+    // get unit price defensively
     function getUnitPrice(adData){
       if(!adData) return 0;
       const candidates = ['unitPrice','unit_price','price','per','unit','amount'];
       for(const k of candidates){
         if(typeof adData[k] !== 'undefined' && adData[k] !== null && !isNaN(Number(adData[k]))) return Number(adData[k]);
       }
-      // if totalCost present and workers present, compute unit
       const total = Number(adData.totalCost ?? adData.total_cost ?? adData.total ?? 0) || 0;
       const workers = Number(adData.workers ?? adData.worker_count ?? adData.requested_workers ?? adData.maxWorkers ?? 0) || 0;
       if(workers > 0 && total > 0) return total / workers;
       return 0;
     }
 
-    // render adverts grid
+    // render functions
     function rebuildGrid(){
       const q = (search.value || '').trim().toLowerCase();
       grid.innerHTML = '';
@@ -213,16 +216,13 @@
       if(!any) grid.innerHTML = '<div class="empty">You have no adverts yet.</div>';
     }
 
-    // build card (only Details button)
     function buildCard(id, data){
       const head = el('div',{class:'card-head'});
       const left = el('div',{style:'display:flex;gap:12px;align-items:center'});
       const thumbSrc = data.thumbnail || data.thumb || data.image || '';
       const thumb = el('img',{class:'thumb', src: thumbSrc, alt: data.title || ''});
       if(!thumbSrc) thumb.style.display = 'none';
-      thumb.addEventListener('click', ()=>{
-        if(thumbSrc) openImageViewer(thumbSrc);
-      });
+      thumb.addEventListener('click', ()=> { if(thumbSrc) openImageViewer(thumbSrc); });
 
       const txt = el('div', {},
         el('div',{class:'title'}, data.title || '(untitled)'),
@@ -247,17 +247,16 @@
       const collapseInner = el('div',{class:'details-inner'}, el('div',{class:'small muted'}, 'Loading submissions…'));
       const collapse = el('div',{class:'details-collapse', id:`collapse-${id}`}, collapseInner);
 
-      // improved expand/collapse using measured height so images + content not clipped
       let expanded = false;
       detailsBtn.addEventListener('click', async () => {
         expanded = !expanded;
         if(expanded){
-          // ensure content is rendered and then set maxHeight to scrollHeight
+          // attach submission listener for this advert into the collapseInner
           await attachSubmissionsListener(id, collapseInner);
-          // give layout a tick to render images/sizes
+          // allow layout to settle then set maxHeight
           requestAnimationFrame(()=> {
             const sh = collapseInner.scrollHeight;
-            collapse.style.maxHeight = (sh + 24) + 'px'; // extra padding
+            collapse.style.maxHeight = (sh + 24) + 'px';
           });
         } else {
           collapse.style.maxHeight = '0';
@@ -269,14 +268,11 @@
       return card;
     }
 
-    // attach submissions listener for advertId and render into containerEl
+    // Submissions listener (same safe approach, per-advert)
     function attachSubmissionsListener(advertId, containerEl){
-      // avoid duplicate
       if(submissionsListeners.has(advertId)) return;
-
       containerEl.innerHTML = '<div class="small muted">Loading submissions…</div>';
 
-      // collection name
       const subColName = 'advert_submissions';
       const q = query(collection(db, subColName), where('advertId', '==', advertId));
 
@@ -295,14 +291,12 @@
           });
         });
 
-        // sort newest first
         list.sort((a,b)=>{
           const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?Date.parse(a.createdAt):0);
           const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?Date.parse(b.createdAt):0);
           return tb - ta;
         });
 
-        // render
         if(list.length === 0){
           containerEl.innerHTML = '<div class="empty small muted">No submissions yet.</div>';
         } else {
@@ -333,16 +327,14 @@
             const payAmount = Math.round(unitPrice * 0.7);
 
             if(currentUser && advertOwnerId && currentUser.uid === advertOwnerId){
-              // dynamic control set depending on status
               const controls = el('div',{style:'display:flex;gap:6px;flex-direction:row;'});
               const approveBtn = el('button',{class:'btn'}, '');
               const rejectBtn = el('button',{class:'btn ghost'}, '');
 
-              // set label and disabled state according to current submission status
               if(stLower === 'approved'){
                 approveBtn.textContent = `Unapprove`;
                 rejectBtn.textContent = `Reject`;
-                // IMPORTANT: once approved, *rejecting is not allowed* — disable reject button
+                // ENFORCE: cannot change approved -> rejected
                 rejectBtn.disabled = true;
                 rejectBtn.title = 'Cannot reject an already-approved submission';
               } else if(stLower === 'rejected'){
@@ -357,15 +349,12 @@
                 rejectBtn.title = '';
               }
 
-              // approve/unapprove handler
               approveBtn.addEventListener('click', async ()=>{
                 approveBtn.disabled = true;
                 try {
                   if(stLower === 'approved'){
-                    // move back to pending (undo approval) — allowed
                     await setSubmissionStatusWithPaymentAdjustment(s.id, 'pending');
                   } else {
-                    // approve
                     await setSubmissionStatusWithPaymentAdjustment(s.id, 'approved');
                   }
                 } catch(e){
@@ -374,16 +363,13 @@
                 } finally { approveBtn.disabled = false; }
               });
 
-              // reject/unreject handler
               rejectBtn.addEventListener('click', async ()=>{
-                if (rejectBtn.disabled) { return; } // safety guard
+                if(rejectBtn.disabled) return;
                 rejectBtn.disabled = true;
                 try {
                   if(stLower === 'rejected'){
-                    // move back to pending
                     await setSubmissionStatusWithPaymentAdjustment(s.id, 'pending');
                   } else {
-                    // reject
                     await setSubmissionStatusWithPaymentAdjustment(s.id, 'rejected');
                   }
                 } catch(e){
@@ -403,7 +389,7 @@
           }
         }
 
-        // try to mark advert completed if approved count >= workers (best effort)
+        // auto-complete advert if approvedCount >= workers requested
         const approvedCount = list.filter(it => (it.status||'').toLowerCase() === 'approved').length;
         const advertData = advertsMap.get(advertId)?.data || {};
         const workersRequested = Number(advertData.workers || advertData.worker_count || advertData.requested_workers || advertData.maxWorkers || 0) || 0;
@@ -436,7 +422,6 @@
       if(unsub){ try{ unsub(); }catch(e){} }
       submissionsListeners.delete(advertId);
     }
-
     function detachAllSubmissionListeners(){
       for(const [k, unsub] of submissionsListeners.entries()){
         try{ unsub(); } catch(e){}
@@ -444,8 +429,7 @@
       submissionsListeners.clear();
     }
 
-    // CENTRAL function to set status and adjust payment (approve -> credit, pending/unapprove -> reverse payment, rejected -> mark)
-    // ENFORCEMENT: approved -> rejected is NOT allowed (transaction will throw)
+    // CORE: set status & payment adjustments (approved -> rejected forbidden)
     async function setSubmissionStatusWithPaymentAdjustment(submissionId, targetStatus){
       if(!submissionId) throw new Error('Invalid submission id');
       const submissionRef = doc(db, 'advert_submissions', submissionId);
@@ -456,36 +440,28 @@
         const sub = subSnap.data() || {};
         const curStatus = (sub.status || 'pending').toLowerCase();
         const target = (targetStatus || '').toLowerCase();
-        if(curStatus === target) return; // nothing to do
+        if(curStatus === target) return;
 
-        // ENFORCE: an approved submission cannot be changed to rejected
+        // ENFORCE
         if(curStatus === 'approved' && target === 'rejected'){
           throw new Error('Operation not allowed: an approved submission cannot be changed to rejected.');
         }
 
-        // gather submitter id and paidAmount existing
         const submitterUid = sub.userId || sub.user || sub.requestedBy || sub.workerId || null;
         const paidAmountExisting = Number(sub.paidAmount ?? sub.paid_amount ?? sub.paid || 0);
 
-        // find advert id and advert doc to compute unit price (inside transaction if possible)
         const advertId = sub.advertId || sub.advertID || sub.taskId || sub.task_id || null;
         let unitPrice = 0;
         if(advertId){
-          try {
-            const advertRef = doc(db, 'advertise_tasks', advertId);
-            const advSnap = await tx.get(advertRef); // inside transaction
-            if(advSnap.exists()){
-              const adv = advSnap.data() || {};
-              unitPrice = getUnitPrice(adv);
-            }
-          } catch(e){
-            // ignore and continue
+          const advertRef = doc(db, 'advertise_tasks', advertId);
+          const advSnap = await tx.get(advertRef);
+          if(advSnap.exists()){
+            const adv = advSnap.data() || {};
+            unitPrice = getUnitPrice(adv);
           }
         }
-
         const payAmount = Math.round((unitPrice || 0) * 0.7);
 
-        // Transitions
         if(target === 'approved'){
           if(curStatus !== 'approved'){
             if(!submitterUid) throw new Error('Submission missing submitter id');
@@ -515,10 +491,8 @@
             });
           }
         } else if(target === 'rejected'){
-          // For non-approved -> rejected flow simply mark as rejected (no money reversal).
           tx.update(submissionRef, { status: 'rejected', rejectedAt: serverTimestamp() });
         } else if(target === 'pending'){
-          // moving to pending: if current was approved and paidAmountExisting>0, reverse payment
           if(curStatus === 'approved' && paidAmountExisting > 0){
             if(!submitterUid) throw new Error('Submission missing submitter id');
             const userRef = doc(db, 'users', submitterUid);
@@ -545,124 +519,100 @@
       });
     }
 
-    // start adverts listeners to display adverts created by current user
+    // PROBE approach: single-time getDocs across owner fields & alternate collections, then attach doc listeners
     async function startAdvertsListeners(uid){
       advertsMap.clear();
-      // tear down previous listeners
       for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
       advertsUnsubs.length = 0;
       detachAllSubmissionListeners();
+      // clear doc listeners
+      for(const unsub of docListeners.values()){ try{ unsub(); } catch(e){} }
+      docListeners.clear();
 
       grid.innerHTML = '<div class="empty">Loading your adverts…</div>';
       diag.textContent = 'Looking up adverts you created…';
 
-      const primaryCol = 'advertise_tasks';
-      let foundAny = false;
+      const primaryCollList = ALT_ADVERT_COLLECTIONS;
+      let foundIds = new Set();
 
-      // First: do a one-time probe (getDocs) across likely owner fields so UI won't stay stuck.
-      try {
-        for(const field of OWNER_FIELDS){
-          try {
-            const q = query(collection(db, primaryCol), where(field, '==', uid));
-            const snap = await getDocs(q);
-            snap.forEach(docSnap => {
-              advertsMap.set(docSnap.id, { id: docSnap.id, data: docSnap.data() });
-              foundAny = true;
-            });
-          } catch(e){
-            // likely permission/index issue on this field — continue probing other fields
-            console.warn('probe query failed for field', field, e);
-          }
-        }
-
-        // If still not found, do a broad one-time scan (limited) and inspect owner-like fields inside each doc.
-        if(!foundAny){
-          try{
-            const snapAll = await getDocs(query(collection(db, primaryCol)));
-            snapAll.forEach(docSnap => {
-              const d = docSnap.data() || {};
-              const possible = OWNER_FIELDS.some(f => {
-                const v = d[f];
-                return v === uid || (Array.isArray(v) && v.includes && v.includes(uid));
-              });
-              if(possible){
-                advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
-                foundAny = true;
-              }
-            });
-          } catch(e){
-            console.warn('broad one-time probe failed', e);
-          }
-        }
-
-        // Rebuild the grid with any results from probe
-        rebuildGrid();
-
-      } catch(e){
-        console.warn('initial probe failed', e);
-      }
-
-      // Attach realtime onSnapshot listeners (per-owner-field) so updates flow in
-      try {
-        for(const field of OWNER_FIELDS){
-          try{
-            const q = query(collection(db, primaryCol), where(field, '==', uid));
-            const unsub = onSnapshot(q, snap => {
+      // one-time probe: check each collection and owner field
+      for(const collName of primaryCollList){
+        try {
+          for(const field of OWNER_FIELDS){
+            try{
+              const q = query(collection(db, collName), where(field, '==', uid));
+              const snap = await getDocs(q);
               snap.forEach(docSnap => {
                 advertsMap.set(docSnap.id, { id: docSnap.id, data: docSnap.data() });
+                foundIds.add(`${collName}::${docSnap.id}`);
               });
-              rebuildGrid();
-            }, err => {
-              console.warn('adverts listener error for field', field, err);
-              // show a diagnostic message but keep other listeners alive
-              diag.textContent = `Listening for adverts — partial listeners error for ${field}`;
-            });
-            advertsUnsubs.push(unsub);
-          } catch(e){
-            console.warn('failed to attach listener for field', field, e);
+            }catch(err){
+              // ignore field-specific errors (common if field/index missing or rules)
+              console.warn('probe field error', collName, field, err.message || err);
+            }
           }
-        }
-
-        // broad listener to catch status changes for adverts owned by the user (best-effort)
-        try {
-          const qAll = query(collection(db, primaryCol));
-          const unsubAll = onSnapshot(qAll, snap => {
-            snap.forEach(docSnap => {
-              const d = docSnap.data() || {};
-              const possible = OWNER_FIELDS.some(f => {
-                const v = d[f];
-                return v === uid || (Array.isArray(v) && v.includes && v.includes(uid));
-              });
-              if(possible){
-                advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
-              }
-            });
-            rebuildGrid();
-          }, err => {
-            console.warn('broad adverts listener error', err);
-          });
-          advertsUnsubs.push(unsubAll);
         } catch(e){
-          console.warn('failed to attach broad listener', e);
+          console.warn('probe collection error', collName, e);
         }
-
-      } catch(e){
-        console.warn('failed attaching realtime listeners', e);
       }
 
-      // After a short delay, if advertsMap still empty, show helpful message instead of indefinite loading
-      setTimeout(() => {
+      // If still empty, do a limited full-scan attempt on primary collection(s) to find docs where owner-like fields include uid
+      if(advertsMap.size === 0){
+        try {
+          const fallbackColl = ALT_ADVERT_COLLECTIONS[0] || 'advertise_tasks';
+          const snapAll = await getDocs(query(collection(db, fallbackColl)));
+          snapAll.forEach(docSnap => {
+            const d = docSnap.data() || {};
+            const possible = OWNER_FIELDS.some(f => {
+              const v = d[f];
+              return v === uid || (Array.isArray(v) && v.includes && v.includes(uid));
+            });
+            if(possible) advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
+          });
+        } catch(e){
+          console.warn('fallback broad probe failed', e);
+        }
+      }
+
+      // Attach per-document realtime listeners for documents we found (safer)
+      for(const [id, entry] of advertsMap.entries()){
+        try{
+          const docRef = doc(db, 'advertise_tasks', id);
+          const unsubDoc = docOnSnapshot(docRef, (snap)=> {
+            if(!snap.exists()){
+              advertsMap.delete(id);
+            } else {
+              advertsMap.set(id, { id: snap.id, data: snap.data() });
+            }
+            rebuildGrid();
+          }, (err) => {
+            console.warn('doc snapshot error for', id, err);
+          });
+          docListeners.set(id, unsubDoc);
+        } catch(e){
+          console.warn('attach doc listener failed for', id, e);
+        }
+      }
+
+      // If advertsMap is still empty, show helpful message after short delay
+      setTimeout(()=> {
         if(advertsMap.size === 0){
-          grid.innerHTML = '<div class="empty">You have no adverts yet.</div>';
-          diag.textContent = 'No adverts found for your account (or insufficient read permissions).';
+          grid.innerHTML = '<div class="empty">No adverts found for your account (or you lack read permission).</div>';
+          diag.textContent = 'No adverts found — check your account or Firestore rules.';
         } else {
           diag.textContent = `Found ${advertsMap.size} adverts`;
           rebuildGrid();
         }
-      }, 2200);
+      }, 800);
     }
 
-    // auth init
+    // cleanup helpers
+    function clearAllDocListeners(){
+      for(const unsub of docListeners.values()){ try{ unsub(); } catch(e){} }
+      docListeners.clear();
+    }
+
+    // auth + init
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       if(!user){
@@ -671,24 +621,26 @@
         return;
       }
       diag.textContent = `Signed in as ${user.email || user.displayName || user.uid.slice(0,8)}`;
-      startAdvertsListeners(user.uid);
+      await startAdvertsListeners(user.uid);
     });
 
-    // search & refresh
+    // UI events
     search.addEventListener('input', () => rebuildGrid());
-    refreshBtn.addEventListener('click', () => {
+    refreshBtn.addEventListener('click', async () => {
       if(!currentUser) return;
+      // teardown
       for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
       advertsUnsubs.length = 0;
       advertsMap.clear();
       detachAllSubmissionListeners();
-      startAdvertsListeners(currentUser.uid);
+      clearAllDocListeners();
+      await startAdvertsListeners(currentUser.uid);
     });
 
-    // cleanup
     window.addEventListener('beforeunload', () => {
       for(const u of advertsUnsubs){ try{ u(); } catch(e){} }
       detachAllSubmissionListeners();
+      clearAllDocListeners();
     });
   </script>
 </body>
