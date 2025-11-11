@@ -409,7 +409,25 @@
 
     // init + auth
     onAuthStateChanged(auth, async (user) => {
-      if(!user){ alert('Please sign in as admin to access this page'); window.location.href = 'login.html'; return; }
+      // clear any previous pending redirect
+      if (window._adminAuthTimeout) { clearTimeout(window._adminAuthTimeout); window._adminAuthTimeout = null; }
+
+      // If there's no signed in user yet, don't immediately block — give auth a short grace period
+      if (!user) {
+        grid.innerHTML = '<div class="small muted">Waiting for authentication…</div>';
+        // only redirect after a short delay if auth still hasn't reported
+        window._adminAuthTimeout = setTimeout(() => {
+          const nowUser = auth.currentUser;
+          if (!nowUser) {
+            alert('Please sign in as admin to access this page');
+            window.location.href = 'login.html';
+          }
+        }, 3500);
+        return;
+      }
+
+      // signed in — clear timeout and proceed
+      if (window._adminAuthTimeout) { clearTimeout(window._adminAuthTimeout); window._adminAuthTimeout = null; }
 
       // allow specific admin emails explicitly
       const allowedAdmins = ['beniwealth70@gmail.com', 'owanaomubo76@gmail.com'];
