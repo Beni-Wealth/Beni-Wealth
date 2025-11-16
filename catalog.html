@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Pool (Player vs System)</title>
+  <style>
+    :root{ --bg:#0b6b3a; --card:#ffffff; --muted:#666; --accent:#0b6b3a }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    body{display:flex;align-items:flex-start;justify-content:center;background:linear-gradient(180deg,#e7f8ef 0%, #cfeee0 100%);padding:20px}
+    .container{width:100%;max-width:1000px;background:var(--card);border-radius:12px;box-shadow:0 8px 30px rgba(10,10,10,.12);overflow:hidden}
+    header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee}
+    header h1{font-size:18px;margin:0;color:#0b6b3a}
+    main{display:flex;gap:20px;padding:18px}
+    #game-area{flex:1;display:flex;flex-direction:column;align-items:center}
+    canvas{background:#0a2b18;border-radius:6px;box-shadow:inset 0 0 40px rgba(0,0,0,.6);}
+    .sidebar{width:320px;padding:12px}
+    .card{background:#fafafa;border-radius:8px;padding:12px;margin-bottom:12px;border:1px solid #eee}
+    .muted{color:var(--muted);font-size:13px}
+    button{background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+    .row{display:flex;gap:8px;align-items:center}
+    .small{font-size:13px}
+    .note{font-size:12px;color:#555}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Beni-Wealth — Pool (Player vs System)</h1>
+      <div class="row">
+        <div class="muted small">Fairness: <strong>50%</strong> (AI intentionally misses half the time)</div>
+        <button id="newGameBtn">New Game</button>
+      </div>
+    </header>
+    <main>
+      <div id="game-area">
+        <canvas id="table" width="760" height="420"></canvas>
+        <div style="width:760px;display:flex;justify-content:space-between;margin-top:12px">
+          <div class="muted small">Controls: Drag from cue ball to set direction & power; release to shoot.</div>
+          <div class="muted small">Turn: <strong id="turnLabel">Player</strong></div>
+        </div>
+      </div>
+      <aside class="sidebar">
+        <div class="card">
+          <div class="row">
+            <div style="flex:1">
+              <div class="small muted">Player</div>
+              <div id="playerScore">Balls potted: 0</div>
+            </div>
+            <div style="flex:1">
+              <div class="small muted">System</div>
+              <div id="aiScore">Balls potted: 0</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="small muted">Game Options</div>
+          <div style="margin-top:8px" class="row">
+            <label class="small">Aim assist</label>
+            <input type="checkbox" id="aimAssist" checked />
+          </div>
+          <div style="margin-top:8px" class="row">
+            <label class="small">AI Skill</label>
+            <select id="aiSkill">
+              <option value="0.5">Balanced (50% fair)</option>
+              <option value="0.3">Easier</option>
+              <option value="0.7">Harder</option>
+            </select>
+          </div>
+          <div style="margin-top:8px" class="row">
+            <button id="toggleAI">Start AI Turn</button>
+            <button id="downloadReplay">Download Replay</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="small muted">Notes</div>
+          <div class="note" style="margin-top:6px">This prototype uses simplified 2D physics (no spin). AI uses heuristics and a 50% intentional-miss mechanism to approximate fairness. Firebase is initialized (no database writes).</div>
+        </div>
+        <div class="card">
+          <div class="small muted">Firebase</div>
+          <div class="note" style="margin-top:6px">Firebase app is initialized using your Beni-Wealth configuration (Firestore project). No data is saved in this prototype.</div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Firebase (modular CDN) -->
+  <script type="module">
+    // Firebase config (from your Beni-Wealth/EasyPay project)
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+    // We import Firestore only to show initialization; no writes are performed in this prototype.
+    import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDRkip46Ql5KhNfuatWAcAxQzgP5VtQ8UY",
+      authDomain: "easypay-6bce8.firebaseapp.com",
+      projectId: "easypay-6bce8",
+      storageBucket: "easypay-6bce8.firebasestorage.app",
+      messagingSenderId: "862671358267",
+      appId: "1:862671358267:web:b243c7b69840ef918c8f1e",
+      measurementId: "G-2FZKDQ47FZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    console.log('Firebase initialized (prototype)');
+
+    // ---- Simple pool implementation (no spin, simplified physics) ----
+    const canvas = document.getElementById('table');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    const pocketRadius = 18;
+    const ballRadius = 9;
+    const friction = 0.992; // per frame
+
+    // Table bounds (padding for rails)
+    const padding = 30;
+
+    let balls = []; // {x,y,vx,vy,r,color,id,active}
+    let cueBallId = 0;
+    let isAiming=false, aimStart=null, aimEnd=null;
+    let currentTurn = 'player'; // 'player'|'ai'
+    let allowPlayerShot = true;
+    let replay = [];
+
+    const pockets = [
+      {x: padding, y: padding},
+      {x: W/2, y: padding},
+      {x: W-padding, y: padding},
+      {x: padding, y: H-padding},
+      {x: W/2, y: H-padding},
+      {x: W-padding, y: H-padding}
+    ];
+
+    function resetTable(){
+      balls = [];
+      // cue ball
+      balls.push({id:0,x:160,y:H/2,vx:0,vy:0,r:ballRadius,color:'#ffffff',active:true});
+      // rack (6 object balls for simplicity)
+      const rack = [ {x:520,y:H/2-18},{x:538,y:H/2},{x:538,y:H/2-36},{x:556,y:H/2-18},{x:556,y:H/2+18},{x:574,y:H/2} ];
+      for(let i=0;i<rack.length;i++){
+        balls.push({id:i+1,x:rack[i].x,y:rack[i].y,vx:0,vy:0,r:ballRadius,color:'#ffcc00',active:true});
+      }
+      cueBallId = 0;
+      document.getElementById('playerScore').textContent = 'Balls potted: 0';
+      document.getElementById('aiScore').textContent = 'Balls potted: 0';
+      currentTurn = 'player';
+      allowPlayerShot = true;
+      replay = [];
+      updateTurnLabel();
+    }
+
+    function drawTable(){
+      ctx.clearRect(0,0,W,H);
+      // green felt
+      ctx.fillStyle = '#0a2b18';
+      ctx.fillRect(0,0,W,H);
+      // rails
+      ctx.fillStyle = '#2a5a3b';
+      ctx.fillRect(0,0,W,padding);
+      ctx.fillRect(0,H-padding,W,padding);
+      ctx.fillRect(0,0,padding,H);
+      ctx.fillRect(W-padding,0,padding,H);
+
+      // pockets
+      for(const p of pockets){
+        ctx.beginPath(); ctx.fillStyle = '#000'; ctx.arc(p.x,p.y,pocketRadius,0,Math.PI*2); ctx.fill();
+      }
+
+      // balls
+      for(const b of balls){
+        if(!b.active) continue;
+        ctx.beginPath(); ctx.fillStyle = b.color; ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+        // outline
+        ctx.strokeStyle = '#222'; ctx.lineWidth=1; ctx.stroke();
+      }
+
+      // aiming line
+      if(isAiming && allowPlayerShot){
+        const cue = balls.find(x=>x.id===cueBallId);
+        if(cue){
+          ctx.beginPath(); ctx.moveTo(cue.x,cue.y); ctx.lineTo(aimEnd.x,aimEnd.y);
+          ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth=2; ctx.setLineDash([8,6]); ctx.stroke(); ctx.setLineDash([]);
+        }
+      }
+    }
+
+    function stepPhysics(){
+      // simple movement + friction
+      for(const b of balls){
+        if(!b.active) continue;
+        b.x += b.vx; b.y += b.vy;
+        b.vx *= friction; b.vy *= friction;
+        if(Math.hypot(b.vx,b.vy) < 0.01){ b.vx=0; b.vy=0 }
+      }
+
+      // collisions (pairwise)
+      for(let i=0;i<balls.length;i++){
+        for(let j=i+1;j<balls.length;j++){
+          const A = balls[i], B = balls[j];
+          if(!A.active || !B.active) continue;
+          const dx = B.x - A.x, dy = B.y - A.y, dist = Math.hypot(dx,dy);
+          const minD = A.r + B.r;
+          if(dist < minD && dist>0){
+            const nx = dx/dist, ny = dy/dist;
+            const overlap = (minD - dist)/2;
+            A.x -= nx*overlap; A.y -= ny*overlap;
+            B.x += nx*overlap; B.y += ny*overlap;
+            // simple elastic collision
+            const relvx = B.vx - A.vx, relvy = B.vy - A.vy;
+            const sep = relvx*nx + relvy*ny;
+            if(sep < 0){
+              const impulse = -1.9 * sep; // restitution-ish
+              A.vx -= impulse*nx; A.vy -= impulse*ny;
+              B.vx += impulse*nx; B.vy += impulse*ny;
+            }
+          }
+        }
+      }
+
+      // rails bounce
+      for(const b of balls){
+        if(!b.active) continue;
+        if(b.x < padding + b.r){ b.x = padding + b.r; b.vx *= -0.8 }
+        if(b.x > W - padding - b.r){ b.x = W - padding - b.r; b.vx *= -0.8 }
+        if(b.y < padding + b.r){ b.y = padding + b.r; b.vy *= -0.8 }
+        if(b.y > H - padding - b.r){ b.y = H - padding - b.r; b.vy *= -0.8 }
+      }
+
+      // pockets
+      for(const p of pockets){
+        for(const b of balls){
+          if(!b.active) continue;
+          const d = Math.hypot(b.x-p.x,b.y-p.y);
+          if(d < pocketRadius){
+            // pocketed
+            b.active = false;
+            b.vx = 0; b.vy = 0;
+            recordPot(b.id);
+          }
+        }
+      }
+    }
+
+    function anyBallMoving(){
+      return balls.some(b=>b.active && (Math.abs(b.vx)>0.05 || Math.abs(b.vy)>0.05));
+    }
+
+    function gameLoop(){
+      stepPhysics();
+      drawTable();
+      // save replay frame
+      replay.push(balls.map(b=>({id:b.id,x:b.x,y:b.y,vx:b.vx,vy:b.vy,active:b.active})));
+
+      if(!anyBallMoving()){
+        // if turn ended and it was AI's turn, give control back to player
+        if(currentTurn==='ai' && allowPlayerShot===false){
+          // switch to player
+          currentTurn='player'; allowPlayerShot=true; updateTurnLabel();
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function recordPot(ballId){
+      if(ballId===cueBallId){
+        // cue ball pocketed -> respawn cue ball
+        setTimeout(()=>{
+          const cue = balls.find(b=>b.id===cueBallId);
+          if(cue){ cue.active=true; cue.x=160; cue.y=H/2; cue.vx=0; cue.vy=0 }
+        },400);
+        return;
+      }
+      // increment score depending on whose turn it was when shot occurred
+      if(currentTurn==='player' || allowPlayerShot===true){
+        // if player shot, increment player
+        const el = document.getElementById('playerScore');
+        const v = parseInt(el.textContent.split(':')[1]) + 1;
+        el.textContent = 'Balls potted: ' + v;
+      } else {
+        const el = document.getElementById('aiScore');
+        const v = parseInt(el.textContent.split(':')[1]) + 1;
+        el.textContent = 'Balls potted: ' + v;
+      }
+    }
+
+    // input handlers
+    canvas.addEventListener('pointerdown', (e)=>{
+      if(currentTurn!=='player' || !allowPlayerShot) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      const cue = balls.find(b=>b.id===cueBallId);
+      if(!cue) return;
+      // only start aiming when pointer is near cue ball
+      if(Math.hypot(x-cue.x,y-cue.y) < 40){
+        isAiming=true; aimStart={x:cue.x,y:cue.y}; aimEnd={x,y};
+      }
+    });
+    canvas.addEventListener('pointermove', (e)=>{
+      if(!isAiming) return;
+      const rect = canvas.getBoundingClientRect();
+      aimEnd.x = e.clientX - rect.left; aimEnd.y = e.clientY - rect.top;
+    });
+    canvas.addEventListener('pointerup', (e)=>{
+      if(!isAiming) return;
+      isAiming=false;
+      // compute shot
+      const cue = balls.find(b=>b.id===cueBallId);
+      const dx = aimStart.x - aimEnd.x, dy = aimStart.y - aimEnd.y;
+      const power = Math.min(40, Math.hypot(dx,dy)/3);
+      const ang = Math.atan2(dy,dx);
+      cue.vx = Math.cos(ang) * power * 0.6;
+      cue.vy = Math.sin(ang) * power * 0.6;
+      allowPlayerShot = false;
+      // after player shoots, switch to AI after movement stops
+      currentTurn = 'player'; updateTurnLabel();
+      // schedule AI takeover: wait until balls stop
+      const waitForStop = setInterval(()=>{
+        if(!anyBallMoving()){
+          clearInterval(waitForStop);
+          // give AI turn
+          currentTurn='ai'; allowPlayerShot=false; updateTurnLabel();
+          setTimeout(()=>{ aiTakeTurn(); }, 700);
+        }
+      }, 400);
+    });
+
+    function updateTurnLabel(){
+      document.getElementById('turnLabel').textContent = currentTurn === 'player' ? 'Player' : 'System (AI)';
+    }
+
+    // AI logic (simple heuristics + 50% miss)
+    function aiTakeTurn(){
+      // compute candidate shots: for each object ball, for each pocket, compute direction from cue to contact point
+      const cue = balls.find(b=>b.id===cueBallId && b.active);
+      if(!cue) return;
+      const objects = balls.filter(b=>b.id!==cueBallId && b.active);
+      if(objects.length===0){ currentTurn='player'; allowPlayerShot=true; updateTurnLabel(); return; }
+
+      // build candidates
+      const candidates = [];
+      for(const obj of objects){
+        for(const p of pockets){
+          // compute target point on object where cue should hit to send it to pocket
+          const pocketDirX = p.x - obj.x, pocketDirY = p.y - obj.y;
+          const distPocket = Math.hypot(pocketDirX,pocketDirY);
+          const contactX = obj.x - (pocketDirX/distPocket) * (ballRadius);
+          const contactY = obj.y - (pocketDirY/distPocket) * (ballRadius);
+          // direction from cue to contact
+          const dirX = contactX - cue.x, dirY = contactY - cue.y;
+          const distCue = Math.hypot(dirX,dirY);
+          const angle = Math.atan2(dirY,dirX);
+          const successEstimate = 1 / (1 + distCue*0.008 + distPocket*0.008); // crude
+          candidates.push({obj, pocket:p, contact:{x:contactX,y:contactY},angle,distCue,distPocket,score:successEstimate});
+        }
+      }
+      // choose best by score
+      candidates.sort((a,b)=>b.score-a.score);
+      let chosen = candidates[0];
+      if(!chosen){ currentTurn='player'; allowPlayerShot=true; updateTurnLabel(); return; }
+
+      // AI skill and fairness: we have an overall intended fairness of ~50%.
+      // We'll use a two-layer random: aiSkill from UI affects baseline accuracy; fairness randomness flips some shots to intentionally miss.
+      const uiSkill = parseFloat(document.getElementById('aiSkill').value) || 0.5; // lower is easier
+      const baseAccuracy = uiSkill; // 0.3..0.7
+      // fairness factor: target 50% successful over many shots -> we add an intentional miss toggle
+      const fairnessToggle = Math.random() < 0.5; // 50% chance to intentionally degrade
+
+      let aimAngle = chosen.angle;
+      let power = Math.min(45, Math.max(18, 30 - chosen.distCue*0.02));
+
+      if(fairnessToggle){
+        // intentionally miss by adding a sizable angular error
+        const missAngle = (Math.random()*1.2 - 0.6); // ±0.6 rad
+        aimAngle += missAngle;
+        power *= (0.7 + Math.random()*0.6);
+      } else {
+        // aim more accurately based on baseAccuracy
+        const smallError = (1-baseAccuracy) * (Math.random()*0.25 - 0.125);
+        aimAngle += smallError;
+        power *= (0.9 + baseAccuracy*0.3);
+      }
+
+      // simulate reaction delay
+      setTimeout(()=>{
+        cue.vx = Math.cos(aimAngle) * power * 0.55;
+        cue.vy = Math.sin(aimAngle) * power * 0.55;
+        // after AI shoots, wait for balls to stop then return to player
+        const waiter = setInterval(()=>{
+          if(!anyBallMoving()){
+            clearInterval(waiter);
+            currentTurn='player'; allowPlayerShot=true; updateTurnLabel();
+          }
+        },400);
+      }, 600 + Math.random()*900);
+    }
+
+    // UI hooks
+    document.getElementById('newGameBtn').addEventListener('click', ()=>{ resetTable(); });
+    document.getElementById('toggleAI').addEventListener('click', ()=>{ if(currentTurn!=='ai'){ currentTurn='ai'; allowPlayerShot=false; updateTurnLabel(); aiTakeTurn(); } });
+    document.getElementById('downloadReplay').addEventListener('click', ()=>{
+      const data = JSON.stringify(replay);
+      const blob = new Blob([data],{type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='pool_replay.json'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    resetTable();
+    updateTurnLabel();
+    requestAnimationFrame(gameLoop);
+
+  </script>
+</body>
+  </html>
+  
