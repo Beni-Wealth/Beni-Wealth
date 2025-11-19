@@ -135,8 +135,10 @@
     const allowedOwners = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
     let currentUser = null;
     let listenerUnsub = null;
+    let tasksListenerUnsub = null;
     let submissions = [];
-    let selected = null;
+    let tasksMap = new Map();
+    let selected = null; 
 
     const tbody = document.getElementById('tbody');
     const countEl = document.getElementById('count');
@@ -165,31 +167,63 @@
 
     function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    // attach realtime listener for deposits with status 'pending'
+    // attach realtime listener for advert_submissions with status 'pending'
     function attachListener(){
+      // teardown previous listeners
       if(listenerUnsub){ try{ listenerUnsub(); }catch(e){} listenerUnsub = null; }
-      const col = collection(db,'deposits');
-      const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
-      listenerUnsub = onSnapshot(q, snap => {
-        const arr = [];
-        snap.forEach(d => arr.push({ id: d.id, data: d.data() }));
-        submissions = arr;
-        renderTable();
-      }, err => { console.error('listener error',err); tbody.innerHTML = '<tr><td colspan="8" class="small">Unable to listen for pending submissions</td></tr>'; countEl.textContent='Error'; });
+      if(tasksListenerUnsub){ try{ tasksListenerUnsub(); }catch(e){} tasksListenerUnsub = null; }
+      submissions = [];
+      tbody.innerHTML = '<tr><td colspan="8" class="small muted">Loading submissions and tasks…</td></tr>';
+      countEl.textContent = 'Loading…';
+
+      try{
+        // listen to tasks collection to map taskId -> title
+        const tasksCol = collection(db,'tasks');
+        tasksListenerUnsub = onSnapshot(tasksCol, snap => {
+          tasksMap.clear();
+          snap.forEach(t => tasksMap.set(t.id, t.data()));
+          // re-render when tasks update
+          renderTable();
+        }, err => {
+          console.warn('tasks listener error', err);
+        });
+
+        // listen to advert_submissions (all recent) and filter client-side
+        const col = collection(db,'advert_submissions');
+        const qAll = query(col, orderBy('createdAt','desc'));
+        listenerUnsub = onSnapshot(qAll, snap => {
+          const arr = [];
+          snap.forEach(d => arr.push({ id: d.id, data: d.data() }));
+          submissions = arr;
+          renderTable();
+        }, err => {
+          console.error('advert_submissions listener error', err);
+          tbody.innerHTML = '<tr><td colspan="8" class="small">Unable to listen for submissions</td></tr>'; countEl.textContent = 'Error';
+        });
+
+      }catch(e){
+        console.error('attachListenerForUser failed', e);
+        tbody.innerHTML = '<tr><td colspan="8" class="small muted">Unable to load submissions.</td></tr>';
+        countEl.textContent = 'Error';
+      }
+    }, err => { console.error('listener error',err); tbody.innerHTML = '<tr><td colspan="8" class="small">Unable to listen for pending submissions</td></tr>'; countEl.textContent='Error'; });
     }
 
     function renderTable(){
       const q = (qInput.value||'').toLowerCase().trim();
+      // include both pending and other statuses, but highlight pending
       const list = submissions.filter(s => {
         const d = s.data || {};
         const uid = (d.userId||'').toLowerCase();
         const email = (d.username||d.email||'').toLowerCase();
         const id = (s.id||'').toLowerCase();
         const provider = (d.provider||'').toLowerCase();
-        return !q || uid.includes(q) || email.includes(q) || id.includes(q) || provider.includes(q);
+        const taskTitle = d.taskId && tasksMap.has(d.taskId) ? (tasksMap.get(d.taskId).title || '') : '';
+        const matchesQ = !q || uid.includes(q) || email.includes(q) || id.includes(q) || provider.includes(q) || taskTitle.toLowerCase().includes(q);
+        return matchesQ;
       });
       countEl.textContent = `${list.length} pending`;
-      if(list.length===0){ tbody.innerHTML = '<tr><td colspan="8" class="small muted">No pending submissions</td></tr>'; return; }
+      if(list.length===0){ tbody.innerHTML = '<tr><td colspan="8" class="small muted">No submissions found</td></tr>'; return; }
       tbody.innerHTML = list.map(s=>{
         const d = s.data||{};
         const id = escapeHtml(s.id);
@@ -197,9 +231,12 @@
         const uid = escapeHtml(d.userId || '-');
         const amt = Number(d.amount || 0).toLocaleString('en-NG');
         const provider = escapeHtml(d.provider || '-');
+        const taskTitle = d.taskId && tasksMap.has(d.taskId) ? escapeHtml(tasksMap.get(d.taskId).title || '') : '';
         const created = fmtDate(d.createdAt);
         const proof = d.proofUrl ? `<a href="${escapeHtml(d.proofUrl)}" target="_blank" rel="noopener">View</a>` : '-';
-        return `<tr data-id="${id}"><td style="font-family:monospace">${id}</td><td>${user}<div class=\"small muted\">${uid}</div></td><td>₦${amt}</td><td>${provider}</td><td>${created}</td><td>${proof}</td><td>${statusPill(d.status)}</td><td><button class=\"btn ghost viewBtn\">View</button></td></tr>`;
+        const statusHtml = statusPill(d.status);
+        const providerCell = taskTitle ? `${provider}<div class="small muted">Task: ${taskTitle}</div>` : provider;
+        return `<tr data-id="${id}"><td style="font-family:monospace">${id}</td><td>${user}<div class=\"small muted\">${uid}</div></td><td>₦${amt}</td><td>${providerCell}</td><td>${created}</td><td>${proof}</td><td>${statusHtml}</td><td><button class=\"btn ghost viewBtn\">View</button></td></tr>`;
       }).join('');
 
       // wire view buttons
@@ -233,7 +270,7 @@
       if(!selected) return; if(!confirm('Approve this submission and credit the user?')) return;
       approveBtn.disabled = true; approveBtn.textContent = 'Approving...';
       try{
-        const depRef = doc(db,'deposits',selected.id);
+        const depRef = doc(db,'advert_submissions',selected.id);
         await runTransaction(db, async (tx)=>{
           const depSnap = await tx.get(depRef);
           if(!depSnap.exists()) throw new Error('Submission not found');
@@ -268,7 +305,7 @@
       if(!selected) return; const reason = prompt('Reason for rejection (optional)'); if(reason===null) return; // cancelled
       rejectBtn.disabled = true; rejectBtn.textContent = 'Rejecting...';
       try{
-        const depRef = doc(db,'deposits',selected.id);
+        const depRef = doc(db,'advert_submissions',selected.id);
         await updateDoc(depRef, { status: 'rejected', verifiedBy: currentUser.uid, verifiedAt: serverTimestamp(), adminNote: reason || '' });
         showToast('Submission rejected');
         viewer.style.display='none'; viewer.setAttribute('aria-hidden','true'); document.body.style.overflow='';
