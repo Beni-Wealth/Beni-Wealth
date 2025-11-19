@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — Submissions · Beni‑Wealth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#2fe0b8">
+  <style>
+    :root{
+      --bg1:#060511; --bg2:#0f0920; --text:#eaf2ff; --muted:rgba(255,255,255,0.62);
+      --accent-start:#2fe0b8; --accent-end:#7a5fff; --card:rgba(255,255,255,0.02);
+      --radius:12px; --container-w:1100px; --bottom-nav-h:74px;
+      font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:var(--container-w);margin:24px auto;padding:20px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand img{width:52px;height:52px;border-radius:12px}
+    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    .search{flex:1;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.005));color:var(--text)}
+    .btn{padding:10px 14px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    .small{font-size:13px;color:var(--muted)}
+
+    .table-wrap{overflow:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.005))}
+    table{width:100%;border-collapse:collapse;min-width:860px}
+    thead th{position:sticky;top:0;background:linear-gradient(90deg, rgba(47,224,184,0.06), rgba(122,95,255,0.04));padding:12px;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text)}
+    tbody td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.02);vertical-align:middle}
+    tbody tr:hover td{background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005))}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700}
+    .pending{background:#fff6d6;color:#6a4f00}
+    .approved{background:#bff0d9;color:#05461f}
+    .rejected{background:#ffdede;color:#6b0b0b}
+
+    .viewer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,0.6),rgba(0,0,0,0.85));z-index:9999;padding:20px}
+    .viewer .card{max-width:920px;width:100%;max-height:90vh;overflow:auto;padding:18px}
+    .meta-row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    .meta-row .avatar{width:64px;height:64px;border-radius:12px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-weight:900}
+
+    .actions{display:flex;gap:10px}
+
+    @media(max-width:760px){ .meta-row{flex-direction:column;align-items:flex-start} table{min-width:600px} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth"/>
+        <div>
+          <div style="font-weight:800">Admin — Pending Submissions</div>
+          <div class="small">Only owners may access this page</div>
+        </div>
+      </div>
+      <div>
+        <button id="refreshBtn" class="btn ghost">Refresh</button>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <input id="q" class="search" placeholder="Search by uid, email, id, or provider..." />
+      <div class="small" id="count">— pending</div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="subTable">
+        <thead>
+          <tr><th>ID</th><th>User</th><th>Amount (₦)</th><th>Provider</th><th>Date</th><th>Proof</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="tbody"><tr><td colspan="8" class="small">Loading pending submissions…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="viewer" class="viewer" aria-hidden="true">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <div style="font-weight:900" id="vTitle">Submission</div>
+        <div class="actions"><button id="vClose" class="btn ghost">Close</button></div>
+      </div>
+
+      <div class="meta-row" style="margin-top:12px">
+        <div class="avatar" id="vAvatar">U</div>
+        <div>
+          <div id="vUser" style="font-weight:800">—</div>
+          <div id="vEmail" class="small muted">—</div>
+          <div id="vUid" class="small muted">UID: —</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div><strong>Amount:</strong> ₦<span id="vAmount">0</span></div>
+        <div><strong>Provider:</strong> <span id="vProvider">-</span></div>
+        <div><strong>Account name entered:</strong> <span id="vAcct">-</span></div>
+        <div style="margin-top:8px"><strong>Created:</strong> <span id="vCreated">-</span></div>
+        <div style="margin-top:12px"><strong>Proof:</strong></div>
+        <div style="margin-top:8px"><img id="vProofImg" src="" alt="proof" style="max-width:100%;border-radius:8px;display:block"/></div>
+
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button id="approveBtn" class="btn">Approve</button>
+          <button id="rejectBtn" class="btn ghost">Reject</button>
+        </div>
+
+        <div id="vStatus" class="small muted" style="margin-top:8px">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" style="position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;padding:10px 12px;border-radius:8px;font-weight:800;display:none;z-index:10000"></div>
+
+  <script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import {
+      getFirestore, collection, query, where, orderBy, onSnapshot, doc, getDoc, updateDoc, runTransaction, serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    if(!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
+
+    const allowedOwners = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
+    let currentUser = null;
+    let listenerUnsub = null;
+    let submissions = [];
+    let selected = null;
+
+    const tbody = document.getElementById('tbody');
+    const countEl = document.getElementById('count');
+    const qInput = document.getElementById('q');
+    const viewer = document.getElementById('viewer');
+    const vClose = document.getElementById('vClose');
+    const vTitle = document.getElementById('vTitle');
+    const vUser = document.getElementById('vUser');
+    const vEmail = document.getElementById('vEmail');
+    const vUid = document.getElementById('vUid');
+    const vAvatar = document.getElementById('vAvatar');
+    const vAmount = document.getElementById('vAmount');
+    const vProvider = document.getElementById('vProvider');
+    const vAcct = document.getElementById('vAcct');
+    const vCreated = document.getElementById('vCreated');
+    const vProofImg = document.getElementById('vProofImg');
+    const vStatus = document.getElementById('vStatus');
+    const approveBtn = document.getElementById('approveBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
+    const toast = document.getElementById('toast');
+
+    function showToast(msg){ toast.textContent = msg; toast.style.display = 'block'; setTimeout(()=>toast.style.display='none',2500); }
+    function fmtDate(v){ try{ if(!v) return '-'; if(typeof v.toDate==='function') return v.toDate().toLocaleString(); if(typeof v.seconds==='number') return new Date(v.seconds*1000).toLocaleString(); return new Date(v).toLocaleString(); }catch(e){return '-';} }
+
+    function statusPill(s){ const st = (s||'').toLowerCase(); if(st==='pending') return '<span class="pill pending">PENDING</span>'; if(st==='approved') return '<span class="pill approved">APPROVED</span>'; if(st==='rejected') return '<span class="pill rejected">REJECTED</span>'; return '<span class="pill pending">'+(s||'')+'</span>'; }
+
+    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // attach realtime listener for deposits with status 'pending'
+    function attachListener(){
+      if(listenerUnsub){ try{ listenerUnsub(); }catch(e){} listenerUnsub = null; }
+      const col = collection(db,'deposits');
+      const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
+      listenerUnsub = onSnapshot(q, snap => {
+        const arr = [];
+        snap.forEach(d => arr.push({ id: d.id, data: d.data() }));
+        submissions = arr;
+        renderTable();
+      }, err => { console.error('listener error',err); tbody.innerHTML = '<tr><td colspan="8" class="small">Unable to listen for pending submissions</td></tr>'; countEl.textContent='Error'; });
+    }
+
+    function renderTable(){
+      const q = (qInput.value||'').toLowerCase().trim();
+      const list = submissions.filter(s => {
+        const d = s.data || {};
+        const uid = (d.userId||'').toLowerCase();
+        const email = (d.username||d.email||'').toLowerCase();
+        const id = (s.id||'').toLowerCase();
+        const provider = (d.provider||'').toLowerCase();
+        return !q || uid.includes(q) || email.includes(q) || id.includes(q) || provider.includes(q);
+      });
+      countEl.textContent = `${list.length} pending`;
+      if(list.length===0){ tbody.innerHTML = '<tr><td colspan="8" class="small muted">No pending submissions</td></tr>'; return; }
+      tbody.innerHTML = list.map(s=>{
+        const d = s.data||{};
+        const id = escapeHtml(s.id);
+        const user = escapeHtml(d.username || '-');
+        const uid = escapeHtml(d.userId || '-');
+        const amt = Number(d.amount || 0).toLocaleString('en-NG');
+        const provider = escapeHtml(d.provider || '-');
+        const created = fmtDate(d.createdAt);
+        const proof = d.proofUrl ? `<a href="${escapeHtml(d.proofUrl)}" target="_blank" rel="noopener">View</a>` : '-';
+        return `<tr data-id="${id}"><td style="font-family:monospace">${id}</td><td>${user}<div class=\"small muted\">${uid}</div></td><td>₦${amt}</td><td>${provider}</td><td>${created}</td><td>${proof}</td><td>${statusPill(d.status)}</td><td><button class=\"btn ghost viewBtn\">View</button></td></tr>`;
+      }).join('');
+
+      // wire view buttons
+      document.querySelectorAll('.viewBtn').forEach(b=>b.addEventListener('click',(e)=>{
+        const row = e.target.closest('tr'); const id = row.getAttribute('data-id'); openViewer(id);
+      }));
+    }
+
+    async function openViewer(id){
+      selected = submissions.find(s=>s.id===id);
+      if(!selected) return;
+      const d = selected.data || {};
+      vTitle.textContent = 'Submission — ' + id;
+      vUser.textContent = d.username || '-';
+      vEmail.textContent = d.email || '-';
+      vUid.textContent = 'UID: ' + (d.userId || '-');
+      vAvatar.textContent = (d.username||'U').charAt(0).toUpperCase();
+      vAmount.textContent = Number(d.amount||0).toLocaleString('en-NG');
+      vProvider.textContent = d.provider || '-';
+      vAcct.textContent = d.accountNameEntered || '-';
+      vCreated.textContent = fmtDate(d.createdAt);
+      vProofImg.src = d.proofUrl || '';
+      vStatus.textContent = 'Status: ' + (d.status||'pending');
+      viewer.style.display = 'flex'; viewer.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
+    }
+
+    vClose.addEventListener('click', ()=>{ viewer.style.display='none'; viewer.setAttribute('aria-hidden','true'); document.body.style.overflow=''; selected = null; });
+
+    // Approve: update deposit status, credit user balance, add transaction record
+    approveBtn.addEventListener('click', async ()=>{
+      if(!selected) return; if(!confirm('Approve this submission and credit the user?')) return;
+      approveBtn.disabled = true; approveBtn.textContent = 'Approving...';
+      try{
+        const depRef = doc(db,'deposits',selected.id);
+        await runTransaction(db, async (tx)=>{
+          const depSnap = await tx.get(depRef);
+          if(!depSnap.exists()) throw new Error('Submission not found');
+          const data = depSnap.data();
+          if((data.status||'').toLowerCase() !== 'pending') throw new Error('Submission is no longer pending');
+
+          // update deposit doc
+          tx.update(depRef, { status: 'approved', verifiedBy: currentUser.uid, verifiedAt: serverTimestamp() });
+
+          // credit user's balance if userId present
+          if(data.userId){
+            const uRef = doc(db,'users',data.userId);
+            const uSnap = await tx.get(uRef);
+            const old = uSnap.exists() ? Number(uSnap.data().balance || 0) : 0;
+            const amt = Number(data.amount || 0);
+            const next = old + amt;
+            tx.update(uRef, { balance: next, updatedAt: serverTimestamp() });
+
+            // create transaction record
+            const txRef = doc(collection(db,'transactions'));
+            tx.set(txRef, { userId: data.userId, type: 'credit', source: 'deposit_verified', amount: amt, depositId: selected.id, createdAt: serverTimestamp(), adminId: currentUser.uid });
+          }
+        });
+        showToast('Approved and credited');
+        viewer.style.display='none'; viewer.setAttribute('aria-hidden','true'); document.body.style.overflow='';
+      }catch(err){ console.error('approve',err); showToast('Failed: ' + (err.message||err)); }
+      finally{ approveBtn.disabled = false; approveBtn.textContent = 'Approve'; }
+    });
+
+    // Reject: mark deposit rejected
+    rejectBtn.addEventListener('click', async ()=>{
+      if(!selected) return; const reason = prompt('Reason for rejection (optional)'); if(reason===null) return; // cancelled
+      rejectBtn.disabled = true; rejectBtn.textContent = 'Rejecting...';
+      try{
+        const depRef = doc(db,'deposits',selected.id);
+        await updateDoc(depRef, { status: 'rejected', verifiedBy: currentUser.uid, verifiedAt: serverTimestamp(), adminNote: reason || '' });
+        showToast('Submission rejected');
+        viewer.style.display='none'; viewer.setAttribute('aria-hidden','true'); document.body.style.overflow='';
+      }catch(err){ console.error('reject',err); showToast('Failed: ' + (err.message||err)); }
+      finally{ rejectBtn.disabled = false; rejectBtn.textContent = 'Reject'; }
+    });
+
+    // wire search
+    qInput.addEventListener('input', ()=> renderTable());
+    document.getElementById('refreshBtn').addEventListener('click', ()=> attachListener());
+
+    // auth + owner-only check (graceful)
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){ tbody.innerHTML = '<tr><td colspan="8" class="small muted">Waiting for authentication…</td></tr>'; // wait a moment then redirect
+        setTimeout(()=>{ if(!auth.currentUser){ alert('Please sign in as an owner to access this page'); window.location.href='login.html'; } },3500); return; }
+      currentUser = user;
+      const email = (user.email||'').toLowerCase();
+      if(!allowedOwners.includes(email)){
+        alert('Access denied — owners only'); window.location.href = 'index.html'; return; }
+      // allowed: start listener
+      attachListener();
+    });
+
+    // cleanup on unload
+    window.addEventListener('beforeunload', ()=>{ if(listenerUnsub) try{ listenerUnsub(); }catch(e){} });
+
+    // initial
+    tbody.innerHTML = '<tr><td colspan="8" class="small muted">Waiting for auth…</td></tr>';
+  </script>
+</body>
+</html>
