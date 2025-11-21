@@ -3,131 +3,179 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin — Submissions · Beni‑Wealth</title>
+  <title>Admin — Advert Submissions</title>
+
+  <!-- Poppins + Favicons & Social preview -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
+  <meta property="og:title" content="Beni-Wealth — Admin Submissions">
+  <meta property="og:description" content="Admin interface for approving/rejecting advert submissions.">
   <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
+
   <style>
     :root{
-      --bg1:#060511; --bg2:#0f0920; --text:#eaf2ff; --muted:rgba(255,255,255,0.62);
-      --accent-start:#2fe0b8; --accent-end:#7a5fff; --card:rgba(255,255,255,0.02);
-      --radius:12px; --container-w:1100px; --bottom-nav-h:74px;
-      font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;
+      --bg1:#0b0613; --bg2:#0f0820;
+      --muted: rgba(255,255,255,0.64);
+      --text: #eaf2ff;
+      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --card: rgba(255,255,255,0.02);
+      --radius:12px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
-    .wrap{max-width:var(--container-w);margin:24px auto;padding:20px}
+    html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:1100px;margin:20px auto;padding:20px}
     header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-    .brand{display:flex;gap:12px;align-items:center}
-    .brand img{width:52px;height:52px;border-radius:12px}
-    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-    .search{flex:1;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.005));color:var(--text)}
-    .btn{padding:10px 14px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
-    .small{font-size:13px;color:var(--muted)}
-
-    .table-wrap{overflow:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.005))}
-    table{width:100%;border-collapse:collapse;min-width:860px}
-    thead th{position:sticky;top:0;background:linear-gradient(90deg, rgba(47,224,184,0.06), rgba(122,95,255,0.04));padding:12px;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text)}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand img{width:56px;height:56px;border-radius:12px}
+    .title{font-weight:800}
+    .muted{color:var(--muted);font-size:13px}
+    .card{background:var(--card);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+    .controls{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    .search{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));color:var(--text)}
+    .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .table-wrap{margin-top:10px;overflow:auto;border-radius:10px}
+    table{width:100%;border-collapse:collapse;min-width:900px}
+    thead th{position:sticky;top:0;background:linear-gradient(90deg, rgba(47,224,184,0.08), rgba(122,95,255,0.06));padding:12px;text-align:left;font-weight:700}
     tbody td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.02);vertical-align:middle}
-    tbody tr:hover td{background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005))}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700}
-    .pending{background:#fff6d6;color:#6a4f00}
-    .approved{background:#bff0d9;color:#05461f}
-    .rejected{background:#ffdede;color:#6b0b0b}
-
-    .viewer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,0.6),rgba(0,0,0,0.85));z-index:9999;padding:20px}
-    .viewer .card{max-width:920px;width:100%;max-height:90vh;overflow:auto;padding:18px}
-    .meta-row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-    .meta-row .avatar{width:64px;height:64px;border-radius:12px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;color:#041219;font-weight:900}
-
-    .actions{display:flex;gap:10px}
-
-    @media(max-width:760px){ .meta-row{flex-direction:column;align-items:flex-start} table{min-width:600px} }
+    .small{font-size:13px;color:var(--muted)}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
+    .pill.pending{background:#fff7d9;color:#6a4f00}
+    .pill.approved{background:#bff0d9;color:#043f20}
+    .pill.rejected{background:#ffdede;color:#6b0b0b}
+    /* viewer overlay */
+    .viewer-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:20px}
+    .viewer{width:980px;max-width:calc(100% - 40px);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:16px;box-shadow:0 30px 120px rgba(0,0,0,0.8);color:var(--text)}
+    .viewer .grid{display:grid;grid-template-columns:1fr 360px;gap:12px}
+    .viewer img{max-width:100%;border-radius:8px;display:block}
+    .meta-row{display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .note{margin-top:8px;color:var(--muted)}
+    @media(max-width:900px){ .viewer{width:100%} .viewer .grid{grid-template-columns:1fr} }
+    .debug{position:fixed;left:16px;bottom:16px;background:rgba(0,0,0,0.45);padding:8px;border-radius:8px;font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <main class="wrap">
     <header>
       <div class="brand">
-        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth"/>
+        <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="logo">
         <div>
-          <div style="font-weight:800">Admin — Pending Submissions</div>
-          <div class="small">Only owners may access this page</div>
+          <div class="title">Beni-Wealth — Admin: Advert Submissions</div>
+          <div class="muted">Owners only — review submissions and approve / reject</div>
         </div>
       </div>
-      <div>
-        <button id="refreshBtn" class="btn ghost">Refresh</button>
-      </div>
+
+      <div class="muted" id="authInfo">Checking auth…</div>
     </header>
 
-    <div class="toolbar">
-      <input id="q" class="search" placeholder="Search by uid, email, id, or provider..." />
-      <div class="small" id="count">— pending</div>
-    </div>
+    <section class="card" aria-labelledby="title">
+      <div class="controls">
+        <input id="q" class="search" placeholder="Search advert id, userId or paidBy" />
+        <button id="refreshBtn" class="btn ghost">Refresh</button>
+        <div style="margin-left:auto" id="count" class="small">—</div>
+      </div>
 
-    <div class="table-wrap">
-      <table id="subTable">
-        <thead>
-          <tr><th>ID</th><th>User</th><th>Amount (₦)</th><th>Provider</th><th>Date</th><th>Proof</th><th>Status</th><th>Actions</th></tr>
-        </thead>
-        <tbody id="tbody"><tr><td colspan="8" class="small">Loading pending submissions…</td></tr></tbody>
-      </table>
-    </div>
-  </div>
+      <div class="table-wrap card">
+        <table aria-live="polite">
+          <thead>
+            <tr>
+              <th>Advert id</th>
+              <th>Paid by / userId</th>
+              <th>Amount (₦)</th>
+              <th>Created</th>
+              <th>Approved at</th>
+              <th>Proof</th>
+              <th>Text proof</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="9" class="small muted">Loading submissions…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-  <div id="viewer" class="viewer" aria-hidden="true">
-    <div class="card">
+    <footer style="margin-top:18px" class="small muted">© <span id="year"></span> Beni-Wealth</footer>
+  </main>
+
+  <!-- viewer overlay -->
+  <div id="viewerBackdrop" class="viewer-backdrop" role="dialog" aria-hidden="true">
+    <div class="viewer" role="document" aria-modal="true">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-        <div style="font-weight:900" id="vTitle">Submission</div>
-        <div class="actions"><button id="vClose" class="btn ghost">Close</button></div>
-      </div>
-
-      <div class="meta-row" style="margin-top:12px">
-        <div class="avatar" id="vAvatar">U</div>
+        <div id="vTitle" style="font-weight:800">Submission</div>
         <div>
-          <div id="vUser" style="font-weight:800">—</div>
-          <div id="vEmail" class="small muted">—</div>
-          <div id="vUid" class="small muted">UID: —</div>
+          <button id="vClose" class="btn ghost">Close</button>
         </div>
       </div>
 
-      <div style="margin-top:12px">
-        <div><strong>Amount:</strong> ₦<span id="vAmount">0</span></div>
-        <div><strong>Provider:</strong> <span id="vProvider">-</span></div>
-        <div><strong>Account name entered:</strong> <span id="vAcct">-</span></div>
-        <div style="margin-top:8px"><strong>Created:</strong> <span id="vCreated">-</span></div>
-        <div style="margin-top:12px"><strong>Proof:</strong></div>
-        <div style="margin-top:8px"><img id="vProofImg" src="" alt="proof" style="max-width:100%;border-radius:8px;display:block"/></div>
+      <div class="grid" style="margin-top:12px">
+        <div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <div id="vAvatar" style="width:68px;height:68px;border-radius:12px;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:grid;place-items:center;font-weight:800;color:#041219;font-size:26px">U</div>
+            <div>
+              <div id="vUser" style="font-weight:800">—</div>
+              <div id="vEmail" class="small muted">—</div>
+              <div id="vUid" class="small muted">UID: —</div>
+            </div>
+          </div>
 
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button id="approveBtn" class="btn">Approve</button>
-          <button id="rejectBtn" class="btn ghost">Reject</button>
+          <div style="margin-top:12px">
+            <div class="meta-row"><div class="small muted">Amount</div><div id="vAmount" style="font-weight:800">₦0</div></div>
+            <div class="meta-row" style="margin-top:6px"><div class="small muted">Created</div><div id="vCreated" class="small muted">—</div></div>
+            <div class="meta-row" style="margin-top:6px"><div class="small muted">Approved at</div><div id="vApproved" class="small muted">—</div></div>
+            <div class="meta-row" style="margin-top:6px"><div class="small muted">Status</div><div id="vStatus" class="small muted">—</div></div>
+
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button id="approveBtn" class="btn">Approve</button>
+              <button id="rejectBtn" class="btn ghost">Reject</button>
+            </div>
+
+            <div class="note" id="vNote">Admin notes will appear here after actions.</div>
+          </div>
         </div>
 
-        <div id="vStatus" class="small muted" style="margin-top:8px">—</div>
+        <div style="max-width:360px">
+          <div style="font-weight:700;margin-bottom:8px">Proof image</div>
+          <div style="background:#000;border-radius:8px;padding:8px;display:flex;align-items:center;justify-content:center">
+            <img id="vProofImg" src="" alt="proof" style="max-width:100%;max-height:420px;border-radius:6px;display:block"/>
+          </div>
+          <div style="margin-top:12px">
+            <div class="small muted">Text proof</div>
+            <div id="vTextProof" style="margin-top:6px">—</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div id="toast" style="position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;padding:10px 12px;border-radius:8px;font-weight:800;display:none;z-index:10000"></div>
+  <div id="dbg" class="debug" style="display:none"></div>
 
   <script type="module">
-    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, collection, query, where, orderBy, onSnapshot, doc, getDoc, updateDoc, runTransaction, serverTimestamp, getDocs, limit
-    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+      getFirestore,
+      collection,
+      query,
+      orderBy,
+      onSnapshot,
+      getDocs,
+      limit,
+      runTransaction,
+      doc,
+      serverTimestamp,
+      updateDoc,
+      addDoc
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+    // Firebase config (your project)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -142,20 +190,16 @@
     const auth = getAuth();
     const db = getFirestore();
 
-    const allowedOwners = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
-    let currentUser = null;
-    let listenerUnsub = null;
-    let tasksListenerUnsub = null;
-    let submissions = [];
-    let tasksMap = new Map();
-    let selected = null;
-    let lastListenerError = null;
-    let pollInterval = null;
+    // allowed owners (lowercase)
+    const ALLOWED_OWNERS = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
 
+    // DOM refs
+    const authInfo = document.getElementById('authInfo');
     const tbody = document.getElementById('tbody');
-    const countEl = document.getElementById('count');
     const qInput = document.getElementById('q');
-    const viewer = document.getElementById('viewer');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const countEl = document.getElementById('count');
+    const viewerBackdrop = document.getElementById('viewerBackdrop');
     const vClose = document.getElementById('vClose');
     const vTitle = document.getElementById('vTitle');
     const vUser = document.getElementById('vUser');
@@ -163,299 +207,352 @@
     const vUid = document.getElementById('vUid');
     const vAvatar = document.getElementById('vAvatar');
     const vAmount = document.getElementById('vAmount');
-    const vProvider = document.getElementById('vProvider');
-    const vAcct = document.getElementById('vAcct');
     const vCreated = document.getElementById('vCreated');
-    const vProofImg = document.getElementById('vProofImg');
+    const vApproved = document.getElementById('vApproved');
     const vStatus = document.getElementById('vStatus');
+    const vProofImg = document.getElementById('vProofImg');
+    const vTextProof = document.getElementById('vTextProof');
+    const vNote = document.getElementById('vNote');
     const approveBtn = document.getElementById('approveBtn');
     const rejectBtn = document.getElementById('rejectBtn');
-    const toast = document.getElementById('toast');
 
-    // debug UI
-    const debugEl = document.createElement('div');
-    debugEl.style.cssText = 'position:fixed;left:18px;top:18px;background:rgba(0,0,0,0.5);color:var(--text);padding:10px;border-radius:8px;font-size:12px;z-index:99999';
-    debugEl.innerHTML = `
-      <div style="font-weight:800;margin-bottom:6px">Admin debug</div>
-      <div id="dbgAuth">auth: waiting</div>
-      <div id="dbgListener">listener: idle</div>
-      <div id="dbgError" style="color:#f6b0b0">last error: -</div>
-      <div id="dbgCount">last fetch: -</div>
-      <div style="margin-top:8px"><button id="dbgFetch" class="btn ghost">Run fetch now</button></div>
-    `;
-    document.body.appendChild(debugEl);
-    const dbgAuth = document.getElementById('dbgAuth');
-    const dbgListener = document.getElementById('dbgListener');
-    const dbgError = document.getElementById('dbgError');
-    const dbgCount = document.getElementById('dbgCount');
-    document.getElementById('dbgFetch').addEventListener('click', ()=>fetchOnce());
+    let currentUser = null;
+    let listenerUnsub = null;
+    let submissions = [];
 
-    function showToast(msg){ toast.textContent = msg; toast.style.display = 'block'; setTimeout(()=>toast.style.display='none',2500); }
-    function fmtDate(v){ try{ if(!v) return '-'; if(typeof v.toDate==='function') return v.toDate().toLocaleString(); if(typeof v.seconds==='number') return new Date(v.seconds*1000).toLocaleString(); return new Date(v).toLocaleString(); }catch(e){return '-';} }
-    function statusPill(s){ const st = (s||'').toLowerCase(); if(st==='pending') return '<span class="pill pending">PENDING</span>'; if(st==='approved') return '<span class="pill approved">APPROVED</span>'; if(st==='rejected') return '<span class="pill rejected">REJECTED</span>'; return '<span class="pill pending">'+(s||'')+'</span>'; }
-    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function fmtDate(v){
+      try{
+        if(!v) return '-';
+        if(typeof v.toDate === 'function') return v.toDate().toLocaleString();
+        if(typeof v.seconds === 'number') return new Date(v.seconds*1000).toLocaleString();
+        return new Date(v).toLocaleString();
+      }catch(e){ return '-'; }
+    }
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function statusPill(s){
+      const st = (s||'').toString().toLowerCase();
+      if(st === 'pending') return '<span class="pill pending">PENDING</span>';
+      if(st === 'approved') return '<span class="pill approved">APPROVED</span>';
+      if(st === 'rejected') return '<span class="pill rejected">REJECTED</span>';
+      return `<span class="pill pending">${escapeHtml(String(s||'').toUpperCase())}</span>`;
+    }
 
-    // render table uses tasksMap to show task titles when available
+    // render table from submissions[] using only the fields you told me
     function renderTable(){
       const q = (qInput.value||'').toLowerCase().trim();
-      const list = submissions.filter(s => {
+      const list = submissions.filter(s=>{
         const d = s.data || {};
-        const uid = (d.userId||'').toLowerCase();
-        const email = (d.username||d.email||'').toLowerCase();
-        const id = (s.id||'').toLowerCase();
-        const provider = (d.provider||'').toLowerCase();
-        const taskTitle = d.taskId && tasksMap.has(d.taskId) ? (tasksMap.get(d.taskId).title || '') : '';
-        const matchesQ = !q || uid.includes(q) || email.includes(q) || id.includes(q) || provider.includes(q) || taskTitle.toLowerCase().includes(q);
-        return matchesQ;
+        const id = (s.id || '').toLowerCase();
+        const uid = (d.userId || '').toLowerCase();
+        const paidBy = (d.paidBy || '').toLowerCase();
+        return !q || id.includes(q) || uid.includes(q) || paidBy.includes(q);
       });
-      countEl.textContent = `${list.length} submissions`;
-      dbgCount.textContent = 'last fetch: ' + list.length;
-      if(list.length===0){ tbody.innerHTML = '<tr><td colspan="8" class="small muted">No submissions found</td></tr>'; return; }
+
+      countEl.textContent = `${list.length} submission${list.length === 1 ? '' : 's'}`;
+
+      if(list.length === 0){
+        tbody.innerHTML = '<tr><td colspan="9" class="small muted">No submissions found</td></tr>';
+        return;
+      }
+
       tbody.innerHTML = list.map(s=>{
-        const d = s.data||{};
+        const d = s.data || {};
         const id = escapeHtml(s.id);
-        const user = escapeHtml(d.username || '-');
-        const uid = escapeHtml(d.userId || '-');
-        const amt = Number(d.amount || 0).toLocaleString('en-NG');
-        const provider = escapeHtml(d.provider || '-');
-        const taskTitle = d.taskId && tasksMap.has(d.taskId) ? escapeHtml(tasksMap.get(d.taskId).title || '') : '';
+        const paidBy = escapeHtml(d.paidBy || '-');
+        const userId = escapeHtml(d.userId || '-');
+        const amt = (Number(d.paidAmount || 0)).toLocaleString('en-NG');
         const created = fmtDate(d.createdAt);
-        const proof = d.proofUrl ? `<a href="${escapeHtml(d.proofUrl)}" target="_blank" rel="noopener">View</a>` : '-';
+        const approved = d.approvedAt ? fmtDate(d.approvedAt) : '-';
+        const imageCell = d.imageUrl ? `<a class="viewImageLink" data-url="${escapeHtml(d.imageUrl)}" href="${escapeHtml(d.imageUrl)}" target="_blank" rel="noopener">View</a>` : '-';
+        const textProof = escapeHtml(d.textProof || '-');
         const statusHtml = statusPill(d.status);
-        const providerCell = taskTitle ? `${provider}<div class="small muted">Task: ${taskTitle}</div>` : provider;
-        return `<tr data-id="${id}"><td style="font-family:monospace">${id}</td><td>${user}<div class=\"small muted\">${uid}</div></td><td>₦${amt}</td><td>${providerCell}</td><td>${created}</td><td>${proof}</td><td>${statusHtml}</td><td><button class=\"btn ghost viewBtn\">View</button></td></tr>`;
+
+        return `<tr data-id="${id}">
+          <td style="font-family:monospace">${id}</td>
+          <td>${paidBy}<div class="small muted">${userId}</div></td>
+          <td>₦${amt}</td>
+          <td>${created}</td>
+          <td>${approved}</td>
+          <td>${imageCell}</td>
+          <td>${textProof}</td>
+          <td>${statusHtml}</td>
+          <td><button class="btn ghost viewBtn">Details</button></td>
+        </tr>`;
       }).join('');
 
-      // wire view buttons
-      document.querySelectorAll('.viewBtn').forEach(b=>b.addEventListener('click',(e)=>{
-        const row = e.target.closest('tr'); const id = row.getAttribute('data-id'); openViewer(id);
-      }));
+      // wire view buttons & image links
+      document.querySelectorAll('.viewBtn').forEach(b=>{
+        b.addEventListener('click', e=>{
+          const row = e.target.closest('tr');
+          const id = row.getAttribute('data-id');
+          openViewer(id);
+        });
+      });
+      document.querySelectorAll('.viewImageLink').forEach(a=>{
+        a.addEventListener('click', e=>{
+          e.preventDefault();
+          const url = a.getAttribute('data-url');
+          openImageViewer(url);
+        });
+      });
     }
 
-    // try realtime listeners for tasks and advert_submissions; fall back to polling with getDocs
-    function attachListener(){
-      // clear previous
-      if(listenerUnsub){ try{ listenerUnsub(); }catch(e){} listenerUnsub = null; }
-      if(tasksListenerUnsub){ try{ tasksListenerUnsub(); }catch(e){} tasksListenerUnsub = null; }
-      if(pollInterval){ clearInterval(pollInterval); pollInterval = null; }
-
-      submissions = [];
-      tbody.innerHTML = '<tr><td colspan="8" class="small muted">Loading submissions and tasks… (attempt realtime)</td></tr>';
-      countEl.textContent = 'Loading…';
-      dbgListener.textContent = 'listener: starting';
-
-      // tasks listener
-      try{
-        const tasksCol = collection(db,'tasks');
-        tasksListenerUnsub = onSnapshot(tasksCol, snap => {
-          tasksMap.clear(); snap.forEach(t=>tasksMap.set(t.id, t.data())); dbgListener.textContent = 'tasks: ok'; renderTable();
-        }, err => {
-          lastListenerError = err; dbgError.textContent = 'last error: ' + (err.message||err); console.warn('tasks listener error',err); dbgListener.textContent = 'tasks: error';
-        });
-      }catch(e){ console.warn('tasks attach failed',e); dbgListener.textContent = 'tasks: attach failed'; dbgError.textContent = 'last error: ' + (e.message||e); }
-
-      // submissions realtime listener
-      try{
-        const col = collection(db,'advert_submissions');
-        // only listen for pending submissions to avoid index issues
-        const qAll = query(col, where('status','==','pending'));
-        listenerUnsub = onSnapshot(qAll, snap => {
-          const arr = []; snap.forEach(d=>arr.push({ id: d.id, data: d.data() })); submissions = arr; dbgListener.textContent = 'submissions: realtime'; lastListenerError = null; dbgError.textContent = 'last error: -'; renderTable();
-        }, err => {
-          lastListenerError = err; const code = err && err.code ? err.code : 'unknown'; const msg = err && err.message ? err.message : String(err);
-          dbgError.textContent = `last error: ${code} — ${msg}`; console.error('advert_submissions listener error', err); dbgListener.textContent = 'submissions: error';
-          // if permission denied, show actionable UI hint and stop realtime attempts
-          if(code === 'permission-denied' || /permission/i.test(msg)){
-            tbody.innerHTML = '<tr><td colspan="8" class="small muted">Access denied: Firestore permission denied. Ensure your security rules allow reads for admin accounts (owners) or sign in with an owner email.</td></tr>';
-            countEl.textContent = 'Access denied';
-            // don't start polling repeatedly if rules block
-            return;
-          }
-          // fallback to polling
-          startPolling();
-        });
-      }catch(e){ console.error('attach listener failed', e); dbgListener.textContent = 'submissions: attach failed'; dbgError.textContent = 'last error: ' + (e.message||e); startPolling(); }
-
-      // set a safety poll in case realtime doesn't fire
-      setTimeout(()=>{
-        if(!submissions.length){ dbgListener.textContent = 'no realtime data yet — falling back to fetch'; startPolling(); }
-      }, 2500);
-    }
-
-    // fallback fetch once or poll
-    async function fetchOnce(){
-      try{
-        dbgListener.textContent = 'fetching once...';
-        const col = collection(db,'advert_submissions');
-        // fetch only pending submissions (limit to 200)
-        const qAll = query(col, where('status','==','pending'), limit(200));
-        const snap = await getDocs(qAll);
-        const arr = [];
-        snap.forEach(d=>arr.push({ id: d.id, data: d.data() }));
-        submissions = arr; renderTable(); dbgListener.textContent = 'fetch once: ok'; dbgError.textContent = 'last error: -';
-      }catch(err){ console.error('fetchOnce',err); const code = err && err.code ? err.code : 'unknown'; const msg = err && err.message ? err.message : String(err); dbgError.textContent = `last error: ${code} — ${msg}`; dbgListener.textContent = 'fetch once failed';
-        if(code === 'permission-denied' || /permission/i.test(msg)){
-          tbody.innerHTML = '<tr><td colspan="8" class="small muted">Access denied: Firestore permission denied when fetching advert_submissions. Check security rules or ensure the signed-in admin has read access.</td></tr>';
-          countEl.textContent = 'Access denied';
-          if(pollInterval){ clearInterval(pollInterval); pollInterval = null; }
-        }
+    // open image in the overlay's right panel
+    function openImageViewer(url){
+      vProofImg.src = url || '';
+      // show overlay if hidden
+      if(viewerBackdrop.style.display !== 'flex'){
+        viewerBackdrop.style.display = 'flex';
+        viewerBackdrop.setAttribute('aria-hidden','false');
+        document.body.style.overflow = 'hidden';
       }
     }
 
-    function startPolling(){
-      if(pollInterval) return; dbgListener.textContent = 'polling every 8s'; fetchOnce(); pollInterval = setInterval(fetchOnce, 8000);
-    }
+    // open the details overlay for the given advert id
+    function openViewer(id){
+      const sel = submissions.find(x => x.id === id);
+      if(!sel) return;
+      const d = sel.data || {};
 
-    async function openViewer(id){
-      selected = submissions.find(s=>s.id===id);
-      if(!selected) return;
-      const d = selected.data || {};
       vTitle.textContent = 'Submission — ' + id;
-      vUser.textContent = d.username || '-';
-      vEmail.textContent = d.email || '-';
+      vUser.textContent = d.paidBy || '-';
+      vEmail.textContent = d.textProof ? (d.textProof.length > 80 ? d.textProof.slice(0,80) + '…' : d.textProof) : '-';
       vUid.textContent = 'UID: ' + (d.userId || '-');
-      vAvatar.textContent = (d.username||'U').charAt(0).toUpperCase();
-      vAmount.textContent = Number(d.amount||0).toLocaleString('en-NG');
-      vProvider.textContent = d.provider || '-';
-      vAcct.textContent = d.accountNameEntered || '-';
+      vAvatar.textContent = (d.paidBy || 'U').charAt(0).toUpperCase();
+      vAmount.textContent = '₦' + (Number(d.paidAmount || 0)).toLocaleString('en-NG');
       vCreated.textContent = fmtDate(d.createdAt);
-      vProofImg.src = d.proofUrl || '';
-      vStatus.textContent = 'Status: ' + (d.status||'pending');
+      vApproved.textContent = d.approvedAt ? fmtDate(d.approvedAt) : '-';
+      vStatus.textContent = (d.status || 'pending').toString().toUpperCase();
+      vProofImg.src = d.imageUrl || '';
+      vTextProof.textContent = d.textProof || '-';
+      vNote.textContent = d.adminNote ? 'Admin note: ' + d.adminNote : 'No admin note';
 
-      // only allow approve/reject when status is pending
-      const isPending = (d.status || '').toString().toLowerCase() === 'pending';
-      approveBtn.disabled = !isPending;
-      rejectBtn.disabled = !isPending;
+      // show overlay
+      viewerBackdrop.style.display = 'flex';
+      viewerBackdrop.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
 
-      viewer.style.display = 'flex'; viewer.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
+      // set up the action handlers referencing the selected doc
+      // (they use runTransaction and will re-query via onSnapshot)
+      // enable buttons (we allow flipping)
+      approveBtn.disabled = false;
+      rejectBtn.disabled = false;
+
+      // store temporarily for handlers
+      viewerBackdrop.dataset.selId = id;
     }
 
-    vClose.addEventListener('click', ()=>{ viewer.style.display='none'; viewer.setAttribute('aria-hidden','true'); document.body.style.overflow=''; selected = null; });
+    vClose.addEventListener('click', ()=> {
+      viewerBackdrop.style.display = 'none';
+      viewerBackdrop.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+      viewerBackdrop.dataset.selId = '';
+    });
 
-    // Approve and reject handlers unchanged but include debug
+    viewerBackdrop.addEventListener('click', (e)=>{
+      if(e.target === viewerBackdrop) vClose.click();
+    });
+
+    // Approve: set status: 'approved', approvedAt: serverTimestamp(), verifiedBy, verifiedAt.
+    // Credit the user's balance inside a transaction and create a transactions record.
     approveBtn.addEventListener('click', async ()=>{
-      if(!selected) return; if(!confirm('Approve this submission and credit the user?')) return;
-      approveBtn.disabled = true; approveBtn.textContent = 'Processing...';
+      const selId = viewerBackdrop.dataset.selId;
+      if(!selId) return;
+      if(!confirm('Approve this submission and credit the user?')) return;
+      approveBtn.disabled = true; approveBtn.textContent = 'Processing…';
+
       try{
-        const depRef = doc(db,'advert_submissions',selected.id);
+        const subRef = doc(db, 'advert_submissions', selId);
         await runTransaction(db, async (tx)=>{
-          const depSnap = await tx.get(depRef);
-          if(!depSnap.exists()) throw new Error('Submission not found');
-          const data = depSnap.data() || {};
+          const snap = await tx.get(subRef);
+          if(!snap.exists()) throw new Error('Submission not found');
+          const data = snap.data() || {};
           const oldStatus = (data.status || '').toString().toLowerCase();
-          // if already approved, nothing to do
-          if(oldStatus === 'approved') return;
+          if(oldStatus === 'approved') {
+            // nothing to do
+            return;
+          }
 
-          const amt = Number(data.amount || 0);
+          // mark submission approved
+          tx.update(subRef, { status: 'approved', approvedAt: serverTimestamp(), verifiedBy: currentUser.uid, verifiedAt: serverTimestamp(), adminNote: '' });
 
-          // mark approved
-          tx.update(depRef, { status: 'approved', verifiedBy: currentUser.uid, verifiedAt: serverTimestamp() });
-
-          // credit user (works when coming from pending or from previously rejected)
+          // credit user if userId present
           if(data.userId){
-            const uRef = doc(db,'users',data.userId);
+            const uRef = doc(db, 'users', data.userId);
             const uSnap = await tx.get(uRef);
             const oldBal = uSnap.exists() ? Number(uSnap.data().balance || 0) : 0;
+            const amt = Number(data.paidAmount || 0);
             const next = oldBal + amt;
             tx.update(uRef, { balance: next, updatedAt: serverTimestamp() });
 
-            const txRef = doc(collection(db,'transactions'));
-            tx.set(txRef, { userId: data.userId, type: 'credit', source: 'advert_submission_verified', amount: amt, submissionId: selected.id, createdAt: serverTimestamp(), adminId: currentUser.uid, note: 'Approved by admin' });
+            // create transactions record
+            const txRef = doc(collection(db, 'transactions'));
+            tx.set(txRef, {
+              userId: data.userId,
+              type: 'credit',
+              source: 'advert_submission_approved',
+              amount: amt,
+              submissionId: selId,
+              createdAt: serverTimestamp(),
+              adminId: currentUser.uid,
+              note: 'Approved by admin'
+            });
           }
         });
-        // optimistic UI: remove the handled submission from local list and re-render
-        submissions = submissions.filter(s=>s.id !== selected.id);
+
+        // optimistic local update
+        submissions = submissions.map(s => s.id === selId ? { id: s.id, data: { ...s.data, status: 'approved', approvedAt: { seconds: Math.floor(Date.now()/1000) } } } : s);
         renderTable();
-        showToast('Submission approved and user credited');
-      }catch(err){ console.error('approve',err); showToast('Failed: ' + (err.message||err)); }
-      finally{ approveBtn.disabled = false; approveBtn.textContent = 'Approve'; }
+        vNote.textContent = 'Approved — changes saved';
+      }catch(err){
+        console.error('approve failed', err);
+        alert('Approve failed: ' + (err && err.message ? err.message : String(err)));
+      }finally{
+        approveBtn.disabled = false; approveBtn.textContent = 'Approve';
+      }
     });
 
-          if(data.userId){
-            const uRef = doc(db,'users',data.userId);
-            const uSnap = await tx.get(uRef);
-            const old = uSnap.exists() ? Number(uSnap.data().balance || 0) : 0;
-            const amt = Number(data.amount || 0);
-            const next = old + amt;
-            tx.update(uRef, { balance: next, updatedAt: serverTimestamp() });
-
-            const txRef = doc(collection(db,'transactions'));
-            tx.set(txRef, { userId: data.userId, type: 'credit', source: 'advert_submission_verified', amount: amt, submissionId: selected.id, createdAt: serverTimestamp(), adminId: currentUser.uid });
-          }
-        });
-        // optimistic UI: remove the approved submission from local list and re-render
-        submissions = submissions.filter(s=>s.id !== selected.id);
-        renderTable();
-        showToast('Approved and credited');
-        viewer.style.display='none'; viewer.setAttribute('aria-hidden','true'); document.body.style.overflow='';
-      }catch(err){ console.error('approve',err); showToast('Failed: ' + (err.message||err)); }
-      finally{ approveBtn.disabled = false; approveBtn.textContent = 'Approve'; }
-    });
-
+    // Reject: set status 'rejected', clear approvedAt (set to null), record adminNote.
+    // If it was previously approved, reverse the credit inside the same transaction (create debit).
     rejectBtn.addEventListener('click', async ()=>{
-      if(!selected) return; const reason = prompt('Reason for rejection (optional)'); if(reason===null) return; // cancelled
-      rejectBtn.disabled = true; rejectBtn.textContent = 'Processing...';
+      const selId = viewerBackdrop.dataset.selId;
+      if(!selId) return;
+      const reason = prompt('Reason for rejection (optional)');
+      if(reason === null) return; // cancelled
+      rejectBtn.disabled = true; rejectBtn.textContent = 'Processing…';
+
       try{
-        const depRef = doc(db,'advert_submissions',selected.id);
+        const subRef = doc(db, 'advert_submissions', selId);
         await runTransaction(db, async (tx)=>{
-          const depSnap = await tx.get(depRef);
-          if(!depSnap.exists()) throw new Error('Submission not found');
-          const data = depSnap.data() || {};
+          const snap = await tx.get(subRef);
+          if(!snap.exists()) throw new Error('Submission not found');
+          const data = snap.data() || {};
           const oldStatus = (data.status || '').toString().toLowerCase();
-          // if already rejected, nothing to do
-          if(oldStatus === 'rejected') return;
+          if(oldStatus === 'rejected') {
+            return;
+          }
 
-          const amt = Number(data.amount || 0);
+          // mark rejected, clear approvedAt
+          tx.update(subRef, { status: 'rejected', approvedAt: null, verifiedBy: currentUser.uid, verifiedAt: serverTimestamp(), adminNote: reason || '' });
 
-          // mark rejected
-          tx.update(depRef, { status: 'rejected', verifiedBy: currentUser.uid, verifiedAt: serverTimestamp(), adminNote: reason || '' });
-
-          // if it was previously approved, reverse the credit (create a debit transaction)
+          // if it was previously approved, reverse credit
           if(data.userId && oldStatus === 'approved'){
             const uRef = doc(db,'users',data.userId);
             const uSnap = await tx.get(uRef);
             const oldBal = uSnap.exists() ? Number(uSnap.data().balance || 0) : 0;
-            const next = oldBal - amt; // allow negative balances if necessary
+            const amt = Number(data.paidAmount || 0);
+            const next = oldBal - amt;
             tx.update(uRef, { balance: next, updatedAt: serverTimestamp() });
 
             const txRef = doc(collection(db,'transactions'));
-            tx.set(txRef, { userId: data.userId, type: 'debit', source: 'advert_submission_reversal', amount: amt, submissionId: selected.id, createdAt: serverTimestamp(), adminId: currentUser.uid, note: 'Reversed after rejection: ' + (reason || '') });
+            tx.set(txRef, {
+              userId: data.userId,
+              type: 'debit',
+              source: 'advert_submission_reversal',
+              amount: amt,
+              submissionId: selId,
+              createdAt: serverTimestamp(),
+              adminId: currentUser.uid,
+              note: 'Reversed after rejection: ' + (reason || '')
+            });
           }
         });
-        // optimistic UI: remove the handled submission from local list and re-render
-        submissions = submissions.filter(s=>s.id !== selected.id);
+
+        // optimistic local update
+        submissions = submissions.map(s => s.id === selId ? { id: s.id, data: { ...s.data, status: 'rejected', approvedAt: null } } : s);
         renderTable();
-        showToast('Submission rejected');
-      }catch(err){ console.error('reject',err); showToast('Failed: ' + (err.message||err)); }
-      finally{ rejectBtn.disabled = false; rejectBtn.textContent = 'Reject'; }
+        vNote.textContent = 'Rejected — changes saved';
+      }catch(err){
+        console.error('reject failed', err);
+        alert('Reject failed: ' + (err && err.message ? err.message : String(err)));
+      }finally{
+        rejectBtn.disabled = false; rejectBtn.textContent = 'Reject';
+      }
     });
-        // optimistic UI: remove rejected submission from local list and re-render
-        submissions = submissions.filter(s=>s.id !== selected.id);
+
+    // attach realtime listener to advert_submissions (most recent first).
+    // If permissions block realtime snapshot, fallback to manual fetch.
+    async function attachListenerRealtime(){
+      // teardown
+      if(listenerUnsub){ try{ listenerUnsub(); }catch(e){} listenerUnsub = null; }
+      tbody.innerHTML = '<tr><td colspan="9" class="small muted">Listening for submissions…</td></tr>';
+      countEl.textContent = '…';
+
+      try{
+        const col = collection(db, 'advert_submissions');
+        const q = query(col, orderBy('createdAt','desc'));
+        listenerUnsub = onSnapshot(q, snap => {
+          const arr = [];
+          snap.forEach(d => arr.push({ id: d.id, data: d.data() }));
+          submissions = arr;
+          renderTable();
+        }, (err) => {
+          console.error('realtime listener error', err);
+          // if permission denied, show message
+          const msg = (err && err.message) ? err.message : String(err);
+          if(err && err.code === 'permission-denied' || /permission/i.test(msg)){
+            tbody.innerHTML = '<tr><td colspan="9" class="small muted">Access denied: Firestore permission denied. Ensure the signed-in admin has read access to advert_submissions.</td></tr>';
+            countEl.textContent = 'Access denied';
+            return;
+          }
+          // fallback fetch
+          fetchOnce();
+        });
+      }catch(e){
+        console.error('attach realtime failed', e);
+        fetchOnce();
+      }
+    }
+
+    // fallback fetch (manual)
+    async function fetchOnce(){
+      try{
+        tbody.innerHTML = '<tr><td colspan="9" class="small muted">Fetching submissions…</td></tr>';
+        const col = collection(db, 'advert_submissions');
+        const q = query(col, orderBy('createdAt','desc'), limit(300));
+        const snap = await getDocs(q);
+        const arr = [];
+        snap.forEach(d => arr.push({ id: d.id, data: d.data() }));
+        submissions = arr;
         renderTable();
-        showToast('Submission rejected');
-        viewer.style.display='none'; viewer.setAttribute('aria-hidden','true'); document.body.style.overflow='';
-      }catch(err){ console.error('reject',err); showToast('Failed: ' + (err.message||err)); }
-      finally{ rejectBtn.disabled = false; rejectBtn.textContent = 'Reject'; }
+      }catch(err){
+        console.error('fetchOnce failed', err);
+        const msg = (err && err.message) ? err.message : String(err);
+        if(err && err.code === 'permission-denied' || /permission/i.test(msg)){
+          tbody.innerHTML = '<tr><td colspan="9" class="small muted">Access denied: Firestore permission denied when fetching advert_submissions. Check security rules or sign in with an owner email.</td></tr>';
+          countEl.textContent = 'Access denied';
+        } else {
+          tbody.innerHTML = '<tr><td colspan="9" class="small muted">Unable to fetch submissions (see console)</td></tr>';
+        }
+      }
+    }
+
+    // wire search & refresh
+    qInput.addEventListener('input', renderTable);
+    refreshBtn.addEventListener('click', ()=> { fetchOnce(); });
+
+    // auth check + owner-only gating
+    onAuthStateChanged(auth, user => {
+      if(!user){
+        authInfo.textContent = 'Not signed in — please sign in with an owner account';
+        tbody.innerHTML = '<tr><td colspan="9" class="small muted">Sign in to load submissions.</td></tr>';
+        return;
+      }
+      currentUser = user;
+      authInfo.textContent = user.email || user.uid;
+      const email = (user.email || '').toLowerCase();
+      if(!ALLOWED_OWNERS.includes(email)){
+        // not allowed
+        tbody.innerHTML = '<tr><td colspan="9" class="small muted">Access denied — owners only.</td></tr>';
+        countEl.textContent = 'Access denied';
+        return;
+      }
+      // allowed — attach listener
+      attachListenerRealtime();
     });
 
-    // wire search and refresh
-    qInput.addEventListener('input', ()=> renderTable());
-    document.getElementById('refreshBtn').addEventListener('click', ()=> attachListener());
-
-    // auth + owner-only check (graceful)
-    onAuthStateChanged(auth, async (user)=>{
-      if(!user){ tbody.innerHTML = '<tr><td colspan="8" class="small muted">Waiting for authentication…</td></tr>'; dbgAuth.textContent = 'auth: none'; setTimeout(()=>{ if(!auth.currentUser){ alert('Please sign in as an owner to access this page'); window.location.href='login.html'; } },3500); return; }
-      currentUser = user; dbgAuth.textContent = 'auth: ' + (user.email||user.uid||'user');
-      const email = (user.email||'').toLowerCase();
-      if(!allowedOwners.includes(email)){
-        alert('Access denied — owners only'); window.location.href = 'index.html'; return; }
-      attachListener();
-    });
-
-    // cleanup
-    window.addEventListener('beforeunload', ()=>{ if(listenerUnsub) try{ listenerUnsub(); }catch(e){} if(tasksListenerUnsub) try{ tasksListenerUnsub(); }catch(e){} if(pollInterval) clearInterval(pollInterval); });
-
-    tbody.innerHTML = '<tr><td colspan="8" class="small muted">Waiting for auth…</td></tr>';
+    // set year
+    document.getElementById('year').textContent = new Date().getFullYear();
   </script>
 </body>
 </html>
