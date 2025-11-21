@@ -115,7 +115,7 @@
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
     import {
-      getFirestore, collection, query, where, orderBy, onSnapshot, doc, getDoc, updateDoc, runTransaction, serverTimestamp
+      getFirestore, collection, query, where, orderBy, onSnapshot, doc, getDoc, updateDoc, runTransaction, serverTimestamp, getDocs, limit
     } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -138,7 +138,9 @@
     let tasksListenerUnsub = null;
     let submissions = [];
     let tasksMap = new Map();
-    let selected = null; 
+    let selected = null;
+    let lastListenerError = null;
+    let pollInterval = null;
 
     const tbody = document.getElementById('tbody');
     const countEl = document.getElementById('count');
@@ -160,58 +162,32 @@
     const rejectBtn = document.getElementById('rejectBtn');
     const toast = document.getElementById('toast');
 
+    // debug UI
+    const debugEl = document.createElement('div');
+    debugEl.style.cssText = 'position:fixed;left:18px;top:18px;background:rgba(0,0,0,0.5);color:var(--text);padding:10px;border-radius:8px;font-size:12px;z-index:99999';
+    debugEl.innerHTML = `
+      <div style="font-weight:800;margin-bottom:6px">Admin debug</div>
+      <div id="dbgAuth">auth: waiting</div>
+      <div id="dbgListener">listener: idle</div>
+      <div id="dbgError" style="color:#f6b0b0">last error: -</div>
+      <div id="dbgCount">last fetch: -</div>
+      <div style="margin-top:8px"><button id="dbgFetch" class="btn ghost">Run fetch now</button></div>
+    `;
+    document.body.appendChild(debugEl);
+    const dbgAuth = document.getElementById('dbgAuth');
+    const dbgListener = document.getElementById('dbgListener');
+    const dbgError = document.getElementById('dbgError');
+    const dbgCount = document.getElementById('dbgCount');
+    document.getElementById('dbgFetch').addEventListener('click', ()=>fetchOnce());
+
     function showToast(msg){ toast.textContent = msg; toast.style.display = 'block'; setTimeout(()=>toast.style.display='none',2500); }
     function fmtDate(v){ try{ if(!v) return '-'; if(typeof v.toDate==='function') return v.toDate().toLocaleString(); if(typeof v.seconds==='number') return new Date(v.seconds*1000).toLocaleString(); return new Date(v).toLocaleString(); }catch(e){return '-';} }
-
     function statusPill(s){ const st = (s||'').toLowerCase(); if(st==='pending') return '<span class="pill pending">PENDING</span>'; if(st==='approved') return '<span class="pill approved">APPROVED</span>'; if(st==='rejected') return '<span class="pill rejected">REJECTED</span>'; return '<span class="pill pending">'+(s||'')+'</span>'; }
-
     function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    // attach realtime listener for advert_submissions with status 'pending'
-    function attachListener(){
-      // teardown previous listeners
-      if(listenerUnsub){ try{ listenerUnsub(); }catch(e){} listenerUnsub = null; }
-      if(tasksListenerUnsub){ try{ tasksListenerUnsub(); }catch(e){} tasksListenerUnsub = null; }
-      submissions = [];
-      tbody.innerHTML = '<tr><td colspan="8" class="small muted">Loading submissions and tasks…</td></tr>';
-      countEl.textContent = 'Loading…';
-
-      try{
-        // listen to tasks collection to map taskId -> title
-        const tasksCol = collection(db,'tasks');
-        tasksListenerUnsub = onSnapshot(tasksCol, snap => {
-          tasksMap.clear();
-          snap.forEach(t => tasksMap.set(t.id, t.data()));
-          // re-render when tasks update
-          renderTable();
-        }, err => {
-          console.warn('tasks listener error', err);
-        });
-
-        // listen to advert_submissions (all recent) and filter client-side
-        const col = collection(db,'advert_submissions');
-        const qAll = query(col, orderBy('createdAt','desc'));
-        listenerUnsub = onSnapshot(qAll, snap => {
-          const arr = [];
-          snap.forEach(d => arr.push({ id: d.id, data: d.data() }));
-          submissions = arr;
-          renderTable();
-        }, err => {
-          console.error('advert_submissions listener error', err);
-          tbody.innerHTML = '<tr><td colspan="8" class="small">Unable to listen for submissions</td></tr>'; countEl.textContent = 'Error';
-        });
-
-      }catch(e){
-        console.error('attachListenerForUser failed', e);
-        tbody.innerHTML = '<tr><td colspan="8" class="small muted">Unable to load submissions.</td></tr>';
-        countEl.textContent = 'Error';
-      }
-    }, err => { console.error('listener error',err); tbody.innerHTML = '<tr><td colspan="8" class="small">Unable to listen for pending submissions</td></tr>'; countEl.textContent='Error'; });
-    }
-
+    // render table uses tasksMap to show task titles when available
     function renderTable(){
       const q = (qInput.value||'').toLowerCase().trim();
-      // include both pending and other statuses, but highlight pending
       const list = submissions.filter(s => {
         const d = s.data || {};
         const uid = (d.userId||'').toLowerCase();
@@ -222,7 +198,8 @@
         const matchesQ = !q || uid.includes(q) || email.includes(q) || id.includes(q) || provider.includes(q) || taskTitle.toLowerCase().includes(q);
         return matchesQ;
       });
-      countEl.textContent = `${list.length} pending`;
+      countEl.textContent = `${list.length} submissions`;
+      dbgCount.textContent = 'last fetch: ' + list.length;
       if(list.length===0){ tbody.innerHTML = '<tr><td colspan="8" class="small muted">No submissions found</td></tr>'; return; }
       tbody.innerHTML = list.map(s=>{
         const d = s.data||{};
@@ -245,6 +222,66 @@
       }));
     }
 
+    // try realtime listeners for tasks and advert_submissions; fall back to polling with getDocs
+    function attachListener(){
+      // clear previous
+      if(listenerUnsub){ try{ listenerUnsub(); }catch(e){} listenerUnsub = null; }
+      if(tasksListenerUnsub){ try{ tasksListenerUnsub(); }catch(e){} tasksListenerUnsub = null; }
+      if(pollInterval){ clearInterval(pollInterval); pollInterval = null; }
+
+      submissions = [];
+      tbody.innerHTML = '<tr><td colspan="8" class="small muted">Loading submissions and tasks… (attempt realtime)</td></tr>';
+      countEl.textContent = 'Loading…';
+      dbgListener.textContent = 'listener: starting';
+
+      // tasks listener
+      try{
+        const tasksCol = collection(db,'tasks');
+        tasksListenerUnsub = onSnapshot(tasksCol, snap => {
+          tasksMap.clear(); snap.forEach(t=>tasksMap.set(t.id, t.data())); dbgListener.textContent = 'tasks: ok'; renderTable();
+        }, err => {
+          lastListenerError = err; dbgError.textContent = 'last error: ' + (err.message||err); console.warn('tasks listener error',err); dbgListener.textContent = 'tasks: error';
+        });
+      }catch(e){ console.warn('tasks attach failed',e); dbgListener.textContent = 'tasks: attach failed'; dbgError.textContent = 'last error: ' + (e.message||e); }
+
+      // submissions realtime listener
+      try{
+        const col = collection(db,'advert_submissions');
+        // only listen for pending submissions to avoid index issues
+        const qAll = query(col, where('status','==','pending'));
+        listenerUnsub = onSnapshot(qAll, snap => {
+          const arr = []; snap.forEach(d=>arr.push({ id: d.id, data: d.data() })); submissions = arr; dbgListener.textContent = 'submissions: realtime'; lastListenerError = null; dbgError.textContent = 'last error: -'; renderTable();
+        }, err => {
+          lastListenerError = err; dbgError.textContent = 'last error: ' + (err.message||err); console.error('advert_submissions listener error', err); dbgListener.textContent = 'submissions: error';
+          // fallback to polling
+          startPolling();
+        });
+      }catch(e){ console.error('attach listener failed', e); dbgListener.textContent = 'submissions: attach failed'; dbgError.textContent = 'last error: ' + (e.message||e); startPolling(); }
+
+      // set a safety poll in case realtime doesn't fire
+      setTimeout(()=>{
+        if(!submissions.length){ dbgListener.textContent = 'no realtime data yet — falling back to fetch'; startPolling(); }
+      }, 2500);
+    }
+
+    // fallback fetch once or poll
+    async function fetchOnce(){
+      try{
+        dbgListener.textContent = 'fetching once...';
+        const col = collection(db,'advert_submissions');
+        // fetch only pending submissions (limit to 200)
+        const qAll = query(col, where('status','==','pending'), limit(200));
+        const snap = await getDocs(qAll);
+        const arr = [];
+        snap.forEach(d=>arr.push({ id: d.id, data: d.data() }));
+        submissions = arr; renderTable(); dbgListener.textContent = 'fetch once: ok'; dbgError.textContent = 'last error: -';
+      }catch(err){ console.error('fetchOnce',err); dbgError.textContent = 'last error: ' + (err.message||err); dbgListener.textContent = 'fetch once failed'; }
+    }
+
+    function startPolling(){
+      if(pollInterval) return; dbgListener.textContent = 'polling every 8s'; fetchOnce(); pollInterval = setInterval(fetchOnce, 8000);
+    }
+
     async function openViewer(id){
       selected = submissions.find(s=>s.id===id);
       if(!selected) return;
@@ -260,27 +297,56 @@
       vCreated.textContent = fmtDate(d.createdAt);
       vProofImg.src = d.proofUrl || '';
       vStatus.textContent = 'Status: ' + (d.status||'pending');
+
+      // only allow approve/reject when status is pending
+      const isPending = (d.status || '').toString().toLowerCase() === 'pending';
+      approveBtn.disabled = !isPending;
+      rejectBtn.disabled = !isPending;
+
       viewer.style.display = 'flex'; viewer.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
     }
 
     vClose.addEventListener('click', ()=>{ viewer.style.display='none'; viewer.setAttribute('aria-hidden','true'); document.body.style.overflow=''; selected = null; });
 
-    // Approve: update deposit status, credit user balance, add transaction record
+    // Approve and reject handlers unchanged but include debug
     approveBtn.addEventListener('click', async ()=>{
       if(!selected) return; if(!confirm('Approve this submission and credit the user?')) return;
-      approveBtn.disabled = true; approveBtn.textContent = 'Approving...';
+      approveBtn.disabled = true; approveBtn.textContent = 'Processing...';
       try{
         const depRef = doc(db,'advert_submissions',selected.id);
         await runTransaction(db, async (tx)=>{
           const depSnap = await tx.get(depRef);
           if(!depSnap.exists()) throw new Error('Submission not found');
-          const data = depSnap.data();
-          if((data.status||'').toLowerCase() !== 'pending') throw new Error('Submission is no longer pending');
+          const data = depSnap.data() || {};
+          const oldStatus = (data.status || '').toString().toLowerCase();
+          // if already approved, nothing to do
+          if(oldStatus === 'approved') return;
 
-          // update deposit doc
+          const amt = Number(data.amount || 0);
+
+          // mark approved
           tx.update(depRef, { status: 'approved', verifiedBy: currentUser.uid, verifiedAt: serverTimestamp() });
 
-          // credit user's balance if userId present
+          // credit user (works when coming from pending or from previously rejected)
+          if(data.userId){
+            const uRef = doc(db,'users',data.userId);
+            const uSnap = await tx.get(uRef);
+            const oldBal = uSnap.exists() ? Number(uSnap.data().balance || 0) : 0;
+            const next = oldBal + amt;
+            tx.update(uRef, { balance: next, updatedAt: serverTimestamp() });
+
+            const txRef = doc(collection(db,'transactions'));
+            tx.set(txRef, { userId: data.userId, type: 'credit', source: 'advert_submission_verified', amount: amt, submissionId: selected.id, createdAt: serverTimestamp(), adminId: currentUser.uid, note: 'Approved by admin' });
+          }
+        });
+        // optimistic UI: remove the handled submission from local list and re-render
+        submissions = submissions.filter(s=>s.id !== selected.id);
+        renderTable();
+        showToast('Submission approved and user credited');
+      }catch(err){ console.error('approve',err); showToast('Failed: ' + (err.message||err)); }
+      finally{ approveBtn.disabled = false; approveBtn.textContent = 'Approve'; }
+    });
+
           if(data.userId){
             const uRef = doc(db,'users',data.userId);
             const uSnap = await tx.get(uRef);
@@ -289,50 +355,82 @@
             const next = old + amt;
             tx.update(uRef, { balance: next, updatedAt: serverTimestamp() });
 
-            // create transaction record
             const txRef = doc(collection(db,'transactions'));
-            tx.set(txRef, { userId: data.userId, type: 'credit', source: 'deposit_verified', amount: amt, depositId: selected.id, createdAt: serverTimestamp(), adminId: currentUser.uid });
+            tx.set(txRef, { userId: data.userId, type: 'credit', source: 'advert_submission_verified', amount: amt, submissionId: selected.id, createdAt: serverTimestamp(), adminId: currentUser.uid });
           }
         });
+        // optimistic UI: remove the approved submission from local list and re-render
+        submissions = submissions.filter(s=>s.id !== selected.id);
+        renderTable();
         showToast('Approved and credited');
         viewer.style.display='none'; viewer.setAttribute('aria-hidden','true'); document.body.style.overflow='';
       }catch(err){ console.error('approve',err); showToast('Failed: ' + (err.message||err)); }
       finally{ approveBtn.disabled = false; approveBtn.textContent = 'Approve'; }
     });
 
-    // Reject: mark deposit rejected
     rejectBtn.addEventListener('click', async ()=>{
       if(!selected) return; const reason = prompt('Reason for rejection (optional)'); if(reason===null) return; // cancelled
-      rejectBtn.disabled = true; rejectBtn.textContent = 'Rejecting...';
+      rejectBtn.disabled = true; rejectBtn.textContent = 'Processing...';
       try{
         const depRef = doc(db,'advert_submissions',selected.id);
-        await updateDoc(depRef, { status: 'rejected', verifiedBy: currentUser.uid, verifiedAt: serverTimestamp(), adminNote: reason || '' });
+        await runTransaction(db, async (tx)=>{
+          const depSnap = await tx.get(depRef);
+          if(!depSnap.exists()) throw new Error('Submission not found');
+          const data = depSnap.data() || {};
+          const oldStatus = (data.status || '').toString().toLowerCase();
+          // if already rejected, nothing to do
+          if(oldStatus === 'rejected') return;
+
+          const amt = Number(data.amount || 0);
+
+          // mark rejected
+          tx.update(depRef, { status: 'rejected', verifiedBy: currentUser.uid, verifiedAt: serverTimestamp(), adminNote: reason || '' });
+
+          // if it was previously approved, reverse the credit (create a debit transaction)
+          if(data.userId && oldStatus === 'approved'){
+            const uRef = doc(db,'users',data.userId);
+            const uSnap = await tx.get(uRef);
+            const oldBal = uSnap.exists() ? Number(uSnap.data().balance || 0) : 0;
+            const next = oldBal - amt; // allow negative balances if necessary
+            tx.update(uRef, { balance: next, updatedAt: serverTimestamp() });
+
+            const txRef = doc(collection(db,'transactions'));
+            tx.set(txRef, { userId: data.userId, type: 'debit', source: 'advert_submission_reversal', amount: amt, submissionId: selected.id, createdAt: serverTimestamp(), adminId: currentUser.uid, note: 'Reversed after rejection: ' + (reason || '') });
+          }
+        });
+        // optimistic UI: remove the handled submission from local list and re-render
+        submissions = submissions.filter(s=>s.id !== selected.id);
+        renderTable();
+        showToast('Submission rejected');
+      }catch(err){ console.error('reject',err); showToast('Failed: ' + (err.message||err)); }
+      finally{ rejectBtn.disabled = false; rejectBtn.textContent = 'Reject'; }
+    });
+        // optimistic UI: remove rejected submission from local list and re-render
+        submissions = submissions.filter(s=>s.id !== selected.id);
+        renderTable();
         showToast('Submission rejected');
         viewer.style.display='none'; viewer.setAttribute('aria-hidden','true'); document.body.style.overflow='';
       }catch(err){ console.error('reject',err); showToast('Failed: ' + (err.message||err)); }
       finally{ rejectBtn.disabled = false; rejectBtn.textContent = 'Reject'; }
     });
 
-    // wire search
+    // wire search and refresh
     qInput.addEventListener('input', ()=> renderTable());
     document.getElementById('refreshBtn').addEventListener('click', ()=> attachListener());
 
     // auth + owner-only check (graceful)
     onAuthStateChanged(auth, async (user)=>{
-      if(!user){ tbody.innerHTML = '<tr><td colspan="8" class="small muted">Waiting for authentication…</td></tr>'; // wait a moment then redirect
-        setTimeout(()=>{ if(!auth.currentUser){ alert('Please sign in as an owner to access this page'); window.location.href='login.html'; } },3500); return; }
-      currentUser = user;
+      if(!user){ tbody.innerHTML = '<tr><td colspan="8" class="small muted">Waiting for authentication…</td></tr>'; dbgAuth.textContent = 'auth: none'; setTimeout(()=>{ if(!auth.currentUser){ alert('Please sign in as an owner to access this page'); window.location.href='login.html'; } },3500); return; }
+      currentUser = user; dbgAuth.textContent = 'auth: ' + (user.email||user.uid||'user');
       const email = (user.email||'').toLowerCase();
       if(!allowedOwners.includes(email)){
         alert('Access denied — owners only'); window.location.href = 'index.html'; return; }
-      // allowed: start listener
       attachListener();
     });
 
-    // cleanup on unload
-    window.addEventListener('beforeunload', ()=>{ if(listenerUnsub) try{ listenerUnsub(); }catch(e){} });
+    // cleanup
+    window.addEventListener('beforeunload', ()=>{ if(listenerUnsub) try{ listenerUnsub(); }catch(e){} if(tasksListenerUnsub) try{ tasksListenerUnsub(); }catch(e){} if(pollInterval) clearInterval(pollInterval); });
 
-    // initial
     tbody.innerHTML = '<tr><td colspan="8" class="small muted">Waiting for auth…</td></tr>';
   </script>
 </body>
