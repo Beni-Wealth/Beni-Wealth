@@ -25,6 +25,7 @@
       --accent-start:#2fe0b8; --accent-end:#7a5fff;
       --card: rgba(255,255,255,0.02);
       --radius:12px;
+      --bottom-nav-h:72px;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
@@ -75,7 +76,7 @@
 
     <section class="card" aria-labelledby="title">
       <div class="controls">
-        <input id="q" class="search" placeholder="Search advert id, userId or paidBy" />
+        <input id="q" class="search" placeholder="Search advert id or userId" />
         <button id="refreshBtn" class="btn ghost">Refresh</button>
         <div style="margin-left:auto" id="count" class="small">—</div>
       </div>
@@ -175,7 +176,7 @@
       addDoc
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Firebase config (your project)
+    // ---------- Firebase config (your project) ----------
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -190,10 +191,10 @@
     const auth = getAuth();
     const db = getFirestore();
 
-    // allowed owners (lowercase)
+    // ---------- Owner emails ----------
     const ALLOWED_OWNERS = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
 
-    // DOM refs
+    // ---------- DOM refs ----------
     const authInfo = document.getElementById('authInfo');
     const tbody = document.getElementById('tbody');
     const qInput = document.getElementById('q');
@@ -216,10 +217,14 @@
     const approveBtn = document.getElementById('approveBtn');
     const rejectBtn = document.getElementById('rejectBtn');
 
+    // ---------- state ----------
     let currentUser = null;
     let listenerUnsub = null;
     let submissions = [];
+    let pollInterval = null;
+    let initialAuthResolved = false;
 
+    // ---------- helpers ----------
     function fmtDate(v){
       try{
         if(!v) return '-';
@@ -237,15 +242,15 @@
       return `<span class="pill pending">${escapeHtml(String(s||'').toUpperCase())}</span>`;
     }
 
-    // render table from submissions[] using only the fields you told me
+    // ---------- render ----------
     function renderTable(){
       const q = (qInput.value||'').toLowerCase().trim();
       const list = submissions.filter(s=>{
         const d = s.data || {};
         const id = (s.id || '').toLowerCase();
         const uid = (d.userId || '').toLowerCase();
-        const paidBy = (d.paidBy || '').toLowerCase();
-        return !q || id.includes(q) || uid.includes(q) || paidBy.includes(q);
+        // only match advert id or userId
+        return !q || id.includes(q) || uid.includes(q);
       });
 
       countEl.textContent = `${list.length} submission${list.length === 1 ? '' : 's'}`;
@@ -297,10 +302,8 @@
       });
     }
 
-    // open image in the overlay's right panel
     function openImageViewer(url){
       vProofImg.src = url || '';
-      // show overlay if hidden
       if(viewerBackdrop.style.display !== 'flex'){
         viewerBackdrop.style.display = 'flex';
         viewerBackdrop.setAttribute('aria-hidden','false');
@@ -308,7 +311,6 @@
       }
     }
 
-    // open the details overlay for the given advert id
     function openViewer(id){
       const sel = submissions.find(x => x.id === id);
       if(!sel) return;
@@ -327,18 +329,12 @@
       vTextProof.textContent = d.textProof || '-';
       vNote.textContent = d.adminNote ? 'Admin note: ' + d.adminNote : 'No admin note';
 
-      // show overlay
       viewerBackdrop.style.display = 'flex';
       viewerBackdrop.setAttribute('aria-hidden','false');
       document.body.style.overflow = 'hidden';
 
-      // set up the action handlers referencing the selected doc
-      // (they use runTransaction and will re-query via onSnapshot)
-      // enable buttons (we allow flipping)
       approveBtn.disabled = false;
       rejectBtn.disabled = false;
-
-      // store temporarily for handlers
       viewerBackdrop.dataset.selId = id;
     }
 
@@ -348,19 +344,16 @@
       document.body.style.overflow = '';
       viewerBackdrop.dataset.selId = '';
     });
-
     viewerBackdrop.addEventListener('click', (e)=>{
       if(e.target === viewerBackdrop) vClose.click();
     });
 
-    // Approve: set status: 'approved', approvedAt: serverTimestamp(), verifiedBy, verifiedAt.
-    // Credit the user's balance inside a transaction and create a transactions record.
+    // ---------- Approve ----------
     approveBtn.addEventListener('click', async ()=>{
       const selId = viewerBackdrop.dataset.selId;
       if(!selId) return;
       if(!confirm('Approve this submission and credit the user?')) return;
       approveBtn.disabled = true; approveBtn.textContent = 'Processing…';
-
       try{
         const subRef = doc(db, 'advert_submissions', selId);
         await runTransaction(db, async (tx)=>{
@@ -368,15 +361,12 @@
           if(!snap.exists()) throw new Error('Submission not found');
           const data = snap.data() || {};
           const oldStatus = (data.status || '').toString().toLowerCase();
-          if(oldStatus === 'approved') {
-            // nothing to do
-            return;
-          }
+          if(oldStatus === 'approved') return;
 
-          // mark submission approved
+          // mark approved and store approvedAt timestamp
           tx.update(subRef, { status: 'approved', approvedAt: serverTimestamp(), verifiedBy: currentUser.uid, verifiedAt: serverTimestamp(), adminNote: '' });
 
-          // credit user if userId present
+          // credit user
           if(data.userId){
             const uRef = doc(db, 'users', data.userId);
             const uSnap = await tx.get(uRef);
@@ -385,8 +375,7 @@
             const next = oldBal + amt;
             tx.update(uRef, { balance: next, updatedAt: serverTimestamp() });
 
-            // create transactions record
-            const txRef = doc(collection(db, 'transactions'));
+            const txRef = doc(collection(db,'transactions'));
             tx.set(txRef, {
               userId: data.userId,
               type: 'credit',
@@ -400,7 +389,7 @@
           }
         });
 
-        // optimistic local update
+        // optimistic update
         submissions = submissions.map(s => s.id === selId ? { id: s.id, data: { ...s.data, status: 'approved', approvedAt: { seconds: Math.floor(Date.now()/1000) } } } : s);
         renderTable();
         vNote.textContent = 'Approved — changes saved';
@@ -412,15 +401,13 @@
       }
     });
 
-    // Reject: set status 'rejected', clear approvedAt (set to null), record adminNote.
-    // If it was previously approved, reverse the credit inside the same transaction (create debit).
+    // ---------- Reject ----------
     rejectBtn.addEventListener('click', async ()=>{
       const selId = viewerBackdrop.dataset.selId;
       if(!selId) return;
       const reason = prompt('Reason for rejection (optional)');
-      if(reason === null) return; // cancelled
+      if(reason === null) return;
       rejectBtn.disabled = true; rejectBtn.textContent = 'Processing…';
-
       try{
         const subRef = doc(db, 'advert_submissions', selId);
         await runTransaction(db, async (tx)=>{
@@ -428,14 +415,12 @@
           if(!snap.exists()) throw new Error('Submission not found');
           const data = snap.data() || {};
           const oldStatus = (data.status || '').toString().toLowerCase();
-          if(oldStatus === 'rejected') {
-            return;
-          }
+          if(oldStatus === 'rejected') return;
 
-          // mark rejected, clear approvedAt
+          // set rejected, clear approvedAt
           tx.update(subRef, { status: 'rejected', approvedAt: null, verifiedBy: currentUser.uid, verifiedAt: serverTimestamp(), adminNote: reason || '' });
 
-          // if it was previously approved, reverse credit
+          // if previously approved, reverse credit
           if(data.userId && oldStatus === 'approved'){
             const uRef = doc(db,'users',data.userId);
             const uSnap = await tx.get(uRef);
@@ -458,7 +443,6 @@
           }
         });
 
-        // optimistic local update
         submissions = submissions.map(s => s.id === selId ? { id: s.id, data: { ...s.data, status: 'rejected', approvedAt: null } } : s);
         renderTable();
         vNote.textContent = 'Rejected — changes saved';
@@ -470,11 +454,10 @@
       }
     });
 
-    // attach realtime listener to advert_submissions (most recent first).
-    // If permissions block realtime snapshot, fallback to manual fetch.
+    // ---------- Listener (realtime) with fallback polling ----------
     async function attachListenerRealtime(){
-      // teardown
       if(listenerUnsub){ try{ listenerUnsub(); }catch(e){} listenerUnsub = null; }
+      if(pollInterval){ clearInterval(pollInterval); pollInterval = null; }
       tbody.innerHTML = '<tr><td colspan="9" class="small muted">Listening for submissions…</td></tr>';
       countEl.textContent = '…';
 
@@ -488,28 +471,29 @@
           renderTable();
         }, (err) => {
           console.error('realtime listener error', err);
-          // if permission denied, show message
-          const msg = (err && err.message) ? err.message : String(err);
-          if(err && err.code === 'permission-denied' || /permission/i.test(msg)){
+          const code = err && err.code ? err.code : '';
+          const msg = err && err.message ? err.message : String(err || '');
+          if(code === 'permission-denied' || /permission/i.test(msg)){
             tbody.innerHTML = '<tr><td colspan="9" class="small muted">Access denied: Firestore permission denied. Ensure the signed-in admin has read access to advert_submissions.</td></tr>';
             countEl.textContent = 'Access denied';
             return;
           }
-          // fallback fetch
+          // otherwise fallback to polling fetch
           fetchOnce();
+          pollInterval = setInterval(fetchOnce, 8000);
         });
       }catch(e){
         console.error('attach realtime failed', e);
         fetchOnce();
+        pollInterval = setInterval(fetchOnce, 8000);
       }
     }
 
-    // fallback fetch (manual)
     async function fetchOnce(){
       try{
         tbody.innerHTML = '<tr><td colspan="9" class="small muted">Fetching submissions…</td></tr>';
         const col = collection(db, 'advert_submissions');
-        const q = query(col, orderBy('createdAt','desc'), limit(300));
+        const q = query(col, orderBy('createdAt','desc'), limit(500));
         const snap = await getDocs(q);
         const arr = [];
         snap.forEach(d => arr.push({ id: d.id, data: d.data() }));
@@ -517,22 +501,25 @@
         renderTable();
       }catch(err){
         console.error('fetchOnce failed', err);
-        const msg = (err && err.message) ? err.message : String(err);
-        if(err && err.code === 'permission-denied' || /permission/i.test(msg)){
-          tbody.innerHTML = '<tr><td colspan="9" class="small muted">Access denied: Firestore permission denied when fetching advert_submissions. Check security rules or sign in with an owner email.</td></tr>';
+        const code = err && err.code ? err.code : '';
+        const msg = err && err.message ? err.message : String(err || '');
+        if(code === 'permission-denied' || /permission/i.test(msg)){
+          tbody.innerHTML = '<tr><td colspan="9" class="small muted">Access denied: Firestore permission denied when fetching advert_submissions. Check rules or sign in with an owner email.</td></tr>';
           countEl.textContent = 'Access denied';
+          if(pollInterval){ clearInterval(pollInterval); pollInterval = null; }
         } else {
           tbody.innerHTML = '<tr><td colspan="9" class="small muted">Unable to fetch submissions (see console)</td></tr>';
         }
       }
     }
 
-    // wire search & refresh
+    // ---------- Search & refresh wiring ----------
     qInput.addEventListener('input', renderTable);
     refreshBtn.addEventListener('click', ()=> { fetchOnce(); });
 
-    // auth check + owner-only gating
-    onAuthStateChanged(auth, user => {
+    // ---------- Auth gating (robust) ----------
+    function handleSignedInUser(user){
+      initialAuthResolved = true;
       if(!user){
         authInfo.textContent = 'Not signed in — please sign in with an owner account';
         tbody.innerHTML = '<tr><td colspan="9" class="small muted">Sign in to load submissions.</td></tr>';
@@ -542,14 +529,32 @@
       authInfo.textContent = user.email || user.uid;
       const email = (user.email || '').toLowerCase();
       if(!ALLOWED_OWNERS.includes(email)){
-        // not allowed
         tbody.innerHTML = '<tr><td colspan="9" class="small muted">Access denied — owners only.</td></tr>';
         countEl.textContent = 'Access denied';
         return;
       }
-      // allowed — attach listener
+      // allowed — attach realtime listener
       attachListenerRealtime();
-    });
+    }
+
+    onAuthStateChanged(auth, (user) => { handleSignedInUser(user); });
+
+    // also handle immediate currentUser
+    if(auth.currentUser){
+      handleSignedInUser(auth.currentUser);
+    } else {
+      // allow a brief window for Firebase to populate currentUser
+      setTimeout(()=>{
+        if(!initialAuthResolved){
+          if(auth.currentUser){
+            handleSignedInUser(auth.currentUser);
+          } else {
+            // still waiting — leave the "Checking auth…" message and wait for onAuthStateChanged
+            authInfo.textContent = 'Checking sign-in…';
+          }
+        }
+      }, 1200);
+    }
 
     // set year
     document.getElementById('year').textContent = new Date().getFullYear();
