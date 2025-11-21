@@ -72,7 +72,9 @@
       <div style="margin-left:auto" id="count" class="small">—</div>
     </div>
 
-    <div id="tableWrap" class="table-wrap">
+    <div id="diag" class="small muted">Connecting…</div>
+
+    <div id="tableWrap" class="table-wrap" style="margin-top:12px">
       <table aria-live="polite">
         <thead>
           <tr>
@@ -132,8 +134,8 @@
   <script type="module">
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import {
-      getFirestore, collection, onSnapshot, query, getDocs, orderBy, where,
-      runTransaction, doc, serverTimestamp, limit
+      getFirestore, collection, onSnapshot, query, getDocs, orderBy, limit,
+      where, runTransaction, doc, serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
@@ -152,8 +154,12 @@
     const db = getFirestore();
     const auth = getAuth();
 
+    // admin emails that can see all adverts
+    const ADMIN_EMAILS = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
+
     // DOM
     const authInfo = document.getElementById('authInfo');
+    const diag = document.getElementById('diag');
     const tbody = document.getElementById('tbody');
     const search = document.getElementById('search');
     const refresh = document.getElementById('refresh');
@@ -173,13 +179,13 @@
 
     // state
     let currentUser = null;
-    let advertsMap = new Map(); // id -> {id, data}
+    let advertsMap = new Map();
     let advertsUnsub = null;
     let subsUnsub = null;
-    let initialAuthResolved = false;
+    let authSettled = false;
 
     // candidate owner fields (apps vary)
-    const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator','ownerUid','user'];
+    const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator','ownerUid','user','requested_by','created_by'];
 
     // helpers
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -200,16 +206,40 @@
       return (w>0 && total>0) ? (total / w) : 0;
     }
 
-    // render table
+    // robust owner match: supports uid, email, displayName, username local-part, arrays, objects
+    function docOwnedByUser(docData, user){
+      if(!docData || !user) return false;
+      const uids = [user.uid];
+      const emails = [user.email?.toLowerCase()];
+      const names = [ (user.displayName || '').toLowerCase(), (user.email||'').split('@')[0].toLowerCase() ];
+
+      for(const f of OWNER_FIELDS){
+        const val = docData[f];
+        if(val === undefined || val === null) continue;
+        if(typeof val === 'string'){
+          const low = val.toLowerCase();
+          if(uids.includes(val) || emails.includes(low) || names.includes(low)) return true;
+          // maybe string contains uid/email as substring
+          if(low === user.uid.toLowerCase() || low === (user.email||'').toLowerCase()) return true;
+        } else if(typeof val === 'object'){
+          // object may contain uid/email keys
+          const vstr = JSON.stringify(val).toLowerCase();
+          if(vstr.includes(user.uid.toLowerCase()) || vstr.includes((user.email||'').toLowerCase())) return true;
+        } else if(Array.isArray(val)){
+          if(val.includes(user.uid) || val.includes(user.email) || val.includes((user.email||'').split('@')[0])) return true;
+        }
+      }
+      return false;
+    }
+
+    // show table rows based on advertsMap
     function renderTable(){
       const qText = (search.value || '').trim().toLowerCase();
       const rows = [];
-      for(const [id, item] of advertsMap.entries()){
+      for(const [id,item] of advertsMap.entries()){
         const d = item.data || {};
-        // filter
         const hay = ((d.title||'') + ' ' + (d.platform||'') + ' ' + (d.status||'')).toLowerCase();
         if(qText && !hay.includes(qText)) continue;
-
         const unit = getUnitPrice(d);
         rows.push({
           id,
@@ -221,7 +251,8 @@
           status: (d.status || 'pending').toString().toLowerCase()
         });
       }
-      // sort newest first by createdAt
+
+      // sort newest first
       rows.sort((a,b) => {
         const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?Date.parse(a.createdAt):0);
         const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?Date.parse(b.createdAt):0);
@@ -257,7 +288,6 @@
       });
     }
 
-    // open advert details + attach submissions listener
     function openDetails(adId){
       const ad = advertsMap.get(adId);
       if(!ad){ alert('Advert not found'); return; }
@@ -271,9 +301,7 @@
       vCreated.textContent = fmtDate(d.createdAt);
       vNote.textContent = '';
 
-      // attach listener for submissions where advertId == adId
-      attachSubmissionsListener(adId);
-
+      attachSubsListener(adId);
       viewer.style.display = 'flex';
       viewer.setAttribute('aria-hidden','false');
       document.body.style.overflow = 'hidden';
@@ -285,20 +313,21 @@
       document.body.style.overflow = '';
       detachSubsListener();
     });
-    viewer.addEventListener('click', (e) => { if(e.target === viewer){ vClose.click(); } });
+    viewer.addEventListener('click', (e) => { if(e.target === viewer) vClose.click(); });
 
-    // submissions listener
-    function attachSubmissionsListener(advertId){
+    // attach subscriptions listener for advert
+    function attachSubsListener(adId){
       detachSubsListener();
       subList.innerHTML = `<div class="small muted">Loading submissions…</div>`;
       try{
         const col = collection(db,'advert_submissions');
-        const q = query(col, where('advertId','==', advertId), orderBy('createdAt','desc'));
+        // avoid orderBy index issues: query by advertId equality only
+        const q = query(col, where('advertId','==', adId));
         subsUnsub = onSnapshot(q, snap => {
-          const list = [];
+          const subs = [];
           snap.forEach(s => {
             const d = s.data() || {};
-            list.push({
+            subs.push({
               id: s.id,
               userId: d.userId || d.user || d.workerId || '',
               textProof: d.textProof || d.text_proof || d.proofText || '',
@@ -308,31 +337,41 @@
               paidAmount: Number(d.paidAmount || d.amount || 0)
             });
           });
-          renderSubmissions(list);
+          // sort by createdAt desc
+          subs.sort((a,b) => {
+            const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?Date.parse(a.createdAt):0);
+            const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?Date.parse(b.createdAt):0);
+            return tb - ta;
+          });
+          renderSubmissions(subs);
         }, err => {
-          console.error('subs onSnapshot error', err);
-          subList.innerHTML = `<div class="small muted">Unable to load submissions: ${escapeHtml(err.message || String(err))}</div>`;
+          console.error('subs listener error', err);
+          subList.innerHTML = `<div class="small muted">Unable to load submissions: ${escapeHtml(err.message||String(err))}</div>`;
         });
       }catch(e){
-        console.error('attach subs failed', e);
-        subList.innerHTML = `<div class="small muted">Unable to attach submissions listener</div>`;
+        console.error('attachSubsListener error', e);
+        subList.innerHTML = `<div class="small muted">Unable to listen for submissions.</div>`;
       }
     }
+    function detachSubsListener(){ if(subsUnsub){ try{subsUnsub(); }catch(e){} subsUnsub=null; } }
 
-    function detachSubsListener(){
-      if(subsUnsub){ try{ subsUnsub(); }catch(e){} subsUnsub = null; }
-    }
-
-    // render submissions
+    // render submissions (owner controls)
     function renderSubmissions(list){
       subList.innerHTML = '';
       if(!list || list.length === 0){ subList.innerHTML = `<div class="small muted">No submissions yet.</div>`; return; }
 
-      // owner of advert is currentUser; allow approve/reject for owner
       const advertId = vId.textContent;
       const advert = advertsMap.get(advertId) || {};
       const adData = advert.data || {};
-      const advertOwnerId = OWNER_FIELDS.map(f=>adData[f]).find(x=>x) || null;
+      // determine advert owner value(s)
+      const advertOwnerMatches = (() => {
+        // collect owner candidates from doc
+        const ownerVals = [];
+        for(const f of OWNER_FIELDS){
+          if(adData[f] !== undefined && adData[f] !== null) ownerVals.push(adData[f]);
+        }
+        return ownerVals;
+      })();
 
       list.forEach(item => {
         const node = document.createElement('div');
@@ -345,245 +384,230 @@
         node.style.background = 'linear-gradient(180deg, rgba(255,255,255,0.01), transparent)';
         node.style.border = '1px solid rgba(255,255,255,0.03)';
 
-        const left = document.createElement('div');
-        left.style.flex = '1';
-        const meta = document.createElement('div');
-        meta.className = 'small muted';
+        const left = document.createElement('div'); left.style.flex='1';
+        const meta = document.createElement('div'); meta.className='small muted';
         meta.textContent = `Submitted: ${fmtDate(item.createdAt)} • ID: ${item.id} • By: ${item.userId || '-'}`;
-        const text = document.createElement('div');
-        text.style.marginTop = '8px';
-        text.style.color = 'var(--muted)';
-        text.style.whiteSpace = 'pre-wrap';
+        const text = document.createElement('div'); text.style.marginTop='8px'; text.style.color='var(--muted)'; text.style.whiteSpace='pre-wrap';
         text.textContent = item.textProof || '(no text proof)';
-
-        left.appendChild(meta);
-        left.appendChild(text);
+        left.appendChild(meta); left.appendChild(text);
 
         const right = document.createElement('div');
-        right.style.minWidth = '220px';
-        right.style.textAlign = 'right';
-        right.style.display = 'flex';
-        right.style.flexDirection = 'column';
-        right.style.alignItems = 'flex-end';
-        right.style.gap = '8px';
+        right.style.minWidth='220px'; right.style.textAlign='right'; right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end'; right.style.gap='8px';
 
         if(item.imageUrl){
           const img = document.createElement('img');
           img.src = item.imageUrl;
           img.alt = 'proof';
-          img.style.maxWidth = '240px';
-          img.style.borderRadius = '8px';
-          img.style.cursor = 'pointer';
-          img.style.border = '1px solid rgba(255,255,255,0.04)';
-          img.addEventListener('click', ()=> openBigImage(item.imageUrl));
+          img.style.maxWidth='240px';
+          img.style.borderRadius='8px';
+          img.style.cursor='pointer';
+          img.style.border='1px solid rgba(255,255,255,0.04)';
+          img.addEventListener('click', ()=> window.open(item.imageUrl,'_blank','noopener'));
           right.appendChild(img);
         }
 
-        const pill = document.createElement('div');
-        pill.className = 'pill ' + (item.status === 'approved' ? 'approved' : item.status === 'rejected' ? 'rejected' : 'pending');
-        pill.textContent = (item.status || 'PENDING').toUpperCase();
+        const pill = document.createElement('div'); pill.className='pill ' + (item.status==='approved'?'approved':item.status==='rejected'?'rejected':'pending');
+        pill.textContent = (item.status||'PENDING').toUpperCase();
         right.appendChild(pill);
 
-        // owner controls
-        if(currentUser && advertOwnerId && currentUser.uid === advertOwnerId){
-          const controls = document.createElement('div');
-          controls.style.display = 'flex';
-          controls.style.gap = '8px';
-          const approveBtn = document.createElement('button');
-          approveBtn.className = 'btn';
+        // allow actions if currentUser is advert owner or admin
+        const currentIsAdmin = currentUser && ADMIN_EMAILS.includes((currentUser.email||'').toLowerCase());
+        let currentIsOwner = false;
+        if(currentUser && advertOwnerMatches.length){
+          // check whether any owner value matches the signed-in user (uid/email/displayName)
+          currentIsOwner = advertOwnerMatches.some(v=>{
+            if(!v) return false;
+            if(typeof v === 'string'){
+              const low = v.toLowerCase();
+              const u = (currentUser.email||'').toLowerCase();
+              const n = (currentUser.displayName||'').toLowerCase();
+              return v === currentUser.uid || low === u || low === n || low === (currentUser.email||'').split('@')[0];
+            } else if(typeof v === 'object'){
+              const s = JSON.stringify(v).toLowerCase();
+              return s.includes((currentUser.email||'').toLowerCase()) || s.includes((currentUser.uid||'').toLowerCase());
+            } else if(Array.isArray(v)){
+              return v.includes(currentUser.uid) || v.includes(currentUser.email);
+            }
+            return false;
+          });
+        }
+        if(currentUser && (currentIsOwner || currentIsAdmin)){
+          const controls = document.createElement('div'); controls.style.display='flex'; controls.style.gap='8px';
           const payAmount = item.paidAmount || Math.round(getUnitPrice(adData) * 0.7) || 0;
-          approveBtn.textContent = `Approve (₦${payAmount.toLocaleString()})`;
-          const rejectBtn = document.createElement('button');
-          rejectBtn.className = 'btn ghost';
-          rejectBtn.textContent = 'Reject';
+          const approveBtn = document.createElement('button'); approveBtn.className='btn'; approveBtn.textContent = `Approve (₦${payAmount.toLocaleString()})`;
+          const rejectBtn = document.createElement('button'); rejectBtn.className='btn ghost'; rejectBtn.textContent='Reject';
 
           const isPending = item.status === 'pending';
-          if(!isPending){
-            approveBtn.disabled = true; rejectBtn.disabled = true;
-            approveBtn.style.opacity = '0.6'; rejectBtn.style.opacity = '0.6';
-          }
+          if(!isPending){ approveBtn.disabled=true; rejectBtn.disabled=true; approveBtn.style.opacity='.6'; rejectBtn.style.opacity='.6'; }
 
-          approveBtn.addEventListener('click', async () => {
+          approveBtn.addEventListener('click', async ()=>{
             if(!isPending) return;
             if(!confirm(`Approve submission and credit user ₦${payAmount.toLocaleString()}?`)) return;
-            approveBtn.disabled = true; rejectBtn.disabled = true;
-            try {
-              await setSubmissionStatusTransaction({ type:'approve', submissionId: item.id, submitterUid: item.userId, amount: payAmount });
+            approveBtn.disabled=true; rejectBtn.disabled=true;
+            try{
+              await setSubmissionStatusTransaction({ type:'approve', submissionId:item.id, submitterUid:item.userId, amount:payAmount});
               vNote.textContent = 'Approved — changes saved';
-            } catch(err){
-              console.error('approve error', err);
-              alert('Approve failed: ' + (err.message || err));
-              approveBtn.disabled = false; rejectBtn.disabled = false;
-            }
+            }catch(err){ console.error('approve error',err); alert('Approve failed: '+(err.message||err)); approveBtn.disabled=false; rejectBtn.disabled=false; }
           });
 
-          rejectBtn.addEventListener('click', async () => {
+          rejectBtn.addEventListener('click', async ()=>{
             if(!isPending) return;
             if(!confirm('Reject this submission?')) return;
-            approveBtn.disabled = true; rejectBtn.disabled = true;
-            try {
-              await setSubmissionStatusTransaction({ type:'reject', submissionId: item.id });
+            approveBtn.disabled=true; rejectBtn.disabled=true;
+            try{
+              await setSubmissionStatusTransaction({ type:'reject', submissionId:item.id });
               vNote.textContent = 'Rejected — changes saved';
-            } catch(err){
-              console.error('reject error', err);
-              alert('Reject failed: ' + (err.message || err));
-              approveBtn.disabled = false; rejectBtn.disabled = false;
-            }
+            }catch(err){ console.error('reject err',err); alert('Reject failed: '+(err.message||err)); approveBtn.disabled=false; rejectBtn.disabled=false; }
           });
 
-          controls.appendChild(approveBtn);
-          controls.appendChild(rejectBtn);
+          controls.appendChild(approveBtn); controls.appendChild(rejectBtn);
           right.appendChild(controls);
         }
 
-        node.appendChild(left);
-        node.appendChild(right);
+        node.appendChild(left); node.appendChild(right);
         subList.appendChild(node);
       });
     }
 
-    function openBigImage(src){
-      // reuse viewer panel — open in new window for simplicity
-      window.open(src, '_blank', 'noopener');
-    }
-
-    // transaction to approve/reject (same logic as admin version, but owner-initiated)
+    // transaction to approve/reject
     async function setSubmissionStatusTransaction(payload){
       if(!payload || !payload.type) throw new Error('Invalid payload');
       if(payload.type === 'approve'){
         const { submissionId, submitterUid, amount } = payload;
         if(!submissionId || !submitterUid) throw new Error('Missing fields');
-        const subRef = doc(db, 'advert_submissions', submissionId);
-        const userRef = doc(db, 'users', submitterUid);
+        const subRef = doc(db,'advert_submissions',submissionId);
+        const userRef = doc(db,'users',submitterUid);
         await runTransaction(db, async (tx) => {
           const sSnap = await tx.get(subRef);
           if(!sSnap.exists()) throw new Error('Submission not found');
           const sData = sSnap.data() || {};
-          const cur = (sData.status||'pending').toLowerCase();
+          const cur = (sData.status || 'pending').toLowerCase();
           if(cur !== 'pending') throw new Error('Submission not pending');
-
-          // credit user
+          // credit user balance (best-effort)
           const uSnap = await tx.get(userRef);
           if(uSnap.exists()){
-            const udata = uSnap.data() || {};
-            const balField = (typeof udata.balance !== 'undefined') ? 'balance' : null;
-            if(balField){
-              const oldBal = Number(udata[balField] || 0);
-              tx.update(userRef, { [balField]: oldBal + Number(amount || 0), updatedAt: serverTimestamp() });
-            } else {
-              tx.set(userRef, { balance: Number(amount || 0), updatedAt: serverTimestamp() }, { merge: true });
-            }
+            const u = uSnap.data() || {};
+            const old = Number(u.balance || 0);
+            tx.update(userRef, { balance: old + Number(amount || 0), updatedAt: serverTimestamp() });
           } else {
-            tx.set(userRef, { balance: Number(amount || 0), updatedAt: serverTimestamp() }, { merge: true });
+            tx.set(userRef, { balance: Number(amount || 0), updatedAt: serverTimestamp() }, { merge:true });
           }
-
-          // update submission
-          tx.update(subRef, { status: 'approved', approvedAt: serverTimestamp(), paidAmount: Number(amount || 0), paidBy: currentUser ? currentUser.uid : null });
+          tx.update(subRef, { status:'approved', approvedAt: serverTimestamp(), paidAmount:Number(amount||0), paidBy: currentUser ? currentUser.uid : null });
         });
       } else if(payload.type === 'reject'){
         const { submissionId } = payload;
         if(!submissionId) throw new Error('Missing id');
-        const subRef = doc(db, 'advert_submissions', submissionId);
+        const subRef = doc(db,'advert_submissions',submissionId);
         await runTransaction(db, async (tx) => {
           const sSnap = await tx.get(subRef);
           if(!sSnap.exists()) throw new Error('Submission not found');
           const sData = sSnap.data() || {};
-          const cur = (sData.status||'pending').toLowerCase();
+          const cur = (sData.status || 'pending').toLowerCase();
           if(cur !== 'pending') throw new Error('Submission not pending');
-          tx.update(subRef, { status: 'rejected', rejectedAt: serverTimestamp() });
+          tx.update(subRef, { status:'rejected', rejectedAt: serverTimestamp() });
         });
-      } else {
-        throw new Error('Unknown action');
-      }
+      } else throw new Error('Unknown action');
     }
 
-    // adverts listener: single broad listener and client-side owner filtering
-    function startAdvertsListenerForOwner(uid){
-      if(advertsUnsub){ try{ advertsUnsub(); }catch(e){} advertsUnsub = null; }
+    // adverts listener: single broad listener and client-side owner filtering (or admin sees all)
+    function startAdvertsListenerForUser(user){
+      if(advertsUnsub){ try{ advertsUnsub(); }catch(e){} advertsUnsub=null; }
       advertsMap = new Map();
       tbody.innerHTML = `<tr><td colspan="7" class="small muted">Loading your adverts…</td></tr>`;
       countEl.textContent = '…';
-      try {
-        const col = collection(db, 'advertise_tasks');
+      diag.textContent = 'Listening to advertise_tasks…';
+
+      try{
+        const col = collection(db,'advertise_tasks');
+        // listen broad (no orderBy) to prevent index issues
         advertsUnsub = onSnapshot(col, snap => {
-          // rebuild map entries for docs that match owner fields
+          // rebuild map each snapshot (keeps it consistent)
+          advertsMap = new Map();
           snap.forEach(ds => {
             const d = ds.data() || {};
-            const isOwner = OWNER_FIELDS.some(f => {
-              const v = d[f];
-              if(Array.isArray(v)) return v.includes(uid);
-              return v === uid;
-            });
-            if(isOwner) advertsMap.set(ds.id, { id: ds.id, data: d });
-            else advertsMap.delete(ds.id);
+            // admin sees everything
+            const isAdmin = user && ADMIN_EMAILS.includes((user.email||'').toLowerCase());
+            if(isAdmin){
+              advertsMap.set(ds.id, { id: ds.id, data: d });
+              return;
+            }
+            // else check owner fields
+            if(docOwnedByUser(d, user)) advertsMap.set(ds.id, { id: ds.id, data: d });
           });
+          diag.textContent = `Found ${advertsMap.size} advert(s) relevant to you`;
           renderTable();
         }, err => {
           console.error('adverts onSnapshot error', err);
+          diag.textContent = 'Realtime listener failed — attempting one-time fetch';
           // fallback to one-time fetch
-          fetchAdvertsForOwnerOnce(uid);
+          fetchAdvertsOnce(user);
         });
-      } catch(e){
+      }catch(e){
         console.error('startAdvertsListener error', e);
-        fetchAdvertsForOwnerOnce(uid);
+        diag.textContent = 'Could not start adverts listener — attempting one-time fetch';
+        fetchAdvertsOnce(user);
       }
     }
 
-    async function fetchAdvertsForOwnerOnce(uid){
+    async function fetchAdvertsOnce(user){
       try{
         tbody.innerHTML = `<tr><td colspan="7" class="small muted">Fetching adverts…</td></tr>`;
-        const col = collection(db, 'advertise_tasks');
-        const q = query(col, orderBy('createdAt','desc'), limit(500));
-        const snap = await getDocs(q);
+        const col = collection(db,'advertise_tasks');
+        // limit to 1000 to avoid huge reads
+        const snap = await getDocs(query(col, limit(1000)));
         advertsMap = new Map();
         snap.forEach(ds => {
           const d = ds.data() || {};
-          const isOwner = OWNER_FIELDS.some(f => {
-            const v = d[f];
-            if(Array.isArray(v)) return v.includes(uid);
-            return v === uid;
-          });
-          if(isOwner) advertsMap.set(ds.id, { id: ds.id, data: d });
+          const isAdmin = user && ADMIN_EMAILS.includes((user.email||'').toLowerCase());
+          if(isAdmin || docOwnedByUser(d,user)) advertsMap.set(ds.id, { id: ds.id, data: d });
         });
+        diag.textContent = `Fetched ${advertsMap.size} advert(s)`;
         renderTable();
       }catch(err){
-        console.error('fetch adverts failed', err);
+        console.error('fetchAdvertsOnce error', err);
         tbody.innerHTML = `<tr><td colspan="7" class="small muted">Unable to load adverts: ${escapeHtml(err.message || String(err))}</td></tr>`;
+        diag.textContent = 'Failed to load adverts — check console and Firestore rules';
       }
     }
 
-    // search / refresh wiring
+    // UI wiring
     search.addEventListener('input', renderTable);
-    refresh.addEventListener('click', ()=> { if(currentUser) startAdvertsListenerForOwner(currentUser.uid); });
+    refresh.addEventListener('click', ()=> { if(currentUser) startAdvertsListenerForUser(currentUser); });
 
-    // auth robust handling
-    function handleSignedInUser(user){
-      initialAuthResolved = true;
+    // auth handling (wait briefly, show sign-in link only after a small grace period)
+    let authTimeout = setTimeout(()=> {
+      if(!auth.currentUser){
+        authInfo.innerHTML = `Not signed in — <a href="login.html" style="color:var(--accent-start)">Sign in</a>`;
+        diag.textContent = 'Sign in to view your adverts.';
+      }
+    }, 3000);
+
+    onAuthStateChanged(auth, user => {
+      authSettled = true;
+      clearTimeout(authTimeout);
       currentUser = user;
       if(!user){
-        authInfo.textContent = 'Not signed in — please sign in';
+        authInfo.innerHTML = `Not signed in — <a href="login.html" style="color:var(--accent-start)">Sign in</a>`;
+        diag.textContent = 'Please sign in to view adverts.';
         tbody.innerHTML = `<tr><td colspan="7" class="small muted">Sign in to view your adverts.</td></tr>`;
+        if(advertsUnsub){ try{ advertsUnsub(); }catch(e){} advertsUnsub=null; }
         return;
       }
-      authInfo.textContent = user.email || (user.displayName || user.uid);
-      // start adverts listener
-      startAdvertsListenerForOwner(user.uid);
-    }
+      authInfo.textContent = `${user.email || user.displayName || user.uid}`;
+      diag.textContent = 'Signed in — loading adverts…';
+      // start listener/fetch
+      startAdvertsListenerForUser(user);
+    });
 
-    onAuthStateChanged(auth, u => handleSignedInUser(u));
+    // if auth already available (rare), handle immediately
     if(auth.currentUser){
-      handleSignedInUser(auth.currentUser);
-    } else {
-      // brief wait for firebase to settle
-      setTimeout(()=> {
-        if(!initialAuthResolved){
-          if(auth.currentUser) handleSignedInUser(auth.currentUser);
-          else authInfo.textContent = 'Checking sign-in…';
-        }
-      }, 1200);
+      clearTimeout(authTimeout);
+      currentUser = auth.currentUser;
+      authInfo.textContent = `${currentUser.email || currentUser.displayName || currentUser.uid}`;
+      startAdvertsListenerForUser(currentUser);
     }
 
-    // cleanup on unload
+    // cleanup
     window.addEventListener('beforeunload', () => {
       if(advertsUnsub){ try{ advertsUnsub(); }catch(e){} }
       if(subsUnsub){ try{ subsUnsub(); }catch(e){} }
