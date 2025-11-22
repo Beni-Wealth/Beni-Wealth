@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
-
+  
   <style>
     :root{ --bg:#0b0613; --panel:#0f0820; --muted:rgba(255,255,255,0.6); --accent1:#2fe0b8; --accent2:#7a5fff; --card:rgba(255,255,255,0.02); --text:#e9f0ff; }
     body{margin:0;font-family:'Poppins',system-ui,Arial;background:linear-gradient(180deg,var(--bg),var(--panel));color:var(--text);-webkit-font-smoothing:antialiased;padding:28px 18px 110px}
@@ -58,7 +58,7 @@
     <div class="topbar">
       <div>
         <h1>Beni-Wealth Plans</h1>
-        <div class="intro">Choose a plan to increase referral earnings. All plans are valid for 365 days from activation.</div>
+        <div class="intro">Choose a plan to increase referral earnings. All plans are validated instantly.</div>
       </div>
       <div class="user-info" id="userInfo">Not signed in</div>
     </div>
@@ -96,7 +96,7 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    // Initialize Firebase explicitly (use the app instance so auth/firestore are correctly bound)
+    // Initialize Firebase app explicitly and bind auth + firestore to it
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
@@ -135,16 +135,6 @@
     function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
     function toast(msg){ const t = document.createElement('div'); t.className='toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, 3000); }
 
-    // globally catch uncaught errors and show console hint (helps debugging when page looks empty)
-    window.addEventListener('error', (ev) => {
-      console.error('Uncaught error:', ev.error || ev.message, ev.filename+':'+ev.lineno);
-      toast('Page script error — open console for details');
-    });
-    window.addEventListener('unhandledrejection', (ev) => {
-      console.error('Unhandled promise rejection:', ev.reason);
-      toast('Network or backend error — check console and network tab');
-    });
-
     function renderPlans() {
       plansGrid.innerHTML = '';
       PLANS.forEach(p => {
@@ -168,13 +158,7 @@
         b.addEventListener('click', (e) => {
           const plan = e.currentTarget.getAttribute('data-plan-info');
           const p = PLANS.find(x=>x.id===plan);
-          alert(`${p.id}
-Price: ${formatN(p.price)}
-Validity: 365 days
-
-Features:
-- ${p.points.join('
-- ')}`);
+          alert(`${p.id}\nPrice: ${formatN(p.price)}\nValidity: 365 days\n\nFeatures:\n- ${p.points.join('\n- ')}`);
         });
       });
     }
@@ -287,7 +271,7 @@ Features:
     document.getElementById('navNews').addEventListener('click', ()=> window.location.href='news.html');
     document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='dashboard.html');
 
-    // render plans immediately (independent of backend) so UI isn't blank
+    // init
     renderPlans();
     refreshUserUI();
 
@@ -295,4 +279,5 @@ Features:
     window._bwPlans = { PLANS, refreshUserUI };
   </script>
 </body>
-</html>
+  </html>
+  
