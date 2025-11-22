@@ -6,19 +6,9 @@
   <title>Beni-Wealth — Plans Catalog</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
 
-  <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
   <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
@@ -27,7 +17,7 @@
     .wrap{max-width:980px;margin:0 auto}
     h1{margin:0 0 12px}
     .intro{color:var(--muted);margin-bottom:18px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
     .plan{background:var(--card);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 18px 40px rgba(0,0,0,0.5)}
     .plan h3{margin:0 0 6px;color:var(--accent2)}
     .plan .price{font-weight:800;font-size:20px;margin-top:6px}
@@ -48,52 +38,20 @@
       right:18px;
       bottom:16px;
       background:linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
-      padding:8px 12px; /* reduced padding */
-      border-radius:34px; /* slightly smaller radius */
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      box-shadow:0 10px 28px rgba(2,6,23,0.5);
-      backdrop-filter: blur(6px);
-      opacity:0.98;
-      z-index:998;
+      padding:8px 12px;
+      border-radius:34px;
+      display:flex;align-items:center;justify-content:space-between;
+      box-shadow:0 10px 28px rgba(2,6,23,0.5);backdrop-filter: blur(6px);opacity:0.98;z-index:998;
     }
-    .nav-btn{
-      width:56px; /* reduced width */
-      text-align:center;
-      color:var(--muted);
-      font-size:11px; /* slightly smaller */
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      cursor:pointer;
-    }
-    .nav-btn .icon-wrap{
-      display:block;
-      margin-bottom:4px;
-      width:36px; height:36px; /* reduced icon size */
-      border-radius:8px;
-      background:rgba(255,255,255,0.04);
-      display:grid;
-      place-items:center;
-      font-size:16px;
-    }
+    .nav-btn{width:56px;text-align:center;color:var(--muted);font-size:11px;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+    .nav-btn .icon-wrap{display:block;margin-bottom:4px;width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.04);display:grid;place-items:center;font-size:16px}
     .nav-center{flex:0 0 86px;display:flex;justify-content:center}
-    .nav-center .center-btn{
-      width:68px; height:68px; /* smaller center button */
-      border-radius:50%;
-      background:linear-gradient(135deg,var(--accent1),var(--accent2));
-      display:grid; place-items:center;
-      color:#041219; font-size:22px;
-      box-shadow:0 10px 28px rgba(61,46,111,0.28);
-      transform:translateY(-18px); /* slightly reduced lift */
-    }
+    .nav-center .center-btn{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:grid;place-items:center;color:#041219;font-size:22px;box-shadow:0 10px 28px rgba(61,46,111,0.28);transform:translateY(-18px)}
 
-    @media(max-width:520px){
-      body{padding:16px}
-      .nav-btn{width:50px}
-      .nav-center .center-btn{width:60px;height:60px;transform:translateY(-14px)}
-    }
+    @media(max-width:520px){body{padding:16px}.nav-btn{width:50px}.nav-center .center-btn{width:60px;height:60px;transform:translateY(-14px)}}
+
+    ul.points{margin:10px 0 0 16px;padding:0;color:var(--muted)}
+    ul.points li{margin:6px 0}
   </style>
 </head>
 <body>
@@ -101,14 +59,14 @@
     <div class="topbar">
       <div>
         <h1>Beni-Wealth Plans</h1>
-        <div class="intro">Pick a plan to increase earnings. Purchase requires enough balance — balance will be debited on purchase. Plans are valid forever (no automatic expiry).</div>
+        <div class="intro">Choose a plan to increase referral earnings. All plans are valid for 365 days from activation.</div>
       </div>
       <div class="user-info" id="userInfo">Not signed in</div>
     </div>
 
     <div class="grid" id="plansGrid"></div>
 
-    <div class="status" id="status">Prices are one-time upgrades. Your balance will be debited immediately on a successful purchase.</div>
+    <div class="status" id="status">Prices are one-time payments. Your balance will be debited immediately on a successful purchase.</div>
   </div>
 
   <!-- bottom nav (smaller) -->
@@ -143,13 +101,30 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Plan definitions
-    // NOTE: 'earning' is the "full" earning (max). We display a 50%-100% range to show 50% off.
+    // Plan definitions (only Bronze & Silver per request)
     const PLANS = [
-      { id: 'Bronze', price: 3000, earning: 200 },
-      { id: 'Silver', price: 5000, earning: 350 },
-      { id: 'Gold', price: 8000, earning: 540 },
-      { id: 'Platinum', price: 15000, earning: 1000 }
+      {
+        id: 'Bronze',
+        price: 1000,
+        points: [
+          'No withdrawal charge',
+          'Priority activation',
+          'Fully active for 365 days',
+          'Referral earnings: ₦500 - ₦1,000 per referral'
+          'Earn 60% of tasks payment'
+        ]
+      },
+      {
+        id: 'Silver',
+        price: 2500,
+        points: [
+          'No withdrawal charge',
+          'Higher priority activation',
+          'Fully active for 365 days',
+          'Referral earnings: ₦700 - ₦1,400 per referral'
+          'Earn 80% of tasks payment'
+        ]
+      }
     ];
 
     const plansGrid = document.getElementById('plansGrid');
@@ -162,12 +137,6 @@
     function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
     function toast(msg){ const t = document.createElement('div'); t.className='toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, 3000); }
 
-    // given a plan's full earning, compute 50% min and create display string
-    function earningRangeDisplay(full){
-      const min = Math.round(full * 0.5);
-      return `${formatN(min)} - ${formatN(full)}`;
-    }
-
     function renderPlans() {
       plansGrid.innerHTML = '';
       PLANS.forEach(p => {
@@ -176,9 +145,10 @@
         div.innerHTML = `
           <h3>${p.id}</h3>
           <div class="price">Price: <strong>${formatN(p.price)}</strong></div>
-          <div class="earn">Earnings / shortlink: <strong>${earningRangeDisplay(p.earning)}</strong></div>
+          <div class="earn">Validity: <strong>365 days</strong></div>
+          <ul class="points">${p.points.map(pt=>`<li>${pt}</li>`).join('')}</ul>
           <div class="buy">
-            <button class="btn primary" data-plan="${p.id}" data-price="${p.price}">Activate ${p.id}</button>
+            <button class="btn primary" data-plan="${p.id}" data-price="${p.price}">Buy ${p.id}</button>
             <button class="btn ghost" data-plan-info="${p.id}">Details</button>
           </div>
         `;
@@ -190,7 +160,7 @@
         b.addEventListener('click', (e) => {
           const plan = e.currentTarget.getAttribute('data-plan-info');
           const p = PLANS.find(x=>x.id===plan);
-          alert(`${p.id}\nPrice: ${formatN(p.price)}\nEarnings / shortlink: ${earningRangeDisplay(p.earning)}\nValidity: Forever`);
+          alert(`${p.id}\nPrice: ${formatN(p.price)}\nValidity: 365 days\n\nFeatures:\n- ${p.points.join('\n- ')}`);
         });
       });
     }
@@ -204,7 +174,7 @@
         return;
       }
 
-      const ok = confirm(`Buy ${plan} for ${formatN(price)}? This will debit your account immediately and activate ${plan} (valid forever).`);
+      const ok = confirm(`Buy ${plan} for ${formatN(price)}? This will debit your account immediately and activate ${plan} for 365 days.`);
       if(!ok) return;
 
       disablePlanButtons(true, plan);
@@ -212,8 +182,9 @@
       try{
         const userRef = doc(db, 'users', currentUid);
         const now = new Date();
+        const expiry = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 365 days
 
-        // Transactionally deduct balance and set plan (no expiry)
+        // Transactionally deduct balance and set plan with expiry
         await runTransaction(db, async (tx) => {
           const snap = await tx.get(userRef);
           const data = snap.exists ? snap.data() : {};
@@ -225,8 +196,8 @@
           const updates = {
             balance: newBal,
             plan: plan,
-            planPurchasedAt: now.toISOString()
-            // deliberately NOT setting planExpiryAt — plans are valid forever
+            planPurchasedAt: now.toISOString(),
+            planExpiryAt: expiry.toISOString()
           };
           tx.set(userRef, updates, { merge: true });
         });
@@ -255,7 +226,7 @@
         } else {
           b.disabled = disable;
           const p = b.getAttribute('data-plan');
-          b.textContent = disable ? 'Please wait...' : `Activate ${p}`;
+          b.textContent = disable ? 'Please wait...' : `Buy ${p}`;
         }
       });
     }
@@ -263,7 +234,7 @@
     async function refreshUserUI(){
       if(!currentUid) {
         userInfo.textContent = 'Not signed in';
-        statusEl.textContent = 'Prices are one-time upgrades. Sign in to purchase.';
+        statusEl.textContent = 'Prices are one-time payments. Sign in to purchase.';
         return;
       }
       try{
@@ -272,9 +243,10 @@
         const data = snap.exists ? snap.data() : {};
         const bal = Number(data.balance || 0);
         const plan = data.plan || 'Basic';
+        const expiry = data.planExpiryAt ? new Date(data.planExpiryAt).toLocaleDateString() : '—';
 
         userInfo.textContent = userInfoText(data, currentUid);
-        statusEl.textContent = `Plan: ${plan} — Balance: ${formatN(bal)} — valid: Forever`;
+        statusEl.textContent = `Plan: ${plan} — Balance: ${formatN(bal)} — Valid until: ${expiry}`;
       }catch(e){ console.warn('refreshUserUI failed', e); }
     }
 
@@ -289,7 +261,7 @@
       currentUser = user;
       currentUid = user ? user.uid : null;
       if(user) userInfo.textContent = 'Signed in — loading...';
-      else { userInfo.textContent = 'Not signed in'; statusEl.textContent = 'Prices are one-time upgrades. Sign in to purchase.'; }
+      else { userInfo.textContent = 'Not signed in'; statusEl.textContent = 'Prices are one-time payments. Sign in to purchase.'; }
       await refreshUserUI();
     });
 
@@ -305,7 +277,7 @@
     refreshUserUI();
 
     // expose debug helpers
-    window._bwCatalog = { PLANS, refreshUserUI };
+    window._bwPlans = { PLANS, refreshUserUI };
   </script>
 </body>
 </html>
