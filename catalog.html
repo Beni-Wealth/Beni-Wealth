@@ -51,7 +51,6 @@
     @media(max-width:520px){body{padding:16px}.nav-btn{width:50px}.nav-center .center-btn{width:60px;height:60px;transform:translateY(-14px)}}
 
     ul.points{margin:10px 0 0 16px;padding:0;color:var(--muted)}
-    ul.points li{margin:6px 0}
   </style>
 </head>
 <body>
@@ -97,6 +96,7 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
+    // Initialize Firebase explicitly (use the app instance so auth/firestore are correctly bound)
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
@@ -111,7 +111,6 @@
           'Priority activation',
           'Fully active for 365 days',
           'Referral earnings: ₦500 - ₦1,000 per referral'
-          'Earn 60% of tasks payment'
         ]
       },
       {
@@ -122,7 +121,6 @@
           'Higher priority activation',
           'Fully active for 365 days',
           'Referral earnings: ₦700 - ₦1,400 per referral'
-          'Earn 80% of tasks payment'
         ]
       }
     ];
@@ -136,6 +134,16 @@
 
     function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
     function toast(msg){ const t = document.createElement('div'); t.className='toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, 3000); }
+
+    // globally catch uncaught errors and show console hint (helps debugging when page looks empty)
+    window.addEventListener('error', (ev) => {
+      console.error('Uncaught error:', ev.error || ev.message, ev.filename+':'+ev.lineno);
+      toast('Page script error — open console for details');
+    });
+    window.addEventListener('unhandledrejection', (ev) => {
+      console.error('Unhandled promise rejection:', ev.reason);
+      toast('Network or backend error — check console and network tab');
+    });
 
     function renderPlans() {
       plansGrid.innerHTML = '';
@@ -160,7 +168,13 @@
         b.addEventListener('click', (e) => {
           const plan = e.currentTarget.getAttribute('data-plan-info');
           const p = PLANS.find(x=>x.id===plan);
-          alert(`${p.id}\nPrice: ${formatN(p.price)}\nValidity: 365 days\n\nFeatures:\n- ${p.points.join('\n- ')}`);
+          alert(`${p.id}
+Price: ${formatN(p.price)}
+Validity: 365 days
+
+Features:
+- ${p.points.join('
+- ')}`);
         });
       });
     }
@@ -247,7 +261,7 @@
 
         userInfo.textContent = userInfoText(data, currentUid);
         statusEl.textContent = `Plan: ${plan} — Balance: ${formatN(bal)} — Valid until: ${expiry}`;
-      }catch(e){ console.warn('refreshUserUI failed', e); }
+      }catch(e){ console.warn('refreshUserUI failed', e); toast('Failed to fetch user data. See console.'); }
     }
 
     function userInfoText(data, uid){
@@ -257,6 +271,7 @@
       return `${name} • Plan: ${plan} • ${formatN(bal)}`;
     }
 
+    // auth listener — attach after render so page shows even if auth hangs
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       currentUid = user ? user.uid : null;
@@ -272,7 +287,7 @@
     document.getElementById('navNews').addEventListener('click', ()=> window.location.href='news.html');
     document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='dashboard.html');
 
-    // init
+    // render plans immediately (independent of backend) so UI isn't blank
     renderPlans();
     refreshUserUI();
 
