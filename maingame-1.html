@@ -4,128 +4,82 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Memory Flip — Beni-Wealth</title>
-
-  <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
   <style>
     :root{
-      --bg-1: #0b0613;
-      --bg-2: #0f0820;
-      --muted: rgba(255,255,255,0.66);
-      --accent-a: #8446ff;
-      --accent-b: #6ce2c8;
-      --accent-grad: linear-gradient(135deg,var(--accent-a),#5b3bff 45%,var(--accent-b) 100%);
-      --panel: rgba(255,255,255,0.02);
-      --card: #071812;
-      --glass: rgba(255,255,255,0.03);
-      --radius: 14px;
-      --text: #eaf2ff;
+      --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.66);
+      --accent-a:#8446ff; --accent-b:#6ce2c8; --accent-grad:linear-gradient(135deg,var(--accent-a),var(--accent-b));
+      --glass: rgba(255,255,255,0.03); --text:#eaf2ff;
       font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, Arial;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
     body{
       background:
-        radial-gradient(1000px 600px at 10% 10%, rgba(132,70,255,0.06), transparent),
-        radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.04), transparent),
+        radial-gradient(900px 500px at 10% 10%, rgba(132,70,255,0.06), transparent),
+        radial-gradient(700px 400px at 90% 90%, rgba(47,224,184,0.04), transparent),
         linear-gradient(180deg,var(--bg-1),var(--bg-2));
       color:var(--text);
-      -webkit-font-smoothing:antialiased;
       padding:20px;
       display:flex;
       justify-content:center;
       align-items:flex-start;
     }
 
-    .phone {
-      width:100%;
-      max-width:460px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      padding:18px;
-      border-radius:20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-      margin:20px;
-      min-height: calc(100vh - 60px);
-      overflow:auto;
-    }
+    .phone{width:100%;max-width:480px;border-radius:18px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 20px 60px rgba(0,0,0,0.6);min-height:calc(100vh - 48px);overflow:auto}
 
-    header{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;
-    }
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .brand{display:flex;gap:12px;align-items:center}
-    .logo{width:56px;height:56px;border-radius:12px;background:var(--accent-grad);display:grid;place-items:center;color:#041219;font-weight:800}
-    h1{margin:0;font-size:17px}
-    .muted{color:var(--muted);font-size:13px}
+    .logo{width:52px;height:52px;border-radius:12px;background:var(--accent-grad);display:grid;place-items:center;color:#041219;font-weight:800}
+    h1{margin:0;font-size:16px}
+    .corner-badge{background:var(--glass);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);font-weight:700;color:var(--text)}
 
-    .card-panel{
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.45);
-    }
-
+    /* board/table */
+    .board-wrap{margin-top:12px}
     .board {
-      display: grid;
+      display:grid;
       grid-template-columns: repeat(5, 1fr);
       gap:10px;
-      margin-top:14px;
+      border-radius:12px;
+      padding:10px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      border:1px solid rgba(255,255,255,0.02);
     }
 
     .card {
+      position:relative;
       width:100%;
       padding-top:100%; /* square */
-      position:relative;
-      perspective: 1000px;
+      perspective:1000px;
     }
     .card-inner {
-      position:absolute; inset:0;
-      transition: transform 0.6s; transform-style: preserve-3d; cursor:pointer;
-      border-radius:10px; overflow:hidden;
+      position:absolute; inset:0; border-radius:8px; overflow:hidden;
+      transition: transform 0.55s; transform-style:preserve-3d; cursor:pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
     }
     .card.flipped .card-inner { transform: rotateY(180deg); pointer-events:none; }
-    .card-front, .card-back{
+    .face {
       position:absolute; inset:0; display:flex;align-items:center;justify-content:center;
-      backface-visibility:hidden; font-weight:700; font-size:22px;
+      backface-visibility:hidden; font-weight:700; font-size:20px; border-radius:8px;
     }
-    .card-front {
-      background: #fff; color:#041219; border-radius:10px; transform: rotateY(180deg);
-      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-    }
-    .card-back {
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
-      border-radius:10px; color:var(--text); display:grid;place-items:center;
-      box-shadow: inset 0 -4px 10px rgba(0,0,0,0.2);
-      font-size:20px;
-    }
+    .front { background:#fff; color:#041219; transform:rotateY(180deg); }
+    .back  { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); color:var(--text); }
 
-    .status-row{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:12px}
-    .status-row .info{font-weight:700}
-    .points{display:flex;gap:10px;align-items:center}
-    .point-badge{background:var(--glass);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+    .info-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:12px}
+    .turn-badge{padding:8px 12px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.03);font-weight:700}
+    .muted{color:var(--muted);font-size:13px}
 
-    #status, #timer {margin-top:8px;font-weight:700}
-
-    .overlay-modal {
-      position:fixed; inset:0; display:flex;align-items:center;justify-content:center;
-      background:rgba(2,6,23,0.6); z-index:2000;
-    }
-    .modal {
-      width: calc(min(520px, 92%));
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:16px; padding:20px; text-align:center; color:var(--text);
-      border:1px solid rgba(255,255,255,0.04);
-      box-shadow: 0 30px 90px rgba(0,0,0,0.6);
-    }
-    .modal h2{margin:0 0 8px}
-    .modal p{color:var(--muted);margin-top:8px}
-    .modal .btn { margin-top:16px; padding:12px 18px; border-radius:10px; border:0; cursor:pointer; font-weight:700; }
-    .btn-primary { background:var(--accent-grad); color:#041219; }
+    /* modal */
+    .overlay-modal{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:flex;align-items:center;justify-content:center;z-index:2000}
+    .modal{width:92%;max-width:520px;padding:20px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 90px rgba(0,0,0,0.6);text-align:center}
+    .btn {padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+    .btn-primary{background:var(--accent-grad);color:#041219}
 
     @media(max-width:420px){
-      .board { gap:8px; }
-      .card-front, .card-back{ font-size:18px }
-      .logo{width:48px;height:48px}
+      .board{gap:8px}
+      .face{font-size:18px}
+      .logo{width:44px;height:44px}
     }
   </style>
 </head>
@@ -135,43 +89,40 @@
       <div class="brand">
         <div class="logo">BW</div>
         <div>
-          <h1>Beni-Wealth — Memory Flip</h1>
-          <div class="muted">Match pairs, beat the bot, win rewards</div>
+          <h1>Memory Flip</h1>
+          <div class="muted">Flip pairs — beat the bot — win ₦40</div>
         </div>
       </div>
-      <div class="muted">Time left: <span id="timer">60s</span></div>
+
+      <!-- Top-right: Bot points -->
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="corner-badge" id="botBadge">Bot Points: <strong id="botPoints">0</strong></div>
+      </div>
     </header>
 
-    <div class="card-panel">
-      <div class="status-row">
-        <div>
-          <div id="status">Flips: 0</div>
-          <div class="muted">Match pairs to score — bot will also take turns</div>
-        </div>
-        <div class="points">
-          <div class="point-badge">Player Points: <strong id="playerPoints">0</strong></div>
-          <div class="point-badge">Bot Points: <strong id="botPoints">0</strong></div>
-        </div>
-      </div>
+    <!-- Top-left: Player points shown below header for clarity -->
+    <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+      <div class="corner-badge" id="playerBadge">Player Points: <strong id="playerPoints">0</strong></div>
+      <div class="turn-badge" id="turnBadge">Your turn</div>
+    </div>
 
+    <div class="board-wrap card-panel">
       <div class="board" id="board" aria-label="Memory board"></div>
 
-      <div style="display:flex;gap:10px;justify-content:space-between;margin-top:12px;align-items:center">
-        <button id="restartBtn" class="btn btn-primary">Restart</button>
-        <div class="muted" id="infoText">First to more points wins — if you win you'll get ₦40 credited.</div>
+      <div class="info-row">
+        <div class="muted">Each correct pair = 1 point. Bot has 50% chance to find pairs.</div>
+        <!-- no restart & no timer per your request -->
       </div>
     </div>
   </div>
 
-  <!-- Firebase compat SDKs -->
+  <!-- Firebase compat SDKs (matching earlier usage) -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <script>
-    /******************************
-     * Firebase (Beni-Wealth) config
-     ******************************/
+    // Beni-Wealth Firebase config (your provided details)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -185,39 +136,30 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    /*******************
-     * Game constants
-     *******************/
+    // Game constants & state
     const EMOJIS = ['🍎','🍌','🍇','🍓','🍉','🥝','🍑','🍍','🍋','🍒'];
     const TOTAL_PAIRS = EMOJIS.length;
-    const GAME_TIME = 60; // seconds
-    const BOT_SUCCESS_PROB = 0.5; // 50% fairness
-    const WIN_CREDIT = 40; // naira awarded when player wins
+    const BOT_SUCCESS_PROB = 0.5;
+    const WIN_CREDIT = 40;
 
-    /*******************
-     * State
-     *******************/
     let deck = [];
     let flipped = [];
-    let matchedCount = 0;
-    let flips = 0;
-    let timeLeft = GAME_TIME;
-    let timerInterval = null;
-
+    let matchedPairs = 0;
     let playerPoints = 0;
     let botPoints = 0;
+    let currentTurn = 'player'; // 'player' or 'bot'
 
+    // UI refs
     const boardEl = document.getElementById('board');
-    const statusEl = document.getElementById('status');
-    const timerEl = document.getElementById('timer');
     const playerPointsEl = document.getElementById('playerPoints');
     const botPointsEl = document.getElementById('botPoints');
-    const restartBtn = document.getElementById('restartBtn');
+    const turnBadge = document.getElementById('turnBadge');
 
+    // firebase user
     let currentUser = null;
     let userRef = null;
-    let userData = null;
 
+    // shuffle helper
     function shuffle(arr){
       for(let i=arr.length-1;i>0;i--){
         const j = Math.floor(Math.random()*(i+1));
@@ -225,14 +167,8 @@
       }
     }
 
-    function setStatus(text){ statusEl.innerText = text; }
-    function setTimer(t){ timerEl.innerText = `${t}s`; }
-    function updatePointsUI(){
-      playerPointsEl.innerText = playerPoints;
-      botPointsEl.innerText = botPoints;
-    }
-
-    function buildDeck(){
+    // create & render deck
+    function createDeck(){
       deck = [...EMOJIS, ...EMOJIS];
       shuffle(deck);
       boardEl.innerHTML = '';
@@ -240,202 +176,213 @@
         const card = document.createElement('div');
         card.className = 'card';
         card.dataset.index = idx;
+        card.dataset.emoji = emoji;
         card.innerHTML = `
-          <div class="card-inner" data-emoji="${emoji}">
-            <div class="card-front">${emoji}</div>
-            <div class="card-back">?</div>
+          <div class="card-inner">
+            <div class="face front">${emoji}</div>
+            <div class="face back">?</div>
           </div>`;
-        card.addEventListener('click', () => onPlayerFlip(card));
+        card.addEventListener('click', () => playerFlip(card));
         boardEl.appendChild(card);
       });
     }
 
-    function resetGame(){
-      flipped = []; matchedCount = 0; flips = 0; timeLeft = GAME_TIME;
-      playerPoints = 0; botPoints = 0;
-      updatePointsUI();
-      setStatus(`Flips: ${flips}`);
-      setTimer(timeLeft);
-      buildDeck();
-      enableBoard(true);
-      if(timerInterval) clearInterval(timerInterval);
-      startTimer();
+    // update points UI
+    function updatePointsUI(){
+      playerPointsEl.textContent = playerPoints;
+      botPointsEl.textContent = botPoints;
     }
 
-    function enableBoard(val){
-      document.querySelectorAll('.card').forEach(c => {
-        if(!c.classList.contains('matched')) c.style.pointerEvents = val ? 'auto' : 'none';
+    // set turn UI
+    function setTurn(t){
+      currentTurn = t;
+      if(t === 'player'){
+        turnBadge.textContent = 'Your turn';
+        enableBoard(true);
+      } else {
+        turnBadge.textContent = "Bot's turn";
+        enableBoard(false);
+      }
+    }
+
+    // enable/disable unmatched cards
+    function enableBoard(enable){
+      document.querySelectorAll('.card').forEach(c=>{
+        if(!c.classList.contains('matched')){
+          c.style.pointerEvents = enable ? 'auto' : 'none';
+        }
       });
     }
 
-    function onPlayerFlip(cardEl){
-      if(cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+    // player flip
+    function playerFlip(card){
+      if(currentTurn !== 'player') return;
+      if(card.classList.contains('flipped') || card.classList.contains('matched')) return;
       if(flipped.length === 2) return;
 
-      cardEl.classList.add('flipped');
-      flipped.push(cardEl);
+      card.classList.add('flipped');
+      flipped.push(card);
 
       if(flipped.length === 2){
-        flips++;
-        setStatus(`Flips: ${flips}`);
         const [a,b] = flipped;
-        const e1 = a.querySelector('.card-inner').dataset.emoji;
-        const e2 = b.querySelector('.card-inner').dataset.emoji;
+        const e1 = a.dataset.emoji;
+        const e2 = b.dataset.emoji;
         if(e1 === e2){
-          a.classList.add('matched'); b.classList.add('matched');
-          matchedCount += 1;
+          // player scored
+          a.classList.add('matched');
+          b.classList.add('matched');
           playerPoints += 1;
+          matchedPairs += 1;
           updatePointsUI();
           flipped = [];
-          if(matchedCount === TOTAL_PAIRS){ endGame(); return; }
-          setTimeout(() => { botTurn(); }, 800);
+          // check end
+          if(matchedPairs === TOTAL_PAIRS){ finishGame(); return; }
+          // player keeps turn (common in matching games) or let bot act? You earlier wanted user and bot to both flip cards; spec said bot also scores — to keep bot involved, switch to bot after a small delay
+          setTimeout(()=> setTurn('bot'), 600);
+          setTimeout(()=> botPlay(), 900);
         } else {
-          enableBoard(false);
+          // mismatch -> show then switch to bot
           setTimeout(()=> {
-            a.classList.remove('flipped'); b.classList.remove('flipped');
+            a.classList.remove('flipped');
+            b.classList.remove('flipped');
             flipped = [];
-            enableBoard(false);
-            setTimeout(()=> botTurn(), 500);
+            setTurn('bot');
+            setTimeout(()=> botPlay(), 500);
           }, 700);
         }
       }
     }
 
-    async function botTurn(){
-      const unmatchedCards = Array.from(document.querySelectorAll('.card'))
-        .filter(c => !c.classList.contains('matched') && !c.classList.contains('flipped'));
-      if(unmatchedCards.length < 2){
-        endGame(); return;
+    // bot plays: 50% chance success
+    async function botPlay(){
+      // collect unmatched & unflipped cards
+      const unmatched = Array.from(document.querySelectorAll('.card')).filter(c => !c.classList.contains('matched') && !c.classList.contains('flipped'));
+      if(unmatched.length < 2){
+        finishGame(); return;
       }
 
       const success = Math.random() < BOT_SUCCESS_PROB;
 
       if(success){
+        // try to find a real matching pair if present
         const map = {};
-        for(const c of unmatchedCards){
-          const emoji = c.querySelector('.card-inner').dataset.emoji;
-          if(!map[emoji]) map[emoji] = [];
-          map[emoji].push(c);
+        for(const c of unmatched){
+          map[c.dataset.emoji] = map[c.dataset.emoji] || [];
+          map[c.dataset.emoji].push(c);
         }
-        const candidates = Object.values(map).filter(arr => arr.length >= 2);
-        if(candidates.length > 0){
-          const pair = candidates[Math.floor(Math.random() * candidates.length)];
+        const pairs = Object.values(map).filter(arr => arr.length >= 2);
+        if(pairs.length > 0){
+          const pair = pairs[Math.floor(Math.random() * pairs.length)];
+          // reveal them
           pair[0].classList.add('flipped'); pair[1].classList.add('flipped');
-          await new Promise(res => setTimeout(res, 700));
+          await new Promise(r => setTimeout(r, 700));
           pair[0].classList.add('matched'); pair[1].classList.add('matched');
-          matchedCount += 1;
           botPoints += 1;
+          matchedPairs += 1;
           updatePointsUI();
-          if(matchedCount === TOTAL_PAIRS){ endGame(); return; }
-          enableBoard(true);
+          // check end
+          if(matchedPairs === TOTAL_PAIRS){ finishGame(); return; }
+          // bot got a point; bot then ends its turn and gives it back to player
+          setTurn('player');
           return;
         }
       }
 
-      const pick = [];
+      // failure: bot flips two random different unmatched cards, then flips them back
+      let pick = [];
       while(pick.length < 2){
-        const c = unmatchedCards[Math.floor(Math.random()*unmatchedCards.length)];
+        const c = unmatched[Math.floor(Math.random()*unmatched.length)];
         if(!pick.includes(c)) pick.push(c);
       }
       pick[0].classList.add('flipped');
-      await new Promise(res => setTimeout(res, 450));
+      await new Promise(r => setTimeout(r, 450));
       pick[1].classList.add('flipped');
-      await new Promise(res => setTimeout(res, 800));
-      pick[0].classList.remove('flipped');
-      pick[1].classList.remove('flipped');
-      enableBoard(true);
+      await new Promise(r => setTimeout(r, 800));
+      // if by chance they match (rare because we randomly picked), handle that
+      if(pick[0].dataset.emoji === pick[1].dataset.emoji){
+        pick[0].classList.add('matched'); pick[1].classList.add('matched');
+        botPoints += 1; matchedPairs += 1; updatePointsUI();
+        if(matchedPairs === TOTAL_PAIRS){ finishGame(); return; }
+      } else {
+        pick[0].classList.remove('flipped'); pick[1].classList.remove('flipped');
+      }
+      // give control back to player
+      setTurn('player');
     }
 
-    function startTimer(){
-      setTimer(timeLeft);
-      timerInterval = setInterval(()=> {
-        timeLeft--;
-        setTimer(timeLeft);
-        if(timeLeft <= 0){
-          clearInterval(timerInterval);
-          enableBoard(false);
-          endGame();
-        }
-      }, 1000);
-    }
-
-    async function endGame(){
-      if(timerInterval) clearInterval(timerInterval);
+    // finish game: determine winner, credit if player wins
+    async function finishGame(){
       enableBoard(false);
+      const result = playerPoints > botPoints ? 'player' : (playerPoints < botPoints ? 'bot' : 'draw');
 
-      const result = (playerPoints > botPoints) ? 'player' : (playerPoints < botPoints) ? 'bot' : 'draw';
-      // record last play timestamp (no blocking)
-      try{
-        if(userRef){
-          await userRef.update({ lastMemoryFlip: firebase.firestore.FieldValue.serverTimestamp() });
-        }
-      }catch(e){ console.warn('failed writing lastMemoryFlip', e); }
+      // always record last play timestamp (non-blocking)
+      try{ if(userRef) await userRef.update({ lastMemoryFlip: firebase.firestore.FieldValue.serverTimestamp() }); }catch(e){console.warn('lastMemoryFlip write failed',e);}
 
       if(result === 'player'){
+        // credit user with ₦40
         try{
           const snap = await userRef.get();
-          const currentBal = Number((snap.data() && snap.data().balance) || 0);
-          const newBal = currentBal + WIN_CREDIT;
+          const curr = Number((snap.data() && snap.data().balance) || 0);
+          const newBal = curr + WIN_CREDIT;
+          // using simple update (if you want, I can switch to transaction)
           await userRef.update({ balance: newBal });
           await userRef.collection('transactions').add({
-            source: "Memory Flip — Win",
+            source: 'Memory Flip — Win',
             amount: WIN_CREDIT,
             date: new Date().toISOString()
           });
-          showResultModal(true, WIN_CREDIT, playerPoints, botPoints);
+          showModal(true, WIN_CREDIT);
         }catch(err){
-          console.error('Credit failed', err);
-          showResultModal(true, WIN_CREDIT, playerPoints, botPoints, true);
+          console.error('credit failed', err);
+          showModal(true, WIN_CREDIT, true);
         }
       } else {
-        showResultModal(false, 0, playerPoints, botPoints);
+        showModal(false, 0);
       }
     }
 
-    function showResultModal(playerWon, amount, pPoints, bPoints, creditFailed=false){
+    // non-dismissible modal (only Close)
+    function showModal(playerWon, amount, creditFailed=false){
       const overlay = document.createElement('div');
       overlay.className = 'overlay-modal';
       overlay.innerHTML = `
         <div class="modal" role="dialog" aria-modal="true">
-          <h2>${playerWon ? 'Congratulations!' : (pPoints === bPoints ? 'It\\'s a draw' : 'Good effort')}</h2>
-          <p style="font-size:18px;margin-top:8px;">
-            Player: <strong>${pPoints}</strong> — Bot: <strong>${bPoints}</strong>
-          </p>
-          ${playerWon ? `<p class="muted" style="margin-top:10px;">You won ₦${amount}${creditFailed ? ' (credit failed — check console)' : ''} — credited to your Beni-Wealth balance.</p>` : `<p class="muted" style="margin-top:10px;">${pPoints===bPoints ? 'Both have equal points.' : 'The bot scored higher this time. Try again!'}</p>`}
-          <button id="resultClose" class="btn btn-primary">Close — Go to games</button>
+          <h2>${playerWon ? 'Congratulations!' : (playerWon === false && playerWon !== null && playerWon !== undefined ? 'Try again' : 'Result')}</h2>
+          <p style="margin-top:10px;font-size:16px">Player: <strong>${playerPoints}</strong> — Bot: <strong>${botPoints}</strong></p>
+          ${playerWon ? `<p class="muted">${creditFailed ? 'You won — but credit failed (see console).' : 'You won ₦' + amount + ' — credited to your balance.'}</p>` : `<p class="muted">${playerPoints === botPoints ? 'It\\'s a draw.' : 'The bot scored higher. Better luck next time!'}</p>`}
+          <button id="closeBtn" class="btn btn-primary" style="margin-top:14px">Close — Go to games</button>
         </div>
       `;
-      overlay.addEventListener('click', (ev) => { ev.stopPropagation(); });
+      // prevent clicks outside from closing — no handler to remove overlay
       document.body.appendChild(overlay);
-      document.getElementById('resultClose').focus();
-      document.getElementById('resultClose').addEventListener('click', () => {
+      document.getElementById('closeBtn').addEventListener('click', () => {
         window.location.href = 'games.html';
       });
     }
 
-    /*******************
-     * Auth & access (NO plan limitations, NO cooldown)
-     *******************/
+    // create new game (no restart button per your request)
+    function startNewGame(){
+      deck = []; flipped = []; matchedPairs = 0; playerPoints = 0; botPoints = 0;
+      updatePointsUI();
+      createDeck();
+      setTurn('player');
+    }
+
+    // AUTH: ensure user signed in; no plan checks and no cooldown per your request
     auth.onAuthStateChanged(async (u) => {
       if(!u) return window.location.href = 'login.html';
       currentUser = u;
       userRef = db.collection('users').doc(u.uid);
       const snap = await userRef.get();
       if(!snap.exists) return window.location.href = 'login.html';
-      userData = snap.data();
-
-      // Removed plan eligibility checks — allow all signed-in users to play
-      resetGame();
+      // ok — start
+      startNewGame();
     });
 
-    // restart binding
-    restartBtn.addEventListener('click', () => {
-      resetGame();
-    });
-
-    // initial UI state
-    setStatus('Loading…');
-    setTimer(GAME_TIME);
+    // defensive initial UI
+    playerPointsEl.textContent = '0';
+    botPointsEl.textContent = '0';
+    turnBadge.textContent = 'Loading…';
   </script>
 </body>
 </html>
