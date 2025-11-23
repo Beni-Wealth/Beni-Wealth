@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Memory Flip — Beni-Wealth</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
   <style>
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.66);
       --accent-a:#8446ff; --accent-b:#6ce2c8; --accent-grad:linear-gradient(135deg,var(--accent-a),var(--accent-b));
       --glass: rgba(255,255,255,0.03); --text:#eaf2ff;
-      font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      font-family:'Poppins',system-ui,Arial;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
@@ -21,108 +20,109 @@
         radial-gradient(700px 400px at 90% 90%, rgba(47,224,184,0.04), transparent),
         linear-gradient(180deg,var(--bg-1),var(--bg-2));
       color:var(--text);
-      padding:20px;
+      padding:18px;
       display:flex;
       justify-content:center;
       align-items:flex-start;
     }
 
-    .phone{width:100%;max-width:480px;border-radius:18px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 20px 60px rgba(0,0,0,0.6);min-height:calc(100vh - 48px);overflow:auto}
-
+    .phone{width:100%;max-width:980px;border-radius:14px;padding:16px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:0 20px 60px rgba(0,0,0,0.6);min-height:80vh;overflow:auto}
     header{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .brand{display:flex;gap:12px;align-items:center}
-    .logo{width:52px;height:52px;border-radius:12px;background:var(--accent-grad);display:grid;place-items:center;color:#041219;font-weight:800}
-    h1{margin:0;font-size:16px}
-    .corner-badge{background:var(--glass);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);font-weight:700;color:var(--text)}
-
-    /* board/table */
-    .board-wrap{margin-top:12px}
-    .board {
-      display:grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap:10px;
-      border-radius:12px;
-      padding:10px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-      border:1px solid rgba(255,255,255,0.02);
-    }
-
-    .card {
-      position:relative;
-      width:100%;
-      padding-top:100%; /* square */
-      perspective:1000px;
-    }
-    .card-inner {
-      position:absolute; inset:0; border-radius:8px; overflow:hidden;
-      transition: transform 0.55s; transform-style:preserve-3d; cursor:pointer;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-    }
-    .card.flipped .card-inner { transform: rotateY(180deg); pointer-events:none; }
-    .face {
-      position:absolute; inset:0; display:flex;align-items:center;justify-content:center;
-      backface-visibility:hidden; font-weight:700; font-size:20px; border-radius:8px;
-    }
-    .front { background:#fff; color:#041219; transform:rotateY(180deg); }
-    .back  { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); color:var(--text); }
-
-    .info-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:12px}
-    .turn-badge{padding:8px 12px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.03);font-weight:700}
+    .logo-box{width:56px;height:56px;border-radius:12px;background:var(--accent-grad);display:grid;place-items:center;color:#041219;font-weight:800}
+    .logo-img{width:44px;height:44px;border-radius:6px;object-fit:cover}
+    h1{margin:0;font-size:18px}
     .muted{color:var(--muted);font-size:13px}
 
+    .layout { display:grid; grid-template-columns: 1fr 320px; gap:18px; margin-top:12px; }
+    @media(max-width:980px){ .layout{grid-template-columns:1fr} }
+
+    /* board */
+    .board-wrap { background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.02); }
+    .board { display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; }
+    .card { position:relative; width:100%; padding-top:100%; perspective:1000px; cursor:pointer; }
+    .card-inner { position:absolute; inset:0; border-radius:10px; transition:transform .55s; transform-style:preserve-3d; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.25); }
+    .card.flipped .card-inner { transform:rotateY(180deg); pointer-events:none; }
+    .face { position:absolute; inset:0; display:flex;align-items:center;justify-content:center; backface-visibility:hidden; font-weight:800; font-size:22px; border-radius:10px; }
+    .front{ background:#fff; color:#041219; transform:rotateY(180deg); }
+    .back{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); color:var(--text); }
+
+    /* badges */
+    .badges { display:flex; gap:12px; align-items:center; justify-content:flex-start; margin-top:10px; }
+    .badge { background:var(--glass); padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); font-weight:700; }
+
+    /* debug / info column */
+    .info-col { padding:12px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); border:1px solid rgba(255,255,255,0.02); min-height:200px; }
+    .info-col h4 { margin:0 0 8px 0; }
+
     /* modal */
-    .overlay-modal{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:flex;align-items:center;justify-content:center;z-index:2000}
-    .modal{width:92%;max-width:520px;padding:20px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 90px rgba(0,0,0,0.6);text-align:center}
-    .btn {padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
-    .btn-primary{background:var(--accent-grad);color:#041219}
+    .overlay-modal{ position:fixed; inset:0; background:rgba(2,6,23,0.6); display:flex; align-items:center; justify-content:center; z-index:3000; }
+    .modal{ width:92%; max-width:540px; padding:18px; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); box-shadow:0 30px 90px rgba(0,0,0,0.6); text-align:center; }
+    .btn{ padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:700; }
+    .btn-primary { background:var(--accent-grad); color:#041219; }
 
     @media(max-width:420px){
-      .board{gap:8px}
-      .face{font-size:18px}
-      .logo{width:44px;height:44px}
+      .board{ gap:8px }
+      .face{ font-size:18px }
+      .logo-box{ width:48px; height:48px }
     }
   </style>
 </head>
 <body>
-  <div class="phone" role="main">
+  <div class="phone" id="app">
     <header>
       <div class="brand">
-        <div class="logo">BW</div>
+        <div class="logo-box">
+          <!-- developer-provided local file path used as image src (will be transformed by tool) -->
+          <img src="/mnt/data/1000588770.png" alt="logo" class="logo-img" />
+        </div>
         <div>
           <h1>Memory Flip</h1>
-          <div class="muted">Flip pairs — beat the bot — win ₦40</div>
+          <div class="muted">Player vs Bot — 50% bot fairness — win ₦40 if you score higher</div>
         </div>
       </div>
 
-      <!-- Top-right: Bot points -->
-      <div style="display:flex;gap:8px;align-items:center">
-        <div class="corner-badge" id="botBadge">Bot Points: <strong id="botPoints">0</strong></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="badge" id="usernameBadge">User: —</div>
+        <div class="badge" id="botBadge">Bot Points: <strong id="botPoints">0</strong></div>
       </div>
     </header>
 
-    <!-- Top-left: Player points shown below header for clarity -->
-    <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
-      <div class="corner-badge" id="playerBadge">Player Points: <strong id="playerPoints">0</strong></div>
-      <div class="turn-badge" id="turnBadge">Your turn</div>
-    </div>
+    <div class="layout" id="mainLayout" aria-live="polite">
+      <!-- left: board (only created after auth + user doc) -->
+      <div class="board-wrap" id="boardWrap">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="badge" id="playerBadge">Player Points: <strong id="playerPoints">0</strong></div>
+          <div class="badge" id="turnBadge">Loading…</div>
+        </div>
 
-    <div class="board-wrap card-panel">
-      <div class="board" id="board" aria-label="Memory board"></div>
+        <div style="height:12px"></div>
+        <div class="board" id="board" aria-label="Memory board"></div>
 
-      <div class="info-row">
-        <div class="muted">Each correct pair = 1 point. Bot has 50% chance to find pairs.</div>
-        <!-- no restart & no timer per your request -->
+        <div style="margin-top:12px;color:var(--muted)">Each correct pair = 1 point. Bot acts after the player's move. No timer.</div>
       </div>
+
+      <!-- right: info column (keeps some helpful info) -->
+      <aside class="info-col" id="infoCol">
+        <h4>Session info</h4>
+        <div id="fbStatus">Firebase: initializing...</div>
+        <div id="authStatus" style="margin-top:8px;color:var(--muted)">Auth: —</div>
+        <div id="uid" style="margin-top:6px;color:var(--muted)">UID: —</div>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+        <div style="color:var(--muted);font-size:13px">Play only available when you're signed in. If you lose, you'll get an encouraging message and can try again.</div>
+      </aside>
     </div>
   </div>
 
-  <!-- Firebase compat SDKs (matching earlier usage) -->
+  <!-- Firebase compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <script>
-    // Beni-Wealth Firebase config (your provided details)
+    /**********************
+     * Beni-Wealth Firebase config
+     **********************/
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -132,14 +132,30 @@
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
 
-    // Game constants & state
+    // defensive init but DO NOT render the board until auth + user doc fetched
+    let firebaseOk = false;
+    try {
+      if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      firebaseOk = true;
+      document.getElementById('fbStatus').innerText = 'Firebase: initialized';
+    } catch (e) {
+      console.error('Firebase init failed', e);
+      document.getElementById('fbStatus').innerText = 'Firebase init failed (see console)';
+      // Because play requires auth, redirect to login — but keep board blank.
+      // Wait a short moment then redirect so user sees useful message.
+      setTimeout(()=> { window.location.href = 'login.html'; }, 800);
+    }
+
+    const auth = firebaseOk ? firebase.auth() : null;
+    const db   = firebaseOk ? firebase.firestore() : null;
+
+    /*******************
+     * Game constants & state
+     *******************/
     const EMOJIS = ['🍎','🍌','🍇','🍓','🍉','🥝','🍑','🍍','🍋','🍒'];
     const TOTAL_PAIRS = EMOJIS.length;
-    const BOT_SUCCESS_PROB = 0.5;
+    const BOT_SUCCESS_PROB = 0.7;
     const WIN_CREDIT = 40;
 
     let deck = [];
@@ -147,27 +163,25 @@
     let matchedPairs = 0;
     let playerPoints = 0;
     let botPoints = 0;
-    let currentTurn = 'player'; // 'player' or 'bot'
+    let currentTurn = 'player';
+    let userRef = null;
+    let currentUser = null;
+    let username = '';
 
     // UI refs
     const boardEl = document.getElementById('board');
     const playerPointsEl = document.getElementById('playerPoints');
     const botPointsEl = document.getElementById('botPoints');
     const turnBadge = document.getElementById('turnBadge');
-
-    // firebase user
-    let currentUser = null;
-    let userRef = null;
+    const fbStatusEl = document.getElementById('fbStatus');
+    const authStatusEl = document.getElementById('authStatus');
+    const uidEl = document.getElementById('uid');
+    const usernameBadge = document.getElementById('usernameBadge');
 
     // shuffle helper
-    function shuffle(arr){
-      for(let i=arr.length-1;i>0;i--){
-        const j = Math.floor(Math.random()*(i+1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-    }
+    function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
 
-    // create & render deck
+    // create board (DOM) — called only after auth + user doc fetched
     function createDeck(){
       deck = [...EMOJIS, ...EMOJIS];
       shuffle(deck);
@@ -177,44 +191,25 @@
         card.className = 'card';
         card.dataset.index = idx;
         card.dataset.emoji = emoji;
-        card.innerHTML = `
-          <div class="card-inner">
-            <div class="face front">${emoji}</div>
-            <div class="face back">?</div>
-          </div>`;
+        card.innerHTML = `<div class="card-inner"><div class="face front">${emoji}</div><div class="face back">?</div></div>`;
         card.addEventListener('click', () => playerFlip(card));
         boardEl.appendChild(card);
       });
     }
 
-    // update points UI
-    function updatePointsUI(){
-      playerPointsEl.textContent = playerPoints;
-      botPointsEl.textContent = botPoints;
-    }
+    function updatePointsUI(){ playerPointsEl.textContent = playerPoints; botPointsEl.textContent = botPoints; }
 
-    // set turn UI
     function setTurn(t){
       currentTurn = t;
-      if(t === 'player'){
-        turnBadge.textContent = 'Your turn';
-        enableBoard(true);
-      } else {
-        turnBadge.textContent = "Bot's turn";
-        enableBoard(false);
-      }
+      if(t === 'player'){ turnBadge.textContent = 'Your turn'; enableBoard(true); }
+      else { turnBadge.textContent = "Bot's turn"; enableBoard(false); }
     }
 
-    // enable/disable unmatched cards
-    function enableBoard(enable){
-      document.querySelectorAll('.card').forEach(c=>{
-        if(!c.classList.contains('matched')){
-          c.style.pointerEvents = enable ? 'auto' : 'none';
-        }
-      });
+    function enableBoard(on){
+      document.querySelectorAll('.card').forEach(c => { if(!c.classList.contains('matched')) c.style.pointerEvents = on ? 'auto' : 'none'; });
     }
 
-    // player flip
+    // Player flip handler
     function playerFlip(card){
       if(currentTurn !== 'player') return;
       if(card.classList.contains('flipped') || card.classList.contains('matched')) return;
@@ -225,46 +220,32 @@
 
       if(flipped.length === 2){
         const [a,b] = flipped;
-        const e1 = a.dataset.emoji;
-        const e2 = b.dataset.emoji;
+        const e1 = a.dataset.emoji, e2 = b.dataset.emoji;
         if(e1 === e2){
-          // player scored
-          a.classList.add('matched');
-          b.classList.add('matched');
-          playerPoints += 1;
-          matchedPairs += 1;
+          a.classList.add('matched'); b.classList.add('matched');
+          playerPoints++; matchedPairs++;
           updatePointsUI();
           flipped = [];
-          // check end
-          if(matchedPairs === TOTAL_PAIRS){ finishGame(); return; }
-          // player keeps turn (common in matching games) or let bot act? You earlier wanted user and bot to both flip cards; spec said bot also scores — to keep bot involved, switch to bot after a small delay
-          setTimeout(()=> setTurn('bot'), 600);
-          setTimeout(()=> botPlay(), 900);
+          // switch to bot so bot stays involved
+          setTimeout(()=> { setTurn('bot'); setTimeout(botPlay, 600); }, 500);
+          if(matchedPairs === TOTAL_PAIRS){ setTimeout(finishGame, 600); }
         } else {
-          // mismatch -> show then switch to bot
           setTimeout(()=> {
-            a.classList.remove('flipped');
-            b.classList.remove('flipped');
-            flipped = [];
-            setTurn('bot');
-            setTimeout(()=> botPlay(), 500);
+            a.classList.remove('flipped'); b.classList.remove('flipped'); flipped = [];
+            setTurn('bot'); setTimeout(botPlay, 500);
           }, 700);
         }
       }
     }
 
-    // bot plays: 50% chance success
+    // Bot's turn (50% chance to succeed)
     async function botPlay(){
-      // collect unmatched & unflipped cards
       const unmatched = Array.from(document.querySelectorAll('.card')).filter(c => !c.classList.contains('matched') && !c.classList.contains('flipped'));
-      if(unmatched.length < 2){
-        finishGame(); return;
-      }
+      if(unmatched.length < 2){ return finishGame(); }
 
       const success = Math.random() < BOT_SUCCESS_PROB;
-
       if(success){
-        // try to find a real matching pair if present
+        // try to locate a real pair
         const map = {};
         for(const c of unmatched){
           map[c.dataset.emoji] = map[c.dataset.emoji] || [];
@@ -272,95 +253,80 @@
         }
         const pairs = Object.values(map).filter(arr => arr.length >= 2);
         if(pairs.length > 0){
-          const pair = pairs[Math.floor(Math.random() * pairs.length)];
-          // reveal them
+          const pair = pairs[Math.floor(Math.random()*pairs.length)];
           pair[0].classList.add('flipped'); pair[1].classList.add('flipped');
-          await new Promise(r => setTimeout(r, 700));
+          await new Promise(r=>setTimeout(r,700));
           pair[0].classList.add('matched'); pair[1].classList.add('matched');
-          botPoints += 1;
-          matchedPairs += 1;
-          updatePointsUI();
-          // check end
-          if(matchedPairs === TOTAL_PAIRS){ finishGame(); return; }
-          // bot got a point; bot then ends its turn and gives it back to player
-          setTurn('player');
-          return;
+          botPoints++; matchedPairs++; updatePointsUI();
+          if(matchedPairs === TOTAL_PAIRS){ return finishGame(); }
+          setTurn('player'); return;
         }
       }
 
-      // failure: bot flips two random different unmatched cards, then flips them back
+      // failure path: flip two random unmatched cards, flip back
       let pick = [];
       while(pick.length < 2){
         const c = unmatched[Math.floor(Math.random()*unmatched.length)];
         if(!pick.includes(c)) pick.push(c);
       }
-      pick[0].classList.add('flipped');
-      await new Promise(r => setTimeout(r, 450));
-      pick[1].classList.add('flipped');
-      await new Promise(r => setTimeout(r, 800));
-      // if by chance they match (rare because we randomly picked), handle that
+      pick[0].classList.add('flipped'); await new Promise(r=>setTimeout(r,450));
+      pick[1].classList.add('flipped'); await new Promise(r=>setTimeout(r,700));
       if(pick[0].dataset.emoji === pick[1].dataset.emoji){
         pick[0].classList.add('matched'); pick[1].classList.add('matched');
-        botPoints += 1; matchedPairs += 1; updatePointsUI();
-        if(matchedPairs === TOTAL_PAIRS){ finishGame(); return; }
+        botPoints++; matchedPairs++; updatePointsUI();
+        if(matchedPairs === TOTAL_PAIRS) return finishGame();
       } else {
         pick[0].classList.remove('flipped'); pick[1].classList.remove('flipped');
       }
-      // give control back to player
       setTurn('player');
     }
 
-    // finish game: determine winner, credit if player wins
+    // finish game: determine winner & credit if player wins
     async function finishGame(){
       enableBoard(false);
-      const result = playerPoints > botPoints ? 'player' : (playerPoints < botPoints ? 'bot' : 'draw');
+      const result = playerPoints > botPoints ? 'player' : playerPoints < botPoints ? 'bot' : 'draw';
 
-      // always record last play timestamp (non-blocking)
-      try{ if(userRef) await userRef.update({ lastMemoryFlip: firebase.firestore.FieldValue.serverTimestamp() }); }catch(e){console.warn('lastMemoryFlip write failed',e);}
+      // record last play timestamp (non-blocking)
+      if(firebaseOk && userRef){
+        userRef.update({ lastMemoryFlip: firebase.firestore.FieldValue.serverTimestamp() }).catch(e => console.warn('lastMemoryFlip write failed', e));
+      }
 
-      if(result === 'player'){
-        // credit user with ₦40
+      if(result === 'player' && firebaseOk && userRef){
+        // credit using transaction
         try{
-          const snap = await userRef.get();
-          const curr = Number((snap.data() && snap.data().balance) || 0);
-          const newBal = curr + WIN_CREDIT;
-          // using simple update (if you want, I can switch to transaction)
-          await userRef.update({ balance: newBal });
-          await userRef.collection('transactions').add({
-            source: 'Memory Flip — Win',
-            amount: WIN_CREDIT,
-            date: new Date().toISOString()
+          await db.runTransaction(async (t) => {
+            const doc = await t.get(userRef);
+            const curr = (doc.exists && doc.data().balance) ? Number(doc.data().balance) : 0;
+            t.update(userRef, { balance: curr + WIN_CREDIT });
           });
+          await userRef.collection('transactions').add({ source: 'Memory Flip — Win', amount: WIN_CREDIT, date: new Date().toISOString() });
           showModal(true, WIN_CREDIT);
         }catch(err){
           console.error('credit failed', err);
           showModal(true, WIN_CREDIT, true);
         }
       } else {
+        // user lost or draw -> show encouraging modal
         showModal(false, 0);
       }
     }
 
-    // non-dismissible modal (only Close)
+    // modal: only close via button which redirects to games.html
     function showModal(playerWon, amount, creditFailed=false){
-      const overlay = document.createElement('div');
-      overlay.className = 'overlay-modal';
-      overlay.innerHTML = `
-        <div class="modal" role="dialog" aria-modal="true">
-          <h2>${playerWon ? 'Congratulations!' : (playerWon === false && playerWon !== null && playerWon !== undefined ? 'Try again' : 'Result')}</h2>
-          <p style="margin-top:10px;font-size:16px">Player: <strong>${playerPoints}</strong> — Bot: <strong>${botPoints}</strong></p>
-          ${playerWon ? `<p class="muted">${creditFailed ? 'You won — but credit failed (see console).' : 'You won ₦' + amount + ' — credited to your balance.'}</p>` : `<p class="muted">${playerPoints === botPoints ? 'It\\'s a draw.' : 'The bot scored higher. Better luck next time!'}</p>`}
-          <button id="closeBtn" class="btn btn-primary" style="margin-top:14px">Close — Go to games</button>
-        </div>
-      `;
-      // prevent clicks outside from closing — no handler to remove overlay
+      const overlay = document.createElement('div'); overlay.className = 'overlay-modal';
+      overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
+        <h2>${playerWon ? 'Congratulations!' : (playerPoints === botPoints ? "It's a draw" : 'You lost this round')}</h2>
+        <p style="margin-top:10px">Player: <strong>${playerPoints}</strong> — Bot: <strong>${botPoints}</strong></p>
+        ${playerWon ? `<p class="muted">${creditFailed ? 'You won — but credit failed (see console).' : 'You won ₦'+amount+' — credited to your balance.'}</p>`
+                   : `<p class="muted">${playerPoints === botPoints ? "It's a draw — try again!" : 'Don’t be discouraged — try again to beat the bot!'}</p>`}
+        <button id="modalClose" class="btn btn-primary" style="margin-top:14px">Close — Go to games</button>
+      </div>`;
+      // do not attach overlay click handler that removes it — modal only closes via button
       document.body.appendChild(overlay);
-      document.getElementById('closeBtn').addEventListener('click', () => {
-        window.location.href = 'games.html';
-      });
+      document.getElementById('modalClose').addEventListener('click', ()=>{ window.location.href = 'games.html'; });
     }
 
-    // create new game (no restart button per your request)
+    // start a fresh game (only after auth & user doc)
     function startNewGame(){
       deck = []; flipped = []; matchedPairs = 0; playerPoints = 0; botPoints = 0;
       updatePointsUI();
@@ -368,21 +334,48 @@
       setTurn('player');
     }
 
-    // AUTH: ensure user signed in; no plan checks and no cooldown per your request
-    auth.onAuthStateChanged(async (u) => {
-      if(!u) return window.location.href = 'login.html';
-      currentUser = u;
-      userRef = db.collection('users').doc(u.uid);
-      const snap = await userRef.get();
-      if(!snap.exists) return window.location.href = 'login.html';
-      // ok — start
-      startNewGame();
-    });
+    // AUTH: require signed-in user. Do not allow play if logged out.
+    if(!firebaseOk){
+      // firebase init failed earlier, redirect to login for safety (no play without backend)
+      setTimeout(()=> window.location.href = 'login.html', 600);
+    } else {
+      auth.onAuthStateChanged(async (u) => {
+        if(!u){
+          // not signed in -> block and redirect to login
+          authStatusEl.innerText = 'Auth: not signed in — redirecting…';
+          setTimeout(()=> window.location.href = 'login.html', 500);
+          return;
+        }
+        currentUser = u;
+        uidEl.innerText = 'UID: ' + (u.uid || '—');
+        authStatusEl.innerText = 'Auth: signed in';
+        // fetch user doc
+        try{
+          userRef = db.collection('users').doc(u.uid);
+          const snap = await userRef.get();
+          if(!snap.exists){
+            // if user doc missing, redirect to profile / register flow
+            authStatusEl.innerText = 'User record missing — redirecting to profile';
+            setTimeout(()=> window.location.href = 'profile.html', 700);
+            return;
+          }
+          const data = snap.data();
+          username = data.username || data.displayName || (u.email ? u.email.split('@')[0] : 'User');
+          usernameBadge.innerText = 'User: ' + username;
+          // Now user is confirmed — create the deck and allow play
+          startNewGame();
+        }catch(err){
+          console.error('Failed to read user doc', err);
+          authStatusEl.innerText = 'Auth: error reading user data — check console';
+          // optionally redirect to login/profile
+          setTimeout(()=> window.location.href = 'login.html', 800);
+        }
+      });
+    }
 
-    // defensive initial UI
-    playerPointsEl.textContent = '0';
-    botPointsEl.textContent = '0';
-    turnBadge.textContent = 'Loading…';
+    // defensive: log uncaught errors
+    window.addEventListener('error', e => console.error('Uncaught error:', e.error || e.message));
+    window.addEventListener('unhandledrejection', e => console.error('Unhandled rejection:', e.reason));
   </script>
 </body>
 </html>
