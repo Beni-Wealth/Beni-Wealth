@@ -26,7 +26,17 @@
       align-items:flex-start;
     }
 
-    .phone{width:100%;max-width:980px;border-radius:14px;padding:16px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:0 20px 60px rgba(0,0,0,0.6);min-height:80vh;overflow:auto}
+    .phone{
+      width:100%;
+      max-width:980px;
+      border-radius:14px;
+      padding:16px;
+      background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
+      box-shadow:0 20px 60px rgba(0,0,0,0.6);
+      min-height:80vh;
+      overflow:auto;
+    }
+
     header{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .brand{display:flex;gap:12px;align-items:center}
     .logo-box{width:56px;height:56px;border-radius:12px;background:var(--accent-grad);display:grid;place-items:center;color:#041219;font-weight:800}
@@ -34,12 +44,13 @@
     h1{margin:0;font-size:18px}
     .muted{color:var(--muted);font-size:13px}
 
-    .layout { display:grid; grid-template-columns: 1fr 320px; gap:18px; margin-top:12px; }
-    @media(max-width:980px){ .layout{grid-template-columns:1fr} }
-
-    /* board */
+    .layout { margin-top:12px; }
     .board-wrap { background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.02); }
-    .board { display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; }
+    /* 6 columns => 30 cards; responsive breakpoints */
+    .board { display:grid; grid-template-columns: repeat(6, 1fr); gap:10px; }
+    @media (max-width:980px){ .board { grid-template-columns: repeat(5, 1fr); } }
+    @media (max-width:720px){ .board { grid-template-columns: repeat(4, 1fr); } }
+
     .card { position:relative; width:100%; padding-top:100%; perspective:1000px; cursor:pointer; }
     .card-inner { position:absolute; inset:0; border-radius:10px; transition:transform .55s; transform-style:preserve-3d; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.25); }
     .card.flipped .card-inner { transform:rotateY(180deg); pointer-events:none; }
@@ -47,22 +58,15 @@
     .front{ background:#fff; color:#041219; transform:rotateY(180deg); }
     .back{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); color:var(--text); }
 
-    /* badges */
-    .badges { display:flex; gap:12px; align-items:center; justify-content:flex-start; margin-top:10px; }
+    .top-row { display:flex; justify-content:space-between; align-items:center; gap:12px; }
     .badge { background:var(--glass); padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); font-weight:700; }
 
-    /* debug / info column */
-    .info-col { padding:12px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); border:1px solid rgba(255,255,255,0.02); min-height:200px; }
-    .info-col h4 { margin:0 0 8px 0; }
-
-    /* modal */
     .overlay-modal{ position:fixed; inset:0; background:rgba(2,6,23,0.6); display:flex; align-items:center; justify-content:center; z-index:3000; }
-    .modal{ width:92%; max-width:540px; padding:18px; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); box-shadow:0 30px 90px rgba(0,0,0,0.6); text-align:center; }
+    .modal{ width:92%; max-width:520px; padding:18px; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); box-shadow:0 30px 90px rgba(0,0,0,0.6); text-align:center; }
     .btn{ padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:700; }
     .btn-primary { background:var(--accent-grad); color:#041219; }
 
     @media(max-width:420px){
-      .board{ gap:8px }
       .face{ font-size:18px }
       .logo-box{ width:48px; height:48px }
     }
@@ -73,309 +77,497 @@
     <header>
       <div class="brand">
         <div class="logo-box">
-          <!-- developer-provided local file path used as image src (will be transformed by tool) -->
+          <!-- logo file (local path) -->
           <img src="/mnt/data/1000588770.png" alt="logo" class="logo-img" />
         </div>
         <div>
           <h1>Memory Flip</h1>
-          <div class="muted">Player vs Bot — 50% bot fairness — win ₦40 if you score higher</div>
+          <div class="muted">Flip objects — beat the bot</div>
         </div>
       </div>
 
       <div style="display:flex;gap:10px;align-items:center">
         <div class="badge" id="usernameBadge">User: —</div>
-        <div class="badge" id="botBadge">Bot Points: <strong id="botPoints">0</strong></div>
+        <div class="badge">Bot Points: <strong id="botPoints">0</strong></div>
       </div>
     </header>
 
-    <div class="layout" id="mainLayout" aria-live="polite">
-      <!-- left: board (only created after auth + user doc) -->
-      <div class="board-wrap" id="boardWrap">
+    <div class="layout">
+      <div class="board-wrap">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="badge" id="playerBadge">Player Points: <strong id="playerPoints">0</strong></div>
+          <div class="badge">Player Points: <strong id="playerPoints">0</strong></div>
           <div class="badge" id="turnBadge">Loading…</div>
         </div>
 
         <div style="height:12px"></div>
         <div class="board" id="board" aria-label="Memory board"></div>
 
-        <div style="margin-top:12px;color:var(--muted)">Each correct pair = 1 point. Bot acts after the player's move. No timer.</div>
+        <div style="margin-top:12px;color:var(--muted)">The board appears when you're signed in. Each correct pair = 1 point.</div>
       </div>
-
-      <!-- right: info column (keeps some helpful info) -->
-      <aside class="info-col" id="infoCol">
-        <h4>Session info</h4>
-        <div id="fbStatus">Firebase: initializing...</div>
-        <div id="authStatus" style="margin-top:8px;color:var(--muted)">Auth: —</div>
-        <div id="uid" style="margin-top:6px;color:var(--muted)">UID: —</div>
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
-        <div style="color:var(--muted);font-size:13px">Play only available when you're signed in. If you lose, you'll get an encouraging message and can try again.</div>
-      </aside>
     </div>
   </div>
 
-  <!-- Firebase compat SDKs -->
+  <!-- PASTE PART 2 BELOW THIS LINE (the JavaScript and closing tags) -->
+    <!-- Firebase compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <script>
-    /**********************
-     * Beni-Wealth Firebase config
-     **********************/
-    const firebaseConfig = {
-      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-      authDomain: "beni-wealths.firebaseapp.com",
-      projectId: "beni-wealths",
-      storageBucket: "beni-wealths.firebasestorage.app",
-      messagingSenderId: "807950483822",
-      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-      measurementId: "G-Z2XP3YN6NS"
-    };
+  /******************************
+   * Beni-Wealth Firebase config
+   ******************************/
+  const firebaseConfig = {
+    apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+    authDomain: "beni-wealths.firebaseapp.com",
+    projectId: "beni-wealths",
+    storageBucket: "beni-wealths.firebasestorage.app",
+    messagingSenderId: "807950483822",
+    appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+    measurementId: "G-Z2XP3YN6NS"
+  };
+  try { if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(firebaseConfig); } catch(e){ console.error('firebase init err', e); }
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-    // defensive init but DO NOT render the board until auth + user doc fetched
-    let firebaseOk = false;
-    try {
-      if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
-      firebaseOk = true;
-      document.getElementById('fbStatus').innerText = 'Firebase: initialized';
-    } catch (e) {
-      console.error('Firebase init failed', e);
-      document.getElementById('fbStatus').innerText = 'Firebase init failed (see console)';
-      // Because play requires auth, redirect to login — but keep board blank.
-      // Wait a short moment then redirect so user sees useful message.
-      setTimeout(()=> { window.location.href = 'login.html'; }, 800);
+  /*******************
+   * Game constants & state
+   *******************/
+  // 15 unique emojis => 30 cards
+  const EMOJIS = ['🍎','🍌','🍇','🍓','🍉','🥝','🍑','🍍','🍋','🍒','🥥','🍊','🥭','🍐','🍏'];
+  const TOTAL_PAIRS = EMOJIS.length;
+  const WIN_CREDIT = 50;
+
+  let deck = []; // array of emojis length 30
+  let flipped = []; // currently flipped DOM elements
+  let matchedPairs = 0;
+  let playerPoints = 0;
+  let botPoints = 0;
+  let currentTurn = 'player';
+  let userRef = null;
+  let currentUser = null;
+  let username = '';
+
+  // bot memory: emoji -> Set of indices it has seen (unmatched)
+  let botMemory = {};
+
+  // UI refs
+  const boardEl = document.getElementById('board');
+  const playerPointsEl = document.getElementById('playerPoints');
+  const botPointsEl = document.getElementById('botPoints');
+  const turnBadge = document.getElementById('turnBadge');
+  const usernameBadge = document.getElementById('usernameBadge');
+
+  // audio (WebAudio) setup (single shared AudioContext)
+  let audioCtx = null;
+  function ensureAudioCtx(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
-
-    const auth = firebaseOk ? firebase.auth() : null;
-    const db   = firebaseOk ? firebase.firestore() : null;
-
-    /*******************
-     * Game constants & state
-     *******************/
-    const EMOJIS = ['🍎','🍌','🍇','🍓','🍉','🥝','🍑','🍍','🍋','🍒'];
-    const TOTAL_PAIRS = EMOJIS.length;
-    const BOT_SUCCESS_PROB = 0.7;
-    const WIN_CREDIT = 40;
-
-    let deck = [];
-    let flipped = [];
-    let matchedPairs = 0;
-    let playerPoints = 0;
-    let botPoints = 0;
-    let currentTurn = 'player';
-    let userRef = null;
-    let currentUser = null;
-    let username = '';
-
-    // UI refs
-    const boardEl = document.getElementById('board');
-    const playerPointsEl = document.getElementById('playerPoints');
-    const botPointsEl = document.getElementById('botPoints');
-    const turnBadge = document.getElementById('turnBadge');
-    const fbStatusEl = document.getElementById('fbStatus');
-    const authStatusEl = document.getElementById('authStatus');
-    const uidEl = document.getElementById('uid');
-    const usernameBadge = document.getElementById('usernameBadge');
-
-    // shuffle helper
-    function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
-
-    // create board (DOM) — called only after auth + user doc fetched
-    function createDeck(){
-      deck = [...EMOJIS, ...EMOJIS];
-      shuffle(deck);
-      boardEl.innerHTML = '';
-      deck.forEach((emoji, idx) => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.dataset.index = idx;
-        card.dataset.emoji = emoji;
-        card.innerHTML = `<div class="card-inner"><div class="face front">${emoji}</div><div class="face back">?</div></div>`;
-        card.addEventListener('click', () => playerFlip(card));
-        boardEl.appendChild(card);
+  }
+  function playFlipSound(){
+    try{
+      ensureAudioCtx();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(800, audioCtx.currentTime);
+      g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 0.01);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start();
+      o.stop(audioCtx.currentTime + 0.12);
+    }catch(e){ /* ignore */ }
+  }
+  function playMatchSound(){
+    try{
+      ensureAudioCtx();
+      const now = audioCtx.currentTime;
+      const o1 = audioCtx.createOscillator(); o1.type='triangle'; o1.frequency.setValueAtTime(440, now);
+      const o2 = audioCtx.createOscillator(); o2.type='sine'; o2.frequency.setValueAtTime(660, now);
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.25, now + 0.01);
+      o1.connect(g); o2.connect(g); g.connect(audioCtx.destination);
+      o1.start(now); o2.start(now);
+      o1.stop(now + 0.18); o2.stop(now + 0.18);
+    }catch(e){}
+  }
+  function playWinSound(){
+    try{
+      ensureAudioCtx();
+      const now = audioCtx.currentTime;
+      const freqs = [660,880,1100];
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.3, now + 0.02);
+      freqs.forEach((f,i)=>{
+        const o = audioCtx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(f, now + i*0.03);
+        o.connect(g);
+        o.start(now + i*0.03);
+        o.stop(now + 0.25 + i*0.03);
       });
+      g.connect(audioCtx.destination);
+    }catch(e){}
+  }
+
+  // utilities
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // ---------- Persistence helpers ----------
+  const GAME_DOC_PATH = (uid) => `users/${uid}/games/memoryFlip`;
+
+  async function saveGameState(){
+    if(!userRef) return;
+    try {
+      const matchedIndices = [];
+      document.querySelectorAll('.card.matched').forEach(c => matchedIndices.push(Number(c.dataset.index)));
+      // persist deck, matchedIndices, points, currentTurn and botMemory
+      await db.doc(GAME_DOC_PATH(currentUser.uid)).set({
+        deck,
+        matchedIndices,
+        playerPoints,
+        botPoints,
+        currentTurn,
+        botMemory, // map emoji -> array of indices
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      console.warn('saveGameState failed', err);
     }
+  }
 
-    function updatePointsUI(){ playerPointsEl.textContent = playerPoints; botPointsEl.textContent = botPoints; }
-
-    function setTurn(t){
-      currentTurn = t;
-      if(t === 'player'){ turnBadge.textContent = 'Your turn'; enableBoard(true); }
-      else { turnBadge.textContent = "Bot's turn"; enableBoard(false); }
-    }
-
-    function enableBoard(on){
-      document.querySelectorAll('.card').forEach(c => { if(!c.classList.contains('matched')) c.style.pointerEvents = on ? 'auto' : 'none'; });
-    }
-
-    // Player flip handler
-    function playerFlip(card){
-      if(currentTurn !== 'player') return;
-      if(card.classList.contains('flipped') || card.classList.contains('matched')) return;
-      if(flipped.length === 2) return;
-
-      card.classList.add('flipped');
-      flipped.push(card);
-
-      if(flipped.length === 2){
-        const [a,b] = flipped;
-        const e1 = a.dataset.emoji, e2 = b.dataset.emoji;
-        if(e1 === e2){
-          a.classList.add('matched'); b.classList.add('matched');
-          playerPoints++; matchedPairs++;
-          updatePointsUI();
-          flipped = [];
-          // switch to bot so bot stays involved
-          setTimeout(()=> { setTurn('bot'); setTimeout(botPlay, 600); }, 500);
-          if(matchedPairs === TOTAL_PAIRS){ setTimeout(finishGame, 600); }
+  async function loadGameStateOrCreate(){
+    // reads game doc; if none, builds fresh deck and writes it
+    const path = GAME_DOC_PATH(currentUser.uid);
+    const docRef = db.doc(path);
+    try{
+      const snap = await docRef.get();
+      if(snap.exists){
+        const d = snap.data();
+        // if deck in doc and correct length, use it
+        if(Array.isArray(d.deck) && d.deck.length === EMOJIS.length*2){
+          deck = d.deck.slice();
         } else {
-          setTimeout(()=> {
-            a.classList.remove('flipped'); b.classList.remove('flipped'); flipped = [];
-            setTurn('bot'); setTimeout(botPlay, 500);
-          }, 700);
-        }
-      }
-    }
-
-    // Bot's turn (50% chance to succeed)
-    async function botPlay(){
-      const unmatched = Array.from(document.querySelectorAll('.card')).filter(c => !c.classList.contains('matched') && !c.classList.contains('flipped'));
-      if(unmatched.length < 2){ return finishGame(); }
-
-      const success = Math.random() < BOT_SUCCESS_PROB;
-      if(success){
-        // try to locate a real pair
-        const map = {};
-        for(const c of unmatched){
-          map[c.dataset.emoji] = map[c.dataset.emoji] || [];
-          map[c.dataset.emoji].push(c);
-        }
-        const pairs = Object.values(map).filter(arr => arr.length >= 2);
-        if(pairs.length > 0){
-          const pair = pairs[Math.floor(Math.random()*pairs.length)];
-          pair[0].classList.add('flipped'); pair[1].classList.add('flipped');
-          await new Promise(r=>setTimeout(r,700));
-          pair[0].classList.add('matched'); pair[1].classList.add('matched');
-          botPoints++; matchedPairs++; updatePointsUI();
-          if(matchedPairs === TOTAL_PAIRS){ return finishGame(); }
-          setTurn('player'); return;
-        }
-      }
-
-      // failure path: flip two random unmatched cards, flip back
-      let pick = [];
-      while(pick.length < 2){
-        const c = unmatched[Math.floor(Math.random()*unmatched.length)];
-        if(!pick.includes(c)) pick.push(c);
-      }
-      pick[0].classList.add('flipped'); await new Promise(r=>setTimeout(r,450));
-      pick[1].classList.add('flipped'); await new Promise(r=>setTimeout(r,700));
-      if(pick[0].dataset.emoji === pick[1].dataset.emoji){
-        pick[0].classList.add('matched'); pick[1].classList.add('matched');
-        botPoints++; matchedPairs++; updatePointsUI();
-        if(matchedPairs === TOTAL_PAIRS) return finishGame();
-      } else {
-        pick[0].classList.remove('flipped'); pick[1].classList.remove('flipped');
-      }
-      setTurn('player');
-    }
-
-    // finish game: determine winner & credit if player wins
-    async function finishGame(){
-      enableBoard(false);
-      const result = playerPoints > botPoints ? 'player' : playerPoints < botPoints ? 'bot' : 'draw';
-
-      // record last play timestamp (non-blocking)
-      if(firebaseOk && userRef){
-        userRef.update({ lastMemoryFlip: firebase.firestore.FieldValue.serverTimestamp() }).catch(e => console.warn('lastMemoryFlip write failed', e));
-      }
-
-      if(result === 'player' && firebaseOk && userRef){
-        // credit using transaction
-        try{
-          await db.runTransaction(async (t) => {
-            const doc = await t.get(userRef);
-            const curr = (doc.exists && doc.data().balance) ? Number(doc.data().balance) : 0;
-            t.update(userRef, { balance: curr + WIN_CREDIT });
-          });
-          await userRef.collection('transactions').add({ source: 'Memory Flip — Win', amount: WIN_CREDIT, date: new Date().toISOString() });
-          showModal(true, WIN_CREDIT);
-        }catch(err){
-          console.error('credit failed', err);
-          showModal(true, WIN_CREDIT, true);
-        }
-      } else {
-        // user lost or draw -> show encouraging modal
-        showModal(false, 0);
-      }
-    }
-
-    // modal: only close via button which redirects to games.html
-    function showModal(playerWon, amount, creditFailed=false){
-      const overlay = document.createElement('div'); overlay.className = 'overlay-modal';
-      overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
-        <h2>${playerWon ? 'Congratulations!' : (playerPoints === botPoints ? "It's a draw" : 'You lost this round')}</h2>
-        <p style="margin-top:10px">Player: <strong>${playerPoints}</strong> — Bot: <strong>${botPoints}</strong></p>
-        ${playerWon ? `<p class="muted">${creditFailed ? 'You won — but credit failed (see console).' : 'You won ₦'+amount+' — credited to your balance.'}</p>`
-                   : `<p class="muted">${playerPoints === botPoints ? "It's a draw — try again!" : 'Don’t be discouraged — try again to beat the bot!'}</p>`}
-        <button id="modalClose" class="btn btn-primary" style="margin-top:14px">Close — Go to games</button>
-      </div>`;
-      // do not attach overlay click handler that removes it — modal only closes via button
-      document.body.appendChild(overlay);
-      document.getElementById('modalClose').addEventListener('click', ()=>{ window.location.href = 'games.html'; });
-    }
-
-    // start a fresh game (only after auth & user doc)
-    function startNewGame(){
-      deck = []; flipped = []; matchedPairs = 0; playerPoints = 0; botPoints = 0;
-      updatePointsUI();
-      createDeck();
-      setTurn('player');
-    }
-
-    // AUTH: require signed-in user. Do not allow play if logged out.
-    if(!firebaseOk){
-      // firebase init failed earlier, redirect to login for safety (no play without backend)
-      setTimeout(()=> window.location.href = 'login.html', 600);
-    } else {
-      auth.onAuthStateChanged(async (u) => {
-        if(!u){
-          // not signed in -> block and redirect to login
-          authStatusEl.innerText = 'Auth: not signed in — redirecting…';
-          setTimeout(()=> window.location.href = 'login.html', 500);
+          deck = await buildAndPersistDeck(docRef);
           return;
         }
-        currentUser = u;
-        uidEl.innerText = 'UID: ' + (u.uid || '—');
-        authStatusEl.innerText = 'Auth: signed in';
-        // fetch user doc
-        try{
-          userRef = db.collection('users').doc(u.uid);
-          const snap = await userRef.get();
-          if(!snap.exists){
-            // if user doc missing, redirect to profile / register flow
-            authStatusEl.innerText = 'User record missing — redirecting to profile';
-            setTimeout(()=> window.location.href = 'profile.html', 700);
-            return;
-          }
-          const data = snap.data();
-          username = data.username || data.displayName || (u.email ? u.email.split('@')[0] : 'User');
-          usernameBadge.innerText = 'User: ' + username;
-          // Now user is confirmed — create the deck and allow play
-          startNewGame();
-        }catch(err){
-          console.error('Failed to read user doc', err);
-          authStatusEl.innerText = 'Auth: error reading user data — check console';
-          // optionally redirect to login/profile
-          setTimeout(()=> window.location.href = 'login.html', 800);
-        }
+        // matched indices to mark matched
+        const matchedIndices = Array.isArray(d.matchedIndices) ? d.matchedIndices.map(Number) : [];
+        playerPoints = Number(d.playerPoints || 0);
+        botPoints = Number(d.botPoints || 0);
+        currentTurn = d.currentTurn || 'player';
+        botMemory = d.botMemory || {};
+        matchedPairs = Math.floor(matchedIndices.length / 2); // safe fallback
+        // create board DOM using deck and then mark matched cards
+        renderDeck();
+        // mark matched
+        matchedIndices.forEach(i => {
+          const c = document.querySelector(`.card[data-index='${i}']`);
+          if(c){ c.classList.add('matched'); /* keep front visible by leaving flipped state visually */ }
+        });
+        updatePointsUI();
+        setTurn(currentTurn);
+        // clean botMemory (remove matched indices from memory)
+        cleanupBotMemoryAfterLoad();
+        return;
+      } else {
+        // no doc -> create new deck and persist
+        await buildAndPersistDeck(docRef);
+      }
+    }catch(err){
+      console.error('loadGameState failed', err);
+      // fallback: create local deck
+      createLocalDeck();
+    }
+  }
+
+  async function buildAndPersistDeck(docRef){
+    deck = [...EMOJIS, ...EMOJIS];
+    shuffle(deck);
+    // persist initial state
+    playerPoints = 0; botPoints = 0; currentTurn = 'player'; botMemory = {}; matchedPairs = 0;
+    renderDeck();
+    await docRef.set({
+      deck,
+      matchedIndices: [],
+      playerPoints,
+      botPoints,
+      currentTurn,
+      botMemory,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    return deck;
+  }
+
+  function cleanupBotMemoryAfterLoad(){
+    // remove indices that are already matched
+    const matchedSet = new Set();
+    document.querySelectorAll('.card.matched').forEach(c => matchedSet.add(Number(c.dataset.index)));
+    for(const em in botMemory){
+      botMemory[em] = (botMemory[em] || []).filter(i => !matchedSet.has(Number(i)));
+      if(botMemory[em].length === 0) delete botMemory[em];
+    }
+  }
+
+  // fallback local deck creation (if persistence fails)
+  function createLocalDeck(){
+    deck = [...EMOJIS, ...EMOJIS];
+    shuffle(deck);
+    playerPoints = 0; botPoints = 0; currentTurn = 'player'; botMemory = {}; matchedPairs = 0;
+    renderDeck();
+    setTurn('player');
+  }
+
+  // ---------- Rendering and gameplay ----------
+  function renderDeck(){
+    boardEl.innerHTML = '';
+    deck.forEach((emoji, idx) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.index = idx;
+      card.dataset.emoji = emoji;
+      card.innerHTML = `<div class="card-inner"><div class="face front">${emoji}</div><div class="face back">?</div></div>`;
+      card.addEventListener('click', () => playerFlip(card));
+      boardEl.appendChild(card);
+    });
+  }
+
+  function updatePointsUI(){
+    playerPointsEl.textContent = playerPoints;
+    botPointsEl.textContent = botPoints;
+  }
+  function setTurn(t){
+    currentTurn = t;
+    turnBadge.textContent = (t === 'player') ? 'Your turn' : "Bot's turn";
+    enableBoard(t === 'player');
+    saveGameState(); // persist turn change
+  }
+  function enableBoard(on){
+    document.querySelectorAll('.card').forEach(c => {
+      if(!c.classList.contains('matched')) c.style.pointerEvents = on ? 'auto' : 'none';
+    });
+  }
+
+  // remember a revealed card for bot memory (index is numeric)
+  function rememberCardForBot(index, emoji){
+    if(!botMemory[emoji]) botMemory[emoji] = [];
+    const arr = botMemory[emoji];
+    if(!arr.includes(index)) arr.push(index);
+    // keep only unmatched indices in memory; caller will clean matched
+    saveGameState(); // persist memory incrementally
+  }
+
+  // called whenever a card is matched to remove those indices from memory
+  function forgetMatchedIndices(indices){
+    const set = new Set(indices.map(Number));
+    for(const em in botMemory){
+      botMemory[em] = botMemory[em].filter(i => !set.has(Number(i)));
+      if(botMemory[em].length === 0) delete botMemory[em];
+    }
+    saveGameState();
+  }
+
+  // Player flip
+  async function playerFlip(card){
+    if(currentTurn !== 'player') return;
+    if(card.classList.contains('flipped') || card.classList.contains('matched')) return;
+    if(flipped.length === 2) return;
+
+    // first user gesture to allow audio resume
+    if(!audioCtx) try{ ensureAudioCtx(); }catch(e){}
+
+    card.classList.add('flipped'); playFlipSound();
+    flipped.push(card);
+    // remember card for bot
+    rememberCardForBot(Number(card.dataset.index), card.dataset.emoji);
+
+    if(flipped.length === 2){
+      const [a,b] = flipped;
+      const e1 = a.dataset.emoji, e2 = b.dataset.emoji;
+      if(e1 === e2){
+        // player matched
+        await sleep(260);
+        a.classList.add('matched'); b.classList.add('matched'); playMatchSound();
+        playerPoints++; matchedPairs++; updatePointsUI();
+        // remove matched indices from bot memory
+        forgetMatchedIndices([a.dataset.index, b.dataset.index]);
+        flipped = [];
+        saveGameState();
+        if(matchedPairs === TOTAL_PAIRS){ await finishGame(); return; }
+        // switch to bot (to keep bot involved)
+        setTimeout(()=> { setTurn('bot'); setTimeout(botPlay, 600); }, 300);
+      } else {
+        // mismatch: show then flip back and let bot play
+        await sleep(700);
+        a.classList.remove('flipped'); b.classList.remove('flipped');
+        flipped = [];
+        saveGameState();
+        setTurn('bot');
+        setTimeout(botPlay, 500);
+      }
+    } else {
+      saveGameState();
+    }
+  }
+
+  // Bot dramatic play (uses botMemory to be smart)
+  async function botPlay(){
+    // find unmatched & unflipped cards
+    const unmatched = Array.from(document.querySelectorAll('.card')).filter(c => !c.classList.contains('matched') && !c.classList.contains('flipped'));
+    if(unmatched.length < 2){ return finishGame(); }
+
+    // 1) check botMemory for any emoji with at least 2 indices (smart match)
+    for(const em in botMemory){
+      const idxs = botMemory[em] || [];
+      // ensure indices are still unmatched and present in DOM
+      const valid = idxs.map(Number).filter(i => {
+        const cc = document.querySelector(`.card[data-index='${i}']`);
+        return cc && !cc.classList.contains('matched') && !cc.classList.contains('flipped');
       });
+      if(valid.length >= 2){
+        // dramatic flipping
+        const c1 = document.querySelector(`.card[data-index='${valid[0]}']`);
+        const c2 = document.querySelector(`.card[data-index='${valid[1]}']`);
+        await botFlipVisible(c1, 600);
+        await botFlipVisible(c2, 600);
+        c1.classList.add('matched'); c2.classList.add('matched'); playMatchSound();
+        botPoints++; matchedPairs++; updatePointsUI();
+        // remove matched indices from memory
+        forgetMatchedIndices([valid[0], valid[1]]);
+        saveGameState();
+        if(matchedPairs === TOTAL_PAIRS){ await finishGame(); return; }
+        setTurn('player');
+        return;
+      }
     }
 
-    // defensive: log uncaught errors
-    window.addEventListener('error', e => console.error('Uncaught error:', e.error || e.message));
-    window.addEventListener('unhandledrejection', e => console.error('Unhandled rejection:', e.reason));
+    // 2) otherwise bot will try to flip cards with a bit of drama: reveal one card, remember it, then attempt to find its pair in memory
+    // pick first card randomly
+    const first = unmatched[Math.floor(Math.random()*unmatched.length)];
+    await botFlipVisible(first, 600);
+    rememberCardForBot(Number(first.dataset.index), first.dataset.emoji);
+
+    // check memory for a pair (excluding first)
+    const known = (botMemory[first.dataset.emoji] || []).filter(i => Number(i) !== Number(first.dataset.index));
+    if(known.length > 0){
+      // reveal known matching index
+      const second = document.querySelector(`.card[data-index='${known[0]}']`);
+      await botFlipVisible(second, 600);
+      // mark matched
+      second.classList.add('matched'); first.classList.add('matched'); playMatchSound();
+      botPoints++; matchedPairs++; updatePointsUI();
+      forgetMatchedIndices([first.dataset.index, second.dataset.index]);
+      saveGameState();
+      if(matchedPairs === TOTAL_PAIRS){ await finishGame(); return; }
+      setTurn('player');
+      return;
+    }
+
+    // 3) else pick a random second card (not the first)
+    const remaining = unmatched.filter(c => c !== first);
+    const second = remaining[Math.floor(Math.random()*remaining.length)];
+    await botFlipVisible(second, 600);
+    rememberCardForBot(Number(second.dataset.index), second.dataset.emoji);
+
+    // if they match (rare chance), mark matched
+    if(first.dataset.emoji === second.dataset.emoji){
+      playMatchSound();
+      first.classList.add('matched'); second.classList.add('matched');
+      botPoints++; matchedPairs++; updatePointsUI();
+      forgetMatchedIndices([first.dataset.index, second.dataset.index]);
+      saveGameState();
+      if(matchedPairs === TOTAL_PAIRS){ return finishGame(); }
+      setTurn('player'); return;
+    } else {
+      // flip both back after a short pause
+      await sleep(500);
+      first.classList.remove('flipped'); second.classList.remove('flipped');
+      saveGameState();
+      setTurn('player');
+      return;
+    }
+  }
+
+  // helper for bot visible flip with audio
+  async function botFlipVisible(card, revealMs = 650){
+    if(!card) return;
+    card.classList.add('flipped'); playFlipSound();
+    await sleep(revealMs);
+  }
+
+  // finish and credit
+  async function finishGame(){
+    enableBoard(false);
+    const result = playerPoints > botPoints ? 'player' : playerPoints < botPoints ? 'bot' : 'draw';
+    // record last play timestamp (non-blocking)
+    if(userRef){
+      userRef.update({ lastMemoryFlip: firebase.firestore.FieldValue.serverTimestamp() }).catch(e=>console.warn('lastMemoryFlip write failed', e));
+    }
+
+    if(result === 'player' && userRef){
+      try{
+        // credit via transaction
+        await db.runTransaction(async (t) => {
+          const doc = await t.get(userRef);
+          const curr = (doc.exists && doc.data().balance) ? Number(doc.data().balance) : 0;
+          t.update(userRef, { balance: curr + WIN_CREDIT });
+        });
+        await userRef.collection('transactions').add({ source: 'Memory Flip — Win', amount: WIN_CREDIT, date: new Date().toISOString() });
+        playWinSound();
+        showModal(true, WIN_CREDIT);
+      }catch(err){
+        console.error('credit failed', err);
+        showModal(true, WIN_CREDIT, true);
+      }
+    } else {
+      // lost or draw
+      showModal(false, 0);
+    }
+  }
+
+  // modal that can only be closed using the button (redirect to games.html)
+  function showModal(playerWon, amount, creditFailed=false){
+    const overlay = document.createElement('div'); overlay.className = 'overlay-modal';
+    overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
+      <h2>${playerWon ? 'Congratulations!' : (playerPoints === botPoints ? "It's a draw" : 'You lost this round')}</h2>
+      <p style="margin-top:10px">Player: <strong>${playerPoints}</strong> — Bot: <strong>${botPoints}</strong></p>
+      ${playerWon ? `<p class="muted">${creditFailed ? 'You won — but credit failed (check console).' : 'You won ₦'+amount+' — credited to your balance.'}</p>`
+                 : `<p class="muted">${playerPoints === botPoints ? "It's a draw — try again!" : 'Don’t be discouraged — try again to beat the bot!'}</p>`}
+      <button id="modalClose" class="btn btn-primary" style="margin-top:14px">Close — Go to games</button>
+    </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('modalClose').addEventListener('click', ()=>{ window.location.href = 'games.html'; });
+  }
+
+  // ---------- Auth + initial load ----------
+  auth.onAuthStateChanged(async (u) => {
+    if(!u) return window.location.href = 'login.html';
+    currentUser = u;
+    userRef = db.collection('users').doc(u.uid);
+    try{
+      const snap = await userRef.get();
+      if(!snap.exists) return window.location.href = 'profile.html';
+      const data = snap.data();
+      username = data.username || data.displayName || (u.email ? u.email.split('@')[0] : 'User');
+      usernameBadge.textContent = 'User: ' + username;
+      // load persisted state or create new
+      await loadGameStateOrCreate();
+      // ensure UI updated
+      updatePointsUI();
+      setTurn(currentTurn || 'player');
+    }catch(err){
+      console.error('Failed to load user doc or game state', err);
+      return window.location.href = 'login.html';
+    }
+  });
+
+  // save on beforeunload to minimize race-loss (best-effort)
+  window.addEventListener('beforeunload', (e) => {
+    saveGameState();
+  });
+
+  // defensive error logging for debugging
+  window.addEventListener('error', e => console.error('Uncaught error:', e.error || e.message));
+  window.addEventListener('unhandledrejection', e => console.error('Unhandled rejection:', e.reason));
   </script>
 </body>
 </html>
