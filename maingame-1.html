@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Memory Flip — Beni-Wealth</title>
+
+  <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg-1: #0b0613;
+      --bg-2: #0f0820;
+      --muted: rgba(255,255,255,0.66);
+      --accent-a: #8446ff;
+      --accent-b: #6ce2c8;
+      --accent-grad: linear-gradient(135deg,var(--accent-a),#5b3bff 45%,var(--accent-b) 100%);
+      --panel: rgba(255,255,255,0.02);
+      --card: #071812;
+      --glass: rgba(255,255,255,0.03);
+      --radius: 14px;
+      --text: #eaf2ff;
+      font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      background:
+        radial-gradient(1000px 600px at 10% 10%, rgba(132,70,255,0.06), transparent),
+        radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.04), transparent),
+        linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      padding:20px;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+
+    .phone {
+      width:100%;
+      max-width:460px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      padding:18px;
+      border-radius:20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      margin:20px;
+      min-height: calc(100vh - 60px);
+      overflow:auto;
+    }
+
+    header{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;
+    }
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:12px;background:var(--accent-grad);display:grid;place-items:center;color:#041219;font-weight:800}
+    h1{margin:0;font-size:17px}
+    .muted{color:var(--muted);font-size:13px}
+
+    .card-panel{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .card {
+      width:100%;
+      padding-top:100%; /* square */
+      position:relative;
+      perspective: 1000px;
+    }
+    .card-inner {
+      position:absolute; inset:0;
+      transition: transform 0.6s; transform-style: preserve-3d; cursor:pointer;
+      border-radius:10px; overflow:hidden;
+    }
+    .card.flipped .card-inner { transform: rotateY(180deg); pointer-events:none; }
+    .card-front, .card-back{
+      position:absolute; inset:0; display:flex;align-items:center;justify-content:center;
+      backface-visibility:hidden; font-weight:700; font-size:22px;
+    }
+    .card-front {
+      background: #fff; color:#041219; border-radius:10px; transform: rotateY(180deg);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    }
+    .card-back {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+      border-radius:10px; color:var(--text); display:grid;place-items:center;
+      box-shadow: inset 0 -4px 10px rgba(0,0,0,0.2);
+      font-size:20px;
+    }
+
+    .status-row{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:12px}
+    .status-row .info{font-weight:700}
+    .points{display:flex;gap:10px;align-items:center}
+    .point-badge{background:var(--glass);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+
+    #status, #timer {margin-top:8px;font-weight:700}
+
+    .overlay-modal {
+      position:fixed; inset:0; display:flex;align-items:center;justify-content:center;
+      background:rgba(2,6,23,0.6); z-index:2000;
+    }
+    .modal {
+      width: calc(min(520px, 92%));
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:16px; padding:20px; text-align:center; color:var(--text);
+      border:1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 30px 90px rgba(0,0,0,0.6);
+    }
+    .modal h2{margin:0 0 8px}
+    .modal p{color:var(--muted);margin-top:8px}
+    .modal .btn { margin-top:16px; padding:12px 18px; border-radius:10px; border:0; cursor:pointer; font-weight:700; }
+    .btn-primary { background:var(--accent-grad); color:#041219; }
+
+    @media(max-width:420px){
+      .board { gap:8px; }
+      .card-front, .card-back{ font-size:18px }
+      .logo{width:48px;height:48px}
+    }
+  </style>
+</head>
+<body>
+  <div class="phone" role="main">
+    <header>
+      <div class="brand">
+        <div class="logo">BW</div>
+        <div>
+          <h1>Beni-Wealth — Memory Flip</h1>
+          <div class="muted">Match pairs, beat the bot, win rewards</div>
+        </div>
+      </div>
+      <div class="muted">Time left: <span id="timer">60s</span></div>
+    </header>
+
+    <div class="card-panel">
+      <div class="status-row">
+        <div>
+          <div id="status">Flips: 0</div>
+          <div class="muted">Match pairs to score — bot will also take turns</div>
+        </div>
+        <div class="points">
+          <div class="point-badge">Player Points: <strong id="playerPoints">0</strong></div>
+          <div class="point-badge">Bot Points: <strong id="botPoints">0</strong></div>
+        </div>
+      </div>
+
+      <div class="board" id="board" aria-label="Memory board"></div>
+
+      <div style="display:flex;gap:10px;justify-content:space-between;margin-top:12px;align-items:center">
+        <button id="restartBtn" class="btn btn-primary">Restart</button>
+        <div class="muted" id="infoText">First to more points wins — if you win you'll get ₦40 credited.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    /******************************
+     * Firebase (Beni-Wealth) config
+     ******************************/
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    /*******************
+     * Game constants
+     *******************/
+    const EMOJIS = ['🍎','🍌','🍇','🍓','🍉','🥝','🍑','🍍','🍋','🍒'];
+    const TOTAL_PAIRS = EMOJIS.length;
+    const GAME_TIME = 60; // seconds
+    const BOT_SUCCESS_PROB = 0.5; // 50% fairness
+    const WIN_CREDIT = 40; // naira awarded when player wins
+
+    /*******************
+     * State
+     *******************/
+    let deck = [];
+    let flipped = [];
+    let matchedCount = 0;
+    let flips = 0;
+    let timeLeft = GAME_TIME;
+    let timerInterval = null;
+
+    let playerPoints = 0;
+    let botPoints = 0;
+
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    const timerEl = document.getElementById('timer');
+    const playerPointsEl = document.getElementById('playerPoints');
+    const botPointsEl = document.getElementById('botPoints');
+    const restartBtn = document.getElementById('restartBtn');
+
+    let currentUser = null;
+    let userRef = null;
+    let userData = null;
+
+    function shuffle(arr){
+      for(let i=arr.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    function setStatus(text){ statusEl.innerText = text; }
+    function setTimer(t){ timerEl.innerText = `${t}s`; }
+    function updatePointsUI(){
+      playerPointsEl.innerText = playerPoints;
+      botPointsEl.innerText = botPoints;
+    }
+
+    function buildDeck(){
+      deck = [...EMOJIS, ...EMOJIS];
+      shuffle(deck);
+      boardEl.innerHTML = '';
+      deck.forEach((emoji, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.index = idx;
+        card.innerHTML = `
+          <div class="card-inner" data-emoji="${emoji}">
+            <div class="card-front">${emoji}</div>
+            <div class="card-back">?</div>
+          </div>`;
+        card.addEventListener('click', () => onPlayerFlip(card));
+        boardEl.appendChild(card);
+      });
+    }
+
+    function resetGame(){
+      flipped = []; matchedCount = 0; flips = 0; timeLeft = GAME_TIME;
+      playerPoints = 0; botPoints = 0;
+      updatePointsUI();
+      setStatus(`Flips: ${flips}`);
+      setTimer(timeLeft);
+      buildDeck();
+      enableBoard(true);
+      if(timerInterval) clearInterval(timerInterval);
+      startTimer();
+    }
+
+    function enableBoard(val){
+      document.querySelectorAll('.card').forEach(c => {
+        if(!c.classList.contains('matched')) c.style.pointerEvents = val ? 'auto' : 'none';
+      });
+    }
+
+    function onPlayerFlip(cardEl){
+      if(cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+      if(flipped.length === 2) return;
+
+      cardEl.classList.add('flipped');
+      flipped.push(cardEl);
+
+      if(flipped.length === 2){
+        flips++;
+        setStatus(`Flips: ${flips}`);
+        const [a,b] = flipped;
+        const e1 = a.querySelector('.card-inner').dataset.emoji;
+        const e2 = b.querySelector('.card-inner').dataset.emoji;
+        if(e1 === e2){
+          a.classList.add('matched'); b.classList.add('matched');
+          matchedCount += 1;
+          playerPoints += 1;
+          updatePointsUI();
+          flipped = [];
+          if(matchedCount === TOTAL_PAIRS){ endGame(); return; }
+          setTimeout(() => { botTurn(); }, 800);
+        } else {
+          enableBoard(false);
+          setTimeout(()=> {
+            a.classList.remove('flipped'); b.classList.remove('flipped');
+            flipped = [];
+            enableBoard(false);
+            setTimeout(()=> botTurn(), 500);
+          }, 700);
+        }
+      }
+    }
+
+    async function botTurn(){
+      const unmatchedCards = Array.from(document.querySelectorAll('.card'))
+        .filter(c => !c.classList.contains('matched') && !c.classList.contains('flipped'));
+      if(unmatchedCards.length < 2){
+        endGame(); return;
+      }
+
+      const success = Math.random() < BOT_SUCCESS_PROB;
+
+      if(success){
+        const map = {};
+        for(const c of unmatchedCards){
+          const emoji = c.querySelector('.card-inner').dataset.emoji;
+          if(!map[emoji]) map[emoji] = [];
+          map[emoji].push(c);
+        }
+        const candidates = Object.values(map).filter(arr => arr.length >= 2);
+        if(candidates.length > 0){
+          const pair = candidates[Math.floor(Math.random() * candidates.length)];
+          pair[0].classList.add('flipped'); pair[1].classList.add('flipped');
+          await new Promise(res => setTimeout(res, 700));
+          pair[0].classList.add('matched'); pair[1].classList.add('matched');
+          matchedCount += 1;
+          botPoints += 1;
+          updatePointsUI();
+          if(matchedCount === TOTAL_PAIRS){ endGame(); return; }
+          enableBoard(true);
+          return;
+        }
+      }
+
+      const pick = [];
+      while(pick.length < 2){
+        const c = unmatchedCards[Math.floor(Math.random()*unmatchedCards.length)];
+        if(!pick.includes(c)) pick.push(c);
+      }
+      pick[0].classList.add('flipped');
+      await new Promise(res => setTimeout(res, 450));
+      pick[1].classList.add('flipped');
+      await new Promise(res => setTimeout(res, 800));
+      pick[0].classList.remove('flipped');
+      pick[1].classList.remove('flipped');
+      enableBoard(true);
+    }
+
+    function startTimer(){
+      setTimer(timeLeft);
+      timerInterval = setInterval(()=> {
+        timeLeft--;
+        setTimer(timeLeft);
+        if(timeLeft <= 0){
+          clearInterval(timerInterval);
+          enableBoard(false);
+          endGame();
+        }
+      }, 1000);
+    }
+
+    async function endGame(){
+      if(timerInterval) clearInterval(timerInterval);
+      enableBoard(false);
+
+      const result = (playerPoints > botPoints) ? 'player' : (playerPoints < botPoints) ? 'bot' : 'draw';
+      // record last play timestamp (no blocking)
+      try{
+        if(userRef){
+          await userRef.update({ lastMemoryFlip: firebase.firestore.FieldValue.serverTimestamp() });
+        }
+      }catch(e){ console.warn('failed writing lastMemoryFlip', e); }
+
+      if(result === 'player'){
+        try{
+          const snap = await userRef.get();
+          const currentBal = Number((snap.data() && snap.data().balance) || 0);
+          const newBal = currentBal + WIN_CREDIT;
+          await userRef.update({ balance: newBal });
+          await userRef.collection('transactions').add({
+            source: "Memory Flip — Win",
+            amount: WIN_CREDIT,
+            date: new Date().toISOString()
+          });
+          showResultModal(true, WIN_CREDIT, playerPoints, botPoints);
+        }catch(err){
+          console.error('Credit failed', err);
+          showResultModal(true, WIN_CREDIT, playerPoints, botPoints, true);
+        }
+      } else {
+        showResultModal(false, 0, playerPoints, botPoints);
+      }
+    }
+
+    function showResultModal(playerWon, amount, pPoints, bPoints, creditFailed=false){
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay-modal';
+      overlay.innerHTML = `
+        <div class="modal" role="dialog" aria-modal="true">
+          <h2>${playerWon ? 'Congratulations!' : (pPoints === bPoints ? 'It\\'s a draw' : 'Good effort')}</h2>
+          <p style="font-size:18px;margin-top:8px;">
+            Player: <strong>${pPoints}</strong> — Bot: <strong>${bPoints}</strong>
+          </p>
+          ${playerWon ? `<p class="muted" style="margin-top:10px;">You won ₦${amount}${creditFailed ? ' (credit failed — check console)' : ''} — credited to your Beni-Wealth balance.</p>` : `<p class="muted" style="margin-top:10px;">${pPoints===bPoints ? 'Both have equal points.' : 'The bot scored higher this time. Try again!'}</p>`}
+          <button id="resultClose" class="btn btn-primary">Close — Go to games</button>
+        </div>
+      `;
+      overlay.addEventListener('click', (ev) => { ev.stopPropagation(); });
+      document.body.appendChild(overlay);
+      document.getElementById('resultClose').focus();
+      document.getElementById('resultClose').addEventListener('click', () => {
+        window.location.href = 'games.html';
+      });
+    }
+
+    /*******************
+     * Auth & access (NO plan limitations, NO cooldown)
+     *******************/
+    auth.onAuthStateChanged(async (u) => {
+      if(!u) return window.location.href = 'login.html';
+      currentUser = u;
+      userRef = db.collection('users').doc(u.uid);
+      const snap = await userRef.get();
+      if(!snap.exists) return window.location.href = 'login.html';
+      userData = snap.data();
+
+      // Removed plan eligibility checks — allow all signed-in users to play
+      resetGame();
+    });
+
+    // restart binding
+    restartBtn.addEventListener('click', () => {
+      resetGame();
+    });
+
+    // initial UI state
+    setStatus('Loading…');
+    setTimer(GAME_TIME);
+  </script>
+</body>
+</html>
