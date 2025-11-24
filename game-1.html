@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Memory Flip — Beni-Wealth</title>
 
-  <!-- favicon (your Cloudinary logo) -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <!-- favicon using your uploaded file (local path) -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/mnt/data/1000588770.png">
   <meta name="theme-color" content="#0f0820">
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
@@ -31,6 +31,7 @@
       align-items:flex-start;
     }
 
+    /* container that centers content and allows scrolling on mobile */
     .phone{
       width:100%;
       max-width:980px;
@@ -38,15 +39,17 @@
       padding:16px;
       background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
       box-shadow:0 20px 60px rgba(0,0,0,0.6);
-      min-height:80vh;
+      min-height:88vh;
+      max-height:calc(100vh - 40px);
       overflow:auto;
     }
 
     header{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .brand{display:flex;gap:12px;align-items:center}
-    .logo-box{width:56px;height:56px;border-radius:12px;background:var(--accent-grad);display:grid;place-items:center;color:#041219;font-weight:800}
-    .logo-img{width:44px;height:44px;border-radius:6px;object-fit:cover}
-    h1{margin:0;font-size:18px}
+    .text-logo{
+      display:flex;flex-direction:column;
+    }
+    .text-logo h1{margin:0;font-size:18px}
     .muted{color:var(--muted);font-size:13px}
 
     .layout { margin-top:12px; }
@@ -55,66 +58,90 @@
     .board { display:grid; grid-template-columns: repeat(6, 1fr); gap:10px; }
     @media (max-width:980px){ .board { grid-template-columns: repeat(5, 1fr); } }
     @media (max-width:720px){ .board { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width:420px){ .board { grid-template-columns: repeat(3, 1fr); gap:8px; } }
 
     .card { position:relative; width:100%; padding-top:100%; perspective:1000px; cursor:pointer; }
-    /* card-inner rotates; front (face-down) shows "?" initially; back (face-up) contains the emoji */
-    .card-inner { position:absolute; inset:0; border-radius:10px; transition:transform .55s; transform-style:preserve-3d; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.25); transform: rotateY(0deg); }
+    /* card-inner rotates; front (face-down) intentionally blank; back (face-up) shows emoji/object */
+    .card-inner { position:absolute; inset:0; border-radius:10px; transition:transform .45s ease; transform-style:preserve-3d; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.25); transform: rotateY(0deg); background:transparent; }
     .card.flipped .card-inner { transform:rotateY(180deg); pointer-events:none; }
     .face { position:absolute; inset:0; display:flex;align-items:center;justify-content:center; backface-visibility:hidden; font-weight:800; font-size:22px; border-radius:10px; }
-    .face.front{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); color:var(--text); transform: rotateY(0deg); } /* face-down */
-    .face.back{ background:#fff; color:#041219; transform: rotateY(180deg); } /* face-up = emoji */
+    .face.front{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); color:var(--text); transform: rotateY(0deg); } /* face-down: intentionally blank (no "?") */
+    .face.back{ background:#ffffff; color:#041219; transform: rotateY(180deg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
 
-    .top-row { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    /* emoji styling */
+    .emoji { font-size:28px; line-height:1; }
+    .emoji-label { font-size:11px; color:rgba(0,0,0,0.45); margin-top:2px; }
+
+    /* tiny watermark (Beni-Wealth) on cards */
+    .watermark {
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 6px;
+      opacity: 0.86;
+      pointer-events: none;
+      user-select: none;
+    }
+    .face.front .watermark { color: rgba(255,255,255,0.10); background: rgba(255,255,255,0.00); }
+    .face.back .watermark  { color: rgba(0,0,0,0.36); background: rgba(255,255,255,0.90); }
+
+    .top-row { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; }
     .badge { background:var(--glass); padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); font-weight:700; }
+
+    /* mute button */
+    .mute-btn{
+      background:transparent;border:1px solid rgba(255,255,255,0.05);padding:8px 10px;border-radius:10px;color:var(--muted);cursor:pointer;font-weight:700;
+    }
 
     .overlay-modal{ position:fixed; inset:0; background:rgba(2,6,23,0.6); display:flex; align-items:center; justify-content:center; z-index:3000; }
     .modal{ width:92%; max-width:520px; padding:18px; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); box-shadow:0 30px 90px rgba(0,0,0,0.6); text-align:center; }
     .btn{ padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:700; }
     .btn-primary { background:var(--accent-grad); color:#041219; }
 
+    /* subtle matched style */
+    .card.matched .card-inner { box-shadow: 0 10px 30px rgba(0,0,0,0.35); border: 1px solid rgba(0,0,0,0.06); }
+    .face.back .emoji { font-size: calc(14px + 1.6vw); } /* responsive emoji size */
+
     @media(max-width:420px){
       .face{ font-size:18px }
-      .logo-box{ width:48px; height:48px }
     }
   </style>
 </head>
 <body>
-  <div class="phone" id="app">
+  <div class="phone" id="app" role="main" aria-live="polite">
     <header>
       <div class="brand">
-        <div class="logo-box">
-          <!-- using your Cloudinary logo for the page -->
-          <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Ewoma/BW logo" class="logo-img" />
-        </div>
-        <div>
+        <div class="text-logo">
           <h1>Memory Flip</h1>
           <div class="muted">Flip objects — beat the bot — win ₦40 if you score higher</div>
         </div>
       </div>
 
-      <div style="display:flex;gap:10px;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center">
         <div class="badge" id="usernameBadge">User: —</div>
-        <div class="badge">Bot Points: <strong id="botPoints">0</strong></div>
+        <div class="badge">Bot: <strong id="botPoints">0</strong></div>
+        <button id="muteBtn" class="mute-btn" title="Mute / Unmute music">Mute</button>
       </div>
     </header>
 
     <div class="layout">
       <div class="board-wrap">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="badge">Player Points: <strong id="playerPoints">0</strong></div>
+        <div class="top-row">
+          <div class="badge">Player: <strong id="playerPoints">0</strong></div>
           <div class="badge" id="turnBadge">Loading…</div>
         </div>
 
-        <div style="height:12px"></div>
         <div class="board" id="board" aria-label="Memory board"></div>
 
-        <div style="margin-top:12px;color:var(--muted)">The board appears when you're signed in. Each correct pair = 1 point. No timer.</div>
+        <div style="margin-top:12px;color:var(--muted)">Board shows 30 cards when signed in. Each correct pair = 1 point. No timer. Game persists across refresh so your progress stays.</div>
       </div>
     </div>
   </div>
 
-  <!-- PASTE PART 2 BELOW THIS LINE (the JavaScript and closing tags) -->
-    <!-- Firebase compat SDKs -->
+  <!-- Firebase compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -145,7 +172,7 @@
   const WIN_CREDIT = 40;
 
   let deck = []; // array of emojis length 30
-  let flipped = []; // currently flipped DOM elements
+  let flipped = []; // currently flipped DOM elements (transient)
   let matchedPairs = 0;
   let playerPoints = 0;
   let botPoints = 0;
@@ -163,27 +190,55 @@
   const botPointsEl = document.getElementById('botPoints');
   const turnBadge = document.getElementById('turnBadge');
   const usernameBadge = document.getElementById('usernameBadge');
+  const muteBtn = document.getElementById('muteBtn');
 
-  // audio (WebAudio) setup (single shared AudioContext)
+  // --- Audio: WebAudio for sound effects + background music loop ---
   let audioCtx = null;
+  let bgGain = null;
+  let bgOsc1 = null;
+  let bgOsc2 = null;
+  let bgLFO = null;
+  let isMuted = localStorage.getItem('bw_music_muted') === '1';
+
   function ensureAudioCtx(){
     if(!audioCtx){
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
   }
+
+  function updateMuteBtn(){
+    muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';
+    muteBtn.title = isMuted ? 'Unmute music' : 'Mute music';
+  }
+
+  function setMuteState(m){
+    isMuted = !!m;
+    localStorage.setItem('bw_music_muted', isMuted ? '1' : '0');
+    updateMuteBtn();
+    if(bgGain) {
+      try { bgGain.gain.setTargetAtTime(isMuted ? 0.0001 : 0.18, audioCtx.currentTime, 0.02); } catch(e){}
+    }
+  }
+
+  muteBtn.addEventListener('click', () => {
+    try{ ensureAudioCtx(); if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{}); }catch(e){}
+    setMuteState(!isMuted);
+  });
+  updateMuteBtn();
+
   function playFlipSound(){
     try{
       ensureAudioCtx();
       const o = audioCtx.createOscillator();
       const g = audioCtx.createGain();
       o.type = 'sine';
-      o.frequency.setValueAtTime(800, audioCtx.currentTime);
+      o.frequency.setValueAtTime(900, audioCtx.currentTime);
       g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(isMuted ? 0.0001 : 0.18, audioCtx.currentTime + 0.01);
       o.connect(g); g.connect(audioCtx.destination);
       o.start();
-      o.stop(audioCtx.currentTime + 0.12);
-    }catch(e){ /* ignore */ }
+      o.stop(audioCtx.currentTime + 0.10);
+    }catch(e){}
   }
   function playMatchSound(){
     try{
@@ -192,7 +247,7 @@
       const o1 = audioCtx.createOscillator(); o1.type='triangle'; o1.frequency.setValueAtTime(440, now);
       const o2 = audioCtx.createOscillator(); o2.type='sine'; o2.frequency.setValueAtTime(660, now);
       const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0001, now);
-      g.gain.exponentialRampToValueAtTime(0.25, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(isMuted ? 0.0001 : 0.26, now + 0.01);
       o1.connect(g); o2.connect(g); g.connect(audioCtx.destination);
       o1.start(now); o2.start(now);
       o1.stop(now + 0.18); o2.stop(now + 0.18);
@@ -203,7 +258,7 @@
       ensureAudioCtx();
       const now = audioCtx.currentTime;
       const freqs = [660,880,1100];
-      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.3, now + 0.02);
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(isMuted ? 0.0001 : 0.3, now + 0.02);
       freqs.forEach((f,i)=>{
         const o = audioCtx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(f, now + i*0.03);
         o.connect(g);
@@ -214,33 +269,91 @@
     }catch(e){}
   }
 
-  // START MUSIC: short arpeggio/intro when a new game starts
-  function playStartMusic(){
+  // Start background ambient music (looped synth). Controlled by bgGain for mute.
+  function startBackgroundMusic(){
     try{
       ensureAudioCtx();
-      if(audioCtx.state === 'suspended'){
-        // resume if needed (some browsers require a user gesture)
-        audioCtx.resume().catch(()=>{});
+      if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+      // if already started, set gain and return
+      if(bgGain) {
+        try { bgGain.gain.setTargetAtTime(isMuted ? 0.0001 : 0.18, audioCtx.currentTime, 0.02); } catch(e){}
+        return;
       }
+
+      bgGain = audioCtx.createGain();
+      bgGain.gain.setValueAtTime(isMuted ? 0.0001 : 0.18, audioCtx.currentTime);
+
+      // two slow detuned oscillators for pad
+      bgOsc1 = audioCtx.createOscillator();
+      bgOsc1.type = 'sine';
+      bgOsc1.frequency.value = 110; // low pad
+      const bgOsc1Gain = audioCtx.createGain(); bgOsc1Gain.gain.value = 0.6;
+
+      bgOsc2 = audioCtx.createOscillator();
+      bgOsc2.type = 'sine';
+      bgOsc2.frequency.value = 147; // slightly detuned
+      const bgOsc2Gain = audioCtx.createGain(); bgOsc2Gain.gain.value = 0.45;
+
+      // subtle LFO to modulate detune
+      bgLFO = audioCtx.createOscillator();
+      bgLFO.type = 'sine';
+      bgLFO.frequency.value = 0.07;
+      const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 30;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 900;
+
+      bgOsc1.connect(bgOsc1Gain);
+      bgOsc2.connect(bgOsc2Gain);
+      bgOsc1Gain.connect(filter);
+      bgOsc2Gain.connect(filter);
+      filter.connect(bgGain);
+      bgGain.connect(audioCtx.destination);
+
+      bgLFO.connect(lfoGain);
+      lfoGain.connect(bgOsc1.detune);
+      lfoGain.connect(bgOsc2.detune);
+
+      bgOsc1.start();
+      bgOsc2.start();
+      bgLFO.start();
+    }catch(e){
+      console.warn('startBackgroundMusic failed', e);
+    }
+  }
+
+  function stopBackgroundMusic(){
+    try{
+      if(bgOsc1){ bgOsc1.stop(); bgOsc1.disconnect(); bgOsc1 = null; }
+      if(bgOsc2){ bgOsc2.stop(); bgOsc2.disconnect(); bgOsc2 = null; }
+      if(bgLFO){ bgLFO.stop(); bgLFO.disconnect(); bgLFO = null; }
+      if(bgGain){ bgGain.disconnect(); bgGain = null; }
+    }catch(e){
+      console.warn('stopBackgroundMusic failed', e);
+    }
+  }
+
+  // small chime on start
+  function playStartChime(){
+    try{
+      ensureAudioCtx();
+      if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
       const now = audioCtx.currentTime;
-      const seq = [330, 440, 550, 660]; // ascending
+      const seq = [330, 440, 550];
       const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0001, now);
-      g.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+      g.gain.exponentialRampToValueAtTime(isMuted ? 0.0001 : 0.24, now + 0.02);
       seq.forEach((f,i)=>{
         const o = audioCtx.createOscillator();
         o.type = 'sine';
-        o.frequency.setValueAtTime(f, now + i*0.09);
+        o.frequency.setValueAtTime(f, now + i*0.08);
         o.connect(g);
-        o.start(now + i*0.09);
-        o.stop(now + 0.22 + i*0.09);
+        o.start(now + i*0.08);
+        o.stop(now + 0.2 + i*0.08);
       });
-      // fade out
-      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
       g.connect(audioCtx.destination);
-    }catch(e){
-      // ignore if autoplay blocked
-      console.warn('start music failed', e);
-    }
+    }catch(e){}
   }
 
   // utilities
@@ -251,7 +364,7 @@
   const GAME_DOC_PATH = (uid) => `users/${uid}/games/memoryFlip`;
 
   async function saveGameState(){
-    if(!userRef) return;
+    if(!userRef || !currentUser) return;
     try {
       const matchedIndices = [];
       document.querySelectorAll('.card.matched').forEach(c => matchedIndices.push(Number(c.dataset.index)));
@@ -348,11 +461,23 @@
       card.className = 'card';
       card.dataset.index = idx;
       card.dataset.emoji = emoji;
-      // front = face-down "?" and back = emoji visible when flipped
-      card.innerHTML = `<div class="card-inner"><div class="face front">?</div><div class="face back">${emoji}</div></div>`;
+      // FRONT: blank face-down (no "?"); BACK: emoji (visible when flipped). Add watermark element.
+      card.innerHTML = `<div class="card-inner" aria-hidden="false">
+          <div class="face front" aria-hidden="true"><div class="watermark">Beni-Wealth</div></div>
+          <div class="face back" aria-hidden="true"><div class="emoji">${emoji}</div><div class="emoji-label">${emojiName(emoji)}</div><div class="watermark">Beni-Wealth</div></div>
+        </div>`;
       card.addEventListener('click', () => playerFlip(card));
       boardEl.appendChild(card);
     });
+  }
+
+  function emojiName(e){
+    // simple label for accessibility (not necessary but helpful)
+    const map = {
+      '🍎':'Apple','🍌':'Banana','🍇':'Grapes','🍓':'Strawberry','🍉':'Watermelon','🥝':'Kiwifruit','🍑':'Peach',
+      '🍍':'Pineapple','🍋':'Lemon','🍒':'Cherry','🥥':'Coconut','🍊':'Orange','🥭':'Mango','🍐':'Pear','🍏':'Green Apple'
+    };
+    return map[e] || '';
   }
 
   function updatePointsUI(){
@@ -391,199 +516,4 @@
   async function playerFlip(card){
     if(currentTurn !== 'player') return;
     if(card.classList.contains('flipped') || card.classList.contains('matched')) return;
-    if(flipped.length === 2) return;
-
-    if(!audioCtx) try{ ensureAudioCtx(); }catch(e){}
-    // attempt to resume in case audio is suspended (user gesture)
-    if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
-    card.classList.add('flipped'); playFlipSound();
-    flipped.push(card);
-    rememberCardForBot(Number(card.dataset.index), card.dataset.emoji);
-
-    if(flipped.length === 2){
-      const [a,b] = flipped;
-      const e1 = a.dataset.emoji, e2 = b.dataset.emoji;
-      if(e1 === e2){
-        await sleep(260);
-        a.classList.add('matched'); b.classList.add('matched'); playMatchSound();
-        playerPoints++; matchedPairs++; updatePointsUI();
-        forgetMatchedIndices([a.dataset.index, b.dataset.index]);
-        flipped = [];
-        saveGameState();
-        if(matchedPairs === TOTAL_PAIRS){ await finishGame(); return; }
-        setTimeout(()=> { setTurn('bot'); setTimeout(botPlay, 600); }, 300);
-      } else {
-        await sleep(700);
-        a.classList.remove('flipped'); b.classList.remove('flipped');
-        flipped = [];
-        saveGameState();
-        setTurn('bot');
-        setTimeout(botPlay, 500);
-      }
-    } else {
-      saveGameState();
-    }
-  }
-
-  // Bot dramatic play
-  async function botPlay(){
-    const unmatched = Array.from(document.querySelectorAll('.card')).filter(c => !c.classList.contains('matched') && !c.classList.contains('flipped'));
-    if(unmatched.length < 2){ return finishGame(); }
-
-    for(const em in botMemory){
-      const idxs = botMemory[em] || [];
-      const valid = idxs.map(Number).filter(i => {
-        const cc = document.querySelector(`.card[data-index='${i}']`);
-        return cc && !cc.classList.contains('matched') && !cc.classList.contains('flipped');
-      });
-      if(valid.length >= 2){
-        const c1 = document.querySelector(`.card[data-index='${valid[0]}']`);
-        const c2 = document.querySelector(`.card[data-index='${valid[1]}']`);
-        await botFlipVisible(c1, 600);
-        await botFlipVisible(c2, 600);
-        c1.classList.add('matched'); c2.classList.add('matched'); playMatchSound();
-        botPoints++; matchedPairs++; updatePointsUI();
-        forgetMatchedIndices([valid[0], valid[1]]);
-        saveGameState();
-        if(matchedPairs === TOTAL_PAIRS){ await finishGame(); return; }
-        setTurn('player');
-        return;
-      }
-    }
-
-    const first = unmatched[Math.floor(Math.random()*unmatched.length)];
-    await botFlipVisible(first, 600);
-    rememberCardForBot(Number(first.dataset.index), first.dataset.emoji);
-
-    const known = (botMemory[first.dataset.emoji] || []).filter(i => Number(i) !== Number(first.dataset.index));
-    if(known.length > 0){
-      const second = document.querySelector(`.card[data-index='${known[0]}']`);
-      await botFlipVisible(second, 600);
-      second.classList.add('matched'); first.classList.add('matched'); playMatchSound();
-      botPoints++; matchedPairs++; updatePointsUI();
-      forgetMatchedIndices([first.dataset.index, second.dataset.index]);
-      saveGameState();
-      if(matchedPairs === TOTAL_PAIRS){ await finishGame(); return; }
-      setTurn('player');
-      return;
-    }
-
-    const remaining = unmatched.filter(c => c !== first);
-    const second = remaining[Math.floor(Math.random()*remaining.length)];
-    await botFlipVisible(second, 600);
-    rememberCardForBot(Number(second.dataset.index), second.dataset.emoji);
-
-    if(first.dataset.emoji === second.dataset.emoji){
-      playMatchSound();
-      first.classList.add('matched'); second.classList.add('matched');
-      botPoints++; matchedPairs++; updatePointsUI();
-      forgetMatchedIndices([first.dataset.index, second.dataset.index]);
-      saveGameState();
-      if(matchedPairs === TOTAL_PAIRS){ return finishGame(); }
-      setTurn('player'); return;
-    } else {
-      await sleep(500);
-      first.classList.remove('flipped'); second.classList.remove('flipped');
-      saveGameState();
-      setTurn('player');
-      return;
-    }
-  }
-
-  async function botFlipVisible(card, revealMs = 650){
-    if(!card) return;
-    card.classList.add('flipped'); playFlipSound();
-    await sleep(revealMs);
-  }
-
-  // finish and credit
-  async function finishGame(){
-    enableBoard(false);
-    const result = playerPoints > botPoints ? 'player' : playerPoints < botPoints ? 'bot' : 'draw';
-    if(userRef){
-      userRef.update({ lastMemoryFlip: firebase.firestore.FieldValue.serverTimestamp() }).catch(e=>console.warn('lastMemoryFlip write failed', e));
-    }
-
-    if(result === 'player' && userRef){
-      try{
-        await db.runTransaction(async (t) => {
-          const doc = await t.get(userRef);
-          const curr = (doc.exists && doc.data().balance) ? Number(doc.data().balance) : 0;
-          t.update(userRef, { balance: curr + WIN_CREDIT });
-        });
-        await userRef.collection('transactions').add({ source: 'Memory Flip — Win', amount: WIN_CREDIT, date: new Date().toISOString() });
-        playWinSound();
-        showModal(true, WIN_CREDIT);
-      }catch(err){
-        console.error('credit failed', err);
-        showModal(true, WIN_CREDIT, true);
-      }
-    } else {
-      showModal(false, 0);
-    }
-  }
-
-  function showModal(playerWon, amount, creditFailed=false){
-    const overlay = document.createElement('div'); overlay.className = 'overlay-modal';
-    overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
-      <h2>${playerWon ? 'Congratulations!' : (playerPoints === botPoints ? "It's a draw" : 'You lost this round')}</h2>
-      <p style="margin-top:10px">Player: <strong>${playerPoints}</strong> — Bot: <strong>${botPoints}</strong></p>
-      ${playerWon ? `<p class="muted">${creditFailed ? 'You won — but credit failed (check console).' : 'You won ₦'+amount+' — credited to your balance.'}</p>`
-                 : `<p class="muted">${playerPoints === botPoints ? "It's a draw — try again!" : 'Don’t be discouraged — try again to beat the bot!'}</p>`}
-      <button id="modalClose" class="btn btn-primary" style="margin-top:14px">Close — Go to games</button>
-    </div>`;
-    document.body.appendChild(overlay);
-    document.getElementById('modalClose').addEventListener('click', ()=>{ window.location.href = 'games.html'; });
-  }
-
-  // Start a new game after auth and user doc present
-  async function startNewGame(){
-    deck = []; flipped = []; matchedPairs = 0; playerPoints = 0; botPoints = 0;
-    updatePointsUI();
-    renderDeck();
-    setTurn('player');
-    // try to resume/start audio and play start music (may be blocked until user gesture)
-    try{ ensureAudioCtx(); if(audioCtx.state === 'suspended') await audioCtx.resume(); }catch(e){}
-    playStartMusic();
-    saveGameState();
-  }
-
-  // ---------- Auth + initial load ----------
-  auth.onAuthStateChanged(async (u) => {
-    if(!u) return window.location.href = 'login.html';
-    currentUser = u;
-    userRef = db.collection('users').doc(u.uid);
-    try{
-      const snap = await userRef.get();
-      if(!snap.exists) return window.location.href = 'profile.html';
-      const data = snap.data();
-      username = data.username || data.displayName || (u.email ? u.email.split('@')[0] : 'User');
-      usernameBadge.textContent = 'User: ' + username;
-      await loadGameStateOrCreate();
-      updatePointsUI();
-      // if there's no deck yet (fresh), ensure start music plays; otherwise we resumed state and do NOT replay start music
-      if(!deck || deck.length === 0){
-        await startNewGame();
-      } else {
-        // deck exists and loaded from Firestore; play start music only if deck is fresh (user asked music on game starts).
-        // We'll play a short cue now to indicate resume (optional)
-        try{ ensureAudioCtx(); if(audioCtx.state === 'suspended') await audioCtx.resume(); }catch(e){}
-        playStartMusic();
-      }
-      setTurn(currentTurn || 'player');
-    }catch(err){
-      console.error('Failed to load user doc or game state', err);
-      return window.location.href = 'login.html';
-    }
-  });
-
-  // save on beforeunload
-  window.addEventListener('beforeunload', (e) => {
-    saveGameState();
-  });
-
-  window.addEventListener('error', e => console.error('Uncaught error:', e.error || e.message));
-  window.addEventListener('unhandledrejection', e => console.error('Unhandled rejection:', e.reason));
-  </script>
-</body>
-</html>
+    
