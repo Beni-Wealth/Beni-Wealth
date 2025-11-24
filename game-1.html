@@ -4,24 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Memory Flip — Beni-Wealth</title>
+
+  <!-- favicon (your Cloudinary logo) -->
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="theme-color" content="#0f0820">
+
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <style>
-
-    
-  <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Social preview -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#2fe0b8">
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.66);
       --accent-a:#8446ff; --accent-b:#6ce2c8; --accent-grad:linear-gradient(135deg,var(--accent-a),var(--accent-b));
@@ -68,11 +57,12 @@
     @media (max-width:720px){ .board { grid-template-columns: repeat(4, 1fr); } }
 
     .card { position:relative; width:100%; padding-top:100%; perspective:1000px; cursor:pointer; }
-    .card-inner { position:absolute; inset:0; border-radius:10px; transition:transform .55s; transform-style:preserve-3d; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.25); }
+    /* card-inner rotates; front (face-down) shows "?" initially; back (face-up) contains the emoji */
+    .card-inner { position:absolute; inset:0; border-radius:10px; transition:transform .55s; transform-style:preserve-3d; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.25); transform: rotateY(0deg); }
     .card.flipped .card-inner { transform:rotateY(180deg); pointer-events:none; }
     .face { position:absolute; inset:0; display:flex;align-items:center;justify-content:center; backface-visibility:hidden; font-weight:800; font-size:22px; border-radius:10px; }
-    .front{ background:#fff; color:#041219; transform:rotateY(180deg); }
-    .back{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); color:var(--text); }
+    .face.front{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); color:var(--text); transform: rotateY(0deg); } /* face-down */
+    .face.back{ background:#fff; color:#041219; transform: rotateY(180deg); } /* face-up = emoji */
 
     .top-row { display:flex; justify-content:space-between; align-items:center; gap:12px; }
     .badge { background:var(--glass); padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); font-weight:700; }
@@ -93,12 +83,12 @@
     <header>
       <div class="brand">
         <div class="logo-box">
-          <!-- logo file (local path) -->
-          <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcr" alt="logo" class="logo-img" />
+          <!-- using your Cloudinary logo for the page -->
+          <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Ewoma/BW logo" class="logo-img" />
         </div>
         <div>
           <h1>Memory Flip</h1>
-          <div class="muted">Flip objects — beat the bot</div>
+          <div class="muted">Flip objects — beat the bot — win ₦40 if you score higher</div>
         </div>
       </div>
 
@@ -118,7 +108,7 @@
         <div style="height:12px"></div>
         <div class="board" id="board" aria-label="Memory board"></div>
 
-        <div style="margin-top:12px;color:var(--muted)">The board appears when you're signed in. Each correct pair = 1 point.</div>
+        <div style="margin-top:12px;color:var(--muted)">The board appears when you're signed in. Each correct pair = 1 point. No timer.</div>
       </div>
     </div>
   </div>
@@ -152,7 +142,7 @@
   // 15 unique emojis => 30 cards
   const EMOJIS = ['🍎','🍌','🍇','🍓','🍉','🥝','🍑','🍍','🍋','🍒','🥥','🍊','🥭','🍐','🍏'];
   const TOTAL_PAIRS = EMOJIS.length;
-  const WIN_CREDIT = 50;
+  const WIN_CREDIT = 40;
 
   let deck = []; // array of emojis length 30
   let flipped = []; // currently flipped DOM elements
@@ -164,7 +154,7 @@
   let currentUser = null;
   let username = '';
 
-  // bot memory: emoji -> Set of indices it has seen (unmatched)
+  // bot memory: emoji -> array of indices it has seen (unmatched)
   let botMemory = {};
 
   // UI refs
@@ -224,6 +214,35 @@
     }catch(e){}
   }
 
+  // START MUSIC: short arpeggio/intro when a new game starts
+  function playStartMusic(){
+    try{
+      ensureAudioCtx();
+      if(audioCtx.state === 'suspended'){
+        // resume if needed (some browsers require a user gesture)
+        audioCtx.resume().catch(()=>{});
+      }
+      const now = audioCtx.currentTime;
+      const seq = [330, 440, 550, 660]; // ascending
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+      seq.forEach((f,i)=>{
+        const o = audioCtx.createOscillator();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, now + i*0.09);
+        o.connect(g);
+        o.start(now + i*0.09);
+        o.stop(now + 0.22 + i*0.09);
+      });
+      // fade out
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+      g.connect(audioCtx.destination);
+    }catch(e){
+      // ignore if autoplay blocked
+      console.warn('start music failed', e);
+    }
+  }
+
   // utilities
   function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
   const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -236,14 +255,13 @@
     try {
       const matchedIndices = [];
       document.querySelectorAll('.card.matched').forEach(c => matchedIndices.push(Number(c.dataset.index)));
-      // persist deck, matchedIndices, points, currentTurn and botMemory
       await db.doc(GAME_DOC_PATH(currentUser.uid)).set({
         deck,
         matchedIndices,
         playerPoints,
         botPoints,
         currentTurn,
-        botMemory, // map emoji -> array of indices
+        botMemory,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
     } catch (err) {
@@ -252,46 +270,38 @@
   }
 
   async function loadGameStateOrCreate(){
-    // reads game doc; if none, builds fresh deck and writes it
     const path = GAME_DOC_PATH(currentUser.uid);
     const docRef = db.doc(path);
     try{
       const snap = await docRef.get();
       if(snap.exists){
         const d = snap.data();
-        // if deck in doc and correct length, use it
         if(Array.isArray(d.deck) && d.deck.length === EMOJIS.length*2){
           deck = d.deck.slice();
         } else {
           deck = await buildAndPersistDeck(docRef);
           return;
         }
-        // matched indices to mark matched
         const matchedIndices = Array.isArray(d.matchedIndices) ? d.matchedIndices.map(Number) : [];
         playerPoints = Number(d.playerPoints || 0);
         botPoints = Number(d.botPoints || 0);
         currentTurn = d.currentTurn || 'player';
         botMemory = d.botMemory || {};
-        matchedPairs = Math.floor(matchedIndices.length / 2); // safe fallback
-        // create board DOM using deck and then mark matched cards
+        matchedPairs = Math.floor(matchedIndices.length / 2);
         renderDeck();
-        // mark matched
         matchedIndices.forEach(i => {
           const c = document.querySelector(`.card[data-index='${i}']`);
-          if(c){ c.classList.add('matched'); /* keep front visible by leaving flipped state visually */ }
+          if(c){ c.classList.add('matched'); c.classList.add('flipped'); } // ensure emoji visible
         });
         updatePointsUI();
         setTurn(currentTurn);
-        // clean botMemory (remove matched indices from memory)
         cleanupBotMemoryAfterLoad();
         return;
       } else {
-        // no doc -> create new deck and persist
         await buildAndPersistDeck(docRef);
       }
     }catch(err){
       console.error('loadGameState failed', err);
-      // fallback: create local deck
       createLocalDeck();
     }
   }
@@ -299,7 +309,6 @@
   async function buildAndPersistDeck(docRef){
     deck = [...EMOJIS, ...EMOJIS];
     shuffle(deck);
-    // persist initial state
     playerPoints = 0; botPoints = 0; currentTurn = 'player'; botMemory = {}; matchedPairs = 0;
     renderDeck();
     await docRef.set({
@@ -315,7 +324,6 @@
   }
 
   function cleanupBotMemoryAfterLoad(){
-    // remove indices that are already matched
     const matchedSet = new Set();
     document.querySelectorAll('.card.matched').forEach(c => matchedSet.add(Number(c.dataset.index)));
     for(const em in botMemory){
@@ -324,7 +332,6 @@
     }
   }
 
-  // fallback local deck creation (if persistence fails)
   function createLocalDeck(){
     deck = [...EMOJIS, ...EMOJIS];
     shuffle(deck);
@@ -341,7 +348,8 @@
       card.className = 'card';
       card.dataset.index = idx;
       card.dataset.emoji = emoji;
-      card.innerHTML = `<div class="card-inner"><div class="face front">${emoji}</div><div class="face back">?</div></div>`;
+      // front = face-down "?" and back = emoji visible when flipped
+      card.innerHTML = `<div class="card-inner"><div class="face front">?</div><div class="face back">${emoji}</div></div>`;
       card.addEventListener('click', () => playerFlip(card));
       boardEl.appendChild(card);
     });
@@ -355,7 +363,7 @@
     currentTurn = t;
     turnBadge.textContent = (t === 'player') ? 'Your turn' : "Bot's turn";
     enableBoard(t === 'player');
-    saveGameState(); // persist turn change
+    saveGameState();
   }
   function enableBoard(on){
     document.querySelectorAll('.card').forEach(c => {
@@ -363,16 +371,13 @@
     });
   }
 
-  // remember a revealed card for bot memory (index is numeric)
   function rememberCardForBot(index, emoji){
     if(!botMemory[emoji]) botMemory[emoji] = [];
     const arr = botMemory[emoji];
     if(!arr.includes(index)) arr.push(index);
-    // keep only unmatched indices in memory; caller will clean matched
-    saveGameState(); // persist memory incrementally
+    saveGameState();
   }
 
-  // called whenever a card is matched to remove those indices from memory
   function forgetMatchedIndices(indices){
     const set = new Set(indices.map(Number));
     for(const em in botMemory){
@@ -388,31 +393,26 @@
     if(card.classList.contains('flipped') || card.classList.contains('matched')) return;
     if(flipped.length === 2) return;
 
-    // first user gesture to allow audio resume
     if(!audioCtx) try{ ensureAudioCtx(); }catch(e){}
-
+    // attempt to resume in case audio is suspended (user gesture)
+    if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
     card.classList.add('flipped'); playFlipSound();
     flipped.push(card);
-    // remember card for bot
     rememberCardForBot(Number(card.dataset.index), card.dataset.emoji);
 
     if(flipped.length === 2){
       const [a,b] = flipped;
       const e1 = a.dataset.emoji, e2 = b.dataset.emoji;
       if(e1 === e2){
-        // player matched
         await sleep(260);
         a.classList.add('matched'); b.classList.add('matched'); playMatchSound();
         playerPoints++; matchedPairs++; updatePointsUI();
-        // remove matched indices from bot memory
         forgetMatchedIndices([a.dataset.index, b.dataset.index]);
         flipped = [];
         saveGameState();
         if(matchedPairs === TOTAL_PAIRS){ await finishGame(); return; }
-        // switch to bot (to keep bot involved)
         setTimeout(()=> { setTurn('bot'); setTimeout(botPlay, 600); }, 300);
       } else {
-        // mismatch: show then flip back and let bot play
         await sleep(700);
         a.classList.remove('flipped'); b.classList.remove('flipped');
         flipped = [];
@@ -425,29 +425,24 @@
     }
   }
 
-  // Bot dramatic play (uses botMemory to be smart)
+  // Bot dramatic play
   async function botPlay(){
-    // find unmatched & unflipped cards
     const unmatched = Array.from(document.querySelectorAll('.card')).filter(c => !c.classList.contains('matched') && !c.classList.contains('flipped'));
     if(unmatched.length < 2){ return finishGame(); }
 
-    // 1) check botMemory for any emoji with at least 2 indices (smart match)
     for(const em in botMemory){
       const idxs = botMemory[em] || [];
-      // ensure indices are still unmatched and present in DOM
       const valid = idxs.map(Number).filter(i => {
         const cc = document.querySelector(`.card[data-index='${i}']`);
         return cc && !cc.classList.contains('matched') && !cc.classList.contains('flipped');
       });
       if(valid.length >= 2){
-        // dramatic flipping
         const c1 = document.querySelector(`.card[data-index='${valid[0]}']`);
         const c2 = document.querySelector(`.card[data-index='${valid[1]}']`);
         await botFlipVisible(c1, 600);
         await botFlipVisible(c2, 600);
         c1.classList.add('matched'); c2.classList.add('matched'); playMatchSound();
         botPoints++; matchedPairs++; updatePointsUI();
-        // remove matched indices from memory
         forgetMatchedIndices([valid[0], valid[1]]);
         saveGameState();
         if(matchedPairs === TOTAL_PAIRS){ await finishGame(); return; }
@@ -456,19 +451,14 @@
       }
     }
 
-    // 2) otherwise bot will try to flip cards with a bit of drama: reveal one card, remember it, then attempt to find its pair in memory
-    // pick first card randomly
     const first = unmatched[Math.floor(Math.random()*unmatched.length)];
     await botFlipVisible(first, 600);
     rememberCardForBot(Number(first.dataset.index), first.dataset.emoji);
 
-    // check memory for a pair (excluding first)
     const known = (botMemory[first.dataset.emoji] || []).filter(i => Number(i) !== Number(first.dataset.index));
     if(known.length > 0){
-      // reveal known matching index
       const second = document.querySelector(`.card[data-index='${known[0]}']`);
       await botFlipVisible(second, 600);
-      // mark matched
       second.classList.add('matched'); first.classList.add('matched'); playMatchSound();
       botPoints++; matchedPairs++; updatePointsUI();
       forgetMatchedIndices([first.dataset.index, second.dataset.index]);
@@ -478,13 +468,11 @@
       return;
     }
 
-    // 3) else pick a random second card (not the first)
     const remaining = unmatched.filter(c => c !== first);
     const second = remaining[Math.floor(Math.random()*remaining.length)];
     await botFlipVisible(second, 600);
     rememberCardForBot(Number(second.dataset.index), second.dataset.emoji);
 
-    // if they match (rare chance), mark matched
     if(first.dataset.emoji === second.dataset.emoji){
       playMatchSound();
       first.classList.add('matched'); second.classList.add('matched');
@@ -494,7 +482,6 @@
       if(matchedPairs === TOTAL_PAIRS){ return finishGame(); }
       setTurn('player'); return;
     } else {
-      // flip both back after a short pause
       await sleep(500);
       first.classList.remove('flipped'); second.classList.remove('flipped');
       saveGameState();
@@ -503,7 +490,6 @@
     }
   }
 
-  // helper for bot visible flip with audio
   async function botFlipVisible(card, revealMs = 650){
     if(!card) return;
     card.classList.add('flipped'); playFlipSound();
@@ -514,14 +500,12 @@
   async function finishGame(){
     enableBoard(false);
     const result = playerPoints > botPoints ? 'player' : playerPoints < botPoints ? 'bot' : 'draw';
-    // record last play timestamp (non-blocking)
     if(userRef){
       userRef.update({ lastMemoryFlip: firebase.firestore.FieldValue.serverTimestamp() }).catch(e=>console.warn('lastMemoryFlip write failed', e));
     }
 
     if(result === 'player' && userRef){
       try{
-        // credit via transaction
         await db.runTransaction(async (t) => {
           const doc = await t.get(userRef);
           const curr = (doc.exists && doc.data().balance) ? Number(doc.data().balance) : 0;
@@ -535,12 +519,10 @@
         showModal(true, WIN_CREDIT, true);
       }
     } else {
-      // lost or draw
       showModal(false, 0);
     }
   }
 
-  // modal that can only be closed using the button (redirect to games.html)
   function showModal(playerWon, amount, creditFailed=false){
     const overlay = document.createElement('div'); overlay.className = 'overlay-modal';
     overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
@@ -554,6 +536,18 @@
     document.getElementById('modalClose').addEventListener('click', ()=>{ window.location.href = 'games.html'; });
   }
 
+  // Start a new game after auth and user doc present
+  async function startNewGame(){
+    deck = []; flipped = []; matchedPairs = 0; playerPoints = 0; botPoints = 0;
+    updatePointsUI();
+    renderDeck();
+    setTurn('player');
+    // try to resume/start audio and play start music (may be blocked until user gesture)
+    try{ ensureAudioCtx(); if(audioCtx.state === 'suspended') await audioCtx.resume(); }catch(e){}
+    playStartMusic();
+    saveGameState();
+  }
+
   // ---------- Auth + initial load ----------
   auth.onAuthStateChanged(async (u) => {
     if(!u) return window.location.href = 'login.html';
@@ -565,10 +559,17 @@
       const data = snap.data();
       username = data.username || data.displayName || (u.email ? u.email.split('@')[0] : 'User');
       usernameBadge.textContent = 'User: ' + username;
-      // load persisted state or create new
       await loadGameStateOrCreate();
-      // ensure UI updated
       updatePointsUI();
+      // if there's no deck yet (fresh), ensure start music plays; otherwise we resumed state and do NOT replay start music
+      if(!deck || deck.length === 0){
+        await startNewGame();
+      } else {
+        // deck exists and loaded from Firestore; play start music only if deck is fresh (user asked music on game starts).
+        // We'll play a short cue now to indicate resume (optional)
+        try{ ensureAudioCtx(); if(audioCtx.state === 'suspended') await audioCtx.resume(); }catch(e){}
+        playStartMusic();
+      }
       setTurn(currentTurn || 'player');
     }catch(err){
       console.error('Failed to load user doc or game state', err);
@@ -576,12 +577,11 @@
     }
   });
 
-  // save on beforeunload to minimize race-loss (best-effort)
+  // save on beforeunload
   window.addEventListener('beforeunload', (e) => {
     saveGameState();
   });
 
-  // defensive error logging for debugging
   window.addEventListener('error', e => console.error('Uncaught error:', e.error || e.message));
   window.addEventListener('unhandledrejection', e => console.error('Unhandled rejection:', e.reason));
   </script>
