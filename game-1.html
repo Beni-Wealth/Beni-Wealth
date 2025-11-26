@@ -1,212 +1,238 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Memory Flip — Beni-Wealth</title>
-<link rel="icon" href="/mnt/data/1000588770.png" />
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-<style>
-:root{
-  --bg1:#0b0613;--bg2:#0f0820;--muted:rgba(255,255,255,0.66);
-  --glass:rgba(255,255,255,0.03);--accent-grad:linear-gradient(135deg,#8446ff,#6ce2c8);
-  --text:#eaf2ff;
-}
-*{box-sizing:border-box}html,body{height:100%;margin:0;font-family:Poppins,system-ui,Arial}
-body{
-  background:radial-gradient(900px 500px at 10% 10%,rgba(132,70,255,0.06),transparent),
-             radial-gradient(700px 400px at 90% 90%,rgba(47,224,184,0.04),transparent),
-             linear-gradient(180deg,var(--bg1),var(--bg2));
-  color:var(--text);padding:18px;display:flex;justify-content:center;align-items:flex-start;
-}
-.container{width:100%;max-width:980px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:14px;padding:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);min-height:88vh;max-height:calc(100vh - 40px);overflow:auto}
-.header{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.header .title{font-size:18px;font-weight:700}
-.badge{background:var(--glass);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);font-weight:700}
-.board-wrap{margin-top:12px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
-.board{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-@media(max-width:980px){.board{grid-template-columns:repeat(5,1fr)}}
-@media(max-width:720px){.board{grid-template-columns:repeat(4,1fr)}}
-@media(max-width:420px){.board{grid-template-columns:repeat(3,1fr);gap:8px}}
-.card{position:relative;width:100%;padding-top:100%;perspective:1000px;cursor:pointer}
-.card-inner{position:absolute;inset:0;border-radius:10px;transition:transform .45s;transform-style:preserve-3d;overflow:hidden}
-.card.flipped .card-inner{transform:rotateY(180deg);pointer-events:none}
-.face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:10px;backface-visibility:hidden}
-.face.front{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);color:var(--text)}
-.face.back{background:#fff;color:#041219;transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
-.emoji{font-size:28px}
-.emoji-label{font-size:11px;color:rgba(0,0,0,0.45)}
-.watermark{position:absolute;right:6px;bottom:6px;font-size:9px;font-weight:700;padding:3px 6px;border-radius:6px;pointer-events:none}
-.face.front .watermark{color:rgba(255,255,255,0.10)}
-.face.back .watermark{color:rgba(0,0,0,0.36);background:rgba(255,255,255,0.9)}
-.overlay{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:flex;align-items:center;justify-content:center;z-index:9999}
-.modal{width:92%;max-width:520px;padding:18px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);text-align:center}
-.btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
-.btn-primary{background:var(--accent-grad);color:#041219}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Beni-Wealth — Striker Minigame</title>
+  <style>
+    :root{--bg:#fff6f0;--card:#ffffff;--accent:#ff6b6b;--muted:#6b7280}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);margin:0;display:flex;align-items:center;justify-content:center;height:100vh}
+    .container{width:100%;max-width:420px;padding:18px}
+    .card{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 6px 24px rgba(16,24,40,0.08)}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .title{font-weight:700;font-size:18px}
+    .sub{color:var(--muted);font-size:13px}
+
+    /* popup modal */
+    .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35)}
+    .modal{width:90%;max-width:420px;background:var(--card);border-radius:12px;padding:16px}
+    .modal h3{margin:0 0 6px 0}
+    .modal p{margin:6px 0;color:var(--muted)}
+    .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+    button{border:0;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer}
+    .btn-ghost{background:#f3f4f6;color:#111827}
+    .btn-primary{background:var(--accent);color:#fff}
+
+    /* game area */
+    .game-area{display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:8px}
+    .striker-wrap{position:relative;width:220px;height:420px;background:#fdece6;border-radius:18px;display:flex;align-items:center;justify-content:center}
+    .tower{width:60px;height:360px;background:linear-gradient(#f3c46b,#f59e0b);border-radius:30px;position:relative;display:flex;align-items:flex-end;justify-content:center}
+    .scale-nums{position:absolute;left:8px;top:12px;color:#7c2d12;font-weight:700;font-size:12px}
+
+    /* rotating stick (the black stuff) */
+    .pivot{position:absolute;bottom:50px;width:260px;height:260px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+    .stick{width:140px;height:12px;background:#111827;border-radius:8px;transform-origin:20% 50%;box-shadow:0 6px 12px rgba(0,0,0,0.15)}
+    .hammer{position:absolute;right:18px;bottom:90px;width:56px;height:56px;border-radius:10px;background:#333;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+    .controls{display:flex;gap:8px}
+    .info{font-size:13px;color:var(--muted)}
+
+    .score-box{margin-top:10px;background:#f8fafc;padding:10px;border-radius:10px;text-align:center}
+    .score-number{font-weight:800;font-size:24px}
+
+    @media (max-width:480px){.container{padding:12px}.striker-wrap{width:180px;height:360px}}
+  </style>
 </head>
 <body>
-<div class="container" id="app" role="main" aria-live="polite">
-  <div class="header">
-    <div>
-      <div class="title">Memory Flip</div>
-      <div style="color:var(--muted);font-size:13px">Flip objects — beat the bot — win ₦40 if you score higher</div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <div class="badge" id="userBadge">User: —</div>
-      <div class="badge">Bot: <strong id="botPoints">0</strong></div>
-      <button id="mute" class="badge" style="background:transparent;border:1px solid rgba(255,255,255,0.05);cursor:pointer">Mute</button>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <div>
+          <div class="title">Striker — One Hit</div>
+          <div class="sub">Entry fee: ₦20 — One play per created round</div>
+        </div>
+        <div id="balance" class="sub">Balance: —</div>
+      </div>
+
+      <div id="gameRoot" class="game-area">
+        <div class="striker-wrap" id="strikerWrap">
+          <div class="tower" aria-hidden>
+            <div class="scale-nums" id="scaleNums">
+              <!-- numbers rendered by JS -->
+            </div>
+            <!-- puck indicator will be drawn by JS -->
+          </div>
+
+          <div class="pivot" aria-hidden>
+            <div id="stick" class="stick"></div>
+          </div>
+
+          <div class="hammer" id="hammer">HIT</div>
+        </div>
+
+        <div class="controls">
+          <button id="playBtn" class="btn-primary">Play (₦20)</button>
+          <button id="cancelBtn" class="btn-ghost">Cancel</button>
+        </div>
+
+        <div id="message" class="info" style="min-height:18px"></div>
+        <div id="scoreBox" class="score-box" style="display:none">
+          <div class="score-number" id="scoreNumber">0</div>
+          <div class="info" id="roundInfo">Round: —</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="board-wrap">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <div class="badge">Player: <strong id="playerPoints">0</strong></div>
-      <div class="badge" id="turn">Loading…</div>
-    </div>
-    <div class="board" id="board" aria-label="Memory board"></div>
-    <div style="margin-top:12px;color:var(--muted)">30 cards. Progress persists across refresh when signed in. No timer.</div>
-  </div>
-</div>
+  <!-- Firebase (modular) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js";
 
-<!-- Firebase compat -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    // --- Firebase config (your saved config) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
 
-<script>
-/* ===== minimal, efficient implementation preserving features ===== */
-const EMOJIS = ['🍎','🍌','🍇','🍓','🍉','🥝','🍑','🍍','🍋','🍒','🥥','🍊','🥭','🍐','🍏'];
-const WIN = 40;
-const GAME_PATH = uid => `users/${uid}/games/memoryFlip`;
-const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-  authDomain: "beni-wealths.firebaseapp.com",
-  projectId: "beni-wealths",
-  storageBucket: "beni-wealths.firebasestorage.app",
-  messagingSenderId: "807950483822",
-  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-  measurementId: "G-Z2XP3YN6NS"
-};
-if(window.firebase && (!firebase.apps || firebase.apps.length===0)) firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth(), db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const functions = getFunctions(app);
 
-let deck=[], flipped=[], matched=0, pPoints=0, bPoints=0, turn='player', userRef=null, user=null, botMemory={};
-const board = document.getElementById('board'), pEl=document.getElementById('playerPoints'), bEl=document.getElementById('botPoints'),
-      turnEl=document.getElementById('turn'), userBadge=document.getElementById('userBadge'), muteBtn=document.getElementById('mute');
+    // UI refs
+    const playBtn = document.getElementById('playBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const message = document.getElementById('message');
+    const stickEl = document.getElementById('stick');
+    const hammerEl = document.getElementById('hammer');
+    const scoreBox = document.getElementById('scoreBox');
+    const scoreNumber = document.getElementById('scoreNumber');
+    const roundInfo = document.getElementById('roundInfo');
+    const balanceEl = document.getElementById('balance');
 
-let aCtx=null, bgGain=null, isMuted = localStorage.getItem('bw_music_muted')==='1';
-const ensureAudio = ()=>{ if(!aCtx) aCtx = new (window.AudioContext||window.webkitAudioContext)(); };
-function playTone(freq,dur=0.12,vol=0.18){ try{ ensureAudio(); const o=aCtx.createOscillator(), g=aCtx.createGain(); o.frequency.value=freq; o.connect(g); g.gain.value=vol; g.connect(aCtx.destination); o.start(); o.stop(aCtx.currentTime+dur);}catch(e){} }
-function startBg(){ try{ ensureAudio(); if(bgGain) { bgGain.gain.setTargetAtTime(isMuted?0.0001:0.12,aCtx.currentTime,0.02); return; } bgGain=aCtx.createGain(); bgGain.gain.value = isMuted?0.0001:0.12; const o1=aCtx.createOscillator(), o2=aCtx.createOscillator(), f=aCtx.createBiquadFilter(); o1.type='sine';o2.type='sine'; o1.frequency.value=110; o2.frequency.value=147; const g1=aCtx.createGain(), g2=aCtx.createGain(); g1.gain.value=0.6; g2.gain.value=0.45; o1.connect(g1);o2.connect(g2); g1.connect(f);g2.connect(f); f.connect(bgGain); bgGain.connect(aCtx.destination); o1.start(); o2.start(); }catch(e){console.warn(e)} }
-function stopBg(){ try{ if(bgGain){ bgGain.disconnect(); bgGain=null; } }catch(e){} }
+    // simple scale numbers render
+    (function renderScale(){
+      const container = document.getElementById('scaleNums');
+      for(let i=0;i<=9;i++){
+        const val = 100 - i*10;
+        const div = document.createElement('div');
+        div.style.marginBottom = '26px';
+        div.textContent = val;
+        container.appendChild(div);
+      }
+    })();
 
-function saveState(){ if(!userRef) return; const matchedIdx=[]; document.querySelectorAll('.card.matched').forEach(c=>matchedIdx.push(Number(c.dataset.i))); return userRef.set({deck,matchedIdx,pPoints,bPoints,turn,botMemory,ts:firebase.firestore.FieldValue.serverTimestamp()}, {merge:true}).catch(()=>{}); }
-async function loadState(){ if(!user) return; try{ const doc=await db.doc(GAME_PATH(user.uid)).get(); if(doc.exists){ const d=doc.data(); if(Array.isArray(d.deck) && d.deck.length===EMOJIS.length*2) deck=d.deck.slice(); pPoints=Number(d.pPoints||0); bPoints=Number(d.bPoints||0); turn=d.turn||'player'; botMemory=d.botMemory||{}; render(); (d.matchedIdx||[]).forEach(i=>{const c=document.querySelector(`.card[data-i='${i}']`); if(c){ c.classList.add('matched'); c.classList.add('flipped'); }}); updateUI(); setTurn(turn); cleanupBotMemory(); return; } }catch(e){console.warn(e);} // fallback
-  deck = shuffle([...EMOJIS,...EMOJIS]); pPoints=bPoints=0; turn='player'; botMemory={}; render(); saveState();
-}
+    // state
+    let currentUser = null;
+    let roundId = null;
+    let rotating = true;
+    let angle = 0; // degrees
+    let raf = null;
+    let played = false; // ensure single hit
 
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; }
-
-function render(){
-  board.innerHTML=''; deck.forEach((em,i)=>{
-    const d=document.createElement('div'); d.className='card'; d.dataset.i=i; d.dataset.emoji=em;
-    d.innerHTML= `<div class="card-inner"><div class="face front"><div class="watermark">Beni-Wealth</div></div><div class="face back"><div class="emoji">${em}</div><div class="emoji-label">${label(em)}</div><div class="watermark">Beni-Wealth</div></div></div>`;
-    d.addEventListener('click',()=>playerFlip(d));
-    board.appendChild(d);
-  });
-  enableBoard(turn==='player');
-}
-function label(e){ const m={'🍎':'Apple','🍌':'Banana','🍇':'Grapes','🍓':'Strawberry','🍉':'Watermelon','🥝':'Kiwifruit','🍑':'Peach','🍍':'Pineapple','🍋':'Lemon','🍒':'Cherry','🥥':'Coconut','🍊':'Orange','🥭':'Mango','🍐':'Pear','🍏':'Green Apple'}; return m[e]||''; }
-function updateUI(){ pEl.textContent=pPoints; bEl.textContent=bPoints; userBadge.textContent='User: '+(user&&user.displayName?user.displayName:(user&&user.email?user.email.split('@')[0]:'User')); updateMuteText(); }
-
-function setTurn(t){ turn=t; turnEl.textContent = t==='player'?'Your turn':"Bot's turn"; enableBoard(t==='player'); saveState(); }
-function enableBoard(on){ document.querySelectorAll('.card').forEach(c=>{ if(!c.classList.contains('matched')) c.style.pointerEvents= on? 'auto':'none'; }); }
-
-function remember(i,emoji){ botMemory[emoji]=botMemory[emoji]||[]; if(!botMemory[emoji].includes(i)) botMemory[emoji].push(i); saveState(); }
-function forget(arr){ const s=new Set(arr.map(Number)); for(const k in botMemory){ botMemory[k]=botMemory[k].filter(i=>!s.has(Number(i))); if(!botMemory[k].length) delete botMemory[k]; } saveState(); }
-
-async function playerFlip(card){
-  if(turn!=='player' || card.classList.contains('flipped')||card.classList.contains('matched')||flipped.length===2) return;
-  try{ ensureAudio(); if(aCtx.state==='suspended') aCtx.resume().catch(()=>{}); }catch(e){}
-  card.classList.add('flipped'); playTone(900,0.12);
-  flipped.push(card); remember(Number(card.dataset.i), card.dataset.emoji);
-  if(flipped.length===2){
-    const [a,b]=flipped; const e1=a.dataset.emoji, e2=b.dataset.emoji;
-    if(e1===e2){
-      await delay(260); a.classList.add('matched'); b.classList.add('matched'); playTone(520,0.18); pPoints++; matched++; updateUI(); forget([a.dataset.i,b.dataset.i]); flipped=[]; saveState();
-      if(matched===EMOJIS.length){ return finish(); }
-      setTimeout(()=>{ setTurn('bot'); setTimeout(botPlay,600); },300);
-    } else {
-      await delay(700); a.classList.remove('flipped'); b.classList.remove('flipped'); flipped=[]; saveState(); setTurn('bot'); setTimeout(botPlay,500);
+    // animate rotation
+    function animate(ts){
+      // rotate at fixed speed (deg per second)
+      const speed = 160; // deg/sec - tweak to make timing challenging
+      angle = (angle + (speed/60)) % 360; // approx per-frame increment
+      stickEl.style.transform = `rotate(${angle}deg)`;
+      raf = requestAnimationFrame(animate);
     }
-  } else saveState();
-}
 
-function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+    // start animation
+    raf = requestAnimationFrame(animate);
 
-async function botPlay(){
-  const candidates = Array.from(document.querySelectorAll('.card')).filter(c=>!c.classList.contains('matched') && !c.classList.contains('flipped'));
-  if(candidates.length<2) return finish();
-  // smart match from memory
-  for(const em in botMemory){
-    const idxs = (botMemory[em]||[]).filter(i=>{
-      const c=document.querySelector(`.card[data-i='${i}']`); return c && !c.classList.contains('matched') && !c.classList.contains('flipped');
+    // auth: try to sign in anonymously if no auth
+    onAuthStateChanged(auth, (u)=>{
+      currentUser = u;
+      if(u){
+        // try to display balance if present in token claims? We will fetch via callable when needed
+        balanceEl.textContent = 'Signed in';
+      } else {
+        signInAnonymously(auth).catch(()=>{});
+      }
     });
-    if(idxs.length>=2){
-      const c1=document.querySelector(`.card[data-i='${idxs[0]}']`), c2=document.querySelector(`.card[data-i='${idxs[1]}']`);
-      await botFlipShow(c1); await botFlipShow(c2); c1.classList.add('matched'); c2.classList.add('matched'); playTone(520,0.18); bPoints++; matched++; updateUI(); forget([idxs[0],idxs[1]]); saveState(); if(matched===EMOJIS.length) return finish(); setTurn('player'); return;
+
+    // cancel button -> redirect to mini-games.html
+    cancelBtn.addEventListener('click', ()=>{
+      window.location.href = 'mini-games.html';
+    });
+
+    // Play button -> show entry confirmation then call createRound
+    playBtn.addEventListener('click', async ()=>{
+      if(played){ message.textContent = 'You already played this round.'; return; }
+      const ok = confirm('Entry fee is ₦20. Click OK to accept and pay ₦20. Cancel to go back to mini-games.');
+      if(!ok){ window.location.href = 'mini-games.html'; return; }
+      message.textContent = 'Creating round and deducting ₦20...';
+      playBtn.disabled = true;
+      try{
+        const createRound = httpsCallable(functions,'createRound');
+        const res = await createRound({ game: 'striker', entryFee: 20 });
+        if(res.data && res.data.ok){
+          roundId = res.data.roundId;
+          message.textContent = 'Round created. You have one hit.';
+          roundInfo.textContent = 'Round: ' + roundId;
+          // allow the user to click the hammer
+          hammerEl.style.cursor = 'pointer';
+          hammerEl.addEventListener('click', onHit);
+        } else {
+          throw new Error(res.data?.message || 'Unable to create round');
+        }
+      }catch(err){
+        console.error(err);
+        alert(err.message || 'Failed to create round. If your balance is low, top up.');
+        message.textContent = '';
+        playBtn.disabled = false;
+      }
+    });
+
+    async function onHit(e){
+      if(played){ return; }
+      if(!roundId){ alert('No active round. Click Play first.'); return; }
+      played = true;
+      // stop rotation
+      cancelAnimationFrame(raf);
+      rotating = false;
+      // compute angle and score
+      const norm = ((angle % 360) + 360) % 360;
+      const diff = Math.min(norm, 360 - norm); // 0..180, 0 is perfectly up
+      const rawPower = Math.max(0, 1 - diff/180); // 1 when diff=0, 0 when diff=180
+      // use same mapping as server: pow 1.05
+      const score = Math.round(Math.pow(rawPower, 1.05) * 100);
+
+      // show score locally
+      scoreBox.style.display = 'block';
+      scoreNumber.textContent = score;
+      message.textContent = 'Submitting score...';
+
+      try{
+        const submitScore = httpsCallable(functions, 'submitScore');
+        const res = await submitScore({ roundId, rawPower, clientDuration: 0 });
+        if(res.data && res.data.ok){
+          message.textContent = 'Score accepted: ' + res.data.score;
+          scoreNumber.textContent = res.data.score;
+        } else {
+          message.textContent = 'Score rejected by server.';
+          console.warn(res);
+        }
+      }catch(err){
+        console.error(err);
+        message.textContent = 'Submission failed: ' + (err.message || 'server error');
+      }
+
+      // disable hammer
+      hammerEl.style.opacity = '0.4';
+      hammerEl.style.pointerEvents = 'none';
+      playBtn.disabled = true;
     }
-  }
-  // random reveal then check memory
-  const first = candidates[Math.floor(Math.random()*candidates.length)];
-  await botFlipShow(first); remember(Number(first.dataset.i), first.dataset.emoji);
-  const known = (botMemory[first.dataset.emoji]||[]).filter(i=>Number(i)!==Number(first.dataset.i));
-  if(known.length>0){
-    const second = document.querySelector(`.card[data-i='${known[0]}']`);
-    await botFlipShow(second); second.classList.add('matched'); first.classList.add('matched'); playTone(520,0.18); bPoints++; matched++; updateUI(); forget([first.dataset.i,second.dataset.i]); saveState(); if(matched===EMOJIS.length) return finish(); setTurn('player'); return;
-  }
-  const rem = candidates.filter(c=>c!==first); const second = rem[Math.floor(Math.random()*rem.length)];
-  await botFlipShow(second); remember(Number(second.dataset.i), second.dataset.emoji);
-  if(first.dataset.emoji===second.dataset.emoji){ playTone(520,0.18); first.classList.add('matched'); second.classList.add('matched'); bPoints++; matched++; updateUI(); forget([first.dataset.i,second.dataset.i]); saveState(); if(matched===EMOJIS.length) return finish(); setTurn('player'); return; }
-  await delay(500); first.classList.remove('flipped'); second.classList.remove('flipped'); saveState(); setTurn('player'); return;
-}
 
-async function botFlipShow(card){ if(!card) return; card.classList.add('flipped'); playTone(900,0.12); await delay(650); }
-
-async function finish(){
-  stopBg(); enableBoard(false);
-  const result = pPoints> bPoints ? 'player' : pPoints< bPoints ? 'bot' : 'draw';
-  if(userRef) userRef.update({ lastMemoryFlip: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
-  if(result==='player' && userRef){
-    try{
-      await db.runTransaction(async t=>{ const d=await t.get(userRef); const cur=(d.exists && Number(d.data().balance))||0; t.update(userRef,{balance: cur + WIN}); });
-      await userRef.collection('transactions').add({source:'Memory Flip — Win',amount:WIN,date:new Date().toISOString()});
-      playTone(880,0.28); showModal(true,WIN);
-    }catch(e){ console.error(e); showModal(true,WIN,true); }
-  } else showModal(false,0);
-}
-
-function showModal(win,amt,fail=false){
-  const ov=document.createElement('div'); ov.className='overlay';
-  ov.innerHTML = `<div class="modal"><h2>${win?'Congratulations!':(pPoints===bPoints?"It's a draw":'You lost this round')}</h2><p style="margin-top:10px">Player: <strong>${pPoints}</strong> — Bot: <strong>${bPoints}</strong></p>${win?`<p style="color:var(--muted)">${fail?'You won — but credit failed.':'You won ₦'+amt+' — credited to your balance.'}</p>`:`<p style="color:var(--muted)">${pPoints===bPoints?"It's a draw — try again!":'Don’t be discouraged — try again to beat the bot!'}</p>`}<button id="closeModal" class="btn btn-primary" style="margin-top:14px">Close — Go to games</button></div>`;
-  document.body.appendChild(ov);
-  document.getElementById('closeModal').addEventListener('click',()=>{ window.location.href='games.html'; });
-}
-
-async function startNew(){ deck = shuffle([...EMOJIS,...EMOJIS]); pPoints=bPoints=matched=0; botMemory={}; render(); setTurn('player'); try{ ensureAudio(); if(aCtx.state==='suspended') await aCtx.resume(); }catch(e){} playTone(400,0.18); startBg(); saveState(); }
-
-auth.onAuthStateChanged(async u=>{
-  if(!u) return window.location.href='login.html';
-  user = u; userRef = db.collection('users').doc(u.uid); try{ const s = await userRef.get(); if(!s.exists) return window.location.href='profile.html'; updateUI(); await loadState(); if(!deck || deck.length===0) await startNew(); else { try{ ensureAudio(); if(aCtx.state==='suspended') await aCtx.resume(); }catch(e){} startBg(); playTone(400,0.18); } setTurn(turn||'player'); }catch(e){ console.error(e); window.location.href='login.html'; }
-});
-
-window.addEventListener('beforeunload',()=>saveState());
-
-// mute button
-function updateMuteText(){ muteBtn.textContent = isMuted?'Unmute':'Mute'; muteBtn.title = isMuted?'Unmute music':'Mute music'; }
-muteBtn.addEventListener('click',()=>{ try{ ensureAudio(); if(aCtx.state==='suspended') aCtx.resume().catch(()=>{}); }catch(e){} isMuted = !isMuted; localStorage.setItem('bw_music_muted', isMuted? '1':'0'); if(bgGain) bgGain.gain.setTargetAtTime(isMuted?0.0001:0.12,aCtx.currentTime,0.02); updateMuteText(); });
-updateMuteText();
-</script>
+    // security note: page expects callable functions createRound and submitScore to be deployed
+  </script>
 </body>
 </html>
