@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BeniWealth — Pool Game Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #f5f7fa;
+    }
+    .container {
+      padding: 20px;
+    }
+    h2 {
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      margin-top: 15px;
+    }
+    button {
+      background: #0066ff;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    button.red {
+      background: #ff3b30;
+    }
+    .round-item {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      margin-top: 10px;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Pool Game — Admin Control</h2>
+
+    <div class="card">
+      <h3>Create New Round</h3>
+      <button id="createRoundBtn">Create Round</button>
+    </div>
+
+    <div class="card">
+      <h3>Active Round</h3>
+      <div id="activeRoundBox">Loading...</div>
+    </div>
+
+    <div class="card">
+      <h3>All Rounds</h3>
+      <div id="roundList">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    // --- Admin authentication ---
+    const allowedAdmins = ['beniwealth70@gmail.com', 'owanaomubo76@gmail.com'];
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user || !allowedAdmins.includes(user.email)) {
+        alert('Access denied. Admins only.');
+        window.location.href = 'index.html';
+      }
+    });
+    const firebaseConfig = {
+      apiKey: 'AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk',
+      authDomain: 'beni-wealths.firebaseapp.com',
+      projectId: 'beni-wealths',
+      storageBucket: 'beni-wealths.firebasestorage.app',
+      messagingSenderId: '807950483822',
+      appId: '1:807950483822:web:e10fa87307e041c4d8417f',
+      measurementId: 'G-Z2XP3YN6NS'
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function loadRounds() {
+      const roundList = document.getElementById('roundList');
+      const activeRoundBox = document.getElementById('activeRoundBox');
+
+      const snap = await db.collection('game_rounds').orderBy('createdAt', 'desc').get();
+
+      roundList.innerHTML = '';
+      activeRoundBox.innerHTML = 'No active round';
+
+      snap.forEach(doc => {
+        const r = doc.data();
+
+        if (r.active) {
+          activeRoundBox.innerHTML = `
+            <div class="round-item">
+              <strong>Round ID:</strong> ${doc.id}<br>
+              <strong>Player Balls:</strong> ${r.totalBallsPlayer}<br>
+              <strong>Bot Balls:</strong> ${r.totalBallsBot}<br>
+              <button class="red" onclick="endRound('${doc.id}')">End Active Round</button>
+            </div>
+          `;
+        }
+
+        roundList.innerHTML += `
+          <div class="round-item">
+            <strong>${doc.id}</strong><br>
+            Player: ${r.totalBallsPlayer} | Bot: ${r.totalBallsBot}<br>
+            Active: ${r.active ? 'Yes' : 'No'}
+          </div>
+        `;
+      });
+    }
+
+    async function createRound() {
+      const id = 'round_' + Date.now();
+
+      // deactivate previous
+      const actives = await db.collection('game_rounds').where('active', '==', true).get();
+      actives.forEach(a => a.ref.update({ active: false }));
+
+      await db.collection('game_rounds').doc(id).set({
+        active: true,
+        createdAt: new Date(),
+        totalBallsPlayer: 0,
+        totalBallsBot: 0
+      });
+
+      loadRounds();
+      alert('New round created: ' + id);
+    }
+
+    async function endRound(id) {
+      await db.collection('game_rounds').doc(id).update({ active: false });
+      loadRounds();
+      alert('Round ended');
+    }
+
+    document.getElementById('createRoundBtn').addEventListener('click', createRound);
+
+    loadRounds();
+  </script>
+</body>
+</html>
