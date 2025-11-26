@@ -1,368 +1,158 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Pool Duel</title>
-
-  <!-- Beni-Wealth theme (Poppins) -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-  <style>
-    :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --accent:#ff6b6b;
-      --muted:#9aa4b2;
-      --success:#10b981;
-      --white:#ffffff;
-      --glass: rgba(255,255,255,0.03);
-    }
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071018 0%, #071a1a 100%);font-family:"Poppins",system-ui,Segoe UI,Roboto,Arial;color:var(--white)}
-    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-    .card{width:100%;max-width:1060px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:18px;box-shadow:0 10px 40px rgba(2,6,23,0.6);display:flex;gap:18px}
-    .left{flex:1;display:flex;flex-direction:column;align-items:center;gap:12px}
-    .right{width:320px;display:flex;flex-direction:column;gap:12px}
-
-    .topbar{width:100%;display:flex;justify-content:space-between;align-items:center}
-    .brand{font-weight:700;font-size:18px;color:var(--accent)}
-    .sub{color:var(--muted);font-size:13px}
-
-    canvas{background:linear-gradient(180deg,#0b6f4f,#0b5f3f);border-radius:10px;display:block;touch-action:none}
-    .controls{display:flex;gap:8px;margin-top:8px}
-    .btn{background:var(--glass);border:1px solid rgba(255,255,255,0.04);color:var(--white);padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer}
-    .btn-primary{background:linear-gradient(90deg,var(--accent),#ff8b8b);border:0;color:#081022}
-    .hud{display:flex;gap:12px;align-items:center}
-    .score-card{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px}
-    .muted{color:var(--muted);font-size:13px}
-    .big{font-size:20px;font-weight:800}
-
-    /* modal */
-    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6)}
-    .overlay.show{display:flex}
-    .modal{width:92%;max-width:420px;background:var(--card);border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
-    .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-
-    footer.note{margin-top:12px;color:var(--muted);font-size:12px}
-
-    @media (max-width:980px){ .card{flex-direction:column}.right{width:100%} canvas{width:100%;height:auto} }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Beni-Wealth — Pool Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-1:#0b0710;
+  --bg-2:#0e0620;
+  --card:#0f1726;
+  --muted:#9aa4b2;
+  --accent-1:#7c3aed;
+  --accent-2:#4ade80;
+  --accent-grad: linear-gradient(90deg,#7c3aed,#06b6d4);
+  --glass: rgba(255,255,255,0.03);
+  --glass-2: rgba(255,255,255,0.02);
+  --danger:#ef4444;
+  --success:#10b981;
+  --text:#e6eef8;
+}
+html,body{height:100%;margin:0;font-family:"Poppins",sans-serif;background:radial-gradient(1000px 600px at 10% 10%, rgba(124,58,237,0.12), transparent), linear-gradient(180deg,var(--bg-1), var(--bg-2)); color:var(--text);}
+.wrap{max-width:1000px;margin:20px auto;padding:20px}
+.card{background:var(--card);border-radius:14px;padding:20px;box-shadow:0 8px 24px rgba(3,6,18,0.6);border:1px solid rgba(255,255,255,0.02)}
+.btn{padding:10px 16px;border-radius:12px;border:0;background:var(--accent-1);color:#fff;font-weight:700;cursor:pointer}
+.btn-ghost{background:transparent;border:1px solid var(--accent-1);color:var(--accent-1)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;justify-content:center;align-items:center;z-index:100}
+.modal{background:var(--card);border-radius:12px;padding:20px;width:300px;box-shadow:0 8px 30px rgba(0,0,0,0.7);}
+input{width:100%;padding:8px;border-radius:8px;border:1px solid #444;background:var(--bg-2);color:#fff;margin-top:6px}
+#poolTable{background:#061226;border-radius:10px;width:100%;height:400px;margin-top:20px;position:relative}
+.ball{width:24px;height:24px;border-radius:50%;position:absolute;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px}
+.ball.player{background:var(--accent-1)}
+.ball.bot{background:var(--accent-2)}
+.hidden{display:none}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="left">
-        <div class="topbar" role="banner">
-          <div>
-            <div class="brand">Beni-Wealth — Mini Pool Duel</div>
-            <div class="sub">Player vs Bot — pocket the most balls to win ₦50</div>
-          </div>
-          <div class="hud">
-            <div id="balanceDisplay" class="muted">Balance: —</div>
-            <div id="roundStatus" class="sub">Round: —</div>
-          </div>
-        </div>
+<div class="wrap">
+  <div class="card">
+    <h2>Pool Game — Play against Bot</h2>
+    <p>Entry Fee: ₦20 per round</p>
+    <button id="playBtn" class="btn">Play</button>
+    <div id="statusMsg" style="margin-top:12px;color:var(--muted)">Not in round</div>
 
-        <!-- Canvas table -->
-        <canvas id="poolCanvas" width="820" height="420" style="max-width:100%"></canvas>
+    <div id="poolTable"></div>
+  </div>
+</div>
 
-        <div class="controls" style="width:100%;justify-content:space-between;align-items:center">
-          <div style="display:flex;gap:8px;align-items:center">
-            <button id="playBtn" class="btn btn-primary">Play (₦20)</button>
-            <button id="forfeitBtn" class="btn">Forfeit</button>
-            <button id="rulesBtn" class="btn">Rules</button>
-          </div>
-
-          <div style="display:flex;gap:8px;align-items:center">
-            <div class="score-card">
-              <div class="muted small">Your balls</div>
-              <div id="playerScore" class="big">0</div>
-            </div>
-            <div class="score-card">
-              <div class="muted small">Bot balls</div>
-              <div id="botScore" class="big">0</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="muted" style="width:100%;text-align:left;margin-top:6px">
-          Tip: click & hold the white cue ball to charge, drag to aim, release to shoot. Spacebar = quick tap.
-        </div>
-      </div>
-
-      <div class="right">
-        <div class="score-card">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div class="muted">Status</div>
-              <div id="turnIndicator" class="big">Waiting</div>
-            </div>
-            <div style="text-align:right">
-              <div class="muted">Time</div>
-              <div id="timer" class="big">0.0s</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="score-card">
-          <div class="muted">Bot difficulty</div>
-          <select id="difficulty" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;background:transparent;color:var(--white)">
-            <option value="easy">Easy</option>
-            <option value="medium" selected>Medium</option>
-            <option value="hard">Hard</option>
-          </select>
-        </div>
-
-        <div class="score-card muted">
-          <div>Round Control (admin-managed):</div>
-          <div style="margin-top:8px">This page expects admin-created rounds. Pick an open round and click Play to join (₦20 will be deducted server-side).</div>
-        </div>
-
-        <div class="score-card muted">
-          <div>Debug / dev</div>
-          <button id="dbgFetchRound" class="btn" style="margin-top:8px">Fetch round snapshot</button>
-          <div class="muted small" style="margin-top:8px">Make sure your Cloud Functions are deployed with name:<br><code>joinRoundForPlayer</code> and <code>submitPlayerShot</code></div>
-        </div>
-      </div>
+<!-- Modal -->
+<div id="confirmModal" class="modal-bg">
+  <div class="modal">
+    <h3>Confirm Play</h3>
+    <p>You will be debited ₦20 to join a round.</p>
+    <label>Enter Round ID:</label>
+    <input type="text" id="roundInput" placeholder="round_xxxxx">
+    <div style="margin-top:12px;text-align:right">
+      <button id="confirmJoin" class="btn">Confirm</button>
+      <button id="cancelJoin" class="btn-ghost">Cancel</button>
     </div>
   </div>
+</div>
 
-  <!-- Join modal -->
-  <div id="joinModal" class="overlay" aria-hidden>
-    <div class="modal" role="dialog" aria-modal="true">
-      <h3 style="margin:0 0 6px 0">Play Duel</h3>
-      <p class="muted">Entry fee: <strong>₦20</strong>. One join per open round. Accept to be charged ₦20 and start your match.</p>
-      <div style="margin-top:8px" class="muted">If you cancel you will return to mini-games page.</div>
-      <div class="actions">
-        <button id="modalCancel" class="btn">Cancel</button>
-        <button id="modalAccept" class="btn btn-primary">Accept & Pay ₦20</button>
-      </div>
-    </div>
-  </div>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getFirestore, doc, getDoc, updateDoc, setDoc, arrayUnion } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 
-  <footer class="note" style="text-align:center">Beni-Wealth — Pool Duel • Client v1.1</footer>
+// Firebase setup
+const firebaseConfig = {
+  apiKey: 'AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk',
+  authDomain: 'beni-wealths.firebaseapp.com',
+  projectId: 'beni-wealths',
+  storageBucket: 'beni-wealths.firebasestorage.app',
+  messagingSenderId: '807950483822',
+  appId: '1:807950483822:web:e10fa87307e041c4d8417f',
+  measurementId: 'G-Z2XP3YN6NS'
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-  <!-- Firebase SDK (modular) -->
-  <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-  import { getAuth, onAuthStateChanged, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-  import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js';
-  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+let user = null;
+let joinedRounds = new Set();
 
-  const firebaseConfig = {
-    apiKey: 'AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk',
-    authDomain: 'beni-wealths.firebaseapp.com',
-    projectId: 'beni-wealths',
-    storageBucket: 'beni-wealths.firebasestorage.app',
-    messagingSenderId: '807950483822',
-    appId: '1:807950483822:web:e10fa87307e041c4d8417f',
-    measurementId: 'G-Z2XP3YN6NS'
-  };
+onAuthStateChanged(auth, u => { if(u) user=u; else alert('Sign in required'); });
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const functions = getFunctions(app);
-  const db = getFirestore(app);
+// UI refs
+const playBtn = document.getElementById('playBtn');
+const confirmModal = document.getElementById('confirmModal');
+const roundInput = document.getElementById('roundInput');
+const confirmJoin = document.getElementById('confirmJoin');
+const cancelJoin = document.getElementById('cancelJoin');
+const statusMsg = document.getElementById('statusMsg');
+const poolTable = document.getElementById('poolTable');
 
-  // UI refs
-  const canvas = document.getElementById('poolCanvas');
-  const ctx = canvas.getContext('2d');
-  const playBtn = document.getElementById('playBtn');
-  const forfeitBtn = document.getElementById('forfeitBtn');
-  const rulesBtn = document.getElementById('rulesBtn');
-  const balanceDisplay = document.getElementById('balanceDisplay');
-  const roundStatus = document.getElementById('roundStatus');
-  const joinModal = document.getElementById('joinModal');
-  const modalAccept = document.getElementById('modalAccept');
-  const modalCancel = document.getElementById('modalCancel');
-  const playerScoreEl = document.getElementById('playerScore');
-  const botScoreEl = document.getElementById('botScore');
-  const turnIndicator = document.getElementById('turnIndicator');
-  const timerEl = document.getElementById('timer');
-  const difficultySel = document.getElementById('difficulty');
-  const dbgFetchBtn = document.getElementById('dbgFetchRound');
+// dummy pool balls
+let balls = [];
 
-  // small local table physics/visuals (client-side only for animation)
-  const W = canvas.width, H = canvas.height;
-  const RAIL = 28, BALL_R = 10, POCKET_R = 22;
-  let balls = []; // ball objects
-  let pockets = [];
-  let cueBall = null;
-
-  // gameplay state
-  let currentRoundId = null;
-  let inRound = false;
-  let playerScore = 0, botScore = 0;
-  let timer = 0, animReq = null;
-  let aiming = false, charge = 0, aimX=0, aimY=0;
-  let lastTime = null;
-  let currentUser = null;
-
-  function refreshHUD() {
-    playerScoreEl.textContent = playerScore;
-    botScoreEl.textContent = botScore;
-  }
-
-  function setupTable() {
-    pockets = [
-      {x:RAIL, y:RAIL}, {x: W/2, y:RAIL}, {x: W-RAIL, y:RAIL},
-      {x:RAIL, y:H-RAIL}, {x:W/2, y:H-RAIL}, {x:W-RAIL, y:H-RAIL}
-    ];
-    balls = [];
-    const cue = {id:'cue', x: RAIL+80, y: H/2, vx:0, vy:0, r:BALL_R, isCue:true, isPocketed:false};
-    balls.push(cue);
-    cueBall = cue;
-    const colors = ['#f97316','#ef4444','#10b981','#3b82f6','#a78bfa','#f59e0b','#06b6d4'];
-    const startX = W - RAIL - 140;
-    let idc = 1;
-    for (let row=0; row<4; row++) {
-      for (let col=0; col<=row; col++) {
-        const x = startX + row * (BALL_R*2 + 1);
-        const y = H/2 + (col - row/2) * (BALL_R*2 + 1);
-        balls.push({id:'b'+(idc++), x, y, vx:0, vy:0, r:BALL_R, color: colors[(idc-2)%colors.length], isCue:false, isPocketed:false});
-      }
-    }
-    playerScore = 0; botScore = 0;
-    refreshHUD();
-  }
-
-  function drawTable() {
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle = '#053a2a';
-    roundRect(ctx, 0,0,W,H,12); ctx.fill();
-    ctx.fillStyle = '#0b6f4f';
-    roundRect(ctx, RAIL-6, RAIL-6, W-(RAIL-6)*2, H-(RAIL-6)*2, 8); ctx.fill();
-    for(const p of pockets){ ctx.beginPath(); ctx.fillStyle='#071c12'; ctx.arc(p.x,p.y,POCKET_R,0,Math.PI*2); ctx.fill(); }
-    for(const b of balls){ if (!b.isPocketed) drawBall(b); }
-    if (aiming && !cueBall.isPocketed) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(cueBall.x, cueBall.y);
-      ctx.lineTo(aimX, aimY);
-      ctx.strokeStyle = 'rgba(255,255,255,0.75)';
-      ctx.lineWidth = 2; ctx.setLineDash([6,6]); ctx.stroke(); ctx.setLineDash([]);
-      const psize = 8 + Math.min(1,charge) * 12;
-      ctx.beginPath(); ctx.fillStyle = 'rgba(255,209,102,0.95)'; ctx.arc(cueBall.x-22, cueBall.y+22, psize, 0, Math.PI*2); ctx.fill();
-      ctx.restore();
-    }
-  }
-
-  function drawBall(b) {
-    ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.ellipse(b.x+2, b.y+2, b.r+2, b.r+2, 0, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.fillStyle = b.isCue ? '#ffffff' : (b.color || '#f97316'); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
-    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.stroke();
-  }
-
-  function updatePhysics(dt) {
-    for(const b of balls){ if (b.isPocketed) continue; b.x += b.vx*dt; b.y += b.vy*dt; }
-    for(const b of balls){ if (b.isPocketed) continue;
-      if (b.x - b.r < RAIL) { b.x = RAIL + b.r; b.vx = -b.vx * 0.96; }
-      if (b.x + b.r > W - RAIL) { b.x = W-RAIL - b.r; b.vx = -b.vx * 0.96; }
-      if (b.y - b.r < RAIL) { b.y = RAIL + b.r; b.vy = -b.vy * 0.96; }
-      if (b.y + b.r > H - RAIL) { b.y = H-RAIL - b.r; b.vy = -b.vy * 0.96; }
-    }
-    for (let i=0;i<balls.length;i++){
-      for (let j=i+1;j<balls.length;j++){
-        resolveBallCollision(balls[i], balls[j]);
-      }
-    }
-    for(const p of pockets){
-      for(const b of balls){
-        if (b.isPocketed) continue;
-        const d = Math.hypot(b.x-p.x,b.y-p.y);
-        if (d < POCKET_R) { b.isPocketed=true; b.vx=0; b.vy=0; }
-      }
-    }
-    for(const b of balls){ if (b.isPocketed) continue; b.vx*=0.995; b.vy*=0.995; if (Math.hypot(b.vx,b.vy)<0.01){b.vx=0;b.vy=0;} }
-  }
-
-  function resolveBallCollision(a,b){
-    if (a.isPocketed||b.isPocketed) return;
-    const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy);
-    if(d===0) return;
-    const overlap=a.r+b.r-d;
-    if(overlap>0){
-      const nx=dx/d, ny=dy/d;
-      const push=overlap/2+0.01;
-      a.x-=nx*push; a.y-=ny*push; b.x+=nx*push; b.y+=ny*push;
-      const vx=b.vx-a.vx, vy=b.vy-a.vy;
-      const rel=vx*nx+vy*ny;
-      if(rel>0) return;
-      const impulse=(-(1+0.98)*rel)/2;
-      const ix=impulse*nx, iy=impulse*ny;
-      a.vx-=ix; a.vy-=iy; b.vx+=ix; b.vy+=iy;
-    }
-  }
-
-  function animate(timestamp){
-    if (!lastTime) lastTime = timestamp;
-    const dt = (timestamp-lastTime)/16; lastTime=timestamp;
-    updatePhysics(dt);
-    drawTable();
-    if(inRound) timer+=dt*0.016;
-    timerEl.textContent = timer.toFixed(1)+'s';
-    animReq=requestAnimationFrame(animate);
-  }
-
-  // ---------------- Firebase logic ----------------
-  onAuthStateChanged(auth, async user=>{
-    if(!user){
-      await signInAnonymously(auth);
-      return;
-    }
-    currentUser = user;
-    updateBalance();
+function renderTable(){
+  poolTable.innerHTML = '';
+  balls.forEach(b=>{
+    const el = document.createElement('div');
+    el.className = 'ball ' + b.type;
+    el.style.left = b.x+'px';
+    el.style.top = b.y+'px';
+    el.textContent = b.id;
+    poolTable.appendChild(el);
   });
+}
 
-  async function updateBalance(){
-    const userRef = doc(db,'users',currentUser.uid);
-    const snap = await getDoc(userRef);
-    if(snap.exists()){
-      const bal = snap.data().balance ?? 0;
-      balanceDisplay.textContent = 'Balance: ₦'+bal;
-    }
+// bot medium shot
+function botPlay(){
+  const ball = balls.find(b=>b.type==='bot');
+  if(!ball) return;
+  const dx = Math.random()*100-50;
+  const dy = Math.random()*100-50;
+  ball.x = Math.min(Math.max(ball.x+dx,0),poolTable.clientWidth-24);
+  ball.y = Math.min(Math.max(ball.y+dy,0),poolTable.clientHeight-24);
+  renderTable();
+}
+
+// start round
+function startRound(roundId){
+  if(joinedRounds.has(roundId)){
+    alert('Already joined this round');
+    return;
   }
+  joinedRounds.add(roundId);
 
-  async function joinRound(roundId){
-    const joinRoundForPlayer = httpsCallable(functions,'joinRoundForPlayer');
-    try{
-      const res = await joinRoundForPlayer({roundId});
-      if(res.data.ok){
-        roundStatus.textContent='Joined: '+roundId;
-        inRound = true;
-        currentRoundId = roundId;
-        joinModal.classList.remove('show');
-        setupTable();
-        if(!animReq) animate();
-      }
-    }catch(err){
-      alert('Error joining round: '+err.message);
-    }
-    updateBalance();
-  }
-
-  playBtn.addEventListener('click',()=> joinModal.classList.add('show'));
-  modalCancel.addEventListener('click',()=> joinModal.classList.remove('show'));
-  modalAccept.addEventListener('click',async ()=>{
-    const roundId = prompt('Enter Round ID to join (admin-created)')?.trim();
-    if(!roundId){ alert('Round ID required'); return; }
-    await joinRound(roundId);
-  });
-
-  dbgFetchBtn.addEventListener('click',async ()=>{
-    if(!currentRoundId) { alert('No round joined'); return; }
-    const snap = await getDoc(doc(db,'games/pool/rounds',currentRoundId));
-    console.log('Round snapshot:', snap.data());
-    alert('Check console for round snapshot.');
-  });
-
-  rulesBtn.addEventListener('click',()=>alert('Pocket all your balls. Cue: click+hold, drag, release. Space = quick tap.'));
-
-  forfeitBtn.addEventListener('click',()=>{ if(confirm('Forfeit round?')) { inRound=false; roundStatus.textContent='Forfeited'; } });
+  // debit user 20 naira
+  // In production: update firestore balance
+  alert('₦20 debited for round ' + roundId);
 
   // initialize table
-  setupTable();
-  animate();
-  </script>
+  balls = [
+    {id:'P', x:50, y:180, type:'player'},
+    {id:'B', x:400, y:180, type:'bot'}
+  ];
+  renderTable();
+  statusMsg.textContent = 'In round ' + roundId;
+
+  // simulate bot movement every 2s
+  setInterval(botPlay,2000);
+}
+
+// event listeners
+playBtn.addEventListener('click',()=>{confirmModal.style.display='flex';});
+cancelJoin.addEventListener('click',()=>{confirmModal.style.display='none';});
+confirmJoin.addEventListener('click',()=>{
+  const rid = roundInput.value.trim();
+  if(!rid){alert('Enter round ID'); return;}
+  confirmModal.style.display='none';
+  startRound(rid);
+});
+</script>
 </body>
 </html>
