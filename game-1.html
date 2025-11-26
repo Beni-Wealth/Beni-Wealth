@@ -2,302 +2,534 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Beni-Wealth — Striker Minigame (Updated)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Pool Duel (Player vs Bot)</title>
+
+  <!-- Beni-Wealth theme (Poppins) -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
   <style>
-    :root{--bg:#fff6f0;--card:#fff;--accent:#ff6b6b;--muted:#6b7280}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:#0f172a}
-    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
-    .card{width:100%;max-width:480px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 10px 30px rgba(2,6,23,0.08)}
-    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .title{font-weight:700;font-size:18px}
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --accent:#ff6b6b;
+      --muted:#9aa4b2;
+      --success:#10b981;
+      --white:#ffffff;
+      --glass: rgba(255,255,255,0.03);
+    }
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071018 0%, #071a1a 100%);font-family:"Poppins",system-ui,Segoe UI,Roboto,Arial;color:var(--white)}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .card{width:100%;max-width:1060px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:18px;box-shadow:0 10px 40px rgba(2,6,23,0.6);display:flex;gap:18px}
+    .left{flex:1;display:flex;flex-direction:column;align-items:center;gap:12px}
+    .right{width:320px;display:flex;flex-direction:column;gap:12px}
+
+    .topbar{width:100%;display:flex;justify-content:space-between;align-items:center}
+    .brand{font-weight:700;font-size:18px;color:var(--accent)}
     .sub{color:var(--muted);font-size:13px}
 
-    /* layout */
-    .game-area{display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:8px}
-    .striker-wrap{position:relative;width:260px;height:460px;background:#fdece6;border-radius:18px;display:flex;align-items:center;justify-content:center}
-    .tower{width:80px;height:360px;background:linear-gradient(#f3c46b,#f59e0b);border-radius:30px;position:relative;display:flex;align-items:flex-end;justify-content:center}
-    .scale-nums{position:absolute;left:8px;top:12px;color:#7c2d12;font-weight:700;font-size:12px}
+    canvas{background:linear-gradient(180deg,#0b6f4f,#0b5f3f);border-radius:10px;display:block;touch-action:none}
+    .controls{display:flex;gap:8px;margin-top:8px}
+    .btn{background:var(--glass);border:1px solid rgba(255,255,255,0.04);color:var(--white);padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),#ff8b8b);border:0;color:#081022}
+    .hud{display:flex;gap:12px;align-items:center}
+    .score-card{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px}
+    .muted{color:var(--muted);font-size:13px}
+    .big{font-size:20px;font-weight:800}
 
-    .pivot{position:absolute;bottom:100px;width:320px;height:320px;display:flex;align-items:center;justify-content:center;pointer-events:none}
-    /* center the stick so 0deg == perfectly up */
-    .stick{width:180px;height:14px;background:#111827;border-radius:10px;transform-origin:50% 50%;box-shadow:0 6px 12px rgba(0,0,0,0.15)}
-    .hammer{position:absolute;right:18px;bottom:96px;width:56px;height:56px;border-radius:10px;background:#111827;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;cursor:default}
-
-    .controls{display:flex;gap:8px}
-    .info{font-size:13px;color:var(--muted)}
-
-    .score-box{margin-top:10px;background:#f8fafc;padding:10px;border-radius:10px;text-align:center}
-    .score-number{font-weight:800;font-size:22px}
-
-    /* popup modal */
-    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.45)}
+    /* modal */
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6)}
     .overlay.show{display:flex}
-    .modal{width:92%;max-width:420px;background:var(--card);border-radius:12px;padding:16px}
+    .modal{width:92%;max-width:420px;background:var(--card);border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
     .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-    .btn{border:0;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
-    .btn-ghost{background:#f3f4f6;color:#111827}
-    .btn-primary{background:var(--accent);color:#fff}
 
-    @media (max-width:480px){.striker-wrap{width:200px;height:380px}.stick{width:140px}}
+    footer.note{margin-top:12px;color:var(--muted);font-size:12px}
+
+    @media (max-width:980px){ .card{flex-direction:column}.right{width:100%} canvas{width:100%;height:auto} }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <div class="header">
-        <div>
-          <div class="title">Striker — One Hit</div>
-          <div class="sub">Entry fee: ₦20 — Each round is managed by admin</div>
+      <div class="left">
+        <div class="topbar" role="banner">
+          <div>
+            <div class="brand">Beni-Wealth — Mini Pool Duel</div>
+            <div class="sub">Player vs Bot — pocket the most balls to win ₦50</div>
+          </div>
+          <div class="hud">
+            <div id="balanceDisplay" class="muted">Balance: —</div>
+            <div id="roundStatus" class="sub">Round: —</div>
+          </div>
         </div>
-        <div id="balance" class="sub">Balance: —</div>
+
+        <!-- Canvas table -->
+        <canvas id="poolCanvas" width="820" height="420" style="max-width:100%"></canvas>
+
+        <div class="controls" style="width:100%;justify-content:space-between;align-items:center">
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="playBtn" class="btn btn-primary">Play (₦20)</button>
+            <button id="forfeitBtn" class="btn">Forfeit</button>
+            <button id="rulesBtn" class="btn">Rules</button>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="score-card">
+              <div class="muted small">Your balls</div>
+              <div id="playerScore" class="big">0</div>
+            </div>
+            <div class="score-card">
+              <div class="muted small">Bot balls</div>
+              <div id="botScore" class="big">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="muted" style="width:100%;text-align:left;margin-top:6px">
+          Tip: click & hold the white cue ball to charge, drag to aim, release to shoot. Spacebar = quick tap.
+        </div>
       </div>
 
-      <div id="gameRoot" class="game-area">
-        <div class="striker-wrap" id="strikerWrap">
-          <div class="tower" aria-hidden>
-            <div class="scale-nums" id="scaleNums"></div>
+      <div class="right">
+        <div class="score-card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div class="muted">Status</div>
+              <div id="turnIndicator" class="big">Waiting</div>
+            </div>
+            <div style="text-align:right">
+              <div class="muted">Time</div>
+              <div id="timer" class="big">0.0s</div>
+            </div>
           </div>
-
-          <div class="pivot" aria-hidden>
-            <!-- stick: 0deg will represent perfectly up -->
-            <div id="stick" class="stick" style="transform:rotate(0deg)"></div>
-          </div>
-
-          <div class="hammer" id="hammer">HIT</div>
         </div>
 
-        <div class="controls">
-          <button id="playBtn" class="btn btn-primary">Play (₦20)</button>
-          <button id="cancelBtn" class="btn btn-ghost">Cancel</button>
+        <div class="score-card">
+          <div class="muted">Bot difficulty</div>
+          <select id="difficulty" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;background:transparent;color:var(--white)">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
         </div>
 
-        <div id="message" class="info" style="min-height:18px"></div>
-        <div id="scoreBox" class="score-box" style="display:none">
-          <div class="score-number" id="scoreNumber">0</div>
-          <div class="info" id="roundInfo">Round: —</div>
+        <div class="score-card muted">
+          <div>Round Control (admin-managed):</div>
+          <div style="margin-top:8px">This page expects admin-created rounds. Pick an open round and click Play to join (₦20 will be deducted server-side).</div>
+        </div>
+
+        <div class="score-card muted">
+          <div>Debug / dev</div>
+          <button id="dbgFetchRound" class="btn" style="margin-top:8px">Fetch round snapshot</button>
+          <div class="muted small" style="margin-top:8px">Make sure your Cloud Functions are deployed with names:<br><code>createRoundForPlayer</code> and <code>submitPlayerShot</code></div>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="confirmOverlay" class="overlay" aria-hidden>
+  <!-- Join modal -->
+  <div id="joinModal" class="overlay" aria-hidden>
     <div class="modal" role="dialog" aria-modal="true">
-      <h3>Play Striker</h3>
-      <p>Entry fee: <strong>₦20</strong></p>
-      <p>One hit only. Click Accept to pay ₦20 and start the round. Cancel will return you to mini-games.</p>
+      <h3 style="margin:0 0 6px 0">Play Duel</h3>
+      <p class="muted">Entry fee: <strong>₦20</strong>. One join per open round. Accept to be charged ₦20 and start your match.</p>
+      <div style="margin-top:8px" class="muted">If you cancel you will return to mini-games page.</div>
       <div class="actions">
-        <button id="modalCancel" class="btn btn-ghost">Cancel</button>
+        <button id="modalCancel" class="btn">Cancel</button>
         <button id="modalAccept" class="btn btn-primary">Accept & Pay ₦20</button>
       </div>
     </div>
   </div>
 
+  <footer class="note" style="text-align:center">Beni-Wealth — Pool Duel • Client v1.0</footer>
+
+  <!-- Firebase SDK (modular) -->
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-    import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js';
-    import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+  // ---------------------------
+  // Your Firebase config (inserted as provided)
+  // ---------------------------
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+  import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
-    // ----- YOUR FIREBASE CONFIG (kept from memory) -----
-    const firebaseConfig = {
-      apiKey: 'AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk',
-      authDomain: 'beni-wealths.firebaseapp.com',
-      projectId: 'beni-wealths',
-      storageBucket: 'beni-wealths.firebasestorage.app',
-      messagingSenderId: '807950483822',
-      appId: '1:807950483822:web:e10fa87307e041c4d8417f',
-      measurementId: 'G-Z2XP3YN6NS'
-    };
+  const firebaseConfig = {
+    apiKey: 'AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk',
+    authDomain: 'beni-wealths.firebaseapp.com',
+    projectId: 'beni-wealths',
+    storageBucket: 'beni-wealths.firebasestorage.app',
+    messagingSenderId: '807950483822',
+    appId: '1:807950483822:web:e10fa87307e041c4d8417f',
+    measurementId: 'G-Z2XP3YN6NS'
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    // use region if your functions are deployed to a region (uncomment and replace if needed)
-    // const functions = getFunctions(app, 'us-central1');
-    const functions = getFunctions(app);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const functions = getFunctions(app);
+  const db = getFirestore(app);
 
-    // UI refs
-    const playBtn = document.getElementById('playBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const message = document.getElementById('message');
-    const stickEl = document.getElementById('stick');
-    const hammerEl = document.getElementById('hammer');
-    const scoreBox = document.getElementById('scoreBox');
-    const scoreNumber = document.getElementById('scoreNumber');
-    const roundInfo = document.getElementById('roundInfo');
-    const balanceEl = document.getElementById('balance');
+  // UI refs
+  const canvas = document.getElementById('poolCanvas');
+  const ctx = canvas.getContext('2d');
+  const playBtn = document.getElementById('playBtn');
+  const forfeitBtn = document.getElementById('forfeitBtn');
+  const rulesBtn = document.getElementById('rulesBtn');
+  const balanceDisplay = document.getElementById('balanceDisplay');
+  const roundStatus = document.getElementById('roundStatus');
+  const joinModal = document.getElementById('joinModal');
+  const modalAccept = document.getElementById('modalAccept');
+  const modalCancel = document.getElementById('modalCancel');
+  const playerScoreEl = document.getElementById('playerScore');
+  const botScoreEl = document.getElementById('botScore');
+  const turnIndicator = document.getElementById('turnIndicator');
+  const timerEl = document.getElementById('timer');
+  const difficultySel = document.getElementById('difficulty');
+  const dbgFetchBtn = document.getElementById('dbgFetchRound');
 
-    const confirmOverlay = document.getElementById('confirmOverlay');
-    const modalAccept = document.getElementById('modalAccept');
-    const modalCancel = document.getElementById('modalCancel');
+  // small local table physics/visuals (client-side only for animation)
+  const W = canvas.width, H = canvas.height;
+  const RAIL = 28, BALL_R = 10, POCKET_R = 22;
+  let balls = []; // ball objects {id,x,y,vx,vy,isCue,isPocketed}
+  let pockets = [];
+  let cueBall = null;
 
-    // render scale numbers
-    (function renderScale(){
-      const container = document.getElementById('scaleNums');
-      for(let i=0;i<=9;i++){
-        const val = 100 - i*10;
-        const div = document.createElement('div');
-        div.style.marginBottom = '26px';
-        div.textContent = val;
-        container.appendChild(div);
+  // gameplay state
+  let currentRoundId = null;
+  let inRound = false;
+  let playerScore = 0, botScore = 0;
+  let timer = 0, animReq = null;
+  let aiming = false, charge = 0, aimX=0, aimY=0;
+  let lastTime = null;
+  let currentUser = null;
+
+  // helper: render HUD changes
+  function refreshHUD() {
+    playerScoreEl.textContent = playerScore;
+    botScoreEl.textContent = botScore;
+  }
+
+  // --- init pockets and balls (visual) ---
+  function setupTable() {
+    pockets = [
+      {x:RAIL, y:RAIL}, {x: W/2, y:RAIL}, {x: W-RAIL, y:RAIL},
+      {x:RAIL, y:H-RAIL}, {x:W/2, y:H-RAIL}, {x:W-RAIL, y:H-RAIL}
+    ];
+    balls = [];
+    const cue = {id:'cue', x: RAIL+80, y: H/2, vx:0, vy:0, r:BALL_R, isCue:true, isPocketed:false};
+    balls.push(cue);
+    cueBall = cue;
+    // 7 object balls
+    const colors = ['#f97316','#ef4444','#10b981','#3b82f6','#a78bfa','#f59e0b','#06b6d4'];
+    const startX = W - RAIL - 140;
+    let idc = 1;
+    for (let row=0; row<4; row++) {
+      for (let col=0; col<=row; col++) {
+        const x = startX + row * (BALL_R*2 + 1);
+        const y = H/2 + (col - row/2) * (BALL_R*2 + 1);
+        balls.push({id:'b'+(idc++), x, y, vx:0, vy:0, r:BALL_R, color: colors[(idc-2)%colors.length], isCue:false, isPocketed:false});
       }
-    })();
-
-    // state
-    let currentUser = null;
-    let roundId = null;
-    let angle = 0; // 0deg = perfectly UP (best)
-    let raf = null;
-    let lastTs = null;
-    let played = false;
-    const ENTRY_FEE = 20;
-
-    // precise animation using requestAnimationFrame and timestamps
-    function animate(ts){
-      if (lastTs == null) lastTs = ts;
-      const dt = (ts - lastTs) / 1000; // seconds elapsed
-      lastTs = ts;
-      // rotation speed degrees/sec
-      const speed = 180; // tune: higher = faster rotation
-      angle = (angle + speed * dt) % 360;
-      stickEl.style.transform = `rotate(${angle}deg)`;
-      raf = requestAnimationFrame(animate);
     }
+    playerScore = 0; botScore = 0;
+    refreshHUD();
+  }
 
-    function startRotation(){
-      if (raf) cancelAnimationFrame(raf);
-      lastTs = null;
-      raf = requestAnimationFrame(animate);
+  // small renderer
+  function drawTable() {
+    // clear
+    ctx.clearRect(0,0,W,H);
+    // rails
+    ctx.fillStyle = '#053a2a';
+    roundRect(ctx, 0,0,W,H,12); ctx.fill();
+    // inner table
+    ctx.fillStyle = '#0b6f4f';
+    roundRect(ctx, RAIL-6, RAIL-6, W-(RAIL-6)*2, H-(RAIL-6)*2, 8); ctx.fill();
+    // pockets
+    for(const p of pockets){ ctx.beginPath(); ctx.fillStyle='#071c12'; ctx.arc(p.x,p.y,POCKET_R,0,Math.PI*2); ctx.fill(); }
+    // balls
+    for(const b of balls){ if (b.isPocketed) continue; drawBall(b); }
+    // aiming indicator
+    if (aiming && !cueBall.isPocketed) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(cueBall.x, cueBall.y);
+      ctx.lineTo(aimX, aimY);
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+      ctx.lineWidth = 2; ctx.setLineDash([6,6]); ctx.stroke(); ctx.setLineDash([]);
+      // power circle
+      const psize = 8 + Math.min(1,charge) * 12;
+      ctx.beginPath(); ctx.fillStyle = 'rgba(255,209,102,0.95)'; ctx.arc(cueBall.x-22, cueBall.y+22, psize, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
     }
+  }
+  function drawBall(b) {
+    // shadow
+    ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.ellipse(b.x+2, b.y+2, b.r+2, b.r+2, 0, 0, Math.PI*2); ctx.fill();
+    // ball
+    ctx.beginPath(); ctx.fillStyle = b.isCue ? '#ffffff' : (b.color || '#f97316'); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+    // stroke
+    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.stroke();
+  }
 
-    function stopRotation(){
-      if (raf) cancelAnimationFrame(raf);
-      raf = null;
+  // basic physics & pocket detection (client-side visual; authoritative state comes from server responses)
+  function updatePhysics(dt) {
+    for(const b of balls){
+      if (b.isPocketed) continue;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
     }
+    // wall collisions
+    for(const b of balls){ if (b.isPocketed) continue;
+      if (b.x - b.r < RAIL) { b.x = RAIL + b.r; b.vx = -b.vx * 0.96; }
+      if (b.x + b.r > W - RAIL) { b.x = W-RAIL - b.r; b.vx = -b.vx * 0.96; }
+      if (b.y - b.r < RAIL) { b.y = RAIL + b.r; b.vy = -b.vy * 0.96; }
+      if (b.y + b.r > H - RAIL) { b.y = H-RAIL - b.r; b.vy = -b.vy * 0.96; }
+    }
+    // naive ball-ball collision
+    for (let i=0;i<balls.length;i++){
+      for (let j=i+1;j<balls.length;j++){
+        resolveBallCollision(balls[i], balls[j]);
+      }
+    }
+    // pocket detection
+    for(const p of pockets){
+      for(const b of balls){
+        if (b.isPocketed) continue;
+        const d = Math.hypot(b.x - p.x, b.y - p.y);
+        if (d < POCKET_R) {
+          b.isPocketed = true; b.vx = 0; b.vy = 0;
+        }
+      }
+    }
+    // friction
+    for(const b of balls){ if (b.isPocketed) continue; b.vx *= 0.995; b.vy *= 0.995; if (Math.hypot(b.vx,b.vy) < 0.01) { b.vx = 0; b.vy = 0; } }
+  }
 
-    // start rotating on load
-    startRotation();
+  // simple collision resolution (elastic-ish)
+  function resolveBallCollision(a,b){
+    if (a.isPocketed || b.isPocketed) return;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const d = Math.hypot(dx,dy);
+    if (d === 0) return;
+    const overlap = a.r + b.r - d;
+    if (overlap > 0){
+      const nx = dx / d, ny = dy / d;
+      const push = overlap / 2 + 0.01;
+      a.x -= nx * push; a.y -= ny * push; b.x += nx * push; b.y += ny * push;
+      const vx = b.vx - a.vx, vy = b.vy - a.vy;
+      const rel = vx * nx + vy * ny;
+      if (rel > 0) return;
+      const impulse = (-(1 + 0.98) * rel) / 2;
+      const ix = impulse * nx, iy = impulse * ny;
+      a.vx -= ix; a.vy -= iy; b.vx += ix; b.vy += iy;
+    }
+  }
 
-    // Auth: auto anonymous if not signed in
-    onAuthStateChanged(auth, async (u) => {
-      currentUser = u;
-      if (!u) {
-        try { await signInAnonymously(auth); } catch(e){ console.warn('Anonymous sign-in failed', e); }
-        balanceEl.textContent = 'Signed in (guest)';
+  // small animation loop
+  function animate(ts) {
+    if (!lastTime) lastTime = ts;
+    const dt = Math.min(0.032, (ts - lastTime)/1000); // cap dt
+    lastTime = ts;
+    if (inRound) timer += dt;
+    updatePhysics(dt);
+    drawTable();
+    timerEl.textContent = timer.toFixed(1) + 's';
+    animReq = requestAnimationFrame(animate);
+  }
+
+  // util: roundRect
+  function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
+
+  // ---- Firebase & auth behavior ----
+  onAuthStateChanged(auth, async (u) => {
+    currentUser = u;
+    if (!u) {
+      try{ await signInAnonymously(auth); }catch(e){ console.warn('anon sign in failed', e); }
+      balanceDisplay.textContent = 'Balance: guest';
+      return;
+    }
+    // try to fetch user's balance (if stored in users/{uid})
+    try {
+      const ud = await getDoc(doc(db, 'users', u.uid));
+      if (ud.exists()) {
+        const data = ud.data();
+        balanceDisplay.textContent = 'Balance: ₦' + (data.balance ?? 0);
+      } else {
+        balanceDisplay.textContent = 'Balance: ₦0';
+      }
+    } catch (e) {
+      console.warn('balance read error', e);
+    }
+  });
+
+  // ---- Play flow: join an admin round (you must supply the roundId) ----
+  playBtn.addEventListener('click', ()=> {
+    if (!currentUser) { alert('Sign in required.'); return; }
+    const rid = prompt('Enter the round ID (admin created):');
+    if (!rid) return;
+    joinModal.classList.add('show');
+    modalAccept.onclick = () => { joinModal.classList.remove('show'); joinRound(rid); };
+    modalCancel.onclick = () => { joinModal.classList.remove('show'); window.location.href = 'mini-games.html'; };
+  });
+
+  // joinRound uses callable to deduct entry fee and assign player
+  async function joinRound(roundId) {
+    try {
+      const fn = httpsCallable(functions, 'createRoundForPlayer');
+      const res = await fn({ roundId });
+      if (res.data && res.data.ok) {
+        currentRoundId = roundId;
+        inRound = true;
+        roundStatus.textContent = 'Round: ' + roundId;
+        turnIndicator.textContent = 'Your turn';
+        timer = 0;
+        startRoundLocal();
+      } else {
+        alert(res.data?.message || 'Failed to join round');
+      }
+    } catch (err) {
+      console.error('join error', err);
+      alert(err.message || 'Failed to join round');
+    }
+  }
+
+  // start local UI for the round
+  function startRoundLocal() {
+    setupTable();
+    if (!animReq) animReq = requestAnimationFrame(animate);
+    enableCueControls();
+  }
+
+  // enable user interactions (aim & charge on cue ball)
+  function enableCueControls() {
+    let pointerDown = false;
+    let startTx = 0;
+
+    canvas.addEventListener('pointerdown', (ev) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
+      if (Math.hypot(x - cueBall.x, y - cueBall.y) <= cueBall.r + 6) {
+        pointerDown = true;
+        aiming = true;
+        charge = 0;
+        aimX = x; aimY = y;
+        startTx = performance.now();
+      }
+    });
+
+    canvas.addEventListener('pointermove', (ev) => {
+      if (!pointerDown) return;
+      const rect = canvas.getBoundingClientRect();
+      aimX = ev.clientX - rect.left; aimY = ev.clientY - rect.top;
+      charge = Math.min(1, (performance.now() - startTx) / 1200);
+    });
+
+    canvas.addEventListener('pointerup', async (ev) => {
+      if (!pointerDown) return;
+      pointerDown = false;
+      aiming = false;
+      const rect = canvas.getBoundingClientRect();
+      const releaseX = ev.clientX - rect.left, releaseY = ev.clientY - rect.top;
+      const dx = releaseX - cueBall.x, dy = releaseY - cueBall.y;
+      const angle = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+      const power = Math.min(1, charge);
+      const maxV = 16;
+      cueBall.vx += (dx / Math.hypot(dx,dy)) * power * maxV;
+      cueBall.vy += (dy / Math.hypot(dx,dy)) * power * maxV;
+      await submitShotToServer({ angle, power });
+      charge = 0;
+    });
+
+    window.addEventListener('keydown', async (ev) => {
+      if (ev.code === 'Space' && inRound) {
+        const angle = 0; const power = 0.3;
+        cueBall.vx += Math.cos(angle*Math.PI/180) * power * 12;
+        cueBall.vy += Math.sin(angle*Math.PI/180) * power * 12;
+        await submitShotToServer({ angle, power });
+      }
+    });
+  }
+
+  // submit player's raw shot to server; server simulates and returns authoritative update (player & bot play)
+  async function submitShotToServer(shot) {
+    if (!currentRoundId) { alert('No active round'); return; }
+    try {
+      turnIndicator.textContent = 'Waiting for server...';
+      playBtn.disabled = true;
+      const fn = httpsCallable(functions, 'submitPlayerShot');
+      const res = await fn({ roundId: currentRoundId, shot, botDifficulty: difficultySel.value });
+      if (!res.data || !res.data.ok) {
+        alert('Shot rejected: ' + (res.data?.message || 'server error'));
+        turnIndicator.textContent = 'Error';
+        playBtn.disabled = false;
         return;
       }
-      // fetch balance from users/{uid}
-      try{
-        const userDoc = doc(db, 'users', u.uid);
-        const snap = await getDoc(userDoc);
-        if (snap.exists()){
-          const data = snap.data();
-          balanceEl.textContent = `Balance: ₦${(data.balance ?? 0)}`;
-        } else {
-          balanceEl.textContent = 'Balance: ₦0';
+      const data = res.data;
+      playerScore = data.playerScore;
+      botScore = data.botScore;
+      refreshHUD();
+      (data.lastShots || []).forEach(s => {
+        if (s.result && s.result.pocketedCount) {
+          let removed = 0;
+          for (let i = balls.length-1; i>=0 && removed < s.result.pocketedCount; i--) {
+            if (!balls[i].isCue && !balls[i].isPocketed) { balls[i].isPocketed = true; removed++; }
+          }
         }
-      }catch(err){
-        console.warn('Failed to read balance', err);
-      }
-    });
+      });
 
-    // Cancel -> redirect to mini-games.html
-    cancelBtn.addEventListener('click', ()=>{
-      window.location.href = 'mini-games.html';
-    });
-
-    // Show confirmation modal on Play
-    playBtn.addEventListener('click', ()=>{
-      if (played) { message.textContent = 'You already played this round.'; return; }
-      confirmOverlay.classList.add('show');
-    });
-
-    modalCancel.addEventListener('click', ()=>{
-      confirmOverlay.classList.remove('show');
-      // redirect as required
-      window.location.href = 'mini-games.html';
-    });
-
-    modalAccept.addEventListener('click', async ()=>{
-      confirmOverlay.classList.remove('show');
-      if (!currentUser) { message.textContent = 'Sign in required.'; return; }
-      if (played) { message.textContent = 'Already played.'; return; }
-      message.textContent = 'Creating round and deducting ₦20...';
-      playBtn.disabled = true;
-
-      try{
-        const createRound = httpsCallable(functions, 'createRound');
-        const res = await createRound({ game: 'striker', entryFee: ENTRY_FEE });
-        if (res.data && res.data.ok){
-          roundId = res.data.roundId;
-          message.textContent = 'Round created. You have one hit.';
-          roundInfo.textContent = 'Round: ' + roundId;
-          // enable hammer click
-          hammerEl.style.pointerEvents = 'auto';
-          hammerEl.style.cursor = 'pointer';
-          hammerEl.addEventListener('click', onHit, { once: true });
-        } else {
-          throw new Error(res.data?.message || 'Failed to create round');
-        }
-      }catch(err){
-        console.error(err);
-        message.textContent = err.message || 'Could not create round. Check balance.';
+      if (data.roundEnded) {
+        turnIndicator.textContent = 'Round complete';
+        inRound = false;
+        playBtn.disabled = true;
+        const winner = data.winner;
+        if (winner === currentUser.uid) {
+          alert('You won! ₦50 has been credited to your account.');
+        } else if (winner === 'bot') {
+          alert('Bot won. Better luck next time!');
+        } else alert('Round ended in a tie.');
+      } else {
+        turnIndicator.textContent = 'Your turn';
         playBtn.disabled = false;
       }
-    });
 
-    // Handle the single hit
-    async function onHit(e){
-      if (!roundId) { message.textContent = 'No active round. Click Play first.'; return; }
-      if (played) { message.textContent = 'Already played.'; return; }
-      played = true;
-
-      // stop rotation and compute score
-      stopRotation();
-      // normalize angle to 0..360
-      const norm = ((angle % 360) + 360) % 360; // 0 is up (best)
-      // distance from perfect up (degrees)
-      const diff = Math.min(norm, 360 - norm); // 0..180
-      const rawPower = Math.max(0, 1 - diff / 180); // 1 at diff=0, 0 at diff=180
-      // server formula: same pow mapping
-      const computedScore = Math.round(Math.pow(rawPower, 1.05) * 100);
-
-      // show local score
-      scoreBox.style.display = 'block';
-      scoreNumber.textContent = computedScore;
-      message.textContent = 'Submitting score...';
-
-      try{
-        const submitScore = httpsCallable(functions, 'submitScore');
-        const res = await submitScore({ roundId, rawPower, clientDuration: 0 });
-        if (res.data && res.data.ok){
-          message.textContent = 'Score accepted: ' + res.data.score;
-          scoreNumber.textContent = res.data.score;
-        } else {
-          message.textContent = 'Score rejected by server.';
-          console.warn(res);
-        }
-      }catch(err){
-        console.error('submit error', err);
-        message.textContent = err.message || 'Submission failed';
-      }
-
-      // disable further interaction for this round
-      hammerEl.style.opacity = '0.45';
-      hammerEl.style.pointerEvents = 'none';
-      playBtn.disabled = true;
+      try {
+        const ud = await getDoc(doc(db, 'users', currentUser.uid));
+        if (ud.exists()) balanceDisplay.textContent = 'Balance: ₦' + (ud.data().balance ?? 0);
+      } catch(e) {}
+    } catch (err) {
+      console.error('submitShot error', err);
+      alert(err.message || 'Shot submit failed');
+      turnIndicator.textContent = 'Error';
+      playBtn.disabled = false;
     }
+  }
 
-    // Make the hammer also respond to keyboard (space) when enabled
-    window.addEventListener('keydown', (ev)=>{
-      if (ev.code === 'Space' && !played && roundId){
-        ev.preventDefault();
-        onHit();
-      }
-    });
+  // debug fetch round snapshot (reads from firestore; be careful with security rules)
+  dbgFetchBtn.addEventListener('click', async ()=> {
+    const rid = prompt('Round ID to fetch:');
+    if (!rid) return;
+    try {
+      const rdoc = await getDoc(doc(db, 'games', 'pool', 'rounds', rid));
+      if (!rdoc.exists()) alert('Round not found');
+      else console.log('Round snapshot', rdoc.data()), alert('Round snapshot logged to console');
+    } catch(err) { console.error(err); alert('Fetch failed'); }
+  });
 
-    // Security note for deployers: please deploy createRound and submitScore as callable Cloud Functions
+  forfeitBtn.addEventListener('click', ()=> {
+    if (!currentRoundId) return alert('No active round');
+    if (!confirm('Forfeit this round? You will lose your entry fee.')) return;
+    inRound = false; currentRoundId = null; turnIndicator.textContent = 'Forfeited';
+    playBtn.disabled = false;
+  });
+
+  rulesBtn.addEventListener('click', ()=> alert('Pocket more balls than the bot to win ₦50. Entry fee ₦20. Admin-created rounds only.'));
+
+  // initial setup
+  setupTable();
+  drawTable();
+
+  if (!animReq) animReq = requestAnimationFrame(animate);
+
+  window.addEventListener('beforeunload', ()=> { if (animReq) cancelAnimationFrame(animReq); });
+
   </script>
 </body>
 </html>
