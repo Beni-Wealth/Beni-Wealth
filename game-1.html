@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Pool Duel (Player vs Bot)</title>
+  <title>Beni-Wealth — Pool Duel</title>
 
   <!-- Beni-Wealth theme (Poppins) -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -121,7 +121,7 @@
         <div class="score-card muted">
           <div>Debug / dev</div>
           <button id="dbgFetchRound" class="btn" style="margin-top:8px">Fetch round snapshot</button>
-          <div class="muted small" style="margin-top:8px">Make sure your Cloud Functions are deployed with names:<br><code>createRoundForPlayer</code> and <code>submitPlayerShot</code></div>
+          <div class="muted small" style="margin-top:8px">Make sure your Cloud Functions are deployed with name:<br><code>joinRoundForPlayer</code> and <code>submitPlayerShot</code></div>
         </div>
       </div>
     </div>
@@ -140,13 +140,10 @@
     </div>
   </div>
 
-  <footer class="note" style="text-align:center">Beni-Wealth — Pool Duel • Client v1.0</footer>
+  <footer class="note" style="text-align:center">Beni-Wealth — Pool Duel • Client v1.1</footer>
 
   <!-- Firebase SDK (modular) -->
   <script type="module">
-  // ---------------------------
-  // Your Firebase config (inserted as provided)
-  // ---------------------------
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
   import { getAuth, onAuthStateChanged, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
   import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js';
@@ -188,7 +185,7 @@
   // small local table physics/visuals (client-side only for animation)
   const W = canvas.width, H = canvas.height;
   const RAIL = 28, BALL_R = 10, POCKET_R = 22;
-  let balls = []; // ball objects {id,x,y,vx,vy,isCue,isPocketed}
+  let balls = []; // ball objects
   let pockets = [];
   let cueBall = null;
 
@@ -201,13 +198,11 @@
   let lastTime = null;
   let currentUser = null;
 
-  // helper: render HUD changes
   function refreshHUD() {
     playerScoreEl.textContent = playerScore;
     botScoreEl.textContent = botScore;
   }
 
-  // --- init pockets and balls (visual) ---
   function setupTable() {
     pockets = [
       {x:RAIL, y:RAIL}, {x: W/2, y:RAIL}, {x: W-RAIL, y:RAIL},
@@ -217,7 +212,6 @@
     const cue = {id:'cue', x: RAIL+80, y: H/2, vx:0, vy:0, r:BALL_R, isCue:true, isPocketed:false};
     balls.push(cue);
     cueBall = cue;
-    // 7 object balls
     const colors = ['#f97316','#ef4444','#10b981','#3b82f6','#a78bfa','#f59e0b','#06b6d4'];
     const startX = W - RAIL - 140;
     let idc = 1;
@@ -232,21 +226,14 @@
     refreshHUD();
   }
 
-  // small renderer
   function drawTable() {
-    // clear
     ctx.clearRect(0,0,W,H);
-    // rails
     ctx.fillStyle = '#053a2a';
     roundRect(ctx, 0,0,W,H,12); ctx.fill();
-    // inner table
     ctx.fillStyle = '#0b6f4f';
     roundRect(ctx, RAIL-6, RAIL-6, W-(RAIL-6)*2, H-(RAIL-6)*2, 8); ctx.fill();
-    // pockets
     for(const p of pockets){ ctx.beginPath(); ctx.fillStyle='#071c12'; ctx.arc(p.x,p.y,POCKET_R,0,Math.PI*2); ctx.fill(); }
-    // balls
-    for(const b of balls){ if (b.isPocketed) continue; drawBall(b); }
-    // aiming indicator
+    for(const b of balls){ if (!b.isPocketed) drawBall(b); }
     if (aiming && !cueBall.isPocketed) {
       ctx.save();
       ctx.beginPath();
@@ -254,282 +241,128 @@
       ctx.lineTo(aimX, aimY);
       ctx.strokeStyle = 'rgba(255,255,255,0.75)';
       ctx.lineWidth = 2; ctx.setLineDash([6,6]); ctx.stroke(); ctx.setLineDash([]);
-      // power circle
       const psize = 8 + Math.min(1,charge) * 12;
       ctx.beginPath(); ctx.fillStyle = 'rgba(255,209,102,0.95)'; ctx.arc(cueBall.x-22, cueBall.y+22, psize, 0, Math.PI*2); ctx.fill();
       ctx.restore();
     }
   }
+
   function drawBall(b) {
-    // shadow
     ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.ellipse(b.x+2, b.y+2, b.r+2, b.r+2, 0, 0, Math.PI*2); ctx.fill();
-    // ball
     ctx.beginPath(); ctx.fillStyle = b.isCue ? '#ffffff' : (b.color || '#f97316'); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
-    // stroke
     ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.stroke();
   }
 
-  // basic physics & pocket detection (client-side visual; authoritative state comes from server responses)
   function updatePhysics(dt) {
-    for(const b of balls){
-      if (b.isPocketed) continue;
-      b.x += b.vx * dt;
-      b.y += b.vy * dt;
-    }
-    // wall collisions
+    for(const b of balls){ if (b.isPocketed) continue; b.x += b.vx*dt; b.y += b.vy*dt; }
     for(const b of balls){ if (b.isPocketed) continue;
       if (b.x - b.r < RAIL) { b.x = RAIL + b.r; b.vx = -b.vx * 0.96; }
       if (b.x + b.r > W - RAIL) { b.x = W-RAIL - b.r; b.vx = -b.vx * 0.96; }
       if (b.y - b.r < RAIL) { b.y = RAIL + b.r; b.vy = -b.vy * 0.96; }
       if (b.y + b.r > H - RAIL) { b.y = H-RAIL - b.r; b.vy = -b.vy * 0.96; }
     }
-    // naive ball-ball collision
     for (let i=0;i<balls.length;i++){
       for (let j=i+1;j<balls.length;j++){
         resolveBallCollision(balls[i], balls[j]);
       }
     }
-    // pocket detection
     for(const p of pockets){
       for(const b of balls){
         if (b.isPocketed) continue;
-        const d = Math.hypot(b.x - p.x, b.y - p.y);
-        if (d < POCKET_R) {
-          b.isPocketed = true; b.vx = 0; b.vy = 0;
-        }
+        const d = Math.hypot(b.x-p.x,b.y-p.y);
+        if (d < POCKET_R) { b.isPocketed=true; b.vx=0; b.vy=0; }
       }
     }
-    // friction
-    for(const b of balls){ if (b.isPocketed) continue; b.vx *= 0.995; b.vy *= 0.995; if (Math.hypot(b.vx,b.vy) < 0.01) { b.vx = 0; b.vy = 0; } }
+    for(const b of balls){ if (b.isPocketed) continue; b.vx*=0.995; b.vy*=0.995; if (Math.hypot(b.vx,b.vy)<0.01){b.vx=0;b.vy=0;} }
   }
 
-  // simple collision resolution (elastic-ish)
   function resolveBallCollision(a,b){
-    if (a.isPocketed || b.isPocketed) return;
-    const dx = b.x - a.x, dy = b.y - a.y;
-    const d = Math.hypot(dx,dy);
-    if (d === 0) return;
-    const overlap = a.r + b.r - d;
-    if (overlap > 0){
-      const nx = dx / d, ny = dy / d;
-      const push = overlap / 2 + 0.01;
-      a.x -= nx * push; a.y -= ny * push; b.x += nx * push; b.y += ny * push;
-      const vx = b.vx - a.vx, vy = b.vy - a.vy;
-      const rel = vx * nx + vy * ny;
-      if (rel > 0) return;
-      const impulse = (-(1 + 0.98) * rel) / 2;
-      const ix = impulse * nx, iy = impulse * ny;
-      a.vx -= ix; a.vy -= iy; b.vx += ix; b.vy += iy;
+    if (a.isPocketed||b.isPocketed) return;
+    const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy);
+    if(d===0) return;
+    const overlap=a.r+b.r-d;
+    if(overlap>0){
+      const nx=dx/d, ny=dy/d;
+      const push=overlap/2+0.01;
+      a.x-=nx*push; a.y-=ny*push; b.x+=nx*push; b.y+=ny*push;
+      const vx=b.vx-a.vx, vy=b.vy-a.vy;
+      const rel=vx*nx+vy*ny;
+      if(rel>0) return;
+      const impulse=(-(1+0.98)*rel)/2;
+      const ix=impulse*nx, iy=impulse*ny;
+      a.vx-=ix; a.vy-=iy; b.vx+=ix; b.vy+=iy;
     }
   }
 
-  // small animation loop
-  function animate(ts) {
-    if (!lastTime) lastTime = ts;
-    const dt = Math.min(0.032, (ts - lastTime)/1000); // cap dt
-    lastTime = ts;
-    if (inRound) timer += dt;
+  function animate(timestamp){
+    if (!lastTime) lastTime = timestamp;
+    const dt = (timestamp-lastTime)/16; lastTime=timestamp;
     updatePhysics(dt);
     drawTable();
-    timerEl.textContent = timer.toFixed(1) + 's';
-    animReq = requestAnimationFrame(animate);
+    if(inRound) timer+=dt*0.016;
+    timerEl.textContent = timer.toFixed(1)+'s';
+    animReq=requestAnimationFrame(animate);
   }
 
-  // util: roundRect
-  function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
-
-  // ---- Firebase & auth behavior ----
-  onAuthStateChanged(auth, async (u) => {
-    currentUser = u;
-    if (!u) {
-      try{ await signInAnonymously(auth); }catch(e){ console.warn('anon sign in failed', e); }
-      balanceDisplay.textContent = 'Balance: guest';
+  // ---------------- Firebase logic ----------------
+  onAuthStateChanged(auth, async user=>{
+    if(!user){
+      await signInAnonymously(auth);
       return;
     }
-    // try to fetch user's balance (if stored in users/{uid})
-    try {
-      const ud = await getDoc(doc(db, 'users', u.uid));
-      if (ud.exists()) {
-        const data = ud.data();
-        balanceDisplay.textContent = 'Balance: ₦' + (data.balance ?? 0);
-      } else {
-        balanceDisplay.textContent = 'Balance: ₦0';
-      }
-    } catch (e) {
-      console.warn('balance read error', e);
+    currentUser = user;
+    updateBalance();
+  });
+
+  async function updateBalance(){
+    const userRef = doc(db,'users',currentUser.uid);
+    const snap = await getDoc(userRef);
+    if(snap.exists()){
+      const bal = snap.data().balance ?? 0;
+      balanceDisplay.textContent = 'Balance: ₦'+bal;
     }
-  });
+  }
 
-  // ---- Play flow: join an admin round (you must supply the roundId) ----
-  playBtn.addEventListener('click', ()=> {
-    if (!currentUser) { alert('Sign in required.'); return; }
-    const rid = prompt('Enter the round ID (admin created):');
-    if (!rid) return;
-    joinModal.classList.add('show');
-    modalAccept.onclick = () => { joinModal.classList.remove('show'); joinRound(rid); };
-    modalCancel.onclick = () => { joinModal.classList.remove('show'); window.location.href = 'mini-games.html'; };
-  });
-
-  // joinRound uses callable to deduct entry fee and assign player
-  async function joinRound(roundId) {
-    try {
-      const fn = httpsCallable(functions, 'createRoundForPlayer');
-      const res = await fn({ roundId });
-      if (res.data && res.data.ok) {
-        currentRoundId = roundId;
+  async function joinRound(roundId){
+    const joinRoundForPlayer = httpsCallable(functions,'joinRoundForPlayer');
+    try{
+      const res = await joinRoundForPlayer({roundId});
+      if(res.data.ok){
+        roundStatus.textContent='Joined: '+roundId;
         inRound = true;
-        roundStatus.textContent = 'Round: ' + roundId;
-        turnIndicator.textContent = 'Your turn';
-        timer = 0;
-        startRoundLocal();
-      } else {
-        alert(res.data?.message || 'Failed to join round');
+        currentRoundId = roundId;
+        joinModal.classList.remove('show');
+        setupTable();
+        if(!animReq) animate();
       }
-    } catch (err) {
-      console.error('join error', err);
-      alert(err.message || 'Failed to join round');
+    }catch(err){
+      alert('Error joining round: '+err.message);
     }
+    updateBalance();
   }
 
-  // start local UI for the round
-  function startRoundLocal() {
-    setupTable();
-    if (!animReq) animReq = requestAnimationFrame(animate);
-    enableCueControls();
-  }
-
-  // enable user interactions (aim & charge on cue ball)
-  function enableCueControls() {
-    let pointerDown = false;
-    let startTx = 0;
-
-    canvas.addEventListener('pointerdown', (ev) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
-      if (Math.hypot(x - cueBall.x, y - cueBall.y) <= cueBall.r + 6) {
-        pointerDown = true;
-        aiming = true;
-        charge = 0;
-        aimX = x; aimY = y;
-        startTx = performance.now();
-      }
-    });
-
-    canvas.addEventListener('pointermove', (ev) => {
-      if (!pointerDown) return;
-      const rect = canvas.getBoundingClientRect();
-      aimX = ev.clientX - rect.left; aimY = ev.clientY - rect.top;
-      charge = Math.min(1, (performance.now() - startTx) / 1200);
-    });
-
-    canvas.addEventListener('pointerup', async (ev) => {
-      if (!pointerDown) return;
-      pointerDown = false;
-      aiming = false;
-      const rect = canvas.getBoundingClientRect();
-      const releaseX = ev.clientX - rect.left, releaseY = ev.clientY - rect.top;
-      const dx = releaseX - cueBall.x, dy = releaseY - cueBall.y;
-      const angle = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
-      const power = Math.min(1, charge);
-      const maxV = 16;
-      cueBall.vx += (dx / Math.hypot(dx,dy)) * power * maxV;
-      cueBall.vy += (dy / Math.hypot(dx,dy)) * power * maxV;
-      await submitShotToServer({ angle, power });
-      charge = 0;
-    });
-
-    window.addEventListener('keydown', async (ev) => {
-      if (ev.code === 'Space' && inRound) {
-        const angle = 0; const power = 0.3;
-        cueBall.vx += Math.cos(angle*Math.PI/180) * power * 12;
-        cueBall.vy += Math.sin(angle*Math.PI/180) * power * 12;
-        await submitShotToServer({ angle, power });
-      }
-    });
-  }
-
-  // submit player's raw shot to server; server simulates and returns authoritative update (player & bot play)
-  async function submitShotToServer(shot) {
-    if (!currentRoundId) { alert('No active round'); return; }
-    try {
-      turnIndicator.textContent = 'Waiting for server...';
-      playBtn.disabled = true;
-      const fn = httpsCallable(functions, 'submitPlayerShot');
-      const res = await fn({ roundId: currentRoundId, shot, botDifficulty: difficultySel.value });
-      if (!res.data || !res.data.ok) {
-        alert('Shot rejected: ' + (res.data?.message || 'server error'));
-        turnIndicator.textContent = 'Error';
-        playBtn.disabled = false;
-        return;
-      }
-      const data = res.data;
-      playerScore = data.playerScore;
-      botScore = data.botScore;
-      refreshHUD();
-      (data.lastShots || []).forEach(s => {
-        if (s.result && s.result.pocketedCount) {
-          let removed = 0;
-          for (let i = balls.length-1; i>=0 && removed < s.result.pocketedCount; i--) {
-            if (!balls[i].isCue && !balls[i].isPocketed) { balls[i].isPocketed = true; removed++; }
-          }
-        }
-      });
-
-      if (data.roundEnded) {
-        turnIndicator.textContent = 'Round complete';
-        inRound = false;
-        playBtn.disabled = true;
-        const winner = data.winner;
-        if (winner === currentUser.uid) {
-          alert('You won! ₦50 has been credited to your account.');
-        } else if (winner === 'bot') {
-          alert('Bot won. Better luck next time!');
-        } else alert('Round ended in a tie.');
-      } else {
-        turnIndicator.textContent = 'Your turn';
-        playBtn.disabled = false;
-      }
-
-      try {
-        const ud = await getDoc(doc(db, 'users', currentUser.uid));
-        if (ud.exists()) balanceDisplay.textContent = 'Balance: ₦' + (ud.data().balance ?? 0);
-      } catch(e) {}
-    } catch (err) {
-      console.error('submitShot error', err);
-      alert(err.message || 'Shot submit failed');
-      turnIndicator.textContent = 'Error';
-      playBtn.disabled = false;
-    }
-  }
-
-  // debug fetch round snapshot (reads from firestore; be careful with security rules)
-  dbgFetchBtn.addEventListener('click', async ()=> {
-    const rid = prompt('Round ID to fetch:');
-    if (!rid) return;
-    try {
-      const rdoc = await getDoc(doc(db, 'games', 'pool', 'rounds', rid));
-      if (!rdoc.exists()) alert('Round not found');
-      else console.log('Round snapshot', rdoc.data()), alert('Round snapshot logged to console');
-    } catch(err) { console.error(err); alert('Fetch failed'); }
+  playBtn.addEventListener('click',()=> joinModal.classList.add('show'));
+  modalCancel.addEventListener('click',()=> joinModal.classList.remove('show'));
+  modalAccept.addEventListener('click',async ()=>{
+    const roundId = prompt('Enter Round ID to join (admin-created)')?.trim();
+    if(!roundId){ alert('Round ID required'); return; }
+    await joinRound(roundId);
   });
 
-  forfeitBtn.addEventListener('click', ()=> {
-    if (!currentRoundId) return alert('No active round');
-    if (!confirm('Forfeit this round? You will lose your entry fee.')) return;
-    inRound = false; currentRoundId = null; turnIndicator.textContent = 'Forfeited';
-    playBtn.disabled = false;
+  dbgFetchBtn.addEventListener('click',async ()=>{
+    if(!currentRoundId) { alert('No round joined'); return; }
+    const snap = await getDoc(doc(db,'games/pool/rounds',currentRoundId));
+    console.log('Round snapshot:', snap.data());
+    alert('Check console for round snapshot.');
   });
 
-  rulesBtn.addEventListener('click', ()=> alert('Pocket more balls than the bot to win ₦50. Entry fee ₦20. Admin-created rounds only.'));
+  rulesBtn.addEventListener('click',()=>alert('Pocket all your balls. Cue: click+hold, drag, release. Space = quick tap.'));
 
-  // initial setup
+  forfeitBtn.addEventListener('click',()=>{ if(confirm('Forfeit round?')) { inRound=false; roundStatus.textContent='Forfeited'; } });
+
+  // initialize table
   setupTable();
-  drawTable();
-
-  if (!animReq) animReq = requestAnimationFrame(animate);
-
-  window.addEventListener('beforeunload', ()=> { if (animReq) cancelAnimationFrame(animReq); });
-
+  animate();
   </script>
 </body>
 </html>
