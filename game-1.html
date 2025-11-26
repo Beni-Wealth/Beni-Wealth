@@ -3,53 +3,52 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Beni-Wealth — Striker Minigame</title>
+  <title>Beni-Wealth — Striker Minigame (Updated)</title>
   <style>
-    :root{--bg:#fff6f0;--card:#ffffff;--accent:#ff6b6b;--muted:#6b7280}
-    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);margin:0;display:flex;align-items:center;justify-content:center;height:100vh}
-    .container{width:100%;max-width:420px;padding:18px}
-    .card{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 6px 24px rgba(16,24,40,0.08)}
+    :root{--bg:#fff6f0;--card:#fff;--accent:#ff6b6b;--muted:#6b7280}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:#0f172a}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+    .card{width:100%;max-width:480px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 10px 30px rgba(2,6,23,0.08)}
     .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
     .title{font-weight:700;font-size:18px}
     .sub{color:var(--muted);font-size:13px}
 
-    /* popup modal */
-    .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35)}
-    .modal{width:90%;max-width:420px;background:var(--card);border-radius:12px;padding:16px}
-    .modal h3{margin:0 0 6px 0}
-    .modal p{margin:6px 0;color:var(--muted)}
-    .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-    button{border:0;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer}
-    .btn-ghost{background:#f3f4f6;color:#111827}
-    .btn-primary{background:var(--accent);color:#fff}
-
-    /* game area */
+    /* layout */
     .game-area{display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:8px}
-    .striker-wrap{position:relative;width:220px;height:420px;background:#fdece6;border-radius:18px;display:flex;align-items:center;justify-content:center}
-    .tower{width:60px;height:360px;background:linear-gradient(#f3c46b,#f59e0b);border-radius:30px;position:relative;display:flex;align-items:flex-end;justify-content:center}
+    .striker-wrap{position:relative;width:260px;height:460px;background:#fdece6;border-radius:18px;display:flex;align-items:center;justify-content:center}
+    .tower{width:80px;height:360px;background:linear-gradient(#f3c46b,#f59e0b);border-radius:30px;position:relative;display:flex;align-items:flex-end;justify-content:center}
     .scale-nums{position:absolute;left:8px;top:12px;color:#7c2d12;font-weight:700;font-size:12px}
 
-    /* rotating stick (the black stuff) */
-    .pivot{position:absolute;bottom:50px;width:260px;height:260px;display:flex;align-items:center;justify-content:center;pointer-events:none}
-    .stick{width:140px;height:12px;background:#111827;border-radius:8px;transform-origin:20% 50%;box-shadow:0 6px 12px rgba(0,0,0,0.15)}
-    .hammer{position:absolute;right:18px;bottom:90px;width:56px;height:56px;border-radius:10px;background:#333;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+    .pivot{position:absolute;bottom:100px;width:320px;height:320px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+    /* center the stick so 0deg == perfectly up */
+    .stick{width:180px;height:14px;background:#111827;border-radius:10px;transform-origin:50% 50%;box-shadow:0 6px 12px rgba(0,0,0,0.15)}
+    .hammer{position:absolute;right:18px;bottom:96px;width:56px;height:56px;border-radius:10px;background:#111827;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;cursor:default}
 
     .controls{display:flex;gap:8px}
     .info{font-size:13px;color:var(--muted)}
 
     .score-box{margin-top:10px;background:#f8fafc;padding:10px;border-radius:10px;text-align:center}
-    .score-number{font-weight:800;font-size:24px}
+    .score-number{font-weight:800;font-size:22px}
 
-    @media (max-width:480px){.container{padding:12px}.striker-wrap{width:180px;height:360px}}
+    /* popup modal */
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.45)}
+    .overlay.show{display:flex}
+    .modal{width:92%;max-width:420px;background:var(--card);border-radius:12px;padding:16px}
+    .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+    .btn{border:0;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+    .btn-ghost{background:#f3f4f6;color:#111827}
+    .btn-primary{background:var(--accent);color:#fff}
+
+    @media (max-width:480px){.striker-wrap{width:200px;height:380px}.stick{width:140px}}
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="wrap">
     <div class="card">
       <div class="header">
         <div>
           <div class="title">Striker — One Hit</div>
-          <div class="sub">Entry fee: ₦20 — One play per created round</div>
+          <div class="sub">Entry fee: ₦20 — Each round is managed by admin</div>
         </div>
         <div id="balance" class="sub">Balance: —</div>
       </div>
@@ -57,22 +56,20 @@
       <div id="gameRoot" class="game-area">
         <div class="striker-wrap" id="strikerWrap">
           <div class="tower" aria-hidden>
-            <div class="scale-nums" id="scaleNums">
-              <!-- numbers rendered by JS -->
-            </div>
-            <!-- puck indicator will be drawn by JS -->
+            <div class="scale-nums" id="scaleNums"></div>
           </div>
 
           <div class="pivot" aria-hidden>
-            <div id="stick" class="stick"></div>
+            <!-- stick: 0deg will represent perfectly up -->
+            <div id="stick" class="stick" style="transform:rotate(0deg)"></div>
           </div>
 
           <div class="hammer" id="hammer">HIT</div>
         </div>
 
         <div class="controls">
-          <button id="playBtn" class="btn-primary">Play (₦20)</button>
-          <button id="cancelBtn" class="btn-ghost">Cancel</button>
+          <button id="playBtn" class="btn btn-primary">Play (₦20)</button>
+          <button id="cancelBtn" class="btn btn-ghost">Cancel</button>
         </div>
 
         <div id="message" class="info" style="min-height:18px"></div>
@@ -84,26 +81,41 @@
     </div>
   </div>
 
-  <!-- Firebase (modular) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js";
+  <div id="confirmOverlay" class="overlay" aria-hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>Play Striker</h3>
+      <p>Entry fee: <strong>₦20</strong></p>
+      <p>One hit only. Click Accept to pay ₦20 and start the round. Cancel will return you to mini-games.</p>
+      <div class="actions">
+        <button id="modalCancel" class="btn btn-ghost">Cancel</button>
+        <button id="modalAccept" class="btn btn-primary">Accept & Pay ₦20</button>
+      </div>
+    </div>
+  </div>
 
-    // --- Firebase config (your saved config) ---
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+    import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js';
+    import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+    // ----- YOUR FIREBASE CONFIG (kept from memory) -----
     const firebaseConfig = {
-      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-      authDomain: "beni-wealths.firebaseapp.com",
-      projectId: "beni-wealths",
-      storageBucket: "beni-wealths.firebasestorage.app",
-      messagingSenderId: "807950483822",
-      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-      measurementId: "G-Z2XP3YN6NS"
+      apiKey: 'AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk',
+      authDomain: 'beni-wealths.firebaseapp.com',
+      projectId: 'beni-wealths',
+      storageBucket: 'beni-wealths.firebasestorage.app',
+      messagingSenderId: '807950483822',
+      appId: '1:807950483822:web:e10fa87307e041c4d8417f',
+      measurementId: 'G-Z2XP3YN6NS'
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    // use region if your functions are deployed to a region (uncomment and replace if needed)
+    // const functions = getFunctions(app, 'us-central1');
     const functions = getFunctions(app);
+    const db = getFirestore(app);
 
     // UI refs
     const playBtn = document.getElementById('playBtn');
@@ -116,7 +128,11 @@
     const roundInfo = document.getElementById('roundInfo');
     const balanceEl = document.getElementById('balance');
 
-    // simple scale numbers render
+    const confirmOverlay = document.getElementById('confirmOverlay');
+    const modalAccept = document.getElementById('modalAccept');
+    const modalCancel = document.getElementById('modalCancel');
+
+    // render scale numbers
     (function renderScale(){
       const container = document.getElementById('scaleNums');
       for(let i=0;i<=9;i++){
@@ -131,90 +147,131 @@
     // state
     let currentUser = null;
     let roundId = null;
-    let rotating = true;
-    let angle = 0; // degrees
+    let angle = 0; // 0deg = perfectly UP (best)
     let raf = null;
-    let played = false; // ensure single hit
+    let lastTs = null;
+    let played = false;
+    const ENTRY_FEE = 20;
 
-    // animate rotation
+    // precise animation using requestAnimationFrame and timestamps
     function animate(ts){
-      // rotate at fixed speed (deg per second)
-      const speed = 160; // deg/sec - tweak to make timing challenging
-      angle = (angle + (speed/60)) % 360; // approx per-frame increment
+      if (lastTs == null) lastTs = ts;
+      const dt = (ts - lastTs) / 1000; // seconds elapsed
+      lastTs = ts;
+      // rotation speed degrees/sec
+      const speed = 180; // tune: higher = faster rotation
+      angle = (angle + speed * dt) % 360;
       stickEl.style.transform = `rotate(${angle}deg)`;
       raf = requestAnimationFrame(animate);
     }
 
-    // start animation
-    raf = requestAnimationFrame(animate);
+    function startRotation(){
+      if (raf) cancelAnimationFrame(raf);
+      lastTs = null;
+      raf = requestAnimationFrame(animate);
+    }
 
-    // auth: try to sign in anonymously if no auth
-    onAuthStateChanged(auth, (u)=>{
+    function stopRotation(){
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+    }
+
+    // start rotating on load
+    startRotation();
+
+    // Auth: auto anonymous if not signed in
+    onAuthStateChanged(auth, async (u) => {
       currentUser = u;
-      if(u){
-        // try to display balance if present in token claims? We will fetch via callable when needed
-        balanceEl.textContent = 'Signed in';
-      } else {
-        signInAnonymously(auth).catch(()=>{});
+      if (!u) {
+        try { await signInAnonymously(auth); } catch(e){ console.warn('Anonymous sign-in failed', e); }
+        balanceEl.textContent = 'Signed in (guest)';
+        return;
+      }
+      // fetch balance from users/{uid}
+      try{
+        const userDoc = doc(db, 'users', u.uid);
+        const snap = await getDoc(userDoc);
+        if (snap.exists()){
+          const data = snap.data();
+          balanceEl.textContent = `Balance: ₦${(data.balance ?? 0)}`;
+        } else {
+          balanceEl.textContent = 'Balance: ₦0';
+        }
+      }catch(err){
+        console.warn('Failed to read balance', err);
       }
     });
 
-    // cancel button -> redirect to mini-games.html
+    // Cancel -> redirect to mini-games.html
     cancelBtn.addEventListener('click', ()=>{
       window.location.href = 'mini-games.html';
     });
 
-    // Play button -> show entry confirmation then call createRound
-    playBtn.addEventListener('click', async ()=>{
-      if(played){ message.textContent = 'You already played this round.'; return; }
-      const ok = confirm('Entry fee is ₦20. Click OK to accept and pay ₦20. Cancel to go back to mini-games.');
-      if(!ok){ window.location.href = 'mini-games.html'; return; }
+    // Show confirmation modal on Play
+    playBtn.addEventListener('click', ()=>{
+      if (played) { message.textContent = 'You already played this round.'; return; }
+      confirmOverlay.classList.add('show');
+    });
+
+    modalCancel.addEventListener('click', ()=>{
+      confirmOverlay.classList.remove('show');
+      // redirect as required
+      window.location.href = 'mini-games.html';
+    });
+
+    modalAccept.addEventListener('click', async ()=>{
+      confirmOverlay.classList.remove('show');
+      if (!currentUser) { message.textContent = 'Sign in required.'; return; }
+      if (played) { message.textContent = 'Already played.'; return; }
       message.textContent = 'Creating round and deducting ₦20...';
       playBtn.disabled = true;
+
       try{
-        const createRound = httpsCallable(functions,'createRound');
-        const res = await createRound({ game: 'striker', entryFee: 20 });
-        if(res.data && res.data.ok){
+        const createRound = httpsCallable(functions, 'createRound');
+        const res = await createRound({ game: 'striker', entryFee: ENTRY_FEE });
+        if (res.data && res.data.ok){
           roundId = res.data.roundId;
           message.textContent = 'Round created. You have one hit.';
           roundInfo.textContent = 'Round: ' + roundId;
-          // allow the user to click the hammer
+          // enable hammer click
+          hammerEl.style.pointerEvents = 'auto';
           hammerEl.style.cursor = 'pointer';
-          hammerEl.addEventListener('click', onHit);
+          hammerEl.addEventListener('click', onHit, { once: true });
         } else {
-          throw new Error(res.data?.message || 'Unable to create round');
+          throw new Error(res.data?.message || 'Failed to create round');
         }
       }catch(err){
         console.error(err);
-        alert(err.message || 'Failed to create round. If your balance is low, top up.');
-        message.textContent = '';
+        message.textContent = err.message || 'Could not create round. Check balance.';
         playBtn.disabled = false;
       }
     });
 
+    // Handle the single hit
     async function onHit(e){
-      if(played){ return; }
-      if(!roundId){ alert('No active round. Click Play first.'); return; }
+      if (!roundId) { message.textContent = 'No active round. Click Play first.'; return; }
+      if (played) { message.textContent = 'Already played.'; return; }
       played = true;
-      // stop rotation
-      cancelAnimationFrame(raf);
-      rotating = false;
-      // compute angle and score
-      const norm = ((angle % 360) + 360) % 360;
-      const diff = Math.min(norm, 360 - norm); // 0..180, 0 is perfectly up
-      const rawPower = Math.max(0, 1 - diff/180); // 1 when diff=0, 0 when diff=180
-      // use same mapping as server: pow 1.05
-      const score = Math.round(Math.pow(rawPower, 1.05) * 100);
 
-      // show score locally
+      // stop rotation and compute score
+      stopRotation();
+      // normalize angle to 0..360
+      const norm = ((angle % 360) + 360) % 360; // 0 is up (best)
+      // distance from perfect up (degrees)
+      const diff = Math.min(norm, 360 - norm); // 0..180
+      const rawPower = Math.max(0, 1 - diff / 180); // 1 at diff=0, 0 at diff=180
+      // server formula: same pow mapping
+      const computedScore = Math.round(Math.pow(rawPower, 1.05) * 100);
+
+      // show local score
       scoreBox.style.display = 'block';
-      scoreNumber.textContent = score;
+      scoreNumber.textContent = computedScore;
       message.textContent = 'Submitting score...';
 
       try{
         const submitScore = httpsCallable(functions, 'submitScore');
         const res = await submitScore({ roundId, rawPower, clientDuration: 0 });
-        if(res.data && res.data.ok){
+        if (res.data && res.data.ok){
           message.textContent = 'Score accepted: ' + res.data.score;
           scoreNumber.textContent = res.data.score;
         } else {
@@ -222,17 +279,25 @@
           console.warn(res);
         }
       }catch(err){
-        console.error(err);
-        message.textContent = 'Submission failed: ' + (err.message || 'server error');
+        console.error('submit error', err);
+        message.textContent = err.message || 'Submission failed';
       }
 
-      // disable hammer
-      hammerEl.style.opacity = '0.4';
+      // disable further interaction for this round
+      hammerEl.style.opacity = '0.45';
       hammerEl.style.pointerEvents = 'none';
       playBtn.disabled = true;
     }
 
-    // security note: page expects callable functions createRound and submitScore to be deployed
+    // Make the hammer also respond to keyboard (space) when enabled
+    window.addEventListener('keydown', (ev)=>{
+      if (ev.code === 'Space' && !played && roundId){
+        ev.preventDefault();
+        onHit();
+      }
+    });
+
+    // Security note for deployers: please deploy createRound and submitScore as callable Cloud Functions
   </script>
 </body>
 </html>
