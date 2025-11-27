@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Quiz (Historical)</title>
+  <title>Beni-Wealth — Quiz (Historical) — Persistent</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -29,9 +29,6 @@
     .timer{font-weight:800;font-size:18px}
     .score{font-weight:800}
     .small{font-size:13px;color:var(--muted)}
-    textarea{width:100%;height:160px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text);padding:10px;border-radius:8px}
-    .admin-area{margin-top:12px}
-    .leaderboard{margin-top:12px}
     pre{white-space:pre-wrap}
     @media (max-width:720px){ .flex{flex-direction:column;align-items:flex-start} }
   </style>
@@ -42,7 +39,7 @@
       <div class="flex">
         <div class="logo">BW QUIZ</div>
         <div>
-          <div style="font-weight:800">Historical Quiz (example)</div>
+          <div style="font-weight:800">Historical Quiz — Persistent</div>
           <div class="small">10 questions • 10 seconds each • +10 / -5 scoring</div>
         </div>
       </div>
@@ -56,21 +53,21 @@
 
     <div class="card" id="mainCard" role="main" aria-live="polite">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="small">Quiz: <strong id="quizTitle">Historical — Example</strong></div>
-        <div class="small">Attempts: <span id="attemptsInfo">checking...</span></div>
+        <div class="small">Quiz: <strong id="quizTitle">historical_001</strong></div>
+        <div class="small">Status: <span id="statusText">idle</span></div>
       </div>
 
       <div style="margin-top:12px" id="controls">
-        <label class="small">Choose quiz (quiz id):</label>
+        <label class="small">Quiz ID:</label>
         <input id="quizIdInput" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text)" value="historical_001" />
-        <button id="startBtn" class="btn" style="margin-left:8px">Start Quiz</button>
-        <span style="margin-left:8px" class="small muted">You can only attempt once per quiz.</span>
+        <button id="startBtn" class="btn" style="margin-left:8px">Start / Resume</button>
+        <span style="margin-left:8px" class="small muted">One completed attempt allowed.</span>
       </div>
 
       <div id="questionCard" class="card hidden" style="margin-top:12px">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div class="score">Score: <span id="score">0</span></div>
-          <div class="timer">Time: <span id="timer">10</span>s</div>
+          <div class="timer">Time left: <span id="timer">10</span>s</div>
         </div>
 
         <div id="questionArea" style="margin-top:12px">
@@ -94,20 +91,6 @@
         </div>
       </div>
 
-      <div class="card admin-area" id="adminArea" style="margin-top:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-weight:800">Questions Editor</div>
-          <div class="small muted">Paste a JSON array of 10 question objects</div>
-        </div>
-        <div style="margin-top:8px" class="small muted">Format (example):<pre>[{"id":"q1","text":"Which year...","choices":["1707","1756","1800","1812"],"answerIndex":0}, ...]</pre></div>
-        <textarea id="questionsJson" placeholder='Paste questions JSON here'></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button id="loadQuestionsBtn" class="btn">Load Questions (local)</button>
-          <button id="saveQuestionsBtn" class="btn-ghost">Save to Firestore (admins only)</button>
-          <div class="small muted" id="adminNote">Not signed in as admin</div>
-        </div>
-      </div>
-
       <div class="card leaderboard" id="leaderboardCard" style="margin-top:12px">
         <div style="font-weight:800">Leaderboard (Top 10)</div>
         <div id="leaderboardList" style="margin-top:8px" class="small muted">Loading…</div>
@@ -116,15 +99,14 @@
 
   </div>
 
-  <!-- Firebase & app logic -->
   <script type="module">
-  // ========== FIREBASE CONFIG (from your provided Beni-Wealth details) ==========
+  // ------------- Firebase setup (Beni-Wealth project) -------------
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
   import {
-    getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged
+    getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence
   } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
   import {
-    getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, addDoc, serverTimestamp, limit
+    getFirestore, collection, doc, addDoc, setDoc, getDoc, updateDoc, getDocs, query, where, orderBy, limit, serverTimestamp
   } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -141,14 +123,17 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // ========== CONFIG & STATE ==========
-  const QUIZ_ID_INPUT = document.getElementById('quizIdInput');
-  const QUIZ_TITLE_EL = document.getElementById('quizTitle');
-  const startBtn = document.getElementById('startBtn');
+  // ensure auth persistence (so session survives refresh)
+  await setPersistence(auth, browserLocalPersistence).catch(()=>{/* ignore if fails */});
+
+  // ------------- UI refs & config -------------
   const signInBtn = document.getElementById('signInBtn');
   const signOutBtn = document.getElementById('signOutBtn');
   const userInfo = document.getElementById('userInfo');
-  const attemptsInfo = document.getElementById('attemptsInfo');
+  const quizIdInput = document.getElementById('quizIdInput');
+  const quizTitleEl = document.getElementById('quizTitle');
+  const startBtn = document.getElementById('startBtn');
+  const statusText = document.getElementById('statusText');
 
   const questionCard = document.getElementById('questionCard');
   const questionArea = document.getElementById('questionArea');
@@ -158,109 +143,288 @@
   const nextBtn = document.getElementById('nextBtn');
   const endEarlyBtn = document.getElementById('endEarlyBtn');
 
-  const questionsJson = document.getElementById('questionsJson');
-  const loadQuestionsBtn = document.getElementById('loadQuestionsBtn');
-  const saveQuestionsBtn = document.getElementById('saveQuestionsBtn');
-  const adminNote = document.getElementById('adminNote');
-
-  const leaderboardList = document.getElementById('leaderboardList');
-  const leaderboardCard = document.getElementById('leaderboardCard');
-
   const resultCard = document.getElementById('resultCard');
   const finalSummary = document.getElementById('finalSummary');
   const closeSummary = document.getElementById('closeSummary');
 
-  // Behavior defaults (per your spec)
+  const leaderboardList = document.getElementById('leaderboardList');
+
+  // rules from you
   const QUESTIONS_COUNT = 10;
   const TIME_PER_QUESTION = 10; // seconds
   const POINTS_CORRECT = 10;
   const POINTS_WRONG = -5;
-
-  let currentUser = null;
-  let questions = []; // loaded from textarea or Firestore
-  let currentIndex = 0;
-  let score = 0;
-  let timer = null;
-  let timeLeft = TIME_PER_QUESTION;
-  let quizId = QUIZ_ID_INPUT.value || 'historical_001';
-  let attemptDocId = null;
-  let hasAttempted = false;
-
-  // Simple admin allowlist (you can change)
   const allowedAdminEmails = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
 
-  // ========== AUTH ==========
+  let currentUser = null;
+  let quizId = quizIdInput.value.trim();
+  quizTitleEl.textContent = quizId;
+
+  // In-memory runtime state (kept in sync with Firestore attempt doc)
+  let questions = []; // load example local questions — replace with your questions later via admin or Firestore
+  let attemptDocRef = null; // Firestore doc ref (object with id and path when created)
+  let attemptData = null; // local snapshot of attempt document {userId,quizId,currentIndex,score,status,questionStartAt,answers[...] }
+  let timer = null;
+  let timeLeft = TIME_PER_QUESTION;
+
+  // sample questions (placeholder) — you will replace these by writing the questions into Firestore or modify this file
+  const placeholderQuestions = [
+    { id:'q1', text:'Which empire built the city of Timbuktu?', choices:['Mali Empire','Songhai Empire','Ghana Empire','Kanem-Bornu Empire'], answerIndex:0 },
+    { id:'q2', text:'Who sailed from Spain and reached the Americas in 1492?', choices:['Ferdinand Magellan','Christopher Columbus','Vasco da Gama','John Cabot'], answerIndex:1 },
+    { id:'q3', text:'The Magna Carta was signed in which year?', choices:['1215','1315','1415','1515'], answerIndex:0 },
+    { id:'q4', text:'Which revolution began in 1789?', choices:['American Revolution','French Revolution','Russian Revolution','Industrial Revolution'], answerIndex:1 },
+    { id:'q5', text:'Who was the first emperor of Rome?', choices:['Julius Caesar','Augustus','Nero','Caligula'], answerIndex:1 },
+    { id:'q6', text:'The Berlin Wall fell in which year?', choices:['1987','1989','1991','1993'], answerIndex:1 },
+    { id:'q7', text:'Which pharaoh commissioned the Great Pyramid of Giza?', choices:['Tutankhamun','Khufu','Ramses II','Akhenaten'], answerIndex:1 },
+    { id:'q8', text:'Who led India to independence in 1947?', choices:['Nehru','Gandhi','Jinnah','Tagore'], answerIndex:1 },
+    { id:'q9', text:'The Treaty of Versailles ended which war?', choices:['World War I','World War II','Franco-Prussian War','Crimean War'], answerIndex:0 },
+    { id:'q10', text:'Which city was the capital of the Ottoman Empire?', choices:['Istanbul','Ankara','Baghdad','Damascus'], answerIndex:0 }
+  ];
+
+  questions = placeholderQuestions.slice();
+
+  // ------------- Auth -------------
   const provider = new GoogleAuthProvider();
 
   signInBtn.addEventListener('click', async () => {
-    try{ await signInWithPopup(auth, provider); } catch(e){ alert('Sign in failed: '+ (e.message||e)); }
+    try { await signInWithPopup(auth, provider); } catch (e) { alert('Sign in failed: ' + (e.message||e)); }
   });
-  signOutBtn.addEventListener('click', async ()=> { await signOut(auth); location.reload(); });
 
-  onAuthStateChanged(auth, async (u) => {
-    currentUser = u;
-    if (!u) {
+  signOutBtn.addEventListener('click', async ()=> { try { await signOut(auth); location.reload(); } catch(e){} });
+
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    if (!user) {
       userInfo.textContent = 'Not signed in';
       signInBtn.classList.remove('hidden');
       signOutBtn.classList.add('hidden');
-      adminNote.textContent = 'Not signed in as admin';
+      statusText.textContent = 'idle';
       return;
     }
-    userInfo.textContent = `${u.displayName || u.email} (${u.email})`;
+    userInfo.textContent = `${user.displayName || user.email} (${user.email})`;
     signInBtn.classList.add('hidden');
     signOutBtn.classList.remove('hidden');
-
-    // admin note
-    if (allowedAdminEmails.includes(u.email)) {
-      adminNote.textContent = 'Signed in as admin';
-    } else {
-      adminNote.textContent = 'Signed in (not admin)';
-    }
-
-    // check prior attempts for current quiz
-    quizId = QUIZ_ID_INPUT.value.trim();
-    await checkAttemptForUser();
+    quizId = quizIdInput.value.trim();
+    quizTitleEl.textContent = quizId;
+    // check for any in-progress attempt for this user+quiz
+    await loadResumeAttemptForUser();
+    // load leaderboard
     await loadLeaderboard(quizId);
   });
 
-  // ========== QUIZ FLOW ==========
-  QUIZ_ID_INPUT.addEventListener('change', () => {
-    quizId = QUIZ_ID_INPUT.value.trim();
-    QUIZ_TITLE_EL.textContent = quizId;
-    // refresh attempt info
-    if (currentUser) checkAttemptForUser();
+  // ------------- Start / Resume flow -------------
+  quizIdInput.addEventListener('change', () => {
+    quizId = quizIdInput.value.trim();
+    quizTitleEl.textContent = quizId;
+    // if signed-in, check for in-progress attempts and leaderboard
+    if (currentUser) loadResumeAttemptForUser();
     loadLeaderboard(quizId);
   });
 
   startBtn.addEventListener('click', async () => {
-    if (!currentUser) return alert('Please sign in with Google to start the quiz.');
-    if (hasAttempted) return alert('You have already attempted this quiz.');
-    // require questions to be loaded
-    if (questions.length !== QUESTIONS_COUNT) {
-      return alert(`Please load ${QUESTIONS_COUNT} questions first (use the Questions Editor).`);
+    if (!currentUser) return alert('Please sign in with Google to start.');
+    // check if user already completed this quiz
+    const completed = await userHasCompletedQuiz();
+    if (completed) return alert('You have already completed this quiz — only one completed attempt allowed.');
+
+    // If there's an in-progress attempt, resume it (loadResumeAttemptForUser already does), otherwise create new attempt
+    if (attemptData && attemptData.status === 'in_progress') {
+      // resume UI
+      showQuestionStateFromAttempt();
+      return;
     }
-    // final confirmation
-    if (!confirm(`Start quiz ${quizId}? You will have ${TIME_PER_QUESTION}s per question. Only one attempt allowed.`)) return;
-    // open quiz UI
-    startQuiz();
+
+    // create new attempt doc
+    await createNewAttemptAndStart();
   });
 
-  function startQuiz(){
-    // reset state
-    currentIndex = 0; score = 0;
-    scoreEl.textContent = score;
-    questionCard.classList.remove('hidden');
-    document.getElementById('controls').classList.add('hidden');
-    resultCard.classList.add('hidden');
-    // create an attempt doc placeholder (so others see this user has started) -- but we will update at the end
-    // We'll add attempt at end after completion to avoid partial writes; but we still mark hasAttempted now to prevent double starts
-    hasAttempted = true;
-    attemptsInfo.textContent = 'attempting…';
-    showQuestion(currentIndex);
+  // --------- create new attempt doc and start ----------
+  async function createNewAttemptAndStart(){
+    // prepare attempt object
+    const payload = {
+      quizId: quizId,
+      userId: currentUser.uid,
+      userEmail: currentUser.email,
+      currentIndex: 0,
+      score: 0,
+      status: 'in_progress',
+      // serverTimestamp for question start
+      questionStartAt: serverTimestamp(),
+      startedAt: serverTimestamp(),
+      answers: [] // will push objects {qIndex, selectedIndex, correct, ts}
+    };
+    try {
+      const ref = await addDoc(collection(db,'quizAttempts'), payload);
+      attemptDocRef = ref;
+      // refresh local attemptData by reading the doc (so timestamps convert)
+      const snap = await getDoc(ref);
+      attemptData = snap.exists() ? snap.data() : null;
+      statusText.textContent = 'in_progress';
+      showQuestionStateFromAttempt();
+    } catch (e) {
+      console.error('create attempt failed', e);
+      alert('Failed to create attempt: ' + (e.message||e));
+    }
   }
 
-  function showQuestion(idx){
+  // --------- load/resume existing in-progress attempt if any ----------
+  async function loadResumeAttemptForUser(){
+    statusText.textContent = 'checking…';
+    attemptDocRef = null;
+    attemptData = null;
+    try {
+      const attemptsRef = collection(db,'quizAttempts');
+      const q = query(attemptsRef, where('quizId','==',quizId), where('userId','==',currentUser.uid), where('status','==','in_progress'), limit(1));
+      const snaps = await getDocs(q);
+      if (!snaps.empty) {
+        const s = snaps.docs[0];
+        attemptDocRef = s.ref;
+        attemptData = s.data();
+        // On resume: compute elapsed since questionStartAt and apply expirations if needed
+        await reconcileExpiredQuestionsAndResume();
+      } else {
+        // no in-progress attempt; check if user already completed the quiz (to block new attempt)
+        const completed = await userHasCompletedQuiz();
+        statusText.textContent = completed ? 'completed' : 'idle';
+      }
+    } catch (e) {
+      console.error('resume check failed', e);
+      statusText.textContent = 'idle';
+    }
+  }
+
+  async function userHasCompletedQuiz(){
+    const attemptsRef = collection(db,'quizAttempts');
+    const q = query(attemptsRef, where('quizId','==',quizId), where('userId','==',currentUser.uid), where('status','==','completed'), limit(1));
+    const snaps = await getDocs(q);
+    return !snaps.empty;
+  }
+
+  // ---------- reconcile any fully-expired questions since stored questionStartAt ----------
+  async function reconcileExpiredQuestionsAndResume(){
+    if (!attemptData || !attemptDocRef) return;
+    // ensure questionStartAt exists and is a Firestore Timestamp
+    const qsa = attemptData.questionStartAt;
+    if (!qsa || !qsa.seconds) {
+      // if missing, just set a fresh start at now
+      await updateDoc(attemptDocRef, { questionStartAt: serverTimestamp() });
+      const refreshed = await getDoc(attemptDocRef);
+      attemptData = refreshed.data();
+      statusText.textContent = 'in_progress';
+      showQuestionStateFromAttempt();
+      return;
+    }
+
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const startSeconds = qsa.seconds;
+    const elapsed = nowSeconds - startSeconds;
+    const expiredQuestions = Math.floor(elapsed / TIME_PER_QUESTION);
+
+    if (expiredQuestions <= 0) {
+      // still within current question
+      statusText.textContent = 'in_progress';
+      showQuestionStateFromAttempt();
+      return;
+    }
+
+    // some questions have fully expired — compute new index and score penalty
+    let newIndex = attemptData.currentIndex + expiredQuestions;
+    let newScore = attemptData.score + (expiredQuestions * POINTS_WRONG);
+    // append placeholder timed-out answers for audit
+    const answersToAppend = [];
+    for (let i = 0; i < expiredQuestions && (attemptData.currentIndex + i) < QUESTIONS_COUNT; i++){
+      const qIndex = attemptData.currentIndex + i;
+      answersToAppend.push({
+        qIndex,
+        selectedIndex: null,
+        correct: false,
+        timedOut: true,
+        ts: serverTimestamp()
+      });
+    }
+
+    // If we've progressed past the last question -> finish quiz immediately
+    if (newIndex >= QUESTIONS_COUNT) {
+      // finish: set completed, save penalties and mark completedAt
+      try {
+        await updateDoc(attemptDocRef, {
+          currentIndex: QUESTIONS_COUNT,
+          score: newScore,
+          answers: (attemptData.answers || []).concat(answersToAppend),
+          status: 'completed',
+          completedAt: serverTimestamp()
+        });
+        // load updated doc
+        const s = await getDoc(attemptDocRef);
+        attemptData = s.data();
+        statusText.textContent = 'completed';
+        showFinalSummary();
+        return;
+      } catch (e) {
+        console.error('finish after expiry failed', e);
+        alert('Failed to finalize expired quiz: ' + (e.message||e));
+        return;
+      }
+    }
+
+    // Otherwise advance to the next live question and reset questionStartAt to now
+    try {
+      await updateDoc(attemptDocRef, {
+        currentIndex: newIndex,
+        score: newScore,
+        // merge answers array client-side (we concatenate)
+        answers: (attemptData.answers || []).concat(answersToAppend),
+        questionStartAt: serverTimestamp()
+      });
+      // refresh local attemptData
+      const s = await getDoc(attemptDocRef);
+      attemptData = s.data();
+      statusText.textContent = 'in_progress';
+      showQuestionStateFromAttempt();
+    } catch (e) {
+      console.error('reconcile update failed', e);
+      alert('Failed to update attempt during resume: ' + (e.message||e));
+    }
+  }
+
+  // ------------- UI rendering & timer -------------
+  function showQuestionStateFromAttempt(){
+    // ensure questions exist
+    if (!questions || questions.length !== QUESTIONS_COUNT) {
+      // If you later put questions in Firestore, load them. For now we use placeholderQuestions.
+      questions = placeholderQuestions.slice();
+    }
+
+    if (!attemptData) return;
+    // if completed
+    if (attemptData.status === 'completed') {
+      showFinalSummary();
+      return;
+    }
+    // else in_progress
+    questionCard.classList.remove('hidden');
+    resultCard.classList.add('hidden');
+    document.getElementById('controls').classList.add('hidden');
+
+    const idx = attemptData.currentIndex || 0;
     const q = questions[idx];
+    renderQuestion(q, idx);
+
+    // compute remaining time using stored questionStartAt
+    const qsa = attemptData.questionStartAt;
+    let elapsed = 0;
+    if (qsa && qsa.seconds) {
+      const nowSeconds = Math.floor(Date.now()/1000);
+      elapsed = nowSeconds - qsa.seconds;
+    }
+    timeLeft = TIME_PER_QUESTION - (elapsed % TIME_PER_QUESTION);
+    if (timeLeft <= 0) timeLeft = 1; // minimal guard
+    startTimerTick();
+    scoreEl.textContent = attemptData.score ?? 0;
+    progressEl.textContent = `Question ${ (idx + 1) } / ${QUESTIONS_COUNT}`;
+  }
+
+  function renderQuestion(q, idx){
     questionArea.innerHTML = '';
     const qEl = document.createElement('div'); qEl.className='question'; qEl.textContent = q.text;
     const choicesEl = document.createElement('div'); choicesEl.className='choices';
@@ -276,236 +440,196 @@
 
     questionArea.appendChild(qEl);
     questionArea.appendChild(choicesEl);
-    progressEl.textContent = `Question ${idx+1} / ${QUESTIONS_COUNT}`;
     nextBtn.classList.add('hidden');
-    // timer
-    resetTimer();
-    startTimer();
   }
 
-  function resetTimer(){
+  function startTimerTick(){
     clearInterval(timer);
-    timeLeft = TIME_PER_QUESTION;
     timerEl.textContent = timeLeft;
-  }
-
-  function startTimer(){
-    timerEl.textContent = timeLeft;
-    timer = setInterval(() => {
+    timer = setInterval(async () => {
       timeLeft--;
       timerEl.textContent = timeLeft;
       if (timeLeft <= 0) {
         clearInterval(timer);
-        handleTimeout();
+        // handle timeout: mark as wrong, advance and update Firestore
+        await handleTimeoutAndAdvance();
       }
-    }, 1000);
+    },1000);
   }
 
-  function handleAnswer(selectedIndex){
+  async function handleAnswer(selectedIndex){
     clearInterval(timer);
-    // disable choices
-    const choiceEls = questionArea.querySelectorAll('.choice');
-    choiceEls.forEach(c => c.classList.add('disabled'));
-    const q = questions[currentIndex];
-    const correctIndex = q.answerIndex;
-    if (selectedIndex === correctIndex){
-      // correct
-      score += POINTS_CORRECT;
-      // mark correct
-      choiceEls[selectedIndex].classList.add('correct');
-      showImmediateFeedback(true, q);
-    } else {
-      // wrong
-      score += POINTS_WRONG;
-      choiceEls[selectedIndex].classList.add('wrong');
-      // also mark correct choice
-      if (choiceEls[correctIndex]) choiceEls[correctIndex].classList.add('correct');
-      showImmediateFeedback(false, q);
-    }
-    scoreEl.textContent = score;
-    // show next after short delay
-    nextBtn.classList.remove('hidden');
-  }
-
-  function handleTimeout(){
-    // treat as wrong
+    // disable UI choices
     const choiceEls = questionArea.querySelectorAll('.choice');
     choiceEls.forEach(c=>c.classList.add('disabled'));
-    score += POINTS_WRONG;
-    scoreEl.textContent = score;
-    // mark correct
-    const q = questions[currentIndex];
-    const correctIndex = q.answerIndex;
-    if (choiceEls[correctIndex]) choiceEls[correctIndex].classList.add('correct');
-    showImmediateFeedback(false, q, true);
-    nextBtn.classList.remove('hidden');
+
+    const idx = attemptData.currentIndex;
+    const q = questions[idx];
+    const correct = (selectedIndex === q.answerIndex);
+
+    // local score update
+    let newScore = (attemptData.score ?? 0) + (correct ? POINTS_CORRECT : POINTS_WRONG);
+
+    // update Firestore: append answer and advance questionStartAt if not last question
+    const answerObj = {
+      qIndex: idx,
+      selectedIndex,
+      correct,
+      timedOut: false,
+      ts: serverTimestamp()
+    };
+
+    // If this was the final question, mark completed
+    const willFinish = (idx + 1) >= QUESTIONS_COUNT;
+
+    try {
+      await updateDoc(attemptDocRef, {
+        score: newScore,
+        answers: (attemptData.answers || []).concat([answerObj]),
+        currentIndex: willFinish ? QUESTIONS_COUNT : (idx + 1),
+        status: willFinish ? 'completed' : 'in_progress',
+        questionStartAt: willFinish ? null : serverTimestamp(),
+        completedAt: willFinish ? serverTimestamp() : undefined
+      });
+      // refresh local snapshot
+      const s = await getDoc(attemptDocRef);
+      attemptData = s.data();
+      scoreEl.textContent = attemptData.score;
+      // show immediate feedback in UI
+      if (correct) {
+        choiceEls[selectedIndex].classList.add('correct');
+        const fb = document.createElement('div'); fb.style.color='var(--success)'; fb.style.fontWeight=700; fb.textContent=`Correct! +${POINTS_CORRECT} points.`; questionArea.appendChild(fb);
+      } else {
+        choiceEls[selectedIndex].classList.add('wrong');
+        if (choiceEls[q.answerIndex]) choiceEls[q.answerIndex].classList.add('correct');
+        const fb = document.createElement('div'); fb.style.color='var(--danger)'; fb.style.fontWeight=700; fb.textContent=`Wrong — ${POINTS_WRONG} points. Correct: "${q.choices[q.answerIndex]}"`; questionArea.appendChild(fb);
+      }
+      // if finished, show summary
+      if (attemptData.status === 'completed') {
+        showFinalSummary();
+      } else {
+        // otherwise, wait a second then render next question
+        nextBtn.classList.remove('hidden');
+        nextBtn.onclick = () => {
+          // manually trigger showing next by refreshing attempt data & UI
+          showQuestionStateFromAttempt();
+        };
+      }
+      await loadLeaderboard(quizId);
+    } catch (e) {
+      console.error('answer update failed', e);
+      alert('Failed to save answer: ' + (e.message||e));
+    }
   }
 
-  function showImmediateFeedback(correct, q, timedOut=false){
-    const fb = document.createElement('div');
-    fb.style.marginTop='8px';
-    fb.style.fontWeight='700';
-    fb.style.fontSize='14px';
-    fb.style.color = correct ? 'var(--success)' : 'var(--danger)';
-    fb.textContent = correct ? `Correct! +${POINTS_CORRECT} points.` : (timedOut ? `Time expired — ${POINTS_WRONG} points.` : `Wrong — ${POINTS_WRONG} points. Correct: "${q.choices[q.answerIndex]}"`);
-    questionArea.appendChild(fb);
+  async function handleTimeoutAndAdvance(){
+    const idx = attemptData.currentIndex;
+    const q = questions[idx];
+    // apply penalty
+    const newScore = (attemptData.score ?? 0) + POINTS_WRONG;
+    const answerObj = {
+      qIndex: idx,
+      selectedIndex: null,
+      correct: false,
+      timedOut: true,
+      ts: serverTimestamp()
+    };
+    const willFinish = (idx + 1) >= QUESTIONS_COUNT;
+
+    try {
+      await updateDoc(attemptDocRef, {
+        score: newScore,
+        answers: (attemptData.answers || []).concat([answerObj]),
+        currentIndex: willFinish ? QUESTIONS_COUNT : (idx + 1),
+        status: willFinish ? 'completed' : 'in_progress',
+        questionStartAt: willFinish ? null : serverTimestamp(),
+        completedAt: willFinish ? serverTimestamp() : undefined
+      });
+      const s = await getDoc(attemptDocRef);
+      attemptData = s.data();
+      scoreEl.textContent = attemptData.score;
+      // show correct choice and feedback
+      const choiceEls = questionArea.querySelectorAll('.choice');
+      if (choiceEls[attemptData && questions[idx] ? questions[idx].answerIndex : 0]) {
+        choiceEls[questions[idx].answerIndex].classList.add('correct');
+      }
+      const fb = document.createElement('div'); fb.style.color='var(--danger)'; fb.style.fontWeight=700; fb.textContent=`Time expired — ${POINTS_WRONG} points. Correct: "${q.choices[q.answerIndex]}"`; questionArea.appendChild(fb);
+
+      if (attemptData.status === 'completed') {
+        showFinalSummary();
+      } else {
+        // resume next question UI
+        nextBtn.classList.remove('hidden');
+        nextBtn.onclick = () => { showQuestionStateFromAttempt(); };
+      }
+      await loadLeaderboard(quizId);
+    } catch (e) {
+      console.error('timeout update failed', e);
+      alert('Failed to save timeout: ' + (e.message||e));
+    }
   }
 
-  nextBtn.addEventListener('click', ()=> {
-    currentIndex++;
-    if (currentIndex >= QUESTIONS_COUNT) {
-      finishQuiz();
-    } else {
-      showQuestion(currentIndex);
+  // End early: mark current state as completed and save
+  endEarlyBtn.addEventListener('click', async () => {
+    if (!attemptData || !attemptDocRef) return;
+    if (!confirm('End quiz early? This will submit your current score.')) return;
+    try {
+      await updateDoc(attemptDocRef, { status: 'completed', completedAt: serverTimestamp() });
+      const s = await getDoc(attemptDocRef);
+      attemptData = s.data();
+      showFinalSummary();
+      await loadLeaderboard(quizId);
+    } catch (e) {
+      console.error('end early failed', e);
+      alert('Failed to end early: ' + (e.message||e));
     }
   });
 
-  endEarlyBtn.addEventListener('click', ()=> {
-    if (!confirm('End quiz early? Your current score will be submitted.')) return;
-    finishQuiz();
-  });
-
-  function finishQuiz(){
+  // show final summary UI
+  function showFinalSummary(){
     clearInterval(timer);
     questionCard.classList.add('hidden');
     resultCard.classList.remove('hidden');
-
-    // build attempt payload
-    const attempt = {
-      quizId: quizId,
-      userId: currentUser.uid,
-      userEmail: currentUser.email,
-      score: score,
-      totalQuestions: QUESTIONS_COUNT,
-      createdAt: serverTimestamp(),
-      answers: [] // we'll reconstruct from UI history if needed — for now, store minimal
-    };
-    finalSummary.innerHTML = `<div style="font-weight:800">Your score: ${score}</div>
-      <div class="small muted" style="margin-top:8px">Saved to Firestore (if allowed). Leaderboard updated.</div>`;
-
-    // save attempt in Firestore
-    saveAttemptToFirestore(attempt).then(()=> {
-      attemptsInfo.textContent = 'attempted';
-      loadLeaderboard(quizId);
-    }).catch(err=>{
-      console.error('save attempt failed',err);
-      finalSummary.innerHTML += `<div class="small" style="color:var(--danger);margin-top:8px">Failed to save attempt: ${err.message||err}</div>`;
-    });
+    statusText.textContent = 'completed';
+    finalSummary.innerHTML = `<div style="font-weight:800">Your score: ${attemptData.score ?? 0}</div>
+      <div class="small muted" style="margin-top:8px">Quiz completed. Thanks for playing.</div>`;
   }
 
   closeSummary.addEventListener('click', ()=> {
-    // reset UI
     resultCard.classList.add('hidden');
     document.getElementById('controls').classList.remove('hidden');
   });
 
-  // ========== QUESTIONS LOADING & ADMIN ==========
-  // local load
-  loadQuestionsBtn.addEventListener('click', ()=> {
-    try {
-      const parsed = JSON.parse(questionsJson.value);
-      if (!Array.isArray(parsed) || parsed.length !== QUESTIONS_COUNT) return alert(`Please provide an array of exactly ${QUESTIONS_COUNT} questions.`);
-      // minimal validation
-      for (const q of parsed) {
-        if (!q.text || !Array.isArray(q.choices) || typeof q.answerIndex !== 'number') throw new Error('Invalid question format');
-      }
-      questions = parsed;
-      alert('Questions loaded locally. You can start the quiz.');
-    } catch (e) {
-      alert('Invalid JSON: ' + (e.message||e));
-    }
-  });
-
-  // admin save to Firestore (protected)
-  saveQuestionsBtn.addEventListener('click', async ()=> {
-    if (!currentUser) return alert('Sign in as admin to save questions.');
-    if (!allowedAdminEmails.includes(currentUser.email)) return alert('You are not an admin.');
-    try {
-      const parsed = JSON.parse(questionsJson.value);
-      if (!Array.isArray(parsed) || parsed.length !== QUESTIONS_COUNT) return alert(`Please provide an array of exactly ${QUESTIONS_COUNT} questions.`);
-      // save under collection quizzes/{quizId}/questions as individual docs
-      const qcol = collection(db, 'quizzes', quizId, 'questions');
-      // Note: simple approach - we overwrite by writing docs with their id or auto ids
-      // For convenience: set doc id from q.id if present
-      for (const q of parsed) {
-        const qdocId = q.id || (q.text.substring(0,20).replace(/\W+/g,'_'));
-        await setDoc(doc(db,'quizzes',quizId,'questions',qdocId), {
-          text: q.text,
-          choices: q.choices,
-          answerIndex: q.answerIndex,
-          createdAt: serverTimestamp()
-        });
-      }
-      alert('Saved questions to Firestore under quizzes/'+quizId+'/questions/');
-    } catch (e) {
-      alert('Save failed: ' + (e.message||e));
-    }
-  });
-
-  // ========== FIRESTORE: attempts check & save & leaderboard ==========
-  async function checkAttemptForUser(){
-    if (!currentUser) { attemptsInfo.textContent = 'sign in to attempt'; return; }
-    quizId = QUIZ_ID_INPUT.value.trim();
-    // query quizAttempts for (quizId,userId)
-    const attemptsRef = collection(db, 'quizAttempts');
-    const q = query(attemptsRef, where('quizId','==',quizId), where('userId','==',currentUser.uid), limit(1));
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      hasAttempted = true;
-      attemptsInfo.textContent = 'already attempted';
-    } else {
-      hasAttempted = false;
-      attemptsInfo.textContent = 'not attempted';
-    }
-  }
-
-  async function saveAttemptToFirestore(attempt){
-    // attempt: {quizId,userId,userEmail,score,totalQuestions,createdAt,answers}
-    // add doc to quizAttempts
-    const attemptsRef = collection(db,'quizAttempts');
-    await addDoc(attemptsRef, attempt);
-  }
-
-  async function loadLeaderboard(quizIdToLoad){
+  // ------------- Leaderboard (reads quizAttempts completed only) -------------
+  async function loadLeaderboard(qid){
     leaderboardList.innerHTML = 'Loading…';
     try {
       const attemptsRef = collection(db,'quizAttempts');
-      const q = query(attemptsRef, where('quizId','==',quizIdToLoad), orderBy('score','desc'), limit(10));
-      const snap = await getDocs(q);
-      if (snap.empty) { leaderboardList.innerHTML = '<div class="small muted">No attempts yet</div>'; return; }
+      const q = query(attemptsRef, where('quizId','==',qid), where('status','==','completed'), orderBy('score','desc'), limit(10));
+      const snaps = await getDocs(q);
+      if (snaps.empty) { leaderboardList.innerHTML = '<div class="small muted">No completed attempts yet</div>'; return; }
       const rows = [];
-      snap.forEach(s => {
+      snaps.forEach(s => {
         const a = s.data();
-        rows.push(`<div style="padding:8px;border-bottom:1px dashed rgba(255,255,255,0.02)"><strong>${a.userEmail}</strong> — <span style="font-weight:800">${a.score}</span><div class="small muted">${a.createdAt && a.createdAt.seconds ? new Date(a.createdAt.seconds*1000).toLocaleString() : ''}</div></div>`);
+        const ts = a.completedAt && a.completedAt.seconds ? new Date(a.completedAt.seconds*1000).toLocaleString() : '';
+        rows.push(`<div style="padding:8px;border-bottom:1px dashed rgba(255,255,255,0.02)"><strong>${a.userEmail}</strong> — <span style="font-weight:800">${a.score}</span><div class="small muted">${ts}</div></div>`);
       });
       leaderboardList.innerHTML = rows.join('');
     } catch (e) {
-      console.error(e);
+      console.error('leaderboard load failed', e);
       leaderboardList.innerHTML = '<div class="small muted">Failed to load leaderboard</div>';
     }
   }
 
-  // initial example questions placeholder (you'll provide yours)
-  const placeholderQuestions = [
-    { id:'q1', text:'Which empire built the city of Timbuktu?', choices:['Mali Empire','Songhai Empire','Ghana Empire','Kanem-Bornu Empire'], answerIndex:0 },
-    { id:'q2', text:'Who sailed from Spain and reached the Americas in 1492?', choices:['Ferdinand Magellan','Christopher Columbus','Vasco da Gama','John Cabot'], answerIndex:1 },
-    { id:'q3', text:'The Magna Carta was signed in which year?', choices:['1215','1315','1415','1515'], answerIndex:0 },
-    { id:'q4', text:'Which revolution began in 1789?', choices:['American Revolution','French Revolution','Russian Revolution','Industrial Revolution'], answerIndex:1 },
-    { id:'q5', text:'Who was the first emperor of Rome?', choices:['Julius Caesar','Augustus','Nero','Caligula'], answerIndex:1 },
-    { id:'q6', text:'The Berlin Wall fell in which year?', choices:['1987','1989','1991','1993'], answerIndex:1 },
-    { id:'q7', text:'Which pharaoh commissioned the Great Pyramid of Giza?', choices:['Tutankhamun','Khufu','Ramses II','Akhenaten'], answerIndex:1 },
-    { id:'q8', text:'Who led India to independence in 1947?', choices:['Nehru','Gandhi','Jinnah','Tagore'], answerIndex:1 },
-    { id:'q9', text:'The Treaty of Versailles ended which war?', choices:['World War I','World War II','Franco-Prussian War','Crimean War'], answerIndex:0 },
-    { id:'q10', text:'Which city was the capital of the Ottoman Empire?', choices:['Istanbul','Ankara','Baghdad','Damascus'], answerIndex:0 }
-  ];
-  // prefill textarea with JSON so you can replace immediately
-  questionsJson.value = JSON.stringify(placeholderQuestions, null, 2);
-  // also auto-load them into questions (local) so page is ready
-  questions = placeholderQuestions;
+  // ------------- initial UI state -------------
+  scoreEl.textContent = '0';
+  timerEl.textContent = String(TIME_PER_QUESTION);
+  progressEl.textContent = `Question 0 / ${QUESTIONS_COUNT}`;
+  statusText.textContent = 'idle';
+  quizTitleEl.textContent = quizId;
 
-  // initial load leaderboard for default quiz
-  loadLeaderboard(quizId);
-
+  // If user is already signed in (session persisted), onAuthStateChanged will fire and resume attempt.
+  // Otherwise, the user can sign in and resume.
   </script>
 </body>
 </html>
