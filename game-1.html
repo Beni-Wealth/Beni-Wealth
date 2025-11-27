@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Quiz (Historical) — Persistent</title>
+  <title>Beni-Wealth — Quiz (Persistent; No Popup)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -45,9 +45,9 @@
       </div>
 
       <div class="flex">
-        <div id="userInfo" class="small muted">Not signed in</div>
-        <button id="signInBtn" class="btn">Sign in (Google)</button>
-        <button id="signOutBtn" class="btn-ghost hidden">Sign out</button>
+        <div id="userInfo" class="small muted">Checking site session…</div>
+        <!-- optional sign-out if you want to provide a site sign-out button -->
+        <button id="signOutBtn" class="btn-ghost hidden">Sign out (site)</button>
       </div>
     </div>
 
@@ -61,7 +61,7 @@
         <label class="small">Quiz ID:</label>
         <input id="quizIdInput" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text)" value="historical_001" />
         <button id="startBtn" class="btn" style="margin-left:8px">Start / Resume</button>
-        <span style="margin-left:8px" class="small muted">One completed attempt allowed.</span>
+        <span style="margin-left:8px" class="small muted">One completed attempt allowed. Use site auth to sign in.</span>
       </div>
 
       <div id="questionCard" class="card hidden" style="margin-top:12px">
@@ -103,10 +103,10 @@
   // ------------- Firebase setup (Beni-Wealth project) -------------
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
   import {
-    getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence
+    getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence
   } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
   import {
-    getFirestore, collection, doc, addDoc, setDoc, getDoc, updateDoc, getDocs, query, where, orderBy, limit, serverTimestamp
+    getFirestore, collection, addDoc, getDoc, updateDoc, getDocs, query, where, orderBy, limit, serverTimestamp
   } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -123,13 +123,12 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // ensure auth persistence (so session survives refresh)
-  await setPersistence(auth, browserLocalPersistence).catch(()=>{/* ignore if fails */});
+  // ensure auth persistence (so if other pages sign in, session remains)
+  await setPersistence(auth, browserLocalPersistence).catch(()=>{/* ignore */});
 
   // ------------- UI refs & config -------------
-  const signInBtn = document.getElementById('signInBtn');
-  const signOutBtn = document.getElementById('signOutBtn');
   const userInfo = document.getElementById('userInfo');
+  const signOutBtn = document.getElementById('signOutBtn');
   const quizIdInput = document.getElementById('quizIdInput');
   const quizTitleEl = document.getElementById('quizTitle');
   const startBtn = document.getElementById('startBtn');
@@ -149,25 +148,23 @@
 
   const leaderboardList = document.getElementById('leaderboardList');
 
-  // rules from you
+  // rules
   const QUESTIONS_COUNT = 10;
   const TIME_PER_QUESTION = 10; // seconds
   const POINTS_CORRECT = 10;
   const POINTS_WRONG = -5;
-  const allowedAdminEmails = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
 
   let currentUser = null;
   let quizId = quizIdInput.value.trim();
   quizTitleEl.textContent = quizId;
 
-  // In-memory runtime state (kept in sync with Firestore attempt doc)
-  let questions = []; // load example local questions — replace with your questions later via admin or Firestore
-  let attemptDocRef = null; // Firestore doc ref (object with id and path when created)
-  let attemptData = null; // local snapshot of attempt document {userId,quizId,currentIndex,score,status,questionStartAt,answers[...] }
+  // runtime state
+  let questions = []; // placeholder questions; replace by loading from Firestore when ready
+  let attemptDocRef = null;
+  let attemptData = null;
   let timer = null;
   let timeLeft = TIME_PER_QUESTION;
 
-  // sample questions (placeholder) — you will replace these by writing the questions into Firestore or modify this file
   const placeholderQuestions = [
     { id:'q1', text:'Which empire built the city of Timbuktu?', choices:['Mali Empire','Songhai Empire','Ghana Empire','Kanem-Bornu Empire'], answerIndex:0 },
     { id:'q2', text:'Who sailed from Spain and reached the Americas in 1492?', choices:['Ferdinand Magellan','Christopher Columbus','Vasco da Gama','John Cabot'], answerIndex:1 },
@@ -180,67 +177,57 @@
     { id:'q9', text:'The Treaty of Versailles ended which war?', choices:['World War I','World War II','Franco-Prussian War','Crimean War'], answerIndex:0 },
     { id:'q10', text:'Which city was the capital of the Ottoman Empire?', choices:['Istanbul','Ankara','Baghdad','Damascus'], answerIndex:0 }
   ];
-
   questions = placeholderQuestions.slice();
 
-  // ------------- Auth -------------
-  const provider = new GoogleAuthProvider();
-
-  signInBtn.addEventListener('click', async () => {
-    try { await signInWithPopup(auth, provider); } catch (e) { alert('Sign in failed: ' + (e.message||e)); }
-  });
-
-  signOutBtn.addEventListener('click', async ()=> { try { await signOut(auth); location.reload(); } catch(e){} });
-
+  // ------------- Auth: rely on site auth session (no popup) -------------
   onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     if (!user) {
-      userInfo.textContent = 'Not signed in';
-      signInBtn.classList.remove('hidden');
+      userInfo.textContent = 'Not signed in on site';
       signOutBtn.classList.add('hidden');
       statusText.textContent = 'idle';
+      // clear any in-memory attempt so user can't resume (they must be signed in on site)
+      attemptDocRef = null;
+      attemptData = null;
       return;
     }
+    // user is signed in on site — use their session
     userInfo.textContent = `${user.displayName || user.email} (${user.email})`;
-    signInBtn.classList.add('hidden');
     signOutBtn.classList.remove('hidden');
     quizId = quizIdInput.value.trim();
     quizTitleEl.textContent = quizId;
-    // check for any in-progress attempt for this user+quiz
+    // try to resume any in-progress attempt for this user+quiz
     await loadResumeAttemptForUser();
-    // load leaderboard
     await loadLeaderboard(quizId);
   });
 
-  // ------------- Start / Resume flow -------------
+  // optional sign-out from site
+  signOutBtn.addEventListener('click', async () => {
+    try { await signOut(auth); location.reload(); } catch(e){ console.error(e); }
+  });
+
+  // ------------- Start / Resume logic -------------
   quizIdInput.addEventListener('change', () => {
     quizId = quizIdInput.value.trim();
     quizTitleEl.textContent = quizId;
-    // if signed-in, check for in-progress attempts and leaderboard
     if (currentUser) loadResumeAttemptForUser();
     loadLeaderboard(quizId);
   });
 
   startBtn.addEventListener('click', async () => {
-    if (!currentUser) return alert('Please sign in with Google to start.');
-    // check if user already completed this quiz
+    if (!currentUser) return alert('You are not signed in on the site. Please sign in on the site and return.');
+    // block if completed
     const completed = await userHasCompletedQuiz();
     if (completed) return alert('You have already completed this quiz — only one completed attempt allowed.');
-
-    // If there's an in-progress attempt, resume it (loadResumeAttemptForUser already does), otherwise create new attempt
     if (attemptData && attemptData.status === 'in_progress') {
-      // resume UI
       showQuestionStateFromAttempt();
       return;
     }
-
-    // create new attempt doc
     await createNewAttemptAndStart();
   });
 
-  // --------- create new attempt doc and start ----------
+  // ------- create new attempt -------
   async function createNewAttemptAndStart(){
-    // prepare attempt object
     const payload = {
       quizId: quizId,
       userId: currentUser.uid,
@@ -248,17 +235,15 @@
       currentIndex: 0,
       score: 0,
       status: 'in_progress',
-      // serverTimestamp for question start
       questionStartAt: serverTimestamp(),
       startedAt: serverTimestamp(),
-      answers: [] // will push objects {qIndex, selectedIndex, correct, ts}
+      answers: []
     };
     try {
       const ref = await addDoc(collection(db,'quizAttempts'), payload);
       attemptDocRef = ref;
-      // refresh local attemptData by reading the doc (so timestamps convert)
       const snap = await getDoc(ref);
-      attemptData = snap.exists() ? snap.data() : null;
+      attemptData = snap.data();
       statusText.textContent = 'in_progress';
       showQuestionStateFromAttempt();
     } catch (e) {
@@ -267,7 +252,7 @@
     }
   }
 
-  // --------- load/resume existing in-progress attempt if any ----------
+  // ------- load/resume -------
   async function loadResumeAttemptForUser(){
     statusText.textContent = 'checking…';
     attemptDocRef = null;
@@ -280,10 +265,9 @@
         const s = snaps.docs[0];
         attemptDocRef = s.ref;
         attemptData = s.data();
-        // On resume: compute elapsed since questionStartAt and apply expirations if needed
+        // reconcile expired questions and resume
         await reconcileExpiredQuestionsAndResume();
       } else {
-        // no in-progress attempt; check if user already completed the quiz (to block new attempt)
         const completed = await userHasCompletedQuiz();
         statusText.textContent = completed ? 'completed' : 'idle';
       }
@@ -300,42 +284,34 @@
     return !snaps.empty;
   }
 
-  // ---------- reconcile any fully-expired questions since stored questionStartAt ----------
   async function reconcileExpiredQuestionsAndResume(){
     if (!attemptData || !attemptDocRef) return;
-    // ensure questionStartAt exists and is a Firestore Timestamp
     const qsa = attemptData.questionStartAt;
     if (!qsa || !qsa.seconds) {
-      // if missing, just set a fresh start at now
       await updateDoc(attemptDocRef, { questionStartAt: serverTimestamp() });
-      const refreshed = await getDoc(attemptDocRef);
-      attemptData = refreshed.data();
+      const snap = await getDoc(attemptDocRef);
+      attemptData = snap.data();
       statusText.textContent = 'in_progress';
       showQuestionStateFromAttempt();
       return;
     }
-
     const nowSeconds = Math.floor(Date.now() / 1000);
     const startSeconds = qsa.seconds;
     const elapsed = nowSeconds - startSeconds;
     const expiredQuestions = Math.floor(elapsed / TIME_PER_QUESTION);
 
     if (expiredQuestions <= 0) {
-      // still within current question
       statusText.textContent = 'in_progress';
       showQuestionStateFromAttempt();
       return;
     }
 
-    // some questions have fully expired — compute new index and score penalty
     let newIndex = attemptData.currentIndex + expiredQuestions;
     let newScore = attemptData.score + (expiredQuestions * POINTS_WRONG);
-    // append placeholder timed-out answers for audit
     const answersToAppend = [];
     for (let i = 0; i < expiredQuestions && (attemptData.currentIndex + i) < QUESTIONS_COUNT; i++){
-      const qIndex = attemptData.currentIndex + i;
       answersToAppend.push({
-        qIndex,
+        qIndex: attemptData.currentIndex + i,
         selectedIndex: null,
         correct: false,
         timedOut: true,
@@ -343,9 +319,7 @@
       });
     }
 
-    // If we've progressed past the last question -> finish quiz immediately
     if (newIndex >= QUESTIONS_COUNT) {
-      // finish: set completed, save penalties and mark completedAt
       try {
         await updateDoc(attemptDocRef, {
           currentIndex: QUESTIONS_COUNT,
@@ -354,7 +328,6 @@
           status: 'completed',
           completedAt: serverTimestamp()
         });
-        // load updated doc
         const s = await getDoc(attemptDocRef);
         attemptData = s.data();
         statusText.textContent = 'completed';
@@ -367,16 +340,13 @@
       }
     }
 
-    // Otherwise advance to the next live question and reset questionStartAt to now
     try {
       await updateDoc(attemptDocRef, {
         currentIndex: newIndex,
         score: newScore,
-        // merge answers array client-side (we concatenate)
         answers: (attemptData.answers || []).concat(answersToAppend),
         questionStartAt: serverTimestamp()
       });
-      // refresh local attemptData
       const s = await getDoc(attemptDocRef);
       attemptData = s.data();
       statusText.textContent = 'in_progress';
@@ -387,21 +357,15 @@
     }
   }
 
-  // ------------- UI rendering & timer -------------
+  // ------------- UI & timer (same behavior as before) -------------
   function showQuestionStateFromAttempt(){
-    // ensure questions exist
-    if (!questions || questions.length !== QUESTIONS_COUNT) {
-      // If you later put questions in Firestore, load them. For now we use placeholderQuestions.
-      questions = placeholderQuestions.slice();
-    }
+    if (!questions || questions.length !== QUESTIONS_COUNT) questions = placeholderQuestions.slice();
 
     if (!attemptData) return;
-    // if completed
     if (attemptData.status === 'completed') {
       showFinalSummary();
       return;
     }
-    // else in_progress
     questionCard.classList.remove('hidden');
     resultCard.classList.add('hidden');
     document.getElementById('controls').classList.add('hidden');
@@ -410,7 +374,6 @@
     const q = questions[idx];
     renderQuestion(q, idx);
 
-    // compute remaining time using stored questionStartAt
     const qsa = attemptData.questionStartAt;
     let elapsed = 0;
     if (qsa && qsa.seconds) {
@@ -418,7 +381,7 @@
       elapsed = nowSeconds - qsa.seconds;
     }
     timeLeft = TIME_PER_QUESTION - (elapsed % TIME_PER_QUESTION);
-    if (timeLeft <= 0) timeLeft = 1; // minimal guard
+    if (timeLeft <= 0) timeLeft = 1;
     startTimerTick();
     scoreEl.textContent = attemptData.score ?? 0;
     progressEl.textContent = `Question ${ (idx + 1) } / ${QUESTIONS_COUNT}`;
@@ -451,7 +414,6 @@
       timerEl.textContent = timeLeft;
       if (timeLeft <= 0) {
         clearInterval(timer);
-        // handle timeout: mark as wrong, advance and update Firestore
         await handleTimeoutAndAdvance();
       }
     },1000);
@@ -459,18 +421,14 @@
 
   async function handleAnswer(selectedIndex){
     clearInterval(timer);
-    // disable UI choices
     const choiceEls = questionArea.querySelectorAll('.choice');
     choiceEls.forEach(c=>c.classList.add('disabled'));
 
     const idx = attemptData.currentIndex;
     const q = questions[idx];
     const correct = (selectedIndex === q.answerIndex);
-
-    // local score update
     let newScore = (attemptData.score ?? 0) + (correct ? POINTS_CORRECT : POINTS_WRONG);
 
-    // update Firestore: append answer and advance questionStartAt if not last question
     const answerObj = {
       qIndex: idx,
       selectedIndex,
@@ -479,7 +437,6 @@
       ts: serverTimestamp()
     };
 
-    // If this was the final question, mark completed
     const willFinish = (idx + 1) >= QUESTIONS_COUNT;
 
     try {
@@ -491,11 +448,9 @@
         questionStartAt: willFinish ? null : serverTimestamp(),
         completedAt: willFinish ? serverTimestamp() : undefined
       });
-      // refresh local snapshot
       const s = await getDoc(attemptDocRef);
       attemptData = s.data();
       scoreEl.textContent = attemptData.score;
-      // show immediate feedback in UI
       if (correct) {
         choiceEls[selectedIndex].classList.add('correct');
         const fb = document.createElement('div'); fb.style.color='var(--success)'; fb.style.fontWeight=700; fb.textContent=`Correct! +${POINTS_CORRECT} points.`; questionArea.appendChild(fb);
@@ -504,16 +459,11 @@
         if (choiceEls[q.answerIndex]) choiceEls[q.answerIndex].classList.add('correct');
         const fb = document.createElement('div'); fb.style.color='var(--danger)'; fb.style.fontWeight=700; fb.textContent=`Wrong — ${POINTS_WRONG} points. Correct: "${q.choices[q.answerIndex]}"`; questionArea.appendChild(fb);
       }
-      // if finished, show summary
       if (attemptData.status === 'completed') {
         showFinalSummary();
       } else {
-        // otherwise, wait a second then render next question
         nextBtn.classList.remove('hidden');
-        nextBtn.onclick = () => {
-          // manually trigger showing next by refreshing attempt data & UI
-          showQuestionStateFromAttempt();
-        };
+        nextBtn.onclick = () => { showQuestionStateFromAttempt(); };
       }
       await loadLeaderboard(quizId);
     } catch (e) {
@@ -525,7 +475,6 @@
   async function handleTimeoutAndAdvance(){
     const idx = attemptData.currentIndex;
     const q = questions[idx];
-    // apply penalty
     const newScore = (attemptData.score ?? 0) + POINTS_WRONG;
     const answerObj = {
       qIndex: idx,
@@ -548,17 +497,12 @@
       const s = await getDoc(attemptDocRef);
       attemptData = s.data();
       scoreEl.textContent = attemptData.score;
-      // show correct choice and feedback
       const choiceEls = questionArea.querySelectorAll('.choice');
-      if (choiceEls[attemptData && questions[idx] ? questions[idx].answerIndex : 0]) {
-        choiceEls[questions[idx].answerIndex].classList.add('correct');
-      }
+      if (choiceEls[questions[idx].answerIndex]) choiceEls[questions[idx].answerIndex].classList.add('correct');
       const fb = document.createElement('div'); fb.style.color='var(--danger)'; fb.style.fontWeight=700; fb.textContent=`Time expired — ${POINTS_WRONG} points. Correct: "${q.choices[q.answerIndex]}"`; questionArea.appendChild(fb);
-
       if (attemptData.status === 'completed') {
         showFinalSummary();
       } else {
-        // resume next question UI
         nextBtn.classList.remove('hidden');
         nextBtn.onclick = () => { showQuestionStateFromAttempt(); };
       }
@@ -569,7 +513,6 @@
     }
   }
 
-  // End early: mark current state as completed and save
   endEarlyBtn.addEventListener('click', async () => {
     if (!attemptData || !attemptDocRef) return;
     if (!confirm('End quiz early? This will submit your current score.')) return;
@@ -585,7 +528,6 @@
     }
   });
 
-  // show final summary UI
   function showFinalSummary(){
     clearInterval(timer);
     questionCard.classList.add('hidden');
@@ -600,7 +542,7 @@
     document.getElementById('controls').classList.remove('hidden');
   });
 
-  // ------------- Leaderboard (reads quizAttempts completed only) -------------
+  // Leaderboard
   async function loadLeaderboard(qid){
     leaderboardList.innerHTML = 'Loading…';
     try {
@@ -621,15 +563,13 @@
     }
   }
 
-  // ------------- initial UI state -------------
+  // initial UI
   scoreEl.textContent = '0';
   timerEl.textContent = String(TIME_PER_QUESTION);
   progressEl.textContent = `Question 0 / ${QUESTIONS_COUNT}`;
   statusText.textContent = 'idle';
   quizTitleEl.textContent = quizId;
 
-  // If user is already signed in (session persisted), onAuthStateChanged will fire and resume attempt.
-  // Otherwise, the user can sign in and resume.
   </script>
 </body>
 </html>
