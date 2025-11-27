@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Quiz (Play)</title>
+  <title>Beni-Wealth — Quiz</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <style>
     :root{
@@ -224,7 +224,6 @@
       const uRef = doc(db, 'users', user.uid);
       userUnsub = onSnapshot(uRef, async (snap) => {
         if(!snap.exists()){
-          // fallback read balances collection or balances/{uid}
           const fallback = await tryBalanceFallback(user.uid);
           balanceEl.textContent = fallback !== null ? formatNaira(fallback) : '—';
           assetBalance.textContent = fallback !== null ? formatNaira(fallback) : formatNaira(0);
@@ -287,28 +286,20 @@
     // START: play button handler — ask confirmation then run transaction to debit ₦20 and create attempt
     playBtn.addEventListener('click', async () => {
       if(!currentUser) return alert('Sign in on the site first.');
-      // ensure no completed attempt
       const completed = await hasCompleted();
       if(completed) return alert('You already completed this quiz (one completed attempt only).');
 
-      // prevent multiple in-progress
       const inprogress = await hasInProgress();
       if(inprogress) {
-        // resume existing
         await loadResumeAttempt();
         showQuizUI();
         return;
       }
 
-      // confirm
       const ok = confirm(`You will be debited ₦${ENTRY_FEE} as entry fee to join this quiz. Proceed?`);
       if(!ok) return;
 
-      // perform transaction: check balance, deduct, create attempt in same tx
       try {
-        const attemptsCol = collection(db, 'quizAttempts');
-        // generate new attempt doc ref
-        // NOTE: runTransaction provides transaction.set on a doc reference; we need a doc ref. Create one using doc(collection(...))
         const newAttemptRef = doc(collection(db,'quizAttempts'));
         await runTransaction(db, async (tx) => {
           const uRef = doc(db, 'users', currentUser.uid);
@@ -320,9 +311,7 @@
           } else {
             currentBal = null;
           }
-          // try fallback lookups if doc didn't contain numeric balance
           if(currentBal === null){
-            // try balances/{uid} one-time
             const fb = await tryBalanceFallback(currentUser.uid);
             currentBal = fb !== null ? fb : 0;
           }
@@ -331,13 +320,9 @@
             throw new Error('insufficient-funds');
           }
 
-          // calculate new balance
           const newBal = Number(currentBal) - ENTRY_FEE;
-
-          // choose where to write balance: if user doc exists, write to 'balance' field; otherwise create users/{uid} with 'balance'
           tx.set(uRef, { balance: newBal }, { merge: true });
 
-          // now create attempt doc atomically
           const payload = {
             quizId: QUIZ_ID,
             userId: currentUser.uid,
@@ -351,11 +336,9 @@
             entryFee: ENTRY_FEE
           };
           tx.set(newAttemptRef, payload);
-          // attach reference to outside scope so we can resume after transaction returns
           attemptRef = newAttemptRef;
         });
-        // transaction succeeded
-        // fetch the attempt data
+
         const snap = await getDoc(attemptRef);
         attemptData = snap.data();
         statusMessage('in_progress');
@@ -370,9 +353,9 @@
     });
 
     // helper: status text in UI (muted)
-    function statusMessage(s){ /* we can show in console or extend UI; keeping minimal */ console.info('status',s); }
+    function statusMessage(s){ console.info('status',s); }
 
-    // check completed attempts
+    // check completed/in-progress
     async function hasCompleted(){
       try {
         const col = collection(db,'quizAttempts');
@@ -401,12 +384,10 @@
         if(!snaps.empty){
           attemptRef = snaps.docs[0].ref;
           attemptData = snaps.docs[0].data();
-          // reconcile expired questions
           await reconcileExpired();
           showQuizUI();
           return;
         }
-        // nothing in progress
       } catch(e){ console.warn('loadResumeAttempt err', e); }
     }
 
@@ -415,7 +396,6 @@
       if(!attemptData || !attemptRef) return;
       const qsa = attemptData.questionStartAt;
       if(!qsa || !qsa.seconds){
-        // set start if missing
         try {
           await updateDoc(attemptRef, { questionStartAt: serverTimestamp() });
           const s = await getDoc(attemptRef); attemptData = s.data();
@@ -427,20 +407,39 @@
       const elapsed = nowSeconds - startSeconds;
       const expiredQs = Math.floor(elapsed / TIME_PER_QUESTION);
       if(expiredQs <= 0) return;
+
       let newIndex = (attemptData.currentIndex || 0) + expiredQs;
       let newScore = (attemptData.score || 0) + (expiredQs * POINTS_WRONG);
-      const answers = attemptData.answers || [];
+      const answers = attemptData.answers ? Array.from(attemptData.answers) : [];
+      const nowIso = new Date().toISOString();
       for(let i=0;i<expiredQs && (attemptData.currentIndex + i) < QUESTIONS_COUNT;i++){
-        answers.push({ qIndex: attemptData.currentIndex + i, selectedIndex: null, correct: false, timedOut: true, ts: serverTimestamp() });
+        answers.push({
+          qIndex: attemptData.currentIndex + i,
+          selectedIndex: null,
+          correct: false,
+          timedOut: true,
+          ts: nowIso
+        });
       }
+
       if(newIndex >= QUESTIONS_COUNT){
-        // finish
-        await updateDoc(attemptRef, { currentIndex: QUESTIONS_COUNT, score: newScore, answers, status: 'completed', completedAt: serverTimestamp() });
+        await updateDoc(attemptRef, {
+          currentIndex: QUESTIONS_COUNT,
+          score: newScore,
+          answers,
+          status: 'completed',
+          completedAt: serverTimestamp()
+        });
         const s = await getDoc(attemptRef); attemptData = s.data();
         showFinal();
         return;
       } else {
-        await updateDoc(attemptRef, { currentIndex: newIndex, score: newScore, answers, questionStartAt: serverTimestamp() });
+        await updateDoc(attemptRef, {
+          currentIndex: newIndex,
+          score: newScore,
+          answers,
+          questionStartAt: serverTimestamp()
+        });
         const s = await getDoc(attemptRef); attemptData = s.data();
       }
     }
@@ -450,9 +449,7 @@
       if(!attemptData) return;
       quizCard.classList.remove('hidden');
       resultCard.classList.add('hidden');
-      // render current question
       renderCurrentQuestion();
-      // compute timeLeft from questionStartAt
       const qsa = attemptData.questionStartAt;
       let elapsed = 0;
       if(qsa && qsa.seconds) { elapsed = Math.floor(Date.now()/1000) - qsa.seconds; }
@@ -501,7 +498,8 @@
       const q = questions[idx];
       const correct = selectedIndex === q.answerIndex;
       const newScore = (attemptData.score || 0) + (correct ? POINTS_CORRECT : POINTS_WRONG);
-      const answerObj = { qIndex: idx, selectedIndex, correct, timedOut: false, ts: serverTimestamp() };
+      const nowIso = new Date().toISOString();
+      const answerObj = { qIndex: idx, selectedIndex, correct, timedOut: false, ts: nowIso };
       const willFinish = (idx + 1) >= QUESTIONS_COUNT;
       try {
         await updateDoc(attemptRef, {
@@ -513,7 +511,6 @@
           completedAt: willFinish ? serverTimestamp() : undefined
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
-        // show feedback visually
         const choiceEls = questionArea.querySelectorAll('.choice');
         choiceEls.forEach(c => c.classList.add('disabled'));
         if(choiceEls[selectedIndex]) choiceEls[selectedIndex].classList.add(correct ? 'correct' : 'wrong');
@@ -524,7 +521,7 @@
         questionArea.appendChild(fb);
         scoreEl.textContent = attemptData.score;
         if(attemptData.status === 'completed'){ showFinal(); await loadLeaderboard(); }
-        else { nextBtn.classList.remove('hidden'); nextBtn.onclick = () => { renderCurrentQuestion(); const s = attemptData; const elapsed = 0; }; }
+        else { nextBtn.classList.remove('hidden'); nextBtn.onclick = () => { renderCurrentQuestion(); }; }
       } catch(e){
         console.error('answer failed', e);
         alert('Could not submit answer: ' + (e.message || e));
@@ -535,7 +532,8 @@
       const idx = attemptData.currentIndex || 0;
       const q = questions[idx];
       const newScore = (attemptData.score || 0) + POINTS_WRONG;
-      const answerObj = { qIndex: idx, selectedIndex: null, correct: false, timedOut: true, ts: serverTimestamp() };
+      const nowIso = new Date().toISOString();
+      const answerObj = { qIndex: idx, selectedIndex: null, correct: false, timedOut: true, ts: nowIso };
       const willFinish = (idx + 1) >= QUESTIONS_COUNT;
       try {
         await updateDoc(attemptRef, {
@@ -547,7 +545,6 @@
           completedAt: willFinish ? serverTimestamp() : undefined
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
-        // reveal correct answer
         const choiceEls = questionArea.querySelectorAll('.choice');
         if(choiceEls[q.answerIndex]) choiceEls[q.answerIndex].classList.add('correct');
         const fb = document.createElement('div'); fb.style.marginTop='8px'; fb.style.fontWeight=700; fb.style.color='var(--danger)';
@@ -576,7 +573,6 @@
       quizCard.classList.add('hidden');
       resultCard.classList.remove('hidden');
       finalSummary.innerHTML = `<div style="font-weight:800">Your score: ${attemptData.score ?? 0}</div><div class="muted small" style="margin-top:8px">Thanks for playing.</div>`;
-      // final: clear local
       clearLocalAttempt();
     }
 
@@ -620,7 +616,6 @@
       let tries=0; const p = setInterval(()=>{ tries++; if(auth.currentUser) clearInterval(p); if(tries>=retries) clearInterval(p); }, interval);
     })();
 
-    // end of module
   </script>
 </body>
 </html>
