@@ -1,158 +1,511 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Beni-Wealth — Pool Game</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg-1:#0b0710;
-  --bg-2:#0e0620;
-  --card:#0f1726;
-  --muted:#9aa4b2;
-  --accent-1:#7c3aed;
-  --accent-2:#4ade80;
-  --accent-grad: linear-gradient(90deg,#7c3aed,#06b6d4);
-  --glass: rgba(255,255,255,0.03);
-  --glass-2: rgba(255,255,255,0.02);
-  --danger:#ef4444;
-  --success:#10b981;
-  --text:#e6eef8;
-}
-html,body{height:100%;margin:0;font-family:"Poppins",sans-serif;background:radial-gradient(1000px 600px at 10% 10%, rgba(124,58,237,0.12), transparent), linear-gradient(180deg,var(--bg-1), var(--bg-2)); color:var(--text);}
-.wrap{max-width:1000px;margin:20px auto;padding:20px}
-.card{background:var(--card);border-radius:14px;padding:20px;box-shadow:0 8px 24px rgba(3,6,18,0.6);border:1px solid rgba(255,255,255,0.02)}
-.btn{padding:10px 16px;border-radius:12px;border:0;background:var(--accent-1);color:#fff;font-weight:700;cursor:pointer}
-.btn-ghost{background:transparent;border:1px solid var(--accent-1);color:var(--accent-1)}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;justify-content:center;align-items:center;z-index:100}
-.modal{background:var(--card);border-radius:12px;padding:20px;width:300px;box-shadow:0 8px 30px rgba(0,0,0,0.7);}
-input{width:100%;padding:8px;border-radius:8px;border:1px solid #444;background:var(--bg-2);color:#fff;margin-top:6px}
-#poolTable{background:#061226;border-radius:10px;width:100%;height:400px;margin-top:20px;position:relative}
-.ball{width:24px;height:24px;border-radius:50%;position:absolute;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px}
-.ball.player{background:var(--accent-1)}
-.ball.bot{background:var(--accent-2)}
-.hidden{display:none}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Quiz (Historical)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-1:#061226; --bg-2:#071a2b; --card:#0f1726; --muted:#9aa4b2; --accent:#7c3aed; --success:#10b981; --danger:#ef4444; --text:#e6eef8;
+    }
+    html,body{height:100%;margin:0;font-family:"Poppins",system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text);-webkit-font-smoothing:antialiased;}
+    .wrap{max-width:960px;margin:24px auto;padding:20px}
+    .header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .logo{font-weight:800;background:linear-gradient(135deg,#7c3aed,#06b6d4);padding:10px 14px;border-radius:10px;color:#041328}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:14px;margin-top:16px;box-shadow:0 8px 30px rgba(2,6,23,0.5)}
+    button{cursor:pointer}
+    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:#041328;font-weight:800}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);padding:8px 12px;border-radius:8px}
+    .muted{color:var(--muted);font-size:13px}
+    .flex{display:flex;gap:12px;align-items:center}
+    #questionArea{min-height:220px;display:flex;flex-direction:column;gap:12px}
+    .question{font-weight:800;font-size:18px}
+    .choices{display:flex;flex-direction:column;gap:8px}
+    .choice{background:rgba(255,255,255,0.02);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);cursor:pointer}
+    .choice.disabled{opacity:0.6;pointer-events:none}
+    .choice.correct{border-color:rgba(16,185,129,0.8);background:rgba(16,185,129,0.08)}
+    .choice.wrong{border-color:rgba(239,68,68,0.9);background:rgba(239,68,68,0.06)}
+    .timer{font-weight:800;font-size:18px}
+    .score{font-weight:800}
+    .small{font-size:13px;color:var(--muted)}
+    textarea{width:100%;height:160px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text);padding:10px;border-radius:8px}
+    .admin-area{margin-top:12px}
+    .leaderboard{margin-top:12px}
+    pre{white-space:pre-wrap}
+    @media (max-width:720px){ .flex{flex-direction:column;align-items:flex-start} }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <h2>Pool Game — Play against Bot</h2>
-    <p>Entry Fee: ₦20 per round</p>
-    <button id="playBtn" class="btn">Play</button>
-    <div id="statusMsg" style="margin-top:12px;color:var(--muted)">Not in round</div>
+  <div class="wrap">
+    <div class="header">
+      <div class="flex">
+        <div class="logo">BW QUIZ</div>
+        <div>
+          <div style="font-weight:800">Historical Quiz (example)</div>
+          <div class="small">10 questions • 10 seconds each • +10 / -5 scoring</div>
+        </div>
+      </div>
 
-    <div id="poolTable"></div>
-  </div>
-</div>
-
-<!-- Modal -->
-<div id="confirmModal" class="modal-bg">
-  <div class="modal">
-    <h3>Confirm Play</h3>
-    <p>You will be debited ₦20 to join a round.</p>
-    <label>Enter Round ID:</label>
-    <input type="text" id="roundInput" placeholder="round_xxxxx">
-    <div style="margin-top:12px;text-align:right">
-      <button id="confirmJoin" class="btn">Confirm</button>
-      <button id="cancelJoin" class="btn-ghost">Cancel</button>
+      <div class="flex">
+        <div id="userInfo" class="small muted">Not signed in</div>
+        <button id="signInBtn" class="btn">Sign in (Google)</button>
+        <button id="signOutBtn" class="btn-ghost hidden">Sign out</button>
+      </div>
     </div>
+
+    <div class="card" id="mainCard" role="main" aria-live="polite">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="small">Quiz: <strong id="quizTitle">Historical — Example</strong></div>
+        <div class="small">Attempts: <span id="attemptsInfo">checking...</span></div>
+      </div>
+
+      <div style="margin-top:12px" id="controls">
+        <label class="small">Choose quiz (quiz id):</label>
+        <input id="quizIdInput" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text)" value="historical_001" />
+        <button id="startBtn" class="btn" style="margin-left:8px">Start Quiz</button>
+        <span style="margin-left:8px" class="small muted">You can only attempt once per quiz.</span>
+      </div>
+
+      <div id="questionCard" class="card hidden" style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="score">Score: <span id="score">0</span></div>
+          <div class="timer">Time: <span id="timer">10</span>s</div>
+        </div>
+
+        <div id="questionArea" style="margin-top:12px">
+          <!-- question and choices injected here -->
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+          <div class="small muted" id="progress">Question 0 / 10</div>
+          <div>
+            <button id="nextBtn" class="btn-ghost hidden">Next</button>
+            <button id="endEarlyBtn" class="btn-ghost">End Quiz</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="resultCard" class="card hidden" style="margin-top:12px">
+        <div style="font-weight:900;font-size:20px">Quiz complete</div>
+        <div style="margin-top:8px" id="finalSummary"></div>
+        <div style="margin-top:12px">
+          <button id="closeSummary" class="btn">Close</button>
+        </div>
+      </div>
+
+      <div class="card admin-area" id="adminArea" style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:800">Questions Editor</div>
+          <div class="small muted">Paste a JSON array of 10 question objects</div>
+        </div>
+        <div style="margin-top:8px" class="small muted">Format (example):<pre>[{"id":"q1","text":"Which year...","choices":["1707","1756","1800","1812"],"answerIndex":0}, ...]</pre></div>
+        <textarea id="questionsJson" placeholder='Paste questions JSON here'></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="loadQuestionsBtn" class="btn">Load Questions (local)</button>
+          <button id="saveQuestionsBtn" class="btn-ghost">Save to Firestore (admins only)</button>
+          <div class="small muted" id="adminNote">Not signed in as admin</div>
+        </div>
+      </div>
+
+      <div class="card leaderboard" id="leaderboardCard" style="margin-top:12px">
+        <div style="font-weight:800">Leaderboard (Top 10)</div>
+        <div id="leaderboardList" style="margin-top:8px" class="small muted">Loading…</div>
+      </div>
+    </div>
+
   </div>
-</div>
 
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { getFirestore, doc, getDoc, updateDoc, setDoc, arrayUnion } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+  <!-- Firebase & app logic -->
+  <script type="module">
+  // ========== FIREBASE CONFIG (from your provided Beni-Wealth details) ==========
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+  import {
+    getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged
+  } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+  import {
+    getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, addDoc, serverTimestamp, limit
+  } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
-// Firebase setup
-const firebaseConfig = {
-  apiKey: 'AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk',
-  authDomain: 'beni-wealths.firebaseapp.com',
-  projectId: 'beni-wealths',
-  storageBucket: 'beni-wealths.firebasestorage.app',
-  messagingSenderId: '807950483822',
-  appId: '1:807950483822:web:e10fa87307e041c4d8417f',
-  measurementId: 'G-Z2XP3YN6NS'
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+  const firebaseConfig = {
+    apiKey: "AIzaSyCAV9eRR32HjYenJNMv3E-KwR4ubFZrhlo",
+    authDomain: "beni-wealth.firebaseapp.com",
+    projectId: "beni-wealth",
+    storageBucket: "beni-wealth.appspot.com",
+    messagingSenderId: "1007146234746",
+    appId: "1:1007146234746:web:cf2a4eb57a755999f0598c",
+    measurementId: "G-N7S4D0M9CG"
+  };
 
-let user = null;
-let joinedRounds = new Set();
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-onAuthStateChanged(auth, u => { if(u) user=u; else alert('Sign in required'); });
+  // ========== CONFIG & STATE ==========
+  const QUIZ_ID_INPUT = document.getElementById('quizIdInput');
+  const QUIZ_TITLE_EL = document.getElementById('quizTitle');
+  const startBtn = document.getElementById('startBtn');
+  const signInBtn = document.getElementById('signInBtn');
+  const signOutBtn = document.getElementById('signOutBtn');
+  const userInfo = document.getElementById('userInfo');
+  const attemptsInfo = document.getElementById('attemptsInfo');
 
-// UI refs
-const playBtn = document.getElementById('playBtn');
-const confirmModal = document.getElementById('confirmModal');
-const roundInput = document.getElementById('roundInput');
-const confirmJoin = document.getElementById('confirmJoin');
-const cancelJoin = document.getElementById('cancelJoin');
-const statusMsg = document.getElementById('statusMsg');
-const poolTable = document.getElementById('poolTable');
+  const questionCard = document.getElementById('questionCard');
+  const questionArea = document.getElementById('questionArea');
+  const timerEl = document.getElementById('timer');
+  const scoreEl = document.getElementById('score');
+  const progressEl = document.getElementById('progress');
+  const nextBtn = document.getElementById('nextBtn');
+  const endEarlyBtn = document.getElementById('endEarlyBtn');
 
-// dummy pool balls
-let balls = [];
+  const questionsJson = document.getElementById('questionsJson');
+  const loadQuestionsBtn = document.getElementById('loadQuestionsBtn');
+  const saveQuestionsBtn = document.getElementById('saveQuestionsBtn');
+  const adminNote = document.getElementById('adminNote');
 
-function renderTable(){
-  poolTable.innerHTML = '';
-  balls.forEach(b=>{
-    const el = document.createElement('div');
-    el.className = 'ball ' + b.type;
-    el.style.left = b.x+'px';
-    el.style.top = b.y+'px';
-    el.textContent = b.id;
-    poolTable.appendChild(el);
+  const leaderboardList = document.getElementById('leaderboardList');
+  const leaderboardCard = document.getElementById('leaderboardCard');
+
+  const resultCard = document.getElementById('resultCard');
+  const finalSummary = document.getElementById('finalSummary');
+  const closeSummary = document.getElementById('closeSummary');
+
+  // Behavior defaults (per your spec)
+  const QUESTIONS_COUNT = 10;
+  const TIME_PER_QUESTION = 10; // seconds
+  const POINTS_CORRECT = 10;
+  const POINTS_WRONG = -5;
+
+  let currentUser = null;
+  let questions = []; // loaded from textarea or Firestore
+  let currentIndex = 0;
+  let score = 0;
+  let timer = null;
+  let timeLeft = TIME_PER_QUESTION;
+  let quizId = QUIZ_ID_INPUT.value || 'historical_001';
+  let attemptDocId = null;
+  let hasAttempted = false;
+
+  // Simple admin allowlist (you can change)
+  const allowedAdminEmails = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
+
+  // ========== AUTH ==========
+  const provider = new GoogleAuthProvider();
+
+  signInBtn.addEventListener('click', async () => {
+    try{ await signInWithPopup(auth, provider); } catch(e){ alert('Sign in failed: '+ (e.message||e)); }
   });
-}
+  signOutBtn.addEventListener('click', async ()=> { await signOut(auth); location.reload(); });
 
-// bot medium shot
-function botPlay(){
-  const ball = balls.find(b=>b.type==='bot');
-  if(!ball) return;
-  const dx = Math.random()*100-50;
-  const dy = Math.random()*100-50;
-  ball.x = Math.min(Math.max(ball.x+dx,0),poolTable.clientWidth-24);
-  ball.y = Math.min(Math.max(ball.y+dy,0),poolTable.clientHeight-24);
-  renderTable();
-}
+  onAuthStateChanged(auth, async (u) => {
+    currentUser = u;
+    if (!u) {
+      userInfo.textContent = 'Not signed in';
+      signInBtn.classList.remove('hidden');
+      signOutBtn.classList.add('hidden');
+      adminNote.textContent = 'Not signed in as admin';
+      return;
+    }
+    userInfo.textContent = `${u.displayName || u.email} (${u.email})`;
+    signInBtn.classList.add('hidden');
+    signOutBtn.classList.remove('hidden');
 
-// start round
-function startRound(roundId){
-  if(joinedRounds.has(roundId)){
-    alert('Already joined this round');
-    return;
+    // admin note
+    if (allowedAdminEmails.includes(u.email)) {
+      adminNote.textContent = 'Signed in as admin';
+    } else {
+      adminNote.textContent = 'Signed in (not admin)';
+    }
+
+    // check prior attempts for current quiz
+    quizId = QUIZ_ID_INPUT.value.trim();
+    await checkAttemptForUser();
+    await loadLeaderboard(quizId);
+  });
+
+  // ========== QUIZ FLOW ==========
+  QUIZ_ID_INPUT.addEventListener('change', () => {
+    quizId = QUIZ_ID_INPUT.value.trim();
+    QUIZ_TITLE_EL.textContent = quizId;
+    // refresh attempt info
+    if (currentUser) checkAttemptForUser();
+    loadLeaderboard(quizId);
+  });
+
+  startBtn.addEventListener('click', async () => {
+    if (!currentUser) return alert('Please sign in with Google to start the quiz.');
+    if (hasAttempted) return alert('You have already attempted this quiz.');
+    // require questions to be loaded
+    if (questions.length !== QUESTIONS_COUNT) {
+      return alert(`Please load ${QUESTIONS_COUNT} questions first (use the Questions Editor).`);
+    }
+    // final confirmation
+    if (!confirm(`Start quiz ${quizId}? You will have ${TIME_PER_QUESTION}s per question. Only one attempt allowed.`)) return;
+    // open quiz UI
+    startQuiz();
+  });
+
+  function startQuiz(){
+    // reset state
+    currentIndex = 0; score = 0;
+    scoreEl.textContent = score;
+    questionCard.classList.remove('hidden');
+    document.getElementById('controls').classList.add('hidden');
+    resultCard.classList.add('hidden');
+    // create an attempt doc placeholder (so others see this user has started) -- but we will update at the end
+    // We'll add attempt at end after completion to avoid partial writes; but we still mark hasAttempted now to prevent double starts
+    hasAttempted = true;
+    attemptsInfo.textContent = 'attempting…';
+    showQuestion(currentIndex);
   }
-  joinedRounds.add(roundId);
 
-  // debit user 20 naira
-  // In production: update firestore balance
-  alert('₦20 debited for round ' + roundId);
+  function showQuestion(idx){
+    const q = questions[idx];
+    questionArea.innerHTML = '';
+    const qEl = document.createElement('div'); qEl.className='question'; qEl.textContent = q.text;
+    const choicesEl = document.createElement('div'); choicesEl.className='choices';
 
-  // initialize table
-  balls = [
-    {id:'P', x:50, y:180, type:'player'},
-    {id:'B', x:400, y:180, type:'bot'}
+    q.choices.forEach((c,i) => {
+      const btn = document.createElement('div');
+      btn.className = 'choice';
+      btn.dataset.index = i;
+      btn.textContent = c;
+      btn.addEventListener('click', () => handleAnswer(i));
+      choicesEl.appendChild(btn);
+    });
+
+    questionArea.appendChild(qEl);
+    questionArea.appendChild(choicesEl);
+    progressEl.textContent = `Question ${idx+1} / ${QUESTIONS_COUNT}`;
+    nextBtn.classList.add('hidden');
+    // timer
+    resetTimer();
+    startTimer();
+  }
+
+  function resetTimer(){
+    clearInterval(timer);
+    timeLeft = TIME_PER_QUESTION;
+    timerEl.textContent = timeLeft;
+  }
+
+  function startTimer(){
+    timerEl.textContent = timeLeft;
+    timer = setInterval(() => {
+      timeLeft--;
+      timerEl.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        handleTimeout();
+      }
+    }, 1000);
+  }
+
+  function handleAnswer(selectedIndex){
+    clearInterval(timer);
+    // disable choices
+    const choiceEls = questionArea.querySelectorAll('.choice');
+    choiceEls.forEach(c => c.classList.add('disabled'));
+    const q = questions[currentIndex];
+    const correctIndex = q.answerIndex;
+    if (selectedIndex === correctIndex){
+      // correct
+      score += POINTS_CORRECT;
+      // mark correct
+      choiceEls[selectedIndex].classList.add('correct');
+      showImmediateFeedback(true, q);
+    } else {
+      // wrong
+      score += POINTS_WRONG;
+      choiceEls[selectedIndex].classList.add('wrong');
+      // also mark correct choice
+      if (choiceEls[correctIndex]) choiceEls[correctIndex].classList.add('correct');
+      showImmediateFeedback(false, q);
+    }
+    scoreEl.textContent = score;
+    // show next after short delay
+    nextBtn.classList.remove('hidden');
+  }
+
+  function handleTimeout(){
+    // treat as wrong
+    const choiceEls = questionArea.querySelectorAll('.choice');
+    choiceEls.forEach(c=>c.classList.add('disabled'));
+    score += POINTS_WRONG;
+    scoreEl.textContent = score;
+    // mark correct
+    const q = questions[currentIndex];
+    const correctIndex = q.answerIndex;
+    if (choiceEls[correctIndex]) choiceEls[correctIndex].classList.add('correct');
+    showImmediateFeedback(false, q, true);
+    nextBtn.classList.remove('hidden');
+  }
+
+  function showImmediateFeedback(correct, q, timedOut=false){
+    const fb = document.createElement('div');
+    fb.style.marginTop='8px';
+    fb.style.fontWeight='700';
+    fb.style.fontSize='14px';
+    fb.style.color = correct ? 'var(--success)' : 'var(--danger)';
+    fb.textContent = correct ? `Correct! +${POINTS_CORRECT} points.` : (timedOut ? `Time expired — ${POINTS_WRONG} points.` : `Wrong — ${POINTS_WRONG} points. Correct: "${q.choices[q.answerIndex]}"`);
+    questionArea.appendChild(fb);
+  }
+
+  nextBtn.addEventListener('click', ()=> {
+    currentIndex++;
+    if (currentIndex >= QUESTIONS_COUNT) {
+      finishQuiz();
+    } else {
+      showQuestion(currentIndex);
+    }
+  });
+
+  endEarlyBtn.addEventListener('click', ()=> {
+    if (!confirm('End quiz early? Your current score will be submitted.')) return;
+    finishQuiz();
+  });
+
+  function finishQuiz(){
+    clearInterval(timer);
+    questionCard.classList.add('hidden');
+    resultCard.classList.remove('hidden');
+
+    // build attempt payload
+    const attempt = {
+      quizId: quizId,
+      userId: currentUser.uid,
+      userEmail: currentUser.email,
+      score: score,
+      totalQuestions: QUESTIONS_COUNT,
+      createdAt: serverTimestamp(),
+      answers: [] // we'll reconstruct from UI history if needed — for now, store minimal
+    };
+    finalSummary.innerHTML = `<div style="font-weight:800">Your score: ${score}</div>
+      <div class="small muted" style="margin-top:8px">Saved to Firestore (if allowed). Leaderboard updated.</div>`;
+
+    // save attempt in Firestore
+    saveAttemptToFirestore(attempt).then(()=> {
+      attemptsInfo.textContent = 'attempted';
+      loadLeaderboard(quizId);
+    }).catch(err=>{
+      console.error('save attempt failed',err);
+      finalSummary.innerHTML += `<div class="small" style="color:var(--danger);margin-top:8px">Failed to save attempt: ${err.message||err}</div>`;
+    });
+  }
+
+  closeSummary.addEventListener('click', ()=> {
+    // reset UI
+    resultCard.classList.add('hidden');
+    document.getElementById('controls').classList.remove('hidden');
+  });
+
+  // ========== QUESTIONS LOADING & ADMIN ==========
+  // local load
+  loadQuestionsBtn.addEventListener('click', ()=> {
+    try {
+      const parsed = JSON.parse(questionsJson.value);
+      if (!Array.isArray(parsed) || parsed.length !== QUESTIONS_COUNT) return alert(`Please provide an array of exactly ${QUESTIONS_COUNT} questions.`);
+      // minimal validation
+      for (const q of parsed) {
+        if (!q.text || !Array.isArray(q.choices) || typeof q.answerIndex !== 'number') throw new Error('Invalid question format');
+      }
+      questions = parsed;
+      alert('Questions loaded locally. You can start the quiz.');
+    } catch (e) {
+      alert('Invalid JSON: ' + (e.message||e));
+    }
+  });
+
+  // admin save to Firestore (protected)
+  saveQuestionsBtn.addEventListener('click', async ()=> {
+    if (!currentUser) return alert('Sign in as admin to save questions.');
+    if (!allowedAdminEmails.includes(currentUser.email)) return alert('You are not an admin.');
+    try {
+      const parsed = JSON.parse(questionsJson.value);
+      if (!Array.isArray(parsed) || parsed.length !== QUESTIONS_COUNT) return alert(`Please provide an array of exactly ${QUESTIONS_COUNT} questions.`);
+      // save under collection quizzes/{quizId}/questions as individual docs
+      const qcol = collection(db, 'quizzes', quizId, 'questions');
+      // Note: simple approach - we overwrite by writing docs with their id or auto ids
+      // For convenience: set doc id from q.id if present
+      for (const q of parsed) {
+        const qdocId = q.id || (q.text.substring(0,20).replace(/\W+/g,'_'));
+        await setDoc(doc(db,'quizzes',quizId,'questions',qdocId), {
+          text: q.text,
+          choices: q.choices,
+          answerIndex: q.answerIndex,
+          createdAt: serverTimestamp()
+        });
+      }
+      alert('Saved questions to Firestore under quizzes/'+quizId+'/questions/');
+    } catch (e) {
+      alert('Save failed: ' + (e.message||e));
+    }
+  });
+
+  // ========== FIRESTORE: attempts check & save & leaderboard ==========
+  async function checkAttemptForUser(){
+    if (!currentUser) { attemptsInfo.textContent = 'sign in to attempt'; return; }
+    quizId = QUIZ_ID_INPUT.value.trim();
+    // query quizAttempts for (quizId,userId)
+    const attemptsRef = collection(db, 'quizAttempts');
+    const q = query(attemptsRef, where('quizId','==',quizId), where('userId','==',currentUser.uid), limit(1));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      hasAttempted = true;
+      attemptsInfo.textContent = 'already attempted';
+    } else {
+      hasAttempted = false;
+      attemptsInfo.textContent = 'not attempted';
+    }
+  }
+
+  async function saveAttemptToFirestore(attempt){
+    // attempt: {quizId,userId,userEmail,score,totalQuestions,createdAt,answers}
+    // add doc to quizAttempts
+    const attemptsRef = collection(db,'quizAttempts');
+    await addDoc(attemptsRef, attempt);
+  }
+
+  async function loadLeaderboard(quizIdToLoad){
+    leaderboardList.innerHTML = 'Loading…';
+    try {
+      const attemptsRef = collection(db,'quizAttempts');
+      const q = query(attemptsRef, where('quizId','==',quizIdToLoad), orderBy('score','desc'), limit(10));
+      const snap = await getDocs(q);
+      if (snap.empty) { leaderboardList.innerHTML = '<div class="small muted">No attempts yet</div>'; return; }
+      const rows = [];
+      snap.forEach(s => {
+        const a = s.data();
+        rows.push(`<div style="padding:8px;border-bottom:1px dashed rgba(255,255,255,0.02)"><strong>${a.userEmail}</strong> — <span style="font-weight:800">${a.score}</span><div class="small muted">${a.createdAt && a.createdAt.seconds ? new Date(a.createdAt.seconds*1000).toLocaleString() : ''}</div></div>`);
+      });
+      leaderboardList.innerHTML = rows.join('');
+    } catch (e) {
+      console.error(e);
+      leaderboardList.innerHTML = '<div class="small muted">Failed to load leaderboard</div>';
+    }
+  }
+
+  // initial example questions placeholder (you'll provide yours)
+  const placeholderQuestions = [
+    { id:'q1', text:'Which empire built the city of Timbuktu?', choices:['Mali Empire','Songhai Empire','Ghana Empire','Kanem-Bornu Empire'], answerIndex:0 },
+    { id:'q2', text:'Who sailed from Spain and reached the Americas in 1492?', choices:['Ferdinand Magellan','Christopher Columbus','Vasco da Gama','John Cabot'], answerIndex:1 },
+    { id:'q3', text:'The Magna Carta was signed in which year?', choices:['1215','1315','1415','1515'], answerIndex:0 },
+    { id:'q4', text:'Which revolution began in 1789?', choices:['American Revolution','French Revolution','Russian Revolution','Industrial Revolution'], answerIndex:1 },
+    { id:'q5', text:'Who was the first emperor of Rome?', choices:['Julius Caesar','Augustus','Nero','Caligula'], answerIndex:1 },
+    { id:'q6', text:'The Berlin Wall fell in which year?', choices:['1987','1989','1991','1993'], answerIndex:1 },
+    { id:'q7', text:'Which pharaoh commissioned the Great Pyramid of Giza?', choices:['Tutankhamun','Khufu','Ramses II','Akhenaten'], answerIndex:1 },
+    { id:'q8', text:'Who led India to independence in 1947?', choices:['Nehru','Gandhi','Jinnah','Tagore'], answerIndex:1 },
+    { id:'q9', text:'The Treaty of Versailles ended which war?', choices:['World War I','World War II','Franco-Prussian War','Crimean War'], answerIndex:0 },
+    { id:'q10', text:'Which city was the capital of the Ottoman Empire?', choices:['Istanbul','Ankara','Baghdad','Damascus'], answerIndex:0 }
   ];
-  renderTable();
-  statusMsg.textContent = 'In round ' + roundId;
+  // prefill textarea with JSON so you can replace immediately
+  questionsJson.value = JSON.stringify(placeholderQuestions, null, 2);
+  // also auto-load them into questions (local) so page is ready
+  questions = placeholderQuestions;
 
-  // simulate bot movement every 2s
-  setInterval(botPlay,2000);
-}
+  // initial load leaderboard for default quiz
+  loadLeaderboard(quizId);
 
-// event listeners
-playBtn.addEventListener('click',()=>{confirmModal.style.display='flex';});
-cancelJoin.addEventListener('click',()=>{confirmModal.style.display='none';});
-confirmJoin.addEventListener('click',()=>{
-  const rid = roundInput.value.trim();
-  if(!rid){alert('Enter round ID'); return;}
-  confirmModal.style.display='none';
-  startRound(rid);
-});
-</script>
+  </script>
 </body>
 </html>
