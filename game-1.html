@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Quiz (Fixed Auth)</title>
+  <title>Beni-Wealth — Quiz (Balance shown)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -41,8 +41,9 @@
         </div>
       </div>
 
-      <div class="flex">
+      <div class="flex" style="align-items:flex-end">
         <div id="userInfo" class="small muted">Checking site auth session…</div>
+        <div id="balanceInfo" class="small muted" style="min-width:120px;text-align:right">Balance: —</div>
         <button id="signOutBtn" class="btn-ghost hidden">Sign out (site)</button>
       </div>
     </div>
@@ -93,14 +94,14 @@
   </div>
 
   <script type="module">
-  // ====== FIXED AUTH: reuse existing Firebase app & auth instance if present =======
+  // ====== Reuse existing Firebase app & auth instance =======
   import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
   import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
   import {
-    getFirestore, collection, addDoc, getDoc, getDocs, doc, updateDoc, query, where, orderBy, limit, serverTimestamp
+    getFirestore, collection, addDoc, getDoc, getDocs, doc, updateDoc, query, where, orderBy, limit, serverTimestamp, onSnapshot
   } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
-  // your Beni-Wealth config (same as you provided)
+  // your Beni-Wealth config
   const firebaseConfig = {
     apiKey: "AIzaSyCAV9eRR32HjYenJNMv3E-KwR4ubFZrhlo",
     authDomain: "beni-wealth.firebaseapp.com",
@@ -111,19 +112,18 @@
     measurementId: "G-N7S4D0M9CG"
   };
 
-  // Reuse existing app if present (prevents multiple app instances and mismatched auth)
+  // reuse if possible
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-
-  // Use auth from the same app
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // ensure auth persistence (so same-site sessions are used)
+  // ensure persistence
   try { await setPersistence(auth, browserLocalPersistence); } catch (e) { /* ignore */ }
 
   // UI refs
   const userInfo = document.getElementById('userInfo');
   const signOutBtn = document.getElementById('signOutBtn');
+  const balanceInfo = document.getElementById('balanceInfo');
   const quizIdInput = document.getElementById('quizIdInput');
   const quizTitleEl = document.getElementById('quizTitle');
   const startBtn = document.getElementById('startBtn');
@@ -159,6 +159,9 @@
   let timer = null;
   let timeLeft = TIME_PER_QUESTION;
 
+  // listener unsub for balance doc
+  let balanceUnsub = null;
+
   const placeholderQuestions = [
     { id:'q1', text:'Which empire built the city of Timbuktu?', choices:['Mali Empire','Songhai Empire','Ghana Empire','Kanem-Bornu Empire'], answerIndex:0 },
     { id:'q2', text:'Who sailed from Spain and reached the Americas in 1492?', choices:['Ferdinand Magellan','Christopher Columbus','Vasco da Gama','John Cabot'], answerIndex:1 },
@@ -173,37 +176,38 @@
   ];
   questions = placeholderQuestions.slice();
 
-  // --- AUTH handling: primary onAuthStateChanged + short polling fallback ---
+  // -------- Auth and balance subscription ----------
   onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     if (!user) {
-      // not signed in yet
       userInfo.textContent = 'Not signed in on site';
       signOutBtn.classList.add('hidden');
       statusText.textContent = 'idle';
       attemptDocRef = null; attemptData = null;
+      unsubscribeBalance();
+      balanceInfo.textContent = 'Balance: —';
       return;
     }
-    // signed in (picked up existing session)
     userInfo.textContent = `${user.displayName || user.email} (${user.email})`;
     signOutBtn.classList.remove('hidden');
     quizId = quizIdInput.value.trim();
     quizTitleEl.textContent = quizId;
+
+    // subscribe to user's balance doc
+    subscribeToBalance(user.uid);
+
     await loadQuestionsForQuiz(quizId);
     await loadResumeAttemptForUser();
     await loadLeaderboard(quizId);
   });
 
-  // Poll fallback: sometimes site signs in *after* this page loads — poll briefly
+  // small poll fallback (in case site signs in after page load)
   (function pollAuthFallback(retries = 10, intervalMs = 500) {
     let attempts = 0;
     const poll = setInterval(() => {
       attempts++;
       if (auth.currentUser) {
         clearInterval(poll);
-        // onAuthStateChanged will handle the rest; but also invoke explicitly if needed
-        // (defensive) trigger resume
-        onAuthStateChanged(auth, () => {});
       } else if (attempts >= retries) {
         clearInterval(poll);
       }
@@ -211,8 +215,93 @@
   })();
 
   signOutBtn.addEventListener('click', async () => {
-    try { await signOut(auth); location.reload(); } catch(e){ console.error(e); }
+    try { await signOut(auth); location.reload(); } catch (e) { console.error(e); }
   });
+
+  // Subscribe to user balance doc (tries common fields)
+  function subscribeToBalance(uid) {
+    unsubscribeBalance(); // clear previous
+    try {
+      const userDocRef = doc(db, 'users', uid);
+      balanceUnsub = onSnapshot(userDocRef, (snap) => {
+        if (!snap.exists()) {
+          balanceInfo.textContent = 'Balance: —';
+          return;
+        }
+        const d = snap.data();
+        const val = extractBalanceFromDoc(d);
+        balanceInfo.textContent = (val === null) ? 'Balance: —' : `Balance: ₦${formatNaira(val)}`;
+      }, (err) => {
+        console.error('balance onSnapshot error', err);
+        balanceInfo.textContent = 'Balance: —';
+      });
+    } catch (e) {
+      console.error('subscribeToBalance err', e);
+      balanceInfo.textContent = 'Balance: —';
+    }
+  }
+
+  function unsubscribeBalance() {
+    if (typeof balanceUnsub === 'function') {
+      try { balanceUnsub(); } catch (e) {}
+    }
+    balanceUnsub = null;
+  }
+
+  // attempt to locate a numeric balance inside user doc
+  function extractBalanceFromDoc(docData) {
+    if (!docData || typeof docData !== 'object') return null;
+    // direct numeric field names to check in order
+    const candidates = [
+      'balance',
+      'walletBalance',
+      'wallet.balance',
+      'account.balance',
+      'balances',
+      'bal'
+    ];
+    for (const path of candidates) {
+      const value = deepGet(docData, path);
+      if (typeof value === 'number' && !isNaN(value)) return value;
+      // If string with numeric content, try parse
+      if (typeof value === 'string') {
+        const parsed = Number(value.replace(/[^0-9.-]+/g,'')); // strip currency chars
+        if (!isNaN(parsed)) return parsed;
+      }
+    }
+    // As fallback, search the object shallowly for a numeric field named like balance-ish
+    for (const k of Object.keys(docData)) {
+      if (/balance|bal|wallet/i.test(k) && typeof docData[k] === 'number') return docData[k];
+      if (/balance|bal|wallet/i.test(k) && typeof docData[k] === 'string') {
+        const p = Number(String(docData[k]).replace(/[^0-9.-]+/g,''));
+        if (!isNaN(p)) return p;
+      }
+      // check nested wallet object
+      if (typeof docData[k] === 'object') {
+        for (const kk of Object.keys(docData[k])) {
+          if (/balance|bal/i.test(kk) && typeof docData[k][kk] === 'number') return docData[k][kk];
+        }
+      }
+    }
+    return null;
+  }
+
+  function deepGet(obj, path) {
+    if (!obj || !path) return undefined;
+    const parts = path.split('.');
+    let cur = obj;
+    for (const p of parts) {
+      if (!cur || typeof cur !== 'object' || !(p in cur)) return undefined;
+      cur = cur[p];
+    }
+    return cur;
+  }
+
+  function formatNaira(n) {
+    // format as integer with commas (no decimals). If decimal exists, show 2 decimals.
+    if (Math.abs(n - Math.round(n)) < 0.005) return Number(n).toLocaleString('en-NG');
+    return Number(n).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
 
   // ---------- Load questions (Firestore fallback -> local) ----------
   async function loadQuestionsForQuiz(qid){
@@ -308,7 +397,6 @@
       } else {
         const completed = await userHasCompletedQuiz();
         statusText.textContent = completed ? 'completed' : 'idle';
-        // attemptData remains null
       }
     } catch (e) {
       console.error('resume check failed', e);
@@ -391,7 +479,7 @@
     }
   }
 
-  // UI & timer & answer handlers (same as previous stable logic)
+  // UI / timer / answer logic (same stable behavior)
   function showQuestionStateFromAttempt() {
     if (!questions || questions.length !== QUESTIONS_COUNT) questions = placeholderQuestions.slice();
     if (!attemptData) return;
@@ -586,7 +674,7 @@
     }
   }
 
-  // Local helpers
+  // Local helpers (quick UI resume)
   function localKey() { if (!currentUser) return null; return `bw_quiz_${quizId}_${currentUser.uid}`; }
   function saveLocalProgress() {
     try {
@@ -612,7 +700,6 @@
   statusText.textContent = 'idle';
   quizTitleEl.textContent = quizId;
 
-  // Done.
   </script>
 </body>
 </html>
