@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Quiz (Persistent; No Popup)</title>
+  <title>Beni-Wealth — Quiz (Persistent, Site Auth)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg-1:#061226; --bg-2:#071a2b; --card:#0f1726; --muted:#9aa4b2; --accent:#7c3aed; --success:#10b981; --danger:#ef4444; --text:#e6eef8;
     }
     html,body{height:100%;margin:0;font-family:"Poppins",system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text);-webkit-font-smoothing:antialiased;}
-    .wrap{max-width:960px;margin:24px auto;padding:20px}
+    .wrap{max-width:980px;margin:28px auto;padding:18px}
     .header{display:flex;justify-content:space-between;align-items:center;gap:12px}
     .logo{font-weight:800;background:linear-gradient(135deg,#7c3aed,#06b6d4);padding:10px 14px;border-radius:10px;color:#041328}
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:14px;margin-top:16px;box-shadow:0 8px 30px rgba(2,6,23,0.5)}
-    button{cursor:pointer}
-    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:#041328;font-weight:800}
-    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);padding:8px 12px;border-radius:8px}
     .muted{color:var(--muted);font-size:13px}
+    .small{font-size:13px}
     .flex{display:flex;gap:12px;align-items:center}
+    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:#041328;font-weight:800;cursor:pointer}
+    .btn-ghost{padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text);cursor:pointer}
     #questionArea{min-height:220px;display:flex;flex-direction:column;gap:12px}
     .question{font-weight:800;font-size:18px}
     .choices{display:flex;flex-direction:column;gap:8px}
@@ -26,9 +26,6 @@
     .choice.disabled{opacity:0.6;pointer-events:none}
     .choice.correct{border-color:rgba(16,185,129,0.8);background:rgba(16,185,129,0.08)}
     .choice.wrong{border-color:rgba(239,68,68,0.9);background:rgba(239,68,68,0.06)}
-    .timer{font-weight:800;font-size:18px}
-    .score{font-weight:800}
-    .small{font-size:13px;color:var(--muted)}
     pre{white-space:pre-wrap}
     @media (max-width:720px){ .flex{flex-direction:column;align-items:flex-start} }
   </style>
@@ -37,42 +34,39 @@
   <div class="wrap">
     <div class="header">
       <div class="flex">
-        <div class="logo">BW QUIZ</div>
+        <div class="logo">Beni-Wealth — Quiz</div>
         <div>
-          <div style="font-weight:800">Historical Quiz — Persistent</div>
-          <div class="small">10 questions • 10 seconds each • +10 / -5 scoring</div>
+          <div style="font-weight:800">Historical Quiz</div>
+          <div class="small muted">10 questions • 10s each • +10 / −5 scoring • persistence & resume</div>
         </div>
       </div>
 
       <div class="flex">
-        <div id="userInfo" class="small muted">Checking site session…</div>
-        <!-- optional sign-out if you want to provide a site sign-out button -->
+        <div id="userInfo" class="small muted">Checking site auth session…</div>
         <button id="signOutBtn" class="btn-ghost hidden">Sign out (site)</button>
       </div>
     </div>
 
     <div class="card" id="mainCard" role="main" aria-live="polite">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="small">Quiz: <strong id="quizTitle">historical_001</strong></div>
-        <div class="small">Status: <span id="statusText">idle</span></div>
+        <div>Quiz ID: <strong id="quizTitle">historical_001</strong></div>
+        <div>Status: <span id="statusText">idle</span></div>
       </div>
 
       <div style="margin-top:12px" id="controls">
-        <label class="small">Quiz ID:</label>
-        <input id="quizIdInput" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text)" value="historical_001" />
+        <label class="small muted">Quiz ID</label>
+        <input id="quizIdInput" value="historical_001" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)" />
         <button id="startBtn" class="btn" style="margin-left:8px">Start / Resume</button>
-        <span style="margin-left:8px" class="small muted">One completed attempt allowed. Use site auth to sign in.</span>
+        <span class="small muted" style="margin-left:8px">Sign in on the main site — this page will detect the session automatically.</span>
       </div>
 
       <div id="questionCard" class="card hidden" style="margin-top:12px">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="score">Score: <span id="score">0</span></div>
-          <div class="timer">Time left: <span id="timer">10</span>s</div>
+          <div>Score: <strong id="score">0</strong></div>
+          <div>Time left: <strong id="timer">10</strong>s</div>
         </div>
 
-        <div id="questionArea" style="margin-top:12px">
-          <!-- question and choices injected here -->
-        </div>
+        <div id="questionArea" style="margin-top:12px"></div>
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
           <div class="small muted" id="progress">Question 0 / 10</div>
@@ -85,28 +79,26 @@
 
       <div id="resultCard" class="card hidden" style="margin-top:12px">
         <div style="font-weight:900;font-size:20px">Quiz complete</div>
-        <div style="margin-top:8px" id="finalSummary"></div>
+        <div id="finalSummary" style="margin-top:8px"></div>
         <div style="margin-top:12px">
           <button id="closeSummary" class="btn">Close</button>
         </div>
       </div>
 
-      <div class="card leaderboard" id="leaderboardCard" style="margin-top:12px">
+      <div class="card" style="margin-top:12px">
         <div style="font-weight:800">Leaderboard (Top 10)</div>
-        <div id="leaderboardList" style="margin-top:8px" class="small muted">Loading…</div>
+        <div id="leaderboardList" class="small muted" style="margin-top:8px">Loading…</div>
       </div>
     </div>
-
   </div>
 
+  <!-- Firebase + App logic -->
   <script type="module">
-  // ------------- Firebase setup (Beni-Wealth project) -------------
+  // --------- Firebase config (Beni-Wealth - using the config you provided) ----------
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
   import {
-    getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence
-  } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-  import {
-    getFirestore, collection, addDoc, getDoc, updateDoc, getDocs, query, where, orderBy, limit, serverTimestamp
+    getFirestore, collection, addDoc, getDoc, getDocs, doc, updateDoc, query, where, orderBy, limit, serverTimestamp
   } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -123,10 +115,10 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // ensure auth persistence (so if other pages sign in, session remains)
-  await setPersistence(auth, browserLocalPersistence).catch(()=>{/* ignore */});
+  // ensure session persistence (so site auth is picked up reliably)
+  await setPersistence(auth, browserLocalPersistence).catch(()=>{});
 
-  // ------------- UI refs & config -------------
+  // --------- UI refs & config ----------
   const userInfo = document.getElementById('userInfo');
   const signOutBtn = document.getElementById('signOutBtn');
   const quizIdInput = document.getElementById('quizIdInput');
@@ -148,23 +140,26 @@
 
   const leaderboardList = document.getElementById('leaderboardList');
 
-  // rules
+  // rules you specified
   const QUESTIONS_COUNT = 10;
   const TIME_PER_QUESTION = 10; // seconds
   const POINTS_CORRECT = 10;
   const POINTS_WRONG = -5;
 
+  // runtime
   let currentUser = null;
   let quizId = quizIdInput.value.trim();
   quizTitleEl.textContent = quizId;
 
-  // runtime state
-  let questions = []; // placeholder questions; replace by loading from Firestore when ready
+  // attempt state (mirrors Firestore doc)
+  // attemptDocRef will be a DocumentReference object when created/fetched
   let attemptDocRef = null;
-  let attemptData = null;
+  let attemptData = null; // local snapshot of fields: {quizId,userId,currentIndex,score,status,questionStartAt,answers[],startedAt,completedAt}
+  let questions = []; // loaded from Firestore or fallback
   let timer = null;
   let timeLeft = TIME_PER_QUESTION;
 
+  // fallback placeholder questions (10) — replace in Firestore quizzes/{quizId}/questions to manage centrally
   const placeholderQuestions = [
     { id:'q1', text:'Which empire built the city of Timbuktu?', choices:['Mali Empire','Songhai Empire','Ghana Empire','Kanem-Bornu Empire'], answerIndex:0 },
     { id:'q2', text:'Who sailed from Spain and reached the Americas in 1492?', choices:['Ferdinand Magellan','Christopher Columbus','Vasco da Gama','John Cabot'], answerIndex:1 },
@@ -177,57 +172,127 @@
     { id:'q9', text:'The Treaty of Versailles ended which war?', choices:['World War I','World War II','Franco-Prussian War','Crimean War'], answerIndex:0 },
     { id:'q10', text:'Which city was the capital of the Ottoman Empire?', choices:['Istanbul','Ankara','Baghdad','Damascus'], answerIndex:0 }
   ];
-  questions = placeholderQuestions.slice();
 
-  // ------------- Auth: rely on site auth session (no popup) -------------
+  // ------------- Auth: rely on existing site session only -------------
   onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     if (!user) {
       userInfo.textContent = 'Not signed in on site';
       signOutBtn.classList.add('hidden');
       statusText.textContent = 'idle';
-      // clear any in-memory attempt so user can't resume (they must be signed in on site)
-      attemptDocRef = null;
-      attemptData = null;
+      attemptDocRef = null; attemptData = null;
       return;
     }
-    // user is signed in on site — use their session
+    // user is signed in on site (email/password or any provider used by site)
     userInfo.textContent = `${user.displayName || user.email} (${user.email})`;
     signOutBtn.classList.remove('hidden');
+
+    // update quiz id title and attempt check
     quizId = quizIdInput.value.trim();
     quizTitleEl.textContent = quizId;
-    // try to resume any in-progress attempt for this user+quiz
+
+    // load questions from Firestore if available, else fallback
+    await loadQuestionsForQuiz(quizId);
+
+    // attempt resume check
     await loadResumeAttemptForUser();
+
+    // load leaderboard
     await loadLeaderboard(quizId);
   });
 
-  // optional sign-out from site
   signOutBtn.addEventListener('click', async () => {
-    try { await signOut(auth); location.reload(); } catch(e){ console.error(e); }
+    try { await signOut(auth); location.reload(); } catch (e) { console.error(e); }
   });
 
-  // ------------- Start / Resume logic -------------
-  quizIdInput.addEventListener('change', () => {
+  // ---------- Load questions from Firestore if present ----------
+  async function loadQuestionsForQuiz(qid) {
+    try {
+      const qcol = collection(db, 'quizzes', qid, 'questions');
+      // try to fetch up to QUESTIONS_COUNT docs ordered by createdAt
+      const q = query(qcol, orderBy('createdAt'), limit(QUESTIONS_COUNT));
+      const snaps = await getDocs(q);
+      if (!snaps.empty && snaps.size >= QUESTIONS_COUNT) {
+        const loaded = [];
+        snaps.forEach(s => {
+          const d = s.data();
+          loaded.push({
+            id: s.id,
+            text: d.text,
+            choices: d.choices,
+            answerIndex: typeof d.answerIndex === 'number' ? d.answerIndex : 0
+          });
+        });
+        questions = loaded.slice(0, QUESTIONS_COUNT);
+        console.info('Loaded questions from Firestore for quiz', qid);
+        return;
+      }
+    } catch (e) {
+      console.warn('Failed loading questions from Firestore, will use fallback', e);
+    }
+    // fallback
+    questions = placeholderQuestions.slice();
+  }
+
+  // ---------- Start / Resume ----------
+  quizIdInput.addEventListener('change', async () => {
     quizId = quizIdInput.value.trim();
     quizTitleEl.textContent = quizId;
-    if (currentUser) loadResumeAttemptForUser();
-    loadLeaderboard(quizId);
+    if (currentUser) {
+      await loadQuestionsForQuiz(quizId);
+      await loadResumeAttemptForUser();
+      await loadLeaderboard(quizId);
+    }
   });
 
   startBtn.addEventListener('click', async () => {
-    if (!currentUser) return alert('You are not signed in on the site. Please sign in on the site and return.');
-    // block if completed
+    if (!currentUser) return alert('You are not signed in on the site. Sign in on the main site and return.');
     const completed = await userHasCompletedQuiz();
     if (completed) return alert('You have already completed this quiz — only one completed attempt allowed.');
     if (attemptData && attemptData.status === 'in_progress') {
+      // resume UI
       showQuestionStateFromAttempt();
       return;
     }
+    // create new attempt
     await createNewAttemptAndStart();
   });
 
-  // ------- create new attempt -------
-  async function createNewAttemptAndStart(){
+  // ---------- Check if user already has in-progress attempt, else set attemptDocRef null ----------
+  async function loadResumeAttemptForUser() {
+    statusText.textContent = 'checking…';
+    attemptDocRef = null;
+    attemptData = null;
+    try {
+      const attemptsRef = collection(db, 'quizAttempts');
+      const q = query(attemptsRef, where('quizId','==',quizId), where('userId','==',currentUser.uid), where('status','==','in_progress'), limit(1));
+      const snaps = await getDocs(q);
+      if (!snaps.empty) {
+        const s = snaps.docs[0];
+        attemptDocRef = s.ref;
+        attemptData = s.data();
+        // reconcile possibly elapsed questions and resume
+        await reconcileExpiredQuestionsAndResume();
+      } else {
+        // no in-progress attempt; check if completed for UI
+        const completed = await userHasCompletedQuiz();
+        statusText.textContent = completed ? 'completed' : 'idle';
+      }
+    } catch (e) {
+      console.error('resume check failed', e);
+      statusText.textContent = 'idle';
+    }
+  }
+
+  async function userHasCompletedQuiz() {
+    const attemptsRef = collection(db, 'quizAttempts');
+    const q = query(attemptsRef, where('quizId','==',quizId), where('userId','==',currentUser.uid), where('status','==','completed'), limit(1));
+    const snaps = await getDocs(q);
+    return !snaps.empty;
+  }
+
+  // ---------- Create new attempt doc ----------
+  async function createNewAttemptAndStart() {
     const payload = {
       quizId: quizId,
       userId: currentUser.uid,
@@ -240,54 +305,26 @@
       answers: []
     };
     try {
-      const ref = await addDoc(collection(db,'quizAttempts'), payload);
+      const ref = await addDoc(collection(db, 'quizAttempts'), payload);
       attemptDocRef = ref;
       const snap = await getDoc(ref);
       attemptData = snap.data();
       statusText.textContent = 'in_progress';
+      // save a small local copy as well for quicker resume
+      saveLocalProgress();
       showQuestionStateFromAttempt();
     } catch (e) {
       console.error('create attempt failed', e);
-      alert('Failed to create attempt: ' + (e.message||e));
+      alert('Failed to create attempt: ' + (e.message || e));
     }
   }
 
-  // ------- load/resume -------
-  async function loadResumeAttemptForUser(){
-    statusText.textContent = 'checking…';
-    attemptDocRef = null;
-    attemptData = null;
-    try {
-      const attemptsRef = collection(db,'quizAttempts');
-      const q = query(attemptsRef, where('quizId','==',quizId), where('userId','==',currentUser.uid), where('status','==','in_progress'), limit(1));
-      const snaps = await getDocs(q);
-      if (!snaps.empty) {
-        const s = snaps.docs[0];
-        attemptDocRef = s.ref;
-        attemptData = s.data();
-        // reconcile expired questions and resume
-        await reconcileExpiredQuestionsAndResume();
-      } else {
-        const completed = await userHasCompletedQuiz();
-        statusText.textContent = completed ? 'completed' : 'idle';
-      }
-    } catch (e) {
-      console.error('resume check failed', e);
-      statusText.textContent = 'idle';
-    }
-  }
-
-  async function userHasCompletedQuiz(){
-    const attemptsRef = collection(db,'quizAttempts');
-    const q = query(attemptsRef, where('quizId','==',quizId), where('userId','==',currentUser.uid), where('status','==','completed'), limit(1));
-    const snaps = await getDocs(q);
-    return !snaps.empty;
-  }
-
-  async function reconcileExpiredQuestionsAndResume(){
+  // ---------- Reconcile expired questions when resuming ----------
+  async function reconcileExpiredQuestionsAndResume() {
     if (!attemptData || !attemptDocRef) return;
     const qsa = attemptData.questionStartAt;
     if (!qsa || !qsa.seconds) {
+      // If missing, set questionStartAt and continue
       await updateDoc(attemptDocRef, { questionStartAt: serverTimestamp() });
       const snap = await getDoc(attemptDocRef);
       attemptData = snap.data();
@@ -295,6 +332,7 @@
       showQuestionStateFromAttempt();
       return;
     }
+
     const nowSeconds = Math.floor(Date.now() / 1000);
     const startSeconds = qsa.seconds;
     const elapsed = nowSeconds - startSeconds;
@@ -306,10 +344,11 @@
       return;
     }
 
+    // apply penalties for fully expired questions
     let newIndex = attemptData.currentIndex + expiredQuestions;
-    let newScore = attemptData.score + (expiredQuestions * POINTS_WRONG);
+    let newScore = (attemptData.score ?? 0) + (expiredQuestions * POINTS_WRONG);
     const answersToAppend = [];
-    for (let i = 0; i < expiredQuestions && (attemptData.currentIndex + i) < QUESTIONS_COUNT; i++){
+    for (let i = 0; i < expiredQuestions && (attemptData.currentIndex + i) < QUESTIONS_COUNT; i++) {
       answersToAppend.push({
         qIndex: attemptData.currentIndex + i,
         selectedIndex: null,
@@ -320,6 +359,7 @@
     }
 
     if (newIndex >= QUESTIONS_COUNT) {
+      // finish quiz
       try {
         await updateDoc(attemptDocRef, {
           currentIndex: QUESTIONS_COUNT,
@@ -331,15 +371,17 @@
         const s = await getDoc(attemptDocRef);
         attemptData = s.data();
         statusText.textContent = 'completed';
+        saveLocalProgress();
         showFinalSummary();
         return;
       } catch (e) {
         console.error('finish after expiry failed', e);
-        alert('Failed to finalize expired quiz: ' + (e.message||e));
+        alert('Failed to finalize expired quiz: ' + (e.message || e));
         return;
       }
     }
 
+    // continue from newIndex and reset questionStartAt
     try {
       await updateDoc(attemptDocRef, {
         currentIndex: newIndex,
@@ -350,22 +392,23 @@
       const s = await getDoc(attemptDocRef);
       attemptData = s.data();
       statusText.textContent = 'in_progress';
+      saveLocalProgress();
       showQuestionStateFromAttempt();
     } catch (e) {
       console.error('reconcile update failed', e);
-      alert('Failed to update attempt during resume: ' + (e.message||e));
+      alert('Failed to update attempt during resume: ' + (e.message || e));
     }
   }
 
-  // ------------- UI & timer (same behavior as before) -------------
-  function showQuestionStateFromAttempt(){
+  // ---------- UI rendering, timer, answering ----------
+  function showQuestionStateFromAttempt() {
     if (!questions || questions.length !== QUESTIONS_COUNT) questions = placeholderQuestions.slice();
-
     if (!attemptData) return;
     if (attemptData.status === 'completed') {
       showFinalSummary();
       return;
     }
+
     questionCard.classList.remove('hidden');
     resultCard.classList.add('hidden');
     document.getElementById('controls').classList.add('hidden');
@@ -374,25 +417,26 @@
     const q = questions[idx];
     renderQuestion(q, idx);
 
+    // compute remaining time using questionStartAt
     const qsa = attemptData.questionStartAt;
     let elapsed = 0;
     if (qsa && qsa.seconds) {
-      const nowSeconds = Math.floor(Date.now()/1000);
-      elapsed = nowSeconds - qsa.seconds;
+      const now = Math.floor(Date.now() / 1000);
+      elapsed = now - qsa.seconds;
     }
     timeLeft = TIME_PER_QUESTION - (elapsed % TIME_PER_QUESTION);
-    if (timeLeft <= 0) timeLeft = 1;
+    if (timeLeft <= 0) timeLeft = 1; // guard
     startTimerTick();
     scoreEl.textContent = attemptData.score ?? 0;
     progressEl.textContent = `Question ${ (idx + 1) } / ${QUESTIONS_COUNT}`;
+    saveLocalProgress();
   }
 
-  function renderQuestion(q, idx){
+  function renderQuestion(q, idx) {
     questionArea.innerHTML = '';
-    const qEl = document.createElement('div'); qEl.className='question'; qEl.textContent = q.text;
-    const choicesEl = document.createElement('div'); choicesEl.className='choices';
-
-    q.choices.forEach((c,i) => {
+    const qEl = document.createElement('div'); qEl.className = 'question'; qEl.textContent = q.text;
+    const choicesEl = document.createElement('div'); choicesEl.className = 'choices';
+    q.choices.forEach((c, i) => {
       const btn = document.createElement('div');
       btn.className = 'choice';
       btn.dataset.index = i;
@@ -400,34 +444,35 @@
       btn.addEventListener('click', () => handleAnswer(i));
       choicesEl.appendChild(btn);
     });
-
     questionArea.appendChild(qEl);
     questionArea.appendChild(choicesEl);
     nextBtn.classList.add('hidden');
   }
 
-  function startTimerTick(){
+  function startTimerTick() {
     clearInterval(timer);
     timerEl.textContent = timeLeft;
     timer = setInterval(async () => {
       timeLeft--;
       timerEl.textContent = timeLeft;
+      // persist a lightweight local snapshot every second so refresh can show near-real-time
+      saveLocalProgress();
       if (timeLeft <= 0) {
         clearInterval(timer);
         await handleTimeoutAndAdvance();
       }
-    },1000);
+    }, 1000);
   }
 
-  async function handleAnswer(selectedIndex){
+  async function handleAnswer(selectedIndex) {
     clearInterval(timer);
     const choiceEls = questionArea.querySelectorAll('.choice');
-    choiceEls.forEach(c=>c.classList.add('disabled'));
+    choiceEls.forEach(c => c.classList.add('disabled'));
 
     const idx = attemptData.currentIndex;
     const q = questions[idx];
     const correct = (selectedIndex === q.answerIndex);
-    let newScore = (attemptData.score ?? 0) + (correct ? POINTS_CORRECT : POINTS_WRONG);
+    const newScore = (attemptData.score ?? 0) + (correct ? POINTS_CORRECT : POINTS_WRONG);
 
     const answerObj = {
       qIndex: idx,
@@ -453,26 +498,27 @@
       scoreEl.textContent = attemptData.score;
       if (correct) {
         choiceEls[selectedIndex].classList.add('correct');
-        const fb = document.createElement('div'); fb.style.color='var(--success)'; fb.style.fontWeight=700; fb.textContent=`Correct! +${POINTS_CORRECT} points.`; questionArea.appendChild(fb);
+        const fb = document.createElement('div'); fb.style.color = 'var(--success)'; fb.style.fontWeight = 700; fb.textContent = `Correct! +${POINTS_CORRECT} points.`; questionArea.appendChild(fb);
       } else {
         choiceEls[selectedIndex].classList.add('wrong');
         if (choiceEls[q.answerIndex]) choiceEls[q.answerIndex].classList.add('correct');
-        const fb = document.createElement('div'); fb.style.color='var(--danger)'; fb.style.fontWeight=700; fb.textContent=`Wrong — ${POINTS_WRONG} points. Correct: "${q.choices[q.answerIndex]}"`; questionArea.appendChild(fb);
+        const fb = document.createElement('div'); fb.style.color = 'var(--danger)'; fb.style.fontWeight = 700; fb.textContent = `Wrong — ${POINTS_WRONG} points. Correct: "${q.choices[q.answerIndex]}"`; questionArea.appendChild(fb);
       }
+      saveLocalProgress();
       if (attemptData.status === 'completed') {
+        await loadLeaderboard(quizId);
         showFinalSummary();
       } else {
         nextBtn.classList.remove('hidden');
         nextBtn.onclick = () => { showQuestionStateFromAttempt(); };
       }
-      await loadLeaderboard(quizId);
     } catch (e) {
       console.error('answer update failed', e);
-      alert('Failed to save answer: ' + (e.message||e));
+      alert('Failed to save answer: ' + (e.message || e));
     }
   }
 
-  async function handleTimeoutAndAdvance(){
+  async function handleTimeoutAndAdvance() {
     const idx = attemptData.currentIndex;
     const q = questions[idx];
     const newScore = (attemptData.score ?? 0) + POINTS_WRONG;
@@ -484,7 +530,6 @@
       ts: serverTimestamp()
     };
     const willFinish = (idx + 1) >= QUESTIONS_COUNT;
-
     try {
       await updateDoc(attemptDocRef, {
         score: newScore,
@@ -497,19 +542,21 @@
       const s = await getDoc(attemptDocRef);
       attemptData = s.data();
       scoreEl.textContent = attemptData.score;
+      // show correct choice visually
       const choiceEls = questionArea.querySelectorAll('.choice');
-      if (choiceEls[questions[idx].answerIndex]) choiceEls[questions[idx].answerIndex].classList.add('correct');
-      const fb = document.createElement('div'); fb.style.color='var(--danger)'; fb.style.fontWeight=700; fb.textContent=`Time expired — ${POINTS_WRONG} points. Correct: "${q.choices[q.answerIndex]}"`; questionArea.appendChild(fb);
+      if (choiceEls[q.answerIndex]) choiceEls[q.answerIndex].classList.add('correct');
+      const fb = document.createElement('div'); fb.style.color = 'var(--danger)'; fb.style.fontWeight = 700; fb.textContent = `Time expired — ${POINTS_WRONG} points. Correct: "${q.choices[q.answerIndex]}"`; questionArea.appendChild(fb);
+      saveLocalProgress();
       if (attemptData.status === 'completed') {
+        await loadLeaderboard(quizId);
         showFinalSummary();
       } else {
         nextBtn.classList.remove('hidden');
         nextBtn.onclick = () => { showQuestionStateFromAttempt(); };
       }
-      await loadLeaderboard(quizId);
     } catch (e) {
       console.error('timeout update failed', e);
-      alert('Failed to save timeout: ' + (e.message||e));
+      alert('Failed to save timeout: ' + (e.message || e));
     }
   }
 
@@ -520,40 +567,42 @@
       await updateDoc(attemptDocRef, { status: 'completed', completedAt: serverTimestamp() });
       const s = await getDoc(attemptDocRef);
       attemptData = s.data();
-      showFinalSummary();
+      saveLocalProgress();
       await loadLeaderboard(quizId);
+      showFinalSummary();
     } catch (e) {
       console.error('end early failed', e);
-      alert('Failed to end early: ' + (e.message||e));
+      alert('Failed to end early: ' + (e.message || e));
     }
   });
 
-  function showFinalSummary(){
+  function showFinalSummary() {
     clearInterval(timer);
     questionCard.classList.add('hidden');
     resultCard.classList.remove('hidden');
     statusText.textContent = 'completed';
     finalSummary.innerHTML = `<div style="font-weight:800">Your score: ${attemptData.score ?? 0}</div>
-      <div class="small muted" style="margin-top:8px">Quiz completed. Thanks for playing.</div>`;
+      <div class="small muted" style="margin-top:8px">Quiz completed. Your attempt was saved.</div>`;
+    clearLocalProgress();
   }
 
-  closeSummary.addEventListener('click', ()=> {
+  closeSummary.addEventListener('click', () => {
     resultCard.classList.add('hidden');
     document.getElementById('controls').classList.remove('hidden');
   });
 
-  // Leaderboard
-  async function loadLeaderboard(qid){
+  // ---------- Leaderboard (completed attempts only) ----------
+  async function loadLeaderboard(qid) {
     leaderboardList.innerHTML = 'Loading…';
     try {
-      const attemptsRef = collection(db,'quizAttempts');
+      const attemptsRef = collection(db, 'quizAttempts');
       const q = query(attemptsRef, where('quizId','==',qid), where('status','==','completed'), orderBy('score','desc'), limit(10));
       const snaps = await getDocs(q);
       if (snaps.empty) { leaderboardList.innerHTML = '<div class="small muted">No completed attempts yet</div>'; return; }
       const rows = [];
       snaps.forEach(s => {
         const a = s.data();
-        const ts = a.completedAt && a.completedAt.seconds ? new Date(a.completedAt.seconds*1000).toLocaleString() : '';
+        const ts = a.completedAt && a.completedAt.seconds ? new Date(a.completedAt.seconds * 1000).toLocaleString() : '';
         rows.push(`<div style="padding:8px;border-bottom:1px dashed rgba(255,255,255,0.02)"><strong>${a.userEmail}</strong> — <span style="font-weight:800">${a.score}</span><div class="small muted">${ts}</div></div>`);
       });
       leaderboardList.innerHTML = rows.join('');
@@ -563,13 +612,55 @@
     }
   }
 
-  // initial UI
+  // ---------- Local persistence helpers (quick resume & UI) ----------
+  function localKey() {
+    if (!currentUser) return null;
+    return `bw_quiz_${quizId}_${currentUser.uid}`;
+  }
+
+  function saveLocalProgress() {
+    try {
+      const key = localKey();
+      if (!key || !attemptData) return;
+      const payload = {
+        attemptId: attemptDocRef ? attemptDocRef.id : null,
+        currentIndex: attemptData.currentIndex,
+        score: attemptData.score,
+        status: attemptData.status,
+        // store questionStartAt as ms since epoch for easier local handling (server ts is canonical)
+        questionStartAtMs: attemptData.questionStartAt && attemptData.questionStartAt.seconds ? attemptData.questionStartAt.seconds * 1000 : Date.now(),
+        lastSavedAt: Date.now()
+      };
+      localStorage.setItem(key, JSON.stringify(payload));
+    } catch (e) { /* ignore */ }
+  }
+
+  function loadLocalProgress() {
+    try {
+      const key = localKey();
+      if (!key) return null;
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) { return null; }
+  }
+
+  function clearLocalProgress() {
+    try {
+      const key = localKey();
+      if (!key) return;
+      localStorage.removeItem(key);
+    } catch (e) { /* ignore */ }
+  }
+
+  // ---------- initial UI state ----------
   scoreEl.textContent = '0';
   timerEl.textContent = String(TIME_PER_QUESTION);
   progressEl.textContent = `Question 0 / ${QUESTIONS_COUNT}`;
   statusText.textContent = 'idle';
   quizTitleEl.textContent = quizId;
 
+  // Note: If user is already signed in on the site, onAuthStateChanged will run and resume automatically.
   </script>
 </body>
 </html>
