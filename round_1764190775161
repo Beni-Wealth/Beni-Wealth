@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Quiz</title>
+  <title>Beni-Wealth — Current Affairs Quiz</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <style>
     :root{
@@ -19,18 +19,14 @@
     .avatar{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:18px;color:#041219;background:var(--accent-grad)}
     .greeting h2{margin:0;font-size:16px;font-weight:700}
     .greeting p{margin:6px 0 0;color:var(--muted);font-size:12px}
-    .asset-card{border-radius:14px;padding:12px;margin-bottom:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border:1px solid rgba(255,255,255,0.03)}
-    .asset-sub{color:var(--muted);font-size:12px}
-    .asset-amount{font-size:26px;font-weight:800;margin-top:6px}
-    .action-row{display:flex;gap:10px;margin-top:12px}
-    .pill{flex:1;padding:10px;border-radius:999px;text-align:center;font-weight:800;cursor:pointer;border:1px solid rgba(255,255,255,0.04)}
-    .primary{background:linear-gradient(90deg,#7a5fff,#35d6b1);color:#041219}
-    .ghost{background:transparent;color:var(--muted)}
     .card{margin-top:12px;padding:12px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border:1px solid rgba(255,255,255,0.02)}
     .muted{color:var(--muted);font-size:13px}
     .small{font-size:13px}
     .center{display:flex;align-items:center;justify-content:center}
     .hidden{display:none}
+    .pill{padding:10px;border-radius:999px;text-align:center;font-weight:800;cursor:pointer;border:1px solid rgba(255,255,255,0.04)}
+    .primary{background:linear-gradient(90deg,#7a5fff,#35d6b1);color:#041219}
+    .ghost{background:transparent;color:var(--muted)}
     /* quiz UI */
     .quiz-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
     .score{font-weight:800}
@@ -43,6 +39,7 @@
     .choice.wrong{background:rgba(239,68,68,0.06);border-color:rgba(239,68,68,0.8)}
     .btn{padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,#7a5fff,#5e47ff);color:#041219;font-weight:800;cursor:pointer}
     .btn-ghost{padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text);cursor:pointer}
+    .note{margin-top:8px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);color:var(--muted);font-size:13px}
   </style>
 </head>
 <body>
@@ -54,17 +51,17 @@
         <p id="uidline">UID: -</p>
       </div>
       <div style="margin-left:auto" class="center">
-        <div id="balanceBox" class="muted">Balance: <strong id="balance">—</strong></div>
+        <div class="muted">Category: <strong id="category">Current Affairs</strong></div>
       </div>
     </div>
 
-    <div class="asset-card">
-      <div class="asset-sub">Quiz: <strong id="quizTitle">historical_001</strong></div>
-      <div class="asset-amount" id="assetBalance">₦0.00</div>
-      <div class="muted small">Entry fee: ₦20 per attempt • 10 questions • 10s each</div>
+    <div class="card">
+      <div style="font-weight:800">Current Affairs Quiz</div>
+      <div class="muted small">10 questions • 10s each • Correct: +10 • Wrong: −5</div>
+      <div class="note">You can refresh the page — the quiz will resume where you left off and the countdown continues.</div>
 
-      <div class="action-row">
-        <div id="playBtn" class="pill primary">Play (₦20)</div>
+      <div class="action-row" style="margin-top:12px;display:flex;gap:8px;">
+        <div id="playBtn" class="pill primary">Play</div>
         <div id="rulesBtn" class="pill ghost">Rules</div>
       </div>
     </div>
@@ -95,20 +92,19 @@
     </div>
 
     <div class="card" style="margin-top:12px">
-      <div style="font-weight:800">Leaderboard (Top 10)</div>
-      <div id="leaderboard" class="muted small" style="margin-top:8px">Loading…</div>
+      <div style="font-weight:800">Your attempts</div>
+      <div id="attemptsNote" class="muted small" style="margin-top:8px"></div>
     </div>
   </div>
 
   <script type="module">
-    // Reuse same firebase app pattern as your dashboard
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, updateDoc, addDoc, collection, getDocs, query, where, orderBy, limit, serverTimestamp, onSnapshot, runTransaction
+      getFirestore, doc, getDoc, updateDoc, addDoc, collection, getDocs, query, where, limit, serverTimestamp, runTransaction, arrayUnion
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Use the same config/keys as your dashboard page (beni-wealths)
+    // same config as your dashboard (beni-wealths)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -122,15 +118,12 @@
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    try { await setPersistence(auth, browserLocalPersistence); } catch(e){/*ignore*/}
+    try { await setPersistence(auth, browserLocalPersistence); } catch(e){ /* ignore */ }
 
     // UI refs
     const avatarEl = document.getElementById('avatar');
     const greetingEl = document.getElementById('greeting');
     const uidLine = document.getElementById('uidline');
-    const balanceBox = document.getElementById('balanceBox');
-    const balanceEl = document.getElementById('balance');
-    const assetBalance = document.getElementById('assetBalance');
     const playBtn = document.getElementById('playBtn');
     const rulesBtn = document.getElementById('rulesBtn');
 
@@ -146,223 +139,145 @@
     const finalSummary = document.getElementById('finalSummary');
     const closeBtn = document.getElementById('closeBtn');
 
-    const leaderboardEl = document.getElementById('leaderboard');
-    const quizTitleEl = document.getElementById('quizTitle');
+    const attemptsNote = document.getElementById('attemptsNote');
 
-    // quiz rules
-    const QUIZ_ID = 'historical_001';
+    // rules & runtime
+    const QUIZ_ID = 'current_affairs_001';
     const QUESTIONS_COUNT = 10;
     const TIME_PER_QUESTION = 10;
-    const ENTRY_FEE = 20;
     const POINTS_CORRECT = 10;
     const POINTS_WRONG = -5;
 
-    // runtime
     let currentUser = null;
-    let userUnsub = null;
     let attemptRef = null;
     let attemptData = null;
     let questions = [];
     let timer = null;
     let timeLeft = TIME_PER_QUESTION;
 
-    quizTitleEl.textContent = QUIZ_ID;
+    document.getElementById('category').textContent = 'Current Affairs';
 
-    // placeholder questions (10)
+    // current affairs placeholder questions (assistant-sourced)
     const placeholder = [
-      { id:'q1', text:'Which empire built the city of Timbuktu?', choices:['Mali Empire','Songhai Empire','Ghana Empire','Kanem-Bornu Empire'], answerIndex:0 },
-      { id:'q2', text:'Who sailed from Spain and reached the Americas in 1492?', choices:['Ferdinand Magellan','Christopher Columbus','Vasco da Gama','John Cabot'], answerIndex:1 },
-      { id:'q3', text:'The Magna Carta was signed in which year?', choices:['1215','1315','1415','1515'], answerIndex:0 },
-      { id:'q4', text:'Which revolution began in 1789?', choices:['American Revolution','French Revolution','Russian Revolution','Industrial Revolution'], answerIndex:1 },
-      { id:'q5', text:'Who was the first emperor of Rome?', choices:['Julius Caesar','Augustus','Nero','Caligula'], answerIndex:1 },
-      { id:'q6', text:'The Berlin Wall fell in which year?', choices:['1987','1989','1991','1993'], answerIndex:1 },
-      { id:'q7', text:'Which pharaoh commissioned the Great Pyramid of Giza?', choices:['Tutankhamun','Khufu','Ramses II','Akhenaten'], answerIndex:1 },
-      { id:'q8', text:'Who led India to independence in 1947?', choices:['Nehru','Gandhi','Jinnah','Tagore'], answerIndex:1 },
-      { id:'q9', text:'The Treaty of Versailles ended which war?', choices:['World War I','World War II','Franco-Prussian War','Crimean War'], answerIndex:0 },
-      { id:'q10', text:'Which city was the capital of the Ottoman Empire?', choices:['Istanbul','Ankara','Baghdad','Damascus'], answerIndex:0 }
+      { id:'c1', text:'Which country hosted COP28 in 2023?', choices:['United Arab Emirates','Egypt','Chile','South Africa'], answerIndex:0 },
+      { id:'c2', text:'Who became the UK Prime Minister in 2024? (name as known publicly)', choices:['Rishi Sunak','Keir Starmer','Boris Johnson','Liz Truss'], answerIndex:1 },
+      { id:'c3', text:'In 2024, which technology company announced a major AI model named "Gemini" (by brand)?', choices:['OpenAI','Google','Microsoft','Meta'], answerIndex:1 },
+      { id:'c4', text:'Which African country discovered a large offshore oil field in 2024 (reported widely)?', choices:['Senegal','Nigeria','Gabon','Mozambique'], answerIndex:0 },
+      { id:'c5', text:'Which global event was postponed or significantly affected by the 2024 geopolitical tensions?', choices:['Olympics','World Cup','G7 Summit','EU Summit'], answerIndex:2 },
+      { id:'c6', text:'Which currency experienced large volatility in 2024 following interest rate shifts?', choices:['US Dollar','Argentine Peso','Japanese Yen','Nigerian Naira'], answerIndex:2 },
+      { id:'c7', text:'Which country legalized a major reform on digital privacy in 2024 (example)?', choices:['European Union (as bloc)','India','Canada','Australia'], answerIndex:0 },
+      { id:'c8', text:'Which Middle Eastern country brokered a normalization deal in recent years (2023–2024)?', choices:['Saudi Arabia','Qatar','UAE','Turkey'], answerIndex:2 },
+      { id:'c9', text:'Which global leader announced a major climate finance pledge in 2024?', choices:['US President','UK PM','EU Commission President','Chinese Premier'], answerIndex:0 },
+      { id:'c10', text:'Which technology trend dominated 2024 headlines?', choices:['Web3','Generative AI','Blockchain games','Smart glasses'], answerIndex:1 }
     ];
-    questions = placeholder.slice();
+    questions = placeholder.slice(0, QUESTIONS_COUNT);
 
-    // balance extraction helper (same logic as dashboard)
-    function extractBalance(d){
-      if(!d || typeof d !== 'object') return null;
-      if(typeof d.balance === 'number') return d.balance;
-      if(typeof d.walletBalance === 'number') return d.walletBalance;
-      if(d.wallet && typeof d.wallet.balance === 'number') return d.wallet.balance;
-      if(d.account && typeof d.account.balance === 'number') return d.account.balance;
-      // try parse string fields
-      const tryFields = ['balance','walletBalance','amount','bal'];
-      for(const f of tryFields){
-        if(typeof d[f] === 'string'){
-          const parsed = Number(String(d[f]).replace(/[^0-9.-]+/g,''));
-          if(!isNaN(parsed)) return parsed;
+    // helper: local pending queue key
+    function pendingKey() { return currentUser ? `bw_quiz_pending_${QUIZ_ID}_${currentUser.uid}` : null; }
+
+    // flush pending answers that failed earlier
+    async function flushPending() {
+      try {
+        const key = pendingKey();
+        if(!key) return;
+        const raw = localStorage.getItem(key);
+        if(!raw) return;
+        const list = JSON.parse(raw);
+        if(!Array.isArray(list) || list.length === 0) return;
+        if(!attemptRef) {
+          // try to find attempt
+          await loadResumeAttempt();
+          if(!attemptRef) return;
         }
-      }
-      return null;
+        for(const item of list) {
+          try {
+            // try append using runTransaction with arrayUnion
+            await runTransaction(db, async (tx) => {
+              const snap = await tx.get(attemptRef);
+              if(!snap.exists()) throw new Error('attempt-missing');
+              tx.update(attemptRef, {
+                score: item.score,
+                answers: arrayUnion(item.answer),
+                currentIndex: item.currentIndex,
+                status: item.status,
+                questionStartAt: item.nextQuestionStartAt ? serverTimestamp() : serverTimestamp()
+              });
+            });
+            // remove item if succeeded
+            // eslint-disable-next-line no-console
+            console.info('flushed pending answer', item);
+          } catch(e) {
+            console.warn('flush pending item failed', e);
+            // stop trying further to avoid infinite loop
+            return;
+          }
+        }
+        localStorage.removeItem(key);
+      } catch(e) { console.warn('flushPending error', e); }
     }
-    function formatNaira(n){ return '₦' + Number(n || 0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
 
-    // monitor auth + user balance like your dashboard
+    // on auth
     onAuthStateChanged(auth, async (user) => {
-      // clear previous
-      if(userUnsub){ try{ userUnsub(); }catch(e){} userUnsub = null; }
       currentUser = user;
       if(!user){
         greetingEl.textContent = 'Hi, User';
         avatarEl.textContent = 'U';
         uidLine.textContent = 'UID: -';
-        balanceEl.textContent = '—';
-        assetBalance.textContent = formatNaira(0);
+        attemptsNote.textContent = 'Sign in on the main site to play.';
         return;
       }
-      // show user
       greetingEl.textContent = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
       avatarEl.textContent = (user.displayName || user.email || 'U')[0].toUpperCase();
       uidLine.textContent = 'UID: ' + user.uid.slice(0,6);
-
-      // subscribe to users/{uid}
-      const uRef = doc(db, 'users', user.uid);
-      userUnsub = onSnapshot(uRef, async (snap) => {
-        if(!snap.exists()){
-          const fallback = await tryBalanceFallback(user.uid);
-          balanceEl.textContent = fallback !== null ? formatNaira(fallback) : '—';
-          assetBalance.textContent = fallback !== null ? formatNaira(fallback) : formatNaira(0);
-        } else {
-          const d = snap.data() || {};
-          const bal = extractBalance(d);
-          balanceEl.textContent = bal !== null ? formatNaira(bal) : '—';
-          assetBalance.textContent = bal !== null ? formatNaira(bal) : formatNaira(0);
-        }
-      }, (err) => {
-        console.warn('balance onSnapshot err', err);
-        balanceEl.textContent = '—';
-        assetBalance.textContent = formatNaira(0);
-      });
-
-      // try to load questions from quizzes/{quizId}/questions if present
-      await loadQuestions(QUIZ_ID);
-      // load leaderboard
-      await loadLeaderboard();
-      // check for in-progress attempt and resume if present
+      // check for in-progress attempt and pending flush
       await loadResumeAttempt();
+      await flushPending();
+      // show count of previous completed attempts
+      await loadAttemptsNote();
     });
 
-    // fallback balance lookups
-    async function tryBalanceFallback(uid){
-      try{
-        const bRef = doc(db, 'balances', uid);
-        const bs = await getDoc(bRef);
-        if(bs && bs.exists()){
-          const dat = bs.data();
-          if(dat && (dat.balance !== undefined || dat.amount !== undefined)) return Number(dat.balance ?? dat.amount ?? 0);
-        }
-      }catch(e){ console.warn('fallback balances doc failed', e); }
-      try{
-        const col = collection(db, 'balances');
-        const q = query(col, where('userId','==', uid), limit(1));
-        const snaps = await getDocs(q);
-        if(!snaps.empty){ const d = snaps.docs[0].data(); return Number(d.balance ?? d.amount ?? 0); }
-      }catch(e){ console.warn('fallback balances collection failed', e); }
-      return null;
-    }
-
-    // load questions from Firestore quizzes/{id}/questions (optional)
-    async function loadQuestions(qid){
-      try{
-        const col = collection(db, 'quizzes', qid, 'questions');
-        const q = query(col, orderBy('createdAt'), limit(QUESTIONS_COUNT));
-        const snaps = await getDocs(q);
-        if(!snaps.empty && snaps.size >= QUESTIONS_COUNT){
-          const loaded = [];
-          snaps.forEach(s => {
-            const d = s.data();
-            loaded.push({ id: s.id, text: d.text, choices: d.choices, answerIndex: d.answerIndex ?? 0 });
-          });
-          if(loaded.length >= QUESTIONS_COUNT) { questions = loaded.slice(0, QUESTIONS_COUNT); console.info('questions loaded'); }
-        }
-      }catch(e){ console.warn('loadQuestions failed', e); }
-    }
-
-    // START: play button handler — ask confirmation then run transaction to debit ₦20 and create attempt
+    // create attempt (no fee, simple addDoc)
     playBtn.addEventListener('click', async () => {
-      if(!currentUser) return alert('Sign in on the site first.');
+      if(!currentUser) return alert('Sign in on the main site first.');
       const completed = await hasCompleted();
       if(completed) return alert('You already completed this quiz (one completed attempt only).');
+      const inprog = await hasInProgress();
+      if(inprog){ await loadResumeAttempt(); showQuizUI(); return; }
 
-      const inprogress = await hasInProgress();
-      if(inprogress) {
-        await loadResumeAttempt();
-        showQuizUI();
-        return;
-      }
-
-      const ok = confirm(`You will be debited ₦${ENTRY_FEE} as entry fee to join this quiz. Proceed?`);
-      if(!ok) return;
+      if(!confirm('Start the Current Affairs quiz?')) return;
 
       try {
-        const newAttemptRef = doc(collection(db,'quizAttempts'));
-        await runTransaction(db, async (tx) => {
-          const uRef = doc(db, 'users', currentUser.uid);
-          const uSnap = await tx.get(uRef);
-          let currentBal = null;
-          if(uSnap.exists()){
-            const ud = uSnap.data() || {};
-            currentBal = extractBalance(ud);
-          } else {
-            currentBal = null;
-          }
-          if(currentBal === null){
-            const fb = await tryBalanceFallback(currentUser.uid);
-            currentBal = fb !== null ? fb : 0;
-          }
-
-          if(Number(currentBal) < ENTRY_FEE){
-            throw new Error('insufficient-funds');
-          }
-
-          const newBal = Number(currentBal) - ENTRY_FEE;
-          tx.set(uRef, { balance: newBal }, { merge: true });
-
-          const payload = {
-            quizId: QUIZ_ID,
-            userId: currentUser.uid,
-            userEmail: currentUser.email,
-            currentIndex: 0,
-            score: 0,
-            status: 'in_progress',
-            questionStartAt: serverTimestamp(),
-            startedAt: serverTimestamp(),
-            answers: [],
-            entryFee: ENTRY_FEE
-          };
-          tx.set(newAttemptRef, payload);
-          attemptRef = newAttemptRef;
-        });
-
+        const payload = {
+          quizId: QUIZ_ID,
+          userId: currentUser.uid,
+          userEmail: currentUser.email || null,
+          currentIndex: 0,
+          score: 0,
+          status: 'in_progress',
+          questionStartAt: serverTimestamp(),
+          startedAt: serverTimestamp(),
+          answers: []
+        };
+        const ref = await addDoc(collection(db,'quizAttempts'), payload);
+        attemptRef = doc(db,'quizAttempts', ref.id);
         const snap = await getDoc(attemptRef);
         attemptData = snap.data();
-        statusMessage('in_progress');
-        saveLocalAttemptSnapshot();
+        saveLocalSnapshot();
         showQuizUI();
-        await loadLeaderboard();
-      } catch (e) {
-        if(e && e.message === 'insufficient-funds') return alert('Insufficient balance to join the quiz.');
-        console.error('transaction failed', e);
+      } catch(e){
+        console.error('start failed', e);
         alert('Could not start quiz: ' + (e.message || e));
       }
     });
 
-    // helper: status text in UI (muted)
-    function statusMessage(s){ console.info('status',s); }
-
-    // check completed/in-progress
+    // helpers to detect attempts
     async function hasCompleted(){
       try {
         const col = collection(db,'quizAttempts');
         const q = query(col, where('quizId','==', QUIZ_ID), where('userId','==', currentUser.uid), where('status','==','completed'), limit(1));
         const snaps = await getDocs(q);
         return !snaps.empty;
-      } catch(e){ console.warn('hasCompleted err', e); return false; }
+      } catch(e) { return false; }
     }
     async function hasInProgress(){
       try {
@@ -370,15 +285,15 @@
         const q = query(col, where('quizId','==', QUIZ_ID), where('userId','==', currentUser.uid), where('status','==','in_progress'), limit(1));
         const snaps = await getDocs(q);
         return !snaps.empty;
-      } catch(e){ console.warn('hasInProgress err', e); return false; }
+      } catch(e) { return false; }
     }
 
-    // load existing in-progress attempt (if any)
+    // load resume attempt
     async function loadResumeAttempt(){
       attemptRef = null;
       attemptData = null;
       try {
-        const col = collection(db, 'quizAttempts');
+        const col = collection(db,'quizAttempts');
         const q = query(col, where('quizId','==', QUIZ_ID), where('userId','==', currentUser.uid), where('status','==','in_progress'), limit(1));
         const snaps = await getDocs(q);
         if(!snaps.empty){
@@ -386,65 +301,53 @@
           attemptData = snaps.docs[0].data();
           await reconcileExpired();
           showQuizUI();
-          return;
         }
-      } catch(e){ console.warn('loadResumeAttempt err', e); }
+      } catch(e){ console.warn('loadResumeAttempt', e); }
     }
 
-    // reconcile expired questions/time left using server timestamps in attemptData.questionStartAt
+    // reconcile expired questions
     async function reconcileExpired(){
       if(!attemptData || !attemptRef) return;
       const qsa = attemptData.questionStartAt;
       if(!qsa || !qsa.seconds){
-        try {
-          await updateDoc(attemptRef, { questionStartAt: serverTimestamp() });
-          const s = await getDoc(attemptRef); attemptData = s.data();
-        } catch(e){ console.warn('reconcile set start failed', e); }
+        try { await updateDoc(attemptRef, { questionStartAt: serverTimestamp() }); const s = await getDoc(attemptRef); attemptData = s.data(); } catch(e){}
         return;
       }
       const nowSeconds = Math.floor(Date.now()/1000);
       const startSeconds = qsa.seconds;
       const elapsed = nowSeconds - startSeconds;
-      const expiredQs = Math.floor(elapsed / TIME_PER_QUESTION);
-      if(expiredQs <= 0) return;
-
-      let newIndex = (attemptData.currentIndex || 0) + expiredQs;
-      let newScore = (attemptData.score || 0) + (expiredQs * POINTS_WRONG);
-      const answers = attemptData.answers ? Array.from(attemptData.answers) : [];
+      const expired = Math.floor(elapsed / TIME_PER_QUESTION);
+      if(expired <= 0) return;
+      let newIndex = (attemptData.currentIndex || 0) + expired;
+      let newScore = (attemptData.score || 0) + (expired * POINTS_WRONG);
       const nowIso = new Date().toISOString();
-      for(let i=0;i<expiredQs && (attemptData.currentIndex + i) < QUESTIONS_COUNT;i++){
-        answers.push({
-          qIndex: attemptData.currentIndex + i,
-          selectedIndex: null,
-          correct: false,
-          timedOut: true,
-          ts: nowIso
-        });
+      const timeoutAnswers = [];
+      for(let i=0;i<expired && (attemptData.currentIndex + i) < QUESTIONS_COUNT;i++){
+        timeoutAnswers.push({ qIndex: attemptData.currentIndex + i, selectedIndex: null, correct: false, timedOut: true, ts: nowIso });
       }
 
-      if(newIndex >= QUESTIONS_COUNT){
-        await updateDoc(attemptRef, {
-          currentIndex: QUESTIONS_COUNT,
-          score: newScore,
-          answers,
-          status: 'completed',
-          completedAt: serverTimestamp()
+      try {
+        // append timeouts using arrayUnion inside transaction
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(attemptRef);
+          if(!snap.exists()) throw new Error('attempt-missing');
+          tx.update(attemptRef, {
+            score: newScore,
+            currentIndex: newIndex >= QUESTIONS_COUNT ? QUESTIONS_COUNT : newIndex,
+            answers: arrayUnion(...timeoutAnswers),
+            status: newIndex >= QUESTIONS_COUNT ? 'completed' : 'in_progress',
+            completedAt: newIndex >= QUESTIONS_COUNT ? serverTimestamp() : undefined,
+            questionStartAt: newIndex >= QUESTIONS_COUNT ? null : serverTimestamp()
+          });
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
-        showFinal();
-        return;
-      } else {
-        await updateDoc(attemptRef, {
-          currentIndex: newIndex,
-          score: newScore,
-          answers,
-          questionStartAt: serverTimestamp()
-        });
-        const s = await getDoc(attemptRef); attemptData = s.data();
+        if(attemptData.status === 'completed') showFinal();
+      } catch(e){
+        console.warn('reconcile transaction failed', e);
       }
     }
 
-    // show UI for quiz and start timer
+    // show quiz UI
     function showQuizUI(){
       if(!attemptData) return;
       quizCard.classList.remove('hidden');
@@ -452,11 +355,11 @@
       renderCurrentQuestion();
       const qsa = attemptData.questionStartAt;
       let elapsed = 0;
-      if(qsa && qsa.seconds) { elapsed = Math.floor(Date.now()/1000) - qsa.seconds; }
+      if(qsa && qsa.seconds) elapsed = Math.floor(Date.now()/1000) - qsa.seconds;
       timeLeft = TIME_PER_QUESTION - (elapsed % TIME_PER_QUESTION);
       if(timeLeft <= 0) timeLeft = 1;
       startTimer();
-      loadLeaderboard();
+      saveLocalSnapshot();
     }
 
     function renderCurrentQuestion(){
@@ -464,16 +367,16 @@
       if(idx >= QUESTIONS_COUNT){ showFinal(); return; }
       const q = questions[idx];
       questionArea.innerHTML = `<div class="question">${q.text}</div>`;
-      const choicesWrap = document.createElement('div'); choicesWrap.className = 'choices';
+      const wrap = document.createElement('div'); wrap.className = 'choices';
       q.choices.forEach((c,i) => {
         const el = document.createElement('div');
         el.className = 'choice';
         el.textContent = c;
         el.dataset.index = i;
         el.addEventListener('click', () => answerChoice(i));
-        choicesWrap.appendChild(el);
+        wrap.appendChild(el);
       });
-      questionArea.appendChild(choicesWrap);
+      questionArea.appendChild(wrap);
       scoreEl.textContent = attemptData.score ?? 0;
       progressEl.textContent = `Question ${ (idx+1) } / ${QUESTIONS_COUNT}`;
       nextBtn.classList.add('hidden');
@@ -492,6 +395,7 @@
       },1000);
     }
 
+    // answer handling with robust fallback
     async function answerChoice(selectedIndex){
       clearInterval(timer);
       const idx = attemptData.currentIndex || 0;
@@ -501,31 +405,71 @@
       const nowIso = new Date().toISOString();
       const answerObj = { qIndex: idx, selectedIndex, correct, timedOut: false, ts: nowIso };
       const willFinish = (idx + 1) >= QUESTIONS_COUNT;
+
+      // optimistic UI disabling
+      const choiceEls = questionArea.querySelectorAll('.choice');
+      choiceEls.forEach(c=>c.classList.add('disabled'));
+
+      // First try updateDoc with arrayUnion (fast)
       try {
         await updateDoc(attemptRef, {
           score: newScore,
-          answers: (attemptData.answers || []).concat([answerObj]),
+          answers: arrayUnion(answerObj),
           currentIndex: willFinish ? QUESTIONS_COUNT : (idx + 1),
           status: willFinish ? 'completed' : 'in_progress',
           questionStartAt: willFinish ? null : serverTimestamp(),
           completedAt: willFinish ? serverTimestamp() : undefined
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
-        const choiceEls = questionArea.querySelectorAll('.choice');
-        choiceEls.forEach(c => c.classList.add('disabled'));
-        if(choiceEls[selectedIndex]) choiceEls[selectedIndex].classList.add(correct ? 'correct' : 'wrong');
-        if(!correct && choiceEls[q.answerIndex]) choiceEls[q.answerIndex].classList.add('correct');
-        const fb = document.createElement('div'); fb.style.marginTop='8px'; fb.style.fontWeight=700;
-        fb.style.color = correct ? 'var(--success)' : 'var(--danger)';
-        fb.textContent = correct ? `Correct! +${POINTS_CORRECT}` : `Wrong — ${POINTS_WRONG}. Correct: ${q.choices[q.answerIndex]}`;
-        questionArea.appendChild(fb);
-        scoreEl.textContent = attemptData.score;
-        if(attemptData.status === 'completed'){ showFinal(); await loadLeaderboard(); }
+        applyAnswerFeedback(selectedIndex, q, correct);
+        if(attemptData.status === 'completed') showFinal();
         else { nextBtn.classList.remove('hidden'); nextBtn.onclick = () => { renderCurrentQuestion(); }; }
-      } catch(e){
-        console.error('answer failed', e);
-        alert('Could not submit answer: ' + (e.message || e));
+        return;
+      } catch (e) {
+        console.warn('updateDoc append failed, trying transaction', e);
       }
+
+      // Fallback: try transaction append (atomic)
+      try {
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(attemptRef);
+          if(!snap.exists()) throw new Error('attempt-missing');
+          tx.update(attemptRef, {
+            score: newScore,
+            answers: arrayUnion(answerObj),
+            currentIndex: willFinish ? QUESTIONS_COUNT : (idx + 1),
+            status: willFinish ? 'completed' : 'in_progress',
+            questionStartAt: willFinish ? null : serverTimestamp(),
+            completedAt: willFinish ? serverTimestamp() : undefined
+          });
+        });
+        const s = await getDoc(attemptRef); attemptData = s.data();
+        applyAnswerFeedback(selectedIndex, q, correct);
+        if(attemptData.status === 'completed') showFinal();
+        else { nextBtn.classList.remove('hidden'); nextBtn.onclick = () => { renderCurrentQuestion(); }; }
+        return;
+      } catch(e) {
+        console.warn('transaction fallback failed', e);
+      }
+
+      // Last resort: queue locally so it won't block the UI
+      queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx + 1), status: willFinish ? 'completed' : 'in_progress' });
+      applyAnswerFeedback(selectedIndex, q, correct, true);
+      if(willFinish) showFinal();
+      else nextBtn.classList.remove('hidden');
+    }
+
+    function applyAnswerFeedback(selectedIndex, q, correct, queued=false){
+      const choiceEls = questionArea.querySelectorAll('.choice');
+      if(choiceEls[selectedIndex]) choiceEls[selectedIndex].classList.add(correct ? 'correct' : 'wrong');
+      if(!correct && choiceEls[q.answerIndex]) choiceEls[q.answerIndex].classList.add('correct');
+      const fb = document.createElement('div'); fb.style.marginTop='8px'; fb.style.fontWeight=700;
+      fb.style.color = correct ? 'var(--success)' : 'var(--danger)';
+      fb.textContent = correct ? `Correct! +${POINTS_CORRECT}` : `Wrong — ${POINTS_WRONG}. Correct: ${q.choices[q.answerIndex]}`;
+      if(queued) fb.textContent += ' (queued — will sync)';
+      questionArea.appendChild(fb);
+      // update displayed score optimistically
+      scoreEl.textContent = (attemptData && attemptData.score !== undefined) ? attemptData.score : (queued ? (Number(scoreEl.textContent)||0) + (correct ? POINTS_CORRECT : POINTS_WRONG) : scoreEl.textContent);
     }
 
     async function handleTimeout(){
@@ -535,25 +479,72 @@
       const nowIso = new Date().toISOString();
       const answerObj = { qIndex: idx, selectedIndex: null, correct: false, timedOut: true, ts: nowIso };
       const willFinish = (idx + 1) >= QUESTIONS_COUNT;
+
       try {
         await updateDoc(attemptRef, {
           score: newScore,
-          answers: (attemptData.answers || []).concat([answerObj]),
+          answers: arrayUnion(answerObj),
           currentIndex: willFinish ? QUESTIONS_COUNT : (idx + 1),
           status: willFinish ? 'completed' : 'in_progress',
           questionStartAt: willFinish ? null : serverTimestamp(),
           completedAt: willFinish ? serverTimestamp() : undefined
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
-        const choiceEls = questionArea.querySelectorAll('.choice');
-        if(choiceEls[q.answerIndex]) choiceEls[q.answerIndex].classList.add('correct');
-        const fb = document.createElement('div'); fb.style.marginTop='8px'; fb.style.fontWeight=700; fb.style.color='var(--danger)';
-        fb.textContent = `Time expired — ${POINTS_WRONG}. Correct: ${q.choices[q.answerIndex]}`;
-        questionArea.appendChild(fb);
-        scoreEl.textContent = attemptData.score;
-        if(attemptData.status === 'completed'){ showFinal(); await loadLeaderboard(); }
+        revealTimeout(q);
+        if(attemptData.status === 'completed') showFinal();
         else { nextBtn.classList.remove('hidden'); nextBtn.onclick = () => { renderCurrentQuestion(); }; }
-      } catch(e){ console.error('timeout update failed', e); alert('Failed to register timeout: ' + (e.message || e)); }
+        return;
+      } catch(e){
+        console.warn('timeout update failed, trying tx', e);
+      }
+
+      try {
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(attemptRef);
+          if(!snap.exists()) throw new Error('attempt-missing');
+          tx.update(attemptRef, {
+            score: newScore,
+            answers: arrayUnion(answerObj),
+            currentIndex: willFinish ? QUESTIONS_COUNT : (idx + 1),
+            status: willFinish ? 'completed' : 'in_progress',
+            questionStartAt: willFinish ? null : serverTimestamp(),
+            completedAt: willFinish ? serverTimestamp() : undefined
+          });
+        });
+        const s = await getDoc(attemptRef); attemptData = s.data();
+        revealTimeout(q);
+        if(attemptData.status === 'completed') showFinal();
+        else { nextBtn.classList.remove('hidden'); nextBtn.onclick = () => { renderCurrentQuestion(); }; }
+        return;
+      } catch(e){
+        console.warn('timeout transaction failed', e);
+      }
+
+      // fallback queue
+      queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx + 1), status: willFinish ? 'completed' : 'in_progress' });
+      revealTimeout(q, true);
+      if(willFinish) showFinal(); else nextBtn.classList.remove('hidden');
+    }
+
+    function revealTimeout(q, queued=false){
+      const choiceEls = questionArea.querySelectorAll('.choice');
+      if(choiceEls[q.answerIndex]) choiceEls[q.answerIndex].classList.add('correct');
+      const fb = document.createElement('div'); fb.style.marginTop='8px'; fb.style.fontWeight=700; fb.style.color='var(--danger)';
+      fb.textContent = `Time expired — ${POINTS_WRONG}. Correct: ${q.choices[q.answerIndex]}` + (queued ? ' (queued — will sync)' : '');
+      questionArea.appendChild(fb);
+      scoreEl.textContent = attemptData && attemptData.score !== undefined ? attemptData.score : scoreEl.textContent;
+    }
+
+    // queue pending answers locally
+    function queuePendingAnswer(item){
+      try {
+        const key = pendingKey();
+        if(!key) return;
+        const raw = localStorage.getItem(key);
+        const list = raw ? JSON.parse(raw) : [];
+        list.push(item);
+        localStorage.setItem(key, JSON.stringify(list));
+      } catch(e){ console.warn('queuePendingAnswer failed', e); }
     }
 
     // end early
@@ -561,10 +552,9 @@
       if(!attemptRef) return;
       if(!confirm('End quiz early? This will save your current score.')) return;
       try {
-        await updateDoc(attemptRef, { status:'completed', completedAt: serverTimestamp() });
+        await updateDoc(attemptRef, { status: 'completed', completedAt: serverTimestamp() });
         const s = await getDoc(attemptRef); attemptData = s.data();
         showFinal();
-        await loadLeaderboard();
       } catch(e){ console.error('end early failed', e); alert('Failed to end early'); }
     });
 
@@ -572,49 +562,41 @@
       clearInterval(timer);
       quizCard.classList.add('hidden');
       resultCard.classList.remove('hidden');
-      finalSummary.innerHTML = `<div style="font-weight:800">Your score: ${attemptData.score ?? 0}</div><div class="muted small" style="margin-top:8px">Thanks for playing.</div>`;
-      clearLocalAttempt();
+      finalSummary.innerHTML = `<div style="font-weight:800">Your score: ${attemptData ? attemptData.score ?? 0 : 0}</div><div class="muted small" style="margin-top:8px">Thanks for playing Current Affairs.</div>`;
+      clearLocalSnapshot();
     }
 
-    closeBtn.addEventListener('click', () => {
-      resultCard.classList.add('hidden');
-    });
+    closeBtn.addEventListener('click', () => resultCard.classList.add('hidden'));
 
-    // leaderboard loader
-    async function loadLeaderboard(){
-      try {
-        const col = collection(db,'quizAttempts');
-        const q = query(col, where('quizId','==', QUIZ_ID), where('status','==','completed'), orderBy('score','desc'), limit(10));
-        const snaps = await getDocs(q);
-        if(snaps.empty){ leaderboardEl.innerHTML = '<div class="muted small">No completed attempts yet</div>'; return; }
-        const rows = [];
-        snaps.forEach(s => {
-          const a = s.data();
-          const ts = a.completedAt && a.completedAt.seconds ? new Date(a.completedAt.seconds*1000).toLocaleString() : '';
-          rows.push(`<div style="padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03)"><strong>${a.userEmail}</strong> — <span style="font-weight:800">${a.score}</span><div class="muted small">${ts}</div></div>`);
-        });
-        leaderboardEl.innerHTML = rows.join('');
-      } catch(e){ console.warn('leaderboard failed', e); leaderboardEl.innerHTML = '<div class="muted small">Failed to load leaderboard</div>'; }
-    }
-
-    // local snapshot (lightweight) to aid UI resume quickly
-    function localKey(){ return currentUser ? `bw_quiz_${QUIZ_ID}_${currentUser.uid}` : null; }
-    function saveLocalAttemptSnapshot(){
+    // small local snapshot to accelerate resume
+    function localKey(){ return currentUser ? `bw_quiz_snap_${QUIZ_ID}_${currentUser.uid}` : null; }
+    function saveLocalSnapshot(){
       try {
         const key = localKey(); if(!key || !attemptData || !attemptRef) return;
         const payload = { attemptId: attemptRef.id, currentIndex: attemptData.currentIndex, score: attemptData.score, status: attemptData.status, questionStartAtMs: attemptData.questionStartAt && attemptData.questionStartAt.seconds ? attemptData.questionStartAt.seconds*1000 : Date.now() };
         localStorage.setItem(key, JSON.stringify(payload));
       } catch(e){}
     }
-    function clearLocalAttempt(){ try{ const k = localKey(); if(k) localStorage.removeItem(k); }catch(e){} }
+    function clearLocalSnapshot(){ try{ const k = localKey(); if(k) localStorage.removeItem(k); }catch(e){} }
 
-    // initial state
-    scoreEl.textContent = '0'; timerEl.textContent = String(TIME_PER_QUESTION);
+    // attempts note: show count of completed attempts
+    async function loadAttemptsNote(){
+      try {
+        const col = collection(db,'quizAttempts');
+        const q = query(col, where('quizId','==', QUIZ_ID), where('userId','==', currentUser.uid), where('status','==','completed'), limit(10));
+        const snaps = await getDocs(q);
+        attemptsNote.textContent = `Completed attempts: ${snaps.size}`;
+      } catch(e){ attemptsNote.textContent = 'Could not load attempts count'; }
+    }
 
-    // small poll fallback in case auth registers after page load (site signs in shortly)
-    (function pollAuth(retries=10, interval=400){
-      let tries=0; const p = setInterval(()=>{ tries++; if(auth.currentUser) clearInterval(p); if(tries>=retries) clearInterval(p); }, interval);
-    })();
+    // initial UI
+    scoreEl.textContent = '0';
+    timerEl.textContent = String(TIME_PER_QUESTION);
+    progressEl.textContent = `Question 0 / ${QUESTIONS_COUNT}`;
+    attemptsNote.textContent = 'Sign in to track attempts.';
+
+    // try flush pending on load (if user session already exists, onAuthStateChanged will do it)
+    (async ()=>{ if(auth.currentUser){ await flushPending(); } })();
 
   </script>
 </body>
