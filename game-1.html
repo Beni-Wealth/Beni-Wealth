@@ -21,7 +21,7 @@
     .muted{color:var(--muted);font-size:13px}
     .desc{margin-top:12px;color:var(--muted)}
     .progress-wrap{margin-top:18px}
-    .bar{height:28px;border-radius:12px;background:var(--bar-bg);overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
+    .bar{height:36px;border-radius:12px;background:var(--bar-bg);overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
     .bar-fill{height:100%;width:0%;background:var(--bar-fill);display:flex;align-items:center;justify-content:center;color:#041219;font-weight:800;transition:width 400ms ease}
     .stats{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
     .btn{padding:10px 14px;border-radius:12px;border:0;background:var(--accent);color:#041219;font-weight:800;cursor:pointer}
@@ -38,24 +38,22 @@
       <div class="top">
         <div class="avatar" id="avatar">U</div>
         <div style="flex:1">
-          <h1 id="title">Current Affairs Quiz — Participation Progress</h1>
-          <div class="muted" id="subtitle">Join now — the event unlocks at 20 participants.</div>
+          <h1 id="title">Current Affairs Quiz — Progress</h1>
+          <div class="muted" id="subtitle">Join the quiz — progress shown as percentage only.</div>
         </div>
         <div style="text-align:right">
           <div class="muted" id="uidline">UID: -</div>
-          <div style="margin-top:6px"><button id="signinHint" class="btn-ghost hidden">Sign in</button></div>
         </div>
       </div>
 
-      <p class="desc">This quiz collects entries from participating users. Each entry requires a ₦20 entry fee. Once 20 people have joined the round the progress reaches 100% (20/20). Press <strong>Play</strong> to join — you'll be debited ₦20 and then redirected to the round page.</p>
+      <p class="desc">Each join is an entry. Progress is displayed as a percentage (0%–100%). Click <strong>Play</strong> to join — you'll be debited ₦20 and then redirected to the round page.</p>
 
-      <div class="progress-wrap">
-        <div class="bar" aria-hidden="false" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="progress-wrap" aria-hidden="false">
+        <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Quiz progress">
           <div id="barFill" class="bar-fill">0%</div>
         </div>
-        <div class="stats">
-          <div class="muted" id="countText">0 / 20 participants</div>
-          <div class="muted" id="remainingText">20 spots left</div>
+        <div class="stats" style="justify-content:center;margin-top:10px">
+          <div class="muted" id="percentLabel">0%</div>
         </div>
       </div>
 
@@ -73,7 +71,7 @@
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp, onSnapshot
+      getFirestore, doc, getDoc, runTransaction, serverTimestamp, onSnapshot
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // same config as your dashboard
@@ -95,21 +93,18 @@
     const avatarEl = document.getElementById('avatar');
     const uidline = document.getElementById('uidline');
     const barFill = document.getElementById('barFill');
-    const countText = document.getElementById('countText');
-    const remainingText = document.getElementById('remainingText');
+    const percentLabel = document.getElementById('percentLabel');
     const playBtn = document.getElementById('playBtn');
     const statusMsg = document.getElementById('statusMsg');
-    const signinHint = document.getElementById('signinHint');
 
-    // config
+    // config (internal cap is 20 but UI displays only percentage)
     const QUIZ_ID = 'current_affairs_001';
     const MAX_PARTICIPANTS = 20;
     const ENTRY_FEE = 20;
-    const REDIRECT_PAGE = 'round_1764190775161.html'; // requested redirect
+    const REDIRECT_PAGE = 'round_1764190775161.html';
 
     let currentUser = null;
 
-    // helper: extract numeric balance from user doc shape
     function extractBalance(d){
       if(!d || typeof d !== 'object') return null;
       if(typeof d.balance === 'number') return d.balance;
@@ -126,19 +121,18 @@
       return null;
     }
 
-    // live listen to progress doc
     const progressRef = doc(db, 'quizProgress', QUIZ_ID);
+
+    // live listen and show percentage-only
     onSnapshot(progressRef, (snap) => {
       const data = snap.exists() ? (snap.data() || {}) : {};
       const count = Number(data.participantsCount || 0);
       updateProgress(count);
     }, (err) => {
       console.warn('progress onSnapshot err', err);
-      // show fallback 0
       updateProgress(0);
     });
 
-    // initial read to ensure bar shows quickly
     (async function loadInitialProgress(){
       try {
         const s = await getDoc(progressRef);
@@ -154,10 +148,7 @@
       const pct = Math.min(100, Math.round((count / MAX_PARTICIPANTS) * 100));
       barFill.style.width = pct + '%';
       barFill.textContent = pct + '%';
-      countText.textContent = `${count} / ${MAX_PARTICIPANTS} participants`;
-      const remaining = Math.max(0, MAX_PARTICIPANTS - count);
-      remainingText.textContent = `${remaining} spot${remaining===1?'':'s'} left`;
-      // if full, optionally disable Play
+      percentLabel.textContent = pct + '%';
       if(count >= MAX_PARTICIPANTS){
         playBtn.disabled = true;
         playBtn.textContent = 'Full';
@@ -167,66 +158,63 @@
         playBtn.textContent = `Play (₦${ENTRY_FEE})`;
         playBtn.style.opacity = 1;
       }
+      const bar = document.querySelector('.bar');
+      if(bar) bar.setAttribute('aria-valuenow', String(pct));
     }
 
-    // On auth state change show user
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
       if(!user){
         avatarEl.textContent = 'U';
         uidline.textContent = 'UID: -';
-        signinHint.classList.remove('hidden');
       } else {
         avatarEl.textContent = (user.displayName || user.email || 'U')[0].toUpperCase();
         uidline.textContent = `UID: ${user.uid.slice(0,6)}`;
-        signinHint.classList.add('hidden');
       }
     });
 
-    signinHint.addEventListener('click', () => {
-      alert('Sign-in is handled centrally on your site. Make sure you are signed in on the main domain before visiting this page.');
-    });
-
-    // Play button — confirm and perform transactional debit + entry + progress increment
+    // FIXED transaction: read all docs first, then perform writes
     playBtn.addEventListener('click', async () => {
       statusMsg.textContent = '';
       if(!currentUser) return alert('Please sign in on the site before joining.');
 
-      // quick client-side check: read progress once to ensure not already full
-      const pr = await getDoc(progressRef);
-      const currentCount = pr.exists() ? Number(pr.data().participantsCount || 0) : 0;
+      // quick client check
+      const pSnapNow = await getDoc(progressRef);
+      const currentCount = pSnapNow.exists() ? Number(pSnapNow.data().participantsCount || 0) : 0;
       if(currentCount >= MAX_PARTICIPANTS) { alert('This round is full.'); return; }
 
       if(!confirm(`Confirm: ₦${ENTRY_FEE} entry fee will be deducted to join this round.`)) return;
 
-      // run single transaction: (1) check users/{uid} balance or balances/{uid}, (2) prevent double-join, (3) deduct, (4) create entry doc quizEntries/{quizId}_{uid}, (5) increment participantsCount in quizProgress/{quizId}
       try {
         await runTransaction(db, async (tx) => {
           const uid = currentUser.uid;
           const uRef = doc(db, 'users', uid);
-          const bRef = doc(db, 'balances', uid); // fallback doc
+          const bRef = doc(db, 'balances', uid);
           const entryId = `${QUIZ_ID}_${uid}`;
           const entryRef = doc(db, 'quizEntries', entryId);
           const pRef = progressRef;
 
-          // 1. check entry existence (prevent double join)
-          const entrySnap = await tx.get(entryRef);
+          // --- ALL READS FIRST ---
+          const [entrySnap, uSnap, bSnap, pSnap] = await Promise.all([
+            tx.get(entryRef),
+            tx.get(uRef),
+            tx.get(bRef),
+            tx.get(pRef)
+          ]);
+
           if(entrySnap.exists()){
             throw new Error('already-joined');
           }
 
-          // 2. resolve balance (users/{uid} preferred)
-          const uSnap = await tx.get(uRef);
+          // resolve balance
           let bal = null;
           if(uSnap.exists()){
             bal = extractBalance(uSnap.data());
           }
-          // fallback to balances/{uid}
           if(bal === null || bal === undefined){
-            const bSnap = await tx.get(bRef);
             if(bSnap.exists()){
               const bd = bSnap.data();
-              bal = (typeof bd.balance === 'number')? bd.balance : (typeof bd.amount === 'number' ? bd.amount : null);
+              bal = (typeof bd.balance === 'number') ? bd.balance : (typeof bd.amount === 'number' ? bd.amount : null);
             }
           }
           if(bal === null || bal === undefined) bal = 0;
@@ -235,12 +223,16 @@
             throw new Error('insufficient-funds');
           }
 
-          // 3. deduct
+          const prevCount = pSnap.exists() ? Number(pSnap.data().participantsCount || 0) : 0;
+          if(prevCount >= MAX_PARTICIPANTS){
+            throw new Error('full');
+          }
+          const nextCount = Math.min(MAX_PARTICIPANTS, prevCount + 1);
+
+          // --- THEN ALL WRITES ---
           const newBal = Number(bal) - ENTRY_FEE;
-          // write back to users/{uid} (merge)
           tx.set(uRef, { balance: newBal }, { merge: true });
 
-          // 4. create entry doc
           tx.set(entryRef, {
             quizId: QUIZ_ID,
             userId: uid,
@@ -248,29 +240,17 @@
             joinedAt: serverTimestamp()
           });
 
-          // 5. bump progress doc participantsCount
-          const pSnap = await tx.get(pRef);
-          const prevCount = pSnap.exists() ? Number(pSnap.data().participantsCount || 0) : 0;
-          const nextCount = Math.min(MAX_PARTICIPANTS, prevCount + 1);
           tx.set(pRef, { participantsCount: nextCount }, { merge: true });
-
-          // transaction body ends — if any step throws, nothing is written
         });
 
-        // success — update UI and redirect
         statusMsg.textContent = 'Joined ✔ — redirecting…';
-        // small delay so the user sees status
         setTimeout(() => { window.location.href = REDIRECT_PAGE; }, 700);
       } catch (err) {
         console.error('join transaction failed', err);
-        if(err && err.message === 'already-joined'){
-          alert('You have already joined this round.');
-          return;
-        }
-        if(err && err.message === 'insufficient-funds'){
-          alert('Insufficient balance to join. Please top up.');
-          return;
-        }
+        const msg = (err && err.message) ? err.message : '';
+        if(msg === 'already-joined'){ alert('You have already joined this round.'); return; }
+        if(msg === 'insufficient-funds'){ alert('Insufficient balance to join. Please top up.'); return; }
+        if(msg === 'full'){ alert('This round became full while we attempted to join.'); return; }
         alert('Could not join: ' + (err.message || err));
       }
     });
