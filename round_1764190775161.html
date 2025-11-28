@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Nigerian Quiz</title>
+  <title>Beni-Wealth — Nigerian Quiz (timer carryover)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
   <style>
     :root{
@@ -78,7 +78,7 @@
     <div class="card">
       <div style="font-weight:800">General Nigerian Quiz</div>
       <div class="muted small">10 questions • 20s each • Correct: +10 • Wrong: −5</div>
-      <div class="note">You can refresh the page — the quiz will resume where you left off and the countdown continues.</div>
+      <div class="note">You can refresh the page — the quiz will resume where you left off and the countdown continues (remaining time carries to next question when you answer).</div>
 
       <div class="action-row" style="margin-top:12px;display:flex;gap:8px;">
         <div id="playBtn" class="pill primary">Play</div>
@@ -172,7 +172,7 @@
     // rules & runtime (changed per request)
     const QUIZ_ID = 'nigeria_general_001';
     const QUESTIONS_COUNT = 10;
-    const TIME_PER_QUESTION = 20; // increased to 20s
+    const TIME_PER_QUESTION = 20; // seconds
     const POINTS_CORRECT = 10;
     const POINTS_WRONG = -5;
     const FEEDBACK_DELAY_MS = 1600; // pause after correct/wrong
@@ -183,7 +183,7 @@
     let attemptData = null;
     let questions = [];
     let timer = null;
-    let timeLeft = TIME_PER_QUESTION;
+    let timeLeft = TIME_PER_QUESTION; // visible seconds
 
     document.getElementById('category').textContent = 'General Nigerian';
 
@@ -222,13 +222,47 @@
                 answers: arrayUnion(item.answer),
                 currentIndex: item.currentIndex,
                 status: item.status,
-                questionStartAt: item.nextQuestionStartAt ? serverTimestamp() : serverTimestamp()
+                // restore the saved client-side carryover time
+                questionTimeLeftMs: item.questionTimeLeftMs || (TIME_PER_QUESTION*1000),
+                questionTimeLeftUpdatedAt: serverTimestamp()
               });
             });
           } catch(e) { console.warn('flush pending item failed', e); return; }
         }
         localStorage.removeItem(key);
       } catch(e){ console.warn('flushPending err', e); }
+    }
+
+    // Helper to compute timeLeft (seconds) from attemptData fields
+    function computeTimeLeftFromAttempt(aData){
+      try{
+        if(!aData) return TIME_PER_QUESTION;
+        // prefer explicit stored remaining + timestamp
+        if(aData.questionTimeLeftMs !== undefined && aData.questionTimeLeftUpdatedAt){
+          const leftMs = Number(aData.questionTimeLeftMs) || 0;
+          const updated = aData.questionTimeLeftUpdatedAt;
+          if(updated && updated.seconds){
+            const elapsed = Date.now() - (updated.seconds * 1000 + Math.floor((updated.nanoseconds||0)/1000000));
+            const remain = Math.max(0, leftMs - elapsed);
+            const seconds = Math.ceil(remain/1000);
+            return seconds > 0 ? seconds : 0;
+          }
+          return Math.ceil(leftMs/1000) || TIME_PER_QUESTION;
+        }
+        // fallback: if older "questionStartAt" exists we convert to timeLeft (compat)
+        if(aData.questionStartAt && aData.questionStartAt.seconds){
+          const startSec = aData.questionStartAt.seconds;
+          const elapsed = Math.floor(Date.now()/1000) - startSec;
+          const remain = TIME_PER_QUESTION - (elapsed % TIME_PER_QUESTION);
+          return remain > 0 ? remain : 1;
+        }
+      }catch(e){ console.warn('computeTimeLeftFromAttempt failed', e); }
+      return TIME_PER_QUESTION;
+    }
+
+    // small helper: persist local queue if offline
+    function queuePendingAnswer(item){
+      try { const key = pendingKey(); if(!key) return; const raw = localStorage.getItem(key); const list = raw ? JSON.parse(raw) : []; list.push(item); localStorage.setItem(key, JSON.stringify(list)); } catch(e){ console.warn('queue failed', e); }
     }
 
     onAuthStateChanged(auth, async (user) => {
@@ -253,7 +287,19 @@
       if(!confirm('Start the General Nigerian quiz?')) return;
 
       try {
-        const payload = { quizId: QUIZ_ID, userId: currentUser.uid, userEmail: currentUser.email || null, currentIndex:0, score:0, status:'in_progress', questionStartAt: serverTimestamp(), startedAt: serverTimestamp(), answers:[] };
+        const payload = {
+          quizId: QUIZ_ID,
+          userId: currentUser.uid,
+          userEmail: currentUser.email || null,
+          currentIndex:0,
+          score:0,
+          status:'in_progress',
+          // start with full time for first question
+          questionTimeLeftMs: TIME_PER_QUESTION * 1000,
+          questionTimeLeftUpdatedAt: serverTimestamp(),
+          startedAt: serverTimestamp(),
+          answers:[]
+        };
         const ref = await addDoc(collection(db,'quizAttempts'), payload);
         attemptRef = doc(db,'quizAttempts', ref.id);
         const snap = await getDoc(attemptRef); attemptData = snap.data();
@@ -278,39 +324,60 @@
         if(!snaps.empty){
           attemptRef = snaps.docs[0].ref;
           attemptData = snaps.docs[0].data();
+          // adjust for elapsed using our stored time-left fields
           await reconcileExpired();
           showQuizUI();
         }
       } catch(e){ console.warn('loadResumeAttempt', e); }
     }
 
+    // reconcileExpired: best-effort using questionTimeLeftMs + timestamp
     async function reconcileExpired(){
       if(!attemptData || !attemptRef) return;
-      const qsa = attemptData.questionStartAt;
-      if(!qsa || !qsa.seconds){ try{ await updateDoc(attemptRef, { questionStartAt: serverTimestamp() }); const s = await getDoc(attemptRef); attemptData = s.data(); }catch(e){} return; }
-      const nowSeconds = Math.floor(Date.now()/1000); const startSeconds = qsa.seconds; const elapsed = nowSeconds - startSeconds; const expired = Math.floor(elapsed / TIME_PER_QUESTION);
-      if(expired <= 0) return;
-      let newIndex = (attemptData.currentIndex || 0) + expired; let newScore = (attemptData.score || 0) + (expired * POINTS_WRONG);
-      const nowIso = new Date().toISOString(); const timeoutAnswers = [];
-      for(let i=0;i<expired && (attemptData.currentIndex + i) < QUESTIONS_COUNT;i++){
-        timeoutAnswers.push({ qIndex: attemptData.currentIndex + i, selectedIndex: null, correct:false, timedOut:true, ts: nowIso });
-      }
-      try {
-        await runTransaction(db, async (tx) => {
-          const snap = await tx.get(attemptRef);
-          if(!snap.exists()) throw new Error('attempt-missing');
-          tx.update(attemptRef, {
-            score: newScore,
-            currentIndex: newIndex >= QUESTIONS_COUNT ? QUESTIONS_COUNT : newIndex,
-            answers: arrayUnion(...timeoutAnswers),
-            status: newIndex >= QUESTIONS_COUNT ? 'completed' : 'in_progress',
-            completedAt: newIndex >= QUESTIONS_COUNT ? serverTimestamp() : undefined,
-            questionStartAt: newIndex >= QUESTIONS_COUNT ? null : serverTimestamp()
+      try{
+        const qLeftMs = attemptData.questionTimeLeftMs;
+        const qUpdated = attemptData.questionTimeLeftUpdatedAt;
+        if(qLeftMs !== undefined && qUpdated && qUpdated.seconds){
+          const elapsed = Date.now() - (qUpdated.seconds*1000 + Math.floor((qUpdated.nanoseconds||0)/1000000));
+          if(elapsed < qLeftMs){
+            // still within current question
+            return;
+          }
+          // elapsed covers current question and possibly more; compute how many questions expired
+          const overMs = elapsed - qLeftMs; // ms beyond current question
+          const expiredCount = 1 + Math.floor(overMs / (TIME_PER_QUESTION*1000));
+          if(expiredCount <= 0) return;
+
+          const nowIso = new Date().toISOString();
+          const timeoutAnswers = [];
+          for(let i=0;i<expiredCount && (attemptData.currentIndex + i) < QUESTIONS_COUNT;i++){
+            timeoutAnswers.push({ qIndex: attemptData.currentIndex + i, selectedIndex: null, correct:false, timedOut:true, ts: nowIso });
+          }
+          let newIndex = (attemptData.currentIndex || 0) + expiredCount;
+          let newScore = (attemptData.score || 0) + (expiredCount * POINTS_WRONG);
+
+          // compute leftover ms for next question (if not completed)
+          const remainderMs = overMs % (TIME_PER_QUESTION*1000);
+          const nextLeftMs = newIndex >= QUESTIONS_COUNT ? 0 : Math.max(0, TIME_PER_QUESTION*1000 - remainderMs);
+
+          await runTransaction(db, async (tx) => {
+            const snap = await tx.get(attemptRef);
+            if(!snap.exists()) throw new Error('attempt-missing');
+            tx.update(attemptRef, {
+              score: newScore,
+              currentIndex: newIndex >= QUESTIONS_COUNT ? QUESTIONS_COUNT : newIndex,
+              answers: arrayUnion(...timeoutAnswers),
+              status: newIndex >= QUESTIONS_COUNT ? 'completed' : 'in_progress',
+              completedAt: newIndex >= QUESTIONS_COUNT ? serverTimestamp() : undefined,
+              questionTimeLeftMs: nextLeftMs,
+              questionTimeLeftUpdatedAt: newIndex >= QUESTIONS_COUNT ? null : serverTimestamp()
+            });
           });
-        });
-        const s = await getDoc(attemptRef); attemptData = s.data();
-        if(attemptData.status === 'completed') showFinal();
-      } catch(e){ console.warn('reconcile tx failed', e); }
+
+          const s = await getDoc(attemptRef); attemptData = s.data();
+          if(attemptData.status === 'completed') showFinal();
+        }
+      }catch(e){ console.warn('reconcileExpired failed', e); }
     }
 
     // RENDER & TIMER
@@ -319,9 +386,10 @@
       quizCard.classList.remove('hidden'); resultCard.classList.add('hidden');
       renderTracker();
       renderCurrentQuestion();
-      const qsa = attemptData.questionStartAt;
-      let elapsed = 0; if(qsa && qsa.seconds) elapsed = Math.floor(Date.now()/1000) - qsa.seconds;
-      timeLeft = TIME_PER_QUESTION - (elapsed % TIME_PER_QUESTION); if(timeLeft <= 0) timeLeft = 1;
+
+      // compute timeLeft using stored questionTimeLeftMs + timestamp
+      timeLeft = computeTimeLeftFromAttempt(attemptData);
+      if(timeLeft <= 0) timeLeft = 1;
       startTimer(); saveLocalSnapshot();
     }
 
@@ -384,9 +452,9 @@
         if(attemptData.status === 'completed' || (attemptData.currentIndex || 0) >= QUESTIONS_COUNT) { showFinal(); return; }
         renderTracker();
         renderCurrentQuestion();
-        const qsa = attemptData.questionStartAt;
-        let elapsed = 0; if(qsa && qsa.seconds) elapsed = Math.floor(Date.now()/1000) - qsa.seconds;
-        timeLeft = TIME_PER_QUESTION - (elapsed % TIME_PER_QUESTION); if(timeLeft <= 0) timeLeft = 1;
+        // compute timeLeft from saved fields
+        timeLeft = computeTimeLeftFromAttempt(attemptData);
+        if(timeLeft <= 0) timeLeft = 1;
         startTimer();
       } catch(e){
         console.error('Next handler failed', e);
@@ -394,7 +462,7 @@
       }
     });
 
-    // ANSWER HANDLING — auto-advance but pause to show feedback
+    // ANSWER HANDLING — carries remaining time to next question
     async function answerChoice(selectedIndex){
       clearInterval(timer);
       const idx = attemptData.currentIndex || 0; const q = questions[idx];
@@ -403,14 +471,18 @@
       const willFinish = (idx+1) >= QUESTIONS_COUNT;
       const choiceEls = questionArea.querySelectorAll('.choice'); choiceEls.forEach(c=>c.classList.add('disabled'));
 
-      // Try quick updateDoc first
+      // compute carryover: keep current timeLeft as next question's starting time
+      const carryMs = Math.max(0, (timeLeft || 0) * 1000);
+
+      // Try quick updateDoc first and include carryover fields
       try {
         await updateDoc(attemptRef, {
           score: newScore,
           answers: arrayUnion(answerObj),
           currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1),
           status: willFinish ? 'completed' : 'in_progress',
-          questionStartAt: willFinish ? null : serverTimestamp(),
+          questionTimeLeftMs: willFinish ? 0 : carryMs,
+          questionTimeLeftUpdatedAt: willFinish ? null : serverTimestamp(),
           completedAt: willFinish ? serverTimestamp() : undefined
         });
         // fetch server state and render next after feedback pause
@@ -421,12 +493,17 @@
         if(attemptData.status === 'completed'){
           setTimeout(()=> showFinal(), FEEDBACK_DELAY_MS);
         } else {
-          setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, FEEDBACK_DELAY_MS);
+          setTimeout(()=> { renderCurrentQuestion();
+            // compute timeLeft from stored carryover
+            timeLeft = computeTimeLeftFromAttempt(attemptData);
+            if(timeLeft <= 0) timeLeft = 1;
+            startTimer();
+          }, FEEDBACK_DELAY_MS);
         }
         return;
       } catch (e) { console.warn('updateDoc append failed', e); }
 
-      // transaction fallback
+      // transaction fallback (same fields)
       try {
         await runTransaction(db, async (tx) => {
           const snap = await tx.get(attemptRef);
@@ -436,7 +513,8 @@
             answers: arrayUnion(answerObj),
             currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1),
             status: willFinish ? 'completed' : 'in_progress',
-            questionStartAt: willFinish ? null : serverTimestamp(),
+            questionTimeLeftMs: willFinish ? 0 : carryMs,
+            questionTimeLeftUpdatedAt: willFinish ? null : serverTimestamp(),
             completedAt: willFinish ? serverTimestamp() : undefined
           });
         });
@@ -446,33 +524,34 @@
         if(attemptData.status === 'completed'){
           setTimeout(()=> showFinal(), FEEDBACK_DELAY_MS);
         } else {
-          setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, FEEDBACK_DELAY_MS);
+          setTimeout(()=> { renderCurrentQuestion();
+            timeLeft = computeTimeLeftFromAttempt(attemptData);
+            if(timeLeft <= 0) timeLeft = 1;
+            startTimer();
+          }, FEEDBACK_DELAY_MS);
         }
         return;
       } catch(e){ console.warn('transaction failed', e); }
 
       // Local queue fallback: update local attemptData optimistically and advance UI after feedback pause
-      queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1), status: willFinish ? 'completed' : 'in_progress' });
+      queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1), status: willFinish ? 'completed' : 'in_progress', questionTimeLeftMs: willFinish ? 0 : carryMs });
       attemptData = attemptData || {};
       attemptData.score = newScore;
       attemptData.currentIndex = willFinish ? QUESTIONS_COUNT : (idx+1);
       attemptData.status = willFinish ? 'completed' : 'in_progress';
+      attemptData.questionTimeLeftMs = willFinish ? 0 : carryMs;
+      attemptData.questionTimeLeftUpdatedAt = null; // local only
       applyAnswerFeedback(selectedIndex, q, correct, true);
       renderTracker();
       if(attemptData.status === 'completed'){
         setTimeout(()=> showFinal(), FEEDBACK_DELAY_MS);
       } else {
-        setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, FEEDBACK_DELAY_MS);
+        setTimeout(()=> { renderCurrentQuestion();
+          timeLeft = computeTimeLeftFromAttempt(attemptData);
+          if(timeLeft <= 0) timeLeft = 1;
+          startTimer();
+        }, FEEDBACK_DELAY_MS);
       }
-    }
-
-    function computeAndStartTimer(){
-      const qsa = attemptData && attemptData.questionStartAt;
-      let elapsed = 0;
-      if(qsa && qsa.seconds) elapsed = Math.floor(Date.now()/1000) - qsa.seconds;
-      timeLeft = TIME_PER_QUESTION - (elapsed % TIME_PER_QUESTION);
-      if(timeLeft <= 0) timeLeft = TIME_PER_QUESTION;
-      startTimer();
     }
 
     function applyAnswerFeedback(selectedIndex, q, correct, queued=false){
@@ -499,13 +578,17 @@
       questionArea.appendChild(fb);
       renderTracker();
 
+      // For timeout we do NOT carry remaining time (next question starts with full TIME_PER_QUESTION)
+      const nextLeftMs = willFinish ? 0 : TIME_PER_QUESTION*1000;
+
       try {
         await updateDoc(attemptRef, {
           score: newScore,
           answers: arrayUnion(answerObj),
           currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1),
           status: willFinish ? 'completed' : 'in_progress',
-          questionStartAt: willFinish ? null : serverTimestamp(),
+          questionTimeLeftMs: nextLeftMs,
+          questionTimeLeftUpdatedAt: willFinish ? null : serverTimestamp(),
           completedAt: willFinish ? serverTimestamp() : undefined
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
@@ -513,7 +596,7 @@
         if(attemptData.status === 'completed'){
           setTimeout(()=> showFinal(), TIMEOUT_FEEDBACK_MS);
         } else {
-          setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, TIMEOUT_FEEDBACK_MS);
+          setTimeout(()=> { renderCurrentQuestion(); timeLeft = computeTimeLeftFromAttempt(attemptData); if(timeLeft<=0) timeLeft=1; startTimer(); }, TIMEOUT_FEEDBACK_MS);
         }
         return;
       } catch(e){ console.warn('timeout update failed', e); }
@@ -526,7 +609,8 @@
             answers: arrayUnion(answerObj),
             currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1),
             status: willFinish ? 'completed' : 'in_progress',
-            questionStartAt: willFinish ? null : serverTimestamp(),
+            questionTimeLeftMs: nextLeftMs,
+            questionTimeLeftUpdatedAt: willFinish ? null : serverTimestamp(),
             completedAt: willFinish ? serverTimestamp() : undefined
           });
         });
@@ -534,26 +618,24 @@
         if(attemptData.status === 'completed'){
           setTimeout(()=> showFinal(), TIMEOUT_FEEDBACK_MS);
         } else {
-          setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, TIMEOUT_FEEDBACK_MS);
+          setTimeout(()=> { renderCurrentQuestion(); timeLeft = computeTimeLeftFromAttempt(attemptData); if(timeLeft<=0) timeLeft=1; startTimer(); }, TIMEOUT_FEEDBACK_MS);
         }
         return;
       } catch(e){ console.warn('timeout tx failed', e); }
 
       // queue locally and optimistically advance after delay
-      queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1), status: willFinish ? 'completed' : 'in_progress' });
+      queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1), status: willFinish ? 'completed' : 'in_progress', questionTimeLeftMs: nextLeftMs });
       attemptData = attemptData || {};
       attemptData.score = newScore;
       attemptData.currentIndex = willFinish ? QUESTIONS_COUNT : (idx+1);
       attemptData.status = willFinish ? 'completed' : 'in_progress';
+      attemptData.questionTimeLeftMs = nextLeftMs;
+      attemptData.questionTimeLeftUpdatedAt = null;
       if(attemptData.status === 'completed'){
         setTimeout(()=> showFinal(), TIMEOUT_FEEDBACK_MS);
       } else {
-        setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, TIMEOUT_FEEDBACK_MS);
+        setTimeout(()=> { renderCurrentQuestion(); timeLeft = computeTimeLeftFromAttempt(attemptData); if(timeLeft<=0) timeLeft=1; startTimer(); }, TIMEOUT_FEEDBACK_MS);
       }
-    }
-
-    function queuePendingAnswer(item){
-      try { const key = pendingKey(); if(!key) return; const raw = localStorage.getItem(key); const list = raw ? JSON.parse(raw) : []; list.push(item); localStorage.setItem(key, JSON.stringify(list)); } catch(e){ console.warn('queue failed', e); }
     }
 
     endBtn.addEventListener('click', async () => {
@@ -570,7 +652,7 @@
     closeBtn.addEventListener('click', ()=> resultCard.classList.add('hidden'));
 
     function localKey(){ return currentUser ? `bw_quiz_snap_${QUIZ_ID}_${currentUser.uid}` : null; }
-    function saveLocalSnapshot(){ try { const key = localKey(); if(!key || !attemptData || !attemptRef) return; const payload = { attemptId: attemptRef.id, currentIndex: attemptData.currentIndex, score: attemptData.score, status: attemptData.status, questionStartAtMs: attemptData.questionStartAt && attemptData.questionStartAt.seconds ? attemptData.questionStartAt.seconds*1000 : Date.now() }; localStorage.setItem(key, JSON.stringify(payload)); } catch(e){} }
+    function saveLocalSnapshot(){ try { const key = localKey(); if(!key || !attemptData || !attemptRef) return; const payload = { attemptId: attemptRef.id, currentIndex: attemptData.currentIndex, score: attemptData.score, status: attemptData.status, questionTimeLeftMs: attemptData.questionTimeLeftMs, questionTimeLeftUpdatedAtMs: attemptData.questionTimeLeftUpdatedAt && attemptData.questionTimeLeftUpdatedAt.seconds ? attemptData.questionTimeLeftUpdatedAt.seconds*1000 : Date.now() }; localStorage.setItem(key, JSON.stringify(payload)); } catch(e){} }
     function clearLocalSnapshot(){ try { const k = localKey(); if(k) localStorage.removeItem(k); } catch(e){} }
 
     async function loadAttemptsNote(){ try { if(!currentUser) { attemptsNote.textContent = 'Sign in to track attempts.'; return; } const col = collection(db,'quizAttempts'); const q = query(col, where('quizId','==', QUIZ_ID), where('userId','==', currentUser.uid), where('status','==','completed'), limit(10)); const snaps = await getDocs(q); attemptsNote.textContent = `Completed attempts: ${snaps.size}`; } catch(e){ attemptsNote.textContent = 'Could not load attempts count'; } }
