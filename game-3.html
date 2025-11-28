@@ -25,8 +25,10 @@
     .left{flex:1;min-width:360px}
     .right{width:320px;min-width:280px}
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.02)}
+    /* 4 columns x 5 rows fits 20 tiles */
     .board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
-    .tile{aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:grid;place-items:center;font-weight:800;font-size:22px;cursor:pointer;user-select:none;position:relative;border:2px solid rgba(255,255,255,0.03)}
+    .tile{aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:grid;place-items:center;font-weight:800;font-size:22px;cursor:pointer;user-select:none;position:relative;border:2px solid rgba(255,255,255,0.03);transition:transform .14s ease}
+    .tile:hover{transform:translateY(-4px)}
     .tile.flipped{background:linear-gradient(90deg,#fff,#fff0);color:#041219}
     .tile.matched{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.6);color:#041219;cursor:default}
     .hud{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:8px}
@@ -36,6 +38,11 @@
     .center{display:flex;align-items:center;justify-content:center}
     .modal{position:fixed;left:0;top:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);z-index:9999}
     .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:16px;border-radius:12px;min-width:300px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+    /* music controls */
+    .music-controls{display:flex;gap:8px;align-items:center;margin-left:6px}
+    .icon-btn{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,0.02);cursor:pointer;font-weight:800}
+    .volume{width:120px}
+    @media(max-width:720px){ .board{grid-template-columns:repeat(4,1fr); } } /* keeps 4 columns on mobile too */
   </style>
 </head>
 <body>
@@ -54,6 +61,13 @@
           <div class="muted">Balance</div>
           <div id="balance" style="font-weight:800">₦0.00</div>
         </div>
+
+        <!-- Music controls -->
+        <div class="music-controls" title="Music controls" aria-hidden="false">
+          <div id="musicToggle" class="icon-btn" aria-pressed="false" role="button" title="Toggle music">♪</div>
+          <input id="vol" class="volume" type="range" min="0" max="1" step="0.05" value="0.45" aria-label="music volume">
+        </div>
+
         <button id="playBtn" class="btn">Play (₦20)</button>
         <button id="backBtn" class="btn ghost">Back</button>
       </div>
@@ -98,6 +112,14 @@
       </div>
     </div>
   </div>
+
+  <!-- hidden looping background audio (replace src with your preferred track) -->
+  <!-- Important: user interaction (Play button or music toggle) will call .play() so browsers allow sound -->
+  <audio id="bgMusic" loop crossorigin="anonymous">
+    <!-- Replace the src below with your hosted MP3 or local path (e.g. /assets/music/ambient.mp3) -->
+    <source src="music/ambient-loop.mp3" type="audio/mpeg">
+    <!-- Fallback silent file helps avoid errors on missing file; replace as needed -->
+  </audio>
 
   <!-- result modal -->
   <div id="modal" class="modal" role="dialog" aria-modal="true">
@@ -145,6 +167,13 @@
     const modalClose = document.getElementById('modalClose');
     const gameNote = document.getElementById('gameNote');
 
+    // music UI
+    const bgMusic = document.getElementById('bgMusic');
+    const musicToggle = document.getElementById('musicToggle');
+    const volSlider = document.getElementById('vol');
+    const MUSIC_KEY = 'bw_music_enabled_v1';
+    const MUSIC_VOL_KEY = 'bw_music_vol_v1';
+
     // constants
     const ENTRY_FEE = 20;
     const WIN_REWARD = 50;
@@ -160,7 +189,7 @@
     let playerScore = 0;
     let botScore = 0;
     let turn = 'none'; // 'player' or 'bot'
-    let botMemory = {}; // value -> array of indices where seen and not matched
+    let botMemory = {}; // value -> set of indices where seen and not matched
     let remainingPairs = 0;
 
     // helpers
@@ -171,10 +200,55 @@
       d.innerHTML = msg;
       if(gamelog.firstChild && gamelog.firstChild.className === 'muted') gamelog.innerHTML = '';
       gamelog.prepend(d);
-      // cap
       while(gamelog.children.length > 120) gamelog.removeChild(gamelog.lastChild);
     }
     function setStatus(text){ turnIndicator.textContent = text; }
+
+    // MUSIC: init from localStorage
+    function initMusicControls(){
+      const enabled = localStorage.getItem(MUSIC_KEY) !== '0'; // default true
+      musicToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+      musicToggle.textContent = enabled ? '♫' : '♪';
+      const vol = Number(localStorage.getItem(MUSIC_VOL_KEY) || volSlider.value);
+      volSlider.value = vol;
+      bgMusic.volume = vol;
+      if(enabled){
+        musicToggle.classList.add('active');
+      } else {
+        musicToggle.classList.remove('active');
+      }
+    }
+
+    musicToggle.addEventListener('click', async () => {
+      const isOn = localStorage.getItem(MUSIC_KEY) !== '0';
+      if(isOn){
+        // turn off
+        localStorage.setItem(MUSIC_KEY, '0');
+        try{ bgMusic.pause(); }catch(e){}
+        musicToggle.setAttribute('aria-pressed','false'); musicToggle.textContent = '♪';
+      } else {
+        // turn on
+        localStorage.setItem(MUSIC_KEY, '1');
+        try{ await bgMusic.play(); }catch(e){ /* play may fail if no user gesture — but Play button will start */ }
+        musicToggle.setAttribute('aria-pressed','true'); musicToggle.textContent = '♫';
+      }
+    });
+
+    volSlider.addEventListener('input', (e) => {
+      const v = Number(e.target.value);
+      bgMusic.volume = v;
+      localStorage.setItem(MUSIC_VOL_KEY, String(v));
+    });
+
+    // try to start music on first user Play action or toggle
+    async function tryStartMusicOnUserGesture(){
+      if(localStorage.getItem(MUSIC_KEY) === '0') return; // user disabled
+      try {
+        await bgMusic.play();
+      } catch(e){
+        // ignore — will be retried on next gesture
+      }
+    }
 
     // fetch & display balance (best-effort)
     async function refreshBalanceDisplay(){
@@ -194,13 +268,11 @@
       balanceEl.textContent = formatN(userBalance);
     }
 
-    // create shuffled tiles with N pairs (default 8 tiles -> 4 pairs or 12 -> 6 pairs)
-    function setupTiles(pairs = 6){
-      // create values as simple emojis or letters for clarity
-      const values = ['🍎','🍌','🍇','🍒','🍋','🍉','🍓','🍍','🍑','🥝','🥭','🍐','🌽','🥕'];
+    // create shuffled tiles with N pairs (default 10 pairs -> 20 tiles)
+    function setupTiles(pairs = 10){
+      const values = ['🍎','🍌','🍇','🍒','🍋','🍉','🍓','🍍','🍑','🥝','🥭','🍐','🌽','🥕','🥔','🥦','🍠','🍆','🍅','🥥'];
       const use = values.slice(0,pairs);
       const paired = [...use, ...use];
-      // shuffle
       for(let i = paired.length -1; i>0; i--){
         const j = Math.floor(Math.random() * (i+1));
         [paired[i], paired[j]] = [paired[j], paired[i]];
@@ -241,7 +313,6 @@
       const idx = Number(e.currentTarget.dataset.index);
       const tile = tiles[idx];
       if(tile.flipped || tile.matched) return;
-
       flipTile(idx, 'player');
     }
 
@@ -249,14 +320,12 @@
       const tile = tiles[idx];
       tile.flipped = true;
       renderBoard();
-      // remember for bot memory if human flips
       if(by === 'player' || by === 'bot'){
         if(!tile.matched){
           botMemory[tile.value] = botMemory[tile.value] || new Set();
           botMemory[tile.value].add(idx);
         }
       }
-
       if(firstFlip === null){ firstFlip = idx; return; }
       if(secondFlip === null && idx !== firstFlip){ secondFlip = idx; lockBoard = true; checkMatch(by); }
     }
@@ -266,17 +335,15 @@
       const b = tiles[secondFlip];
       const isMatch = a.value === b.value;
       if(isMatch){
-        // mark matched
         a.matched = b.matched = true;
         remainingPairs--;
         if(by === 'player') { playerScore++; log(`<div>You matched ${a.value} — +1</div>`); } 
         else { botScore++; log(`<div style="color:orange">Bot matched ${a.value} — +1</div>`); }
-
-        // remove matched indices from bot memory
-        if(botMemory[a.value]) { botMemory[a.value].delete(firstFlip); botMemory[a.value].delete(secondFlip); if(botMemory[a.value].size===0) delete botMemory[a.value]; }
-
+        if(botMemory[a.value]){
+          botMemory[a.value].delete(firstFlip); botMemory[a.value].delete(secondFlip);
+          if(botMemory[a.value].size===0) delete botMemory[a.value];
+        }
         updateScores();
-        // reset flips after short pause then continue same player's turn (matches give extra turn)
         setTimeout(()=> {
           firstFlip = null; secondFlip = null; lockBoard = false;
           renderBoard();
@@ -286,21 +353,18 @@
           }
         }, 900);
       } else {
-        // not matched — show for a short while then flip back
         if(by === 'player') log(`<div>Wrong — ${a.value} ≠ ${b.value}</div>`); else log(`<div style="color:orange">Bot missed — ${a.value} ≠ ${b.value}</div>`);
         setTimeout(()=> {
           a.flipped = false; b.flipped = false;
-          // bot memory: both seen but not matched (they already added on flip)
           firstFlip = null; secondFlip = null;
           renderBoard();
-          // switch turn
           if(by === 'player'){ turn = 'bot'; setStatus("Bot's turn"); botTurn(); } else { turn = 'player'; setStatus("Your turn"); }
           lockBoard = false;
         }, 900);
       }
     }
 
-    // BOT logic: medium-smart bot with memory
+    // BOT logic
     async function botTurn(){
       if(remainingPairs <= 0) return;
       turn = 'bot';
@@ -308,24 +372,19 @@
       setStatus("Bot is thinking...");
       await sleep(600);
 
-      // 1) if bot knows a matching pair from memory, pick it
       for(const val in botMemory){
         const idxs = Array.from(botMemory[val]);
-        // remove already matched indices
         const usable = idxs.filter(i => !tiles[i].matched);
         if(usable.length >= 2){
-          // pick first two
           await botFlipSequence(usable[0], usable[1]);
           return;
         }
       }
 
-      // 2) If bot knows one index of a value, flip it then try to find its match by scanning unseen tiles
       for(const val in botMemory){
         const idxs = Array.from(botMemory[val]).filter(i=> !tiles[i].matched);
         if(idxs.length === 1){
           const knownIdx = idxs[0];
-          // pick a random unrevealed tile which is not knownIdx and not matched
           const candidate = tiles.map((t,i)=> i).filter(i=> !tiles[i].matched && i !== knownIdx && !tiles[i].flipped);
           if(candidate.length>0){
             const pick = candidate[Math.floor(Math.random()*candidate.length)];
@@ -335,23 +394,17 @@
         }
       }
 
-      // 3) Otherwise pick two random unrevealed tiles (random but avoid ones already seen if possible)
       const unseen = tiles.map((t,i)=> i).filter(i => !tiles[i].matched && !tiles[i].flipped);
-      if(unseen.length === 0){ // defensive
-        turn = 'player'; lockBoard = false; setStatus("Your turn"); return;
-      }
-      // try to prioritize tiles bot hasn't seen (not present in memory)
+      if(unseen.length === 0){ turn = 'player'; lockBoard = false; setStatus("Your turn"); return; }
       const notSeen = unseen.filter(i => {
         const v = tiles[i].value; return !botMemory[v] || botMemory[v].size === 0;
       });
       let pickA, pickB;
       if(notSeen.length >= 2){
         pickA = notSeen[Math.floor(Math.random()*notSeen.length)];
-        // remove pickA for pickB selection
         const rem = notSeen.filter(i=> i !== pickA);
         pickB = rem[Math.floor(Math.random()*rem.length)];
       } else {
-        // fallback: any two unseen
         pickA = unseen[Math.floor(Math.random()*unseen.length)];
         const rem = unseen.filter(i => i !== pickA);
         pickB = rem[Math.floor(Math.random()*rem.length)];
@@ -359,35 +412,26 @@
       await botFlipSequence(pickA, pickB);
     }
 
-    // bot flipping sequence (reveals one, waits, reveals second)
     async function botFlipSequence(i1, i2){
       await sleep(350);
       flipTile(i1, 'bot');
       await sleep(700);
       flipTile(i2, 'bot');
-      // checkMatch is triggered automatically since flipTile sets secondFlip and lockBoard
-      // but ensure checkMatch has time to run — function flow will handle it
     }
 
-    // helper
     function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-    // game completion
     async function finishGame(){
       lockBoard = true;
       setStatus('Game complete');
       log(`<div style="font-weight:900">Final — You: ${playerScore} — Bot: ${botScore}</div>`);
-      // create or update server game doc to completed and credit if player won
-      // if no server-side game was created earlier (should be created at Play), still attempt credit/deduction logic accurately
       const didUserWin = playerScore > botScore;
       if(didUserWin){
-        // credit WIN_REWARD to player via transaction
         setStatus('You won — crediting reward...');
         try {
           await runTransaction(db, async (tx) => {
             const uRef = doc(db, 'users', currentUser.uid);
             const bRef = doc(db, 'balances', currentUser.uid);
-            // get both to decide which exists
             const uSnap = await tx.get(uRef);
             const bSnap = await tx.get(bRef);
             let balance = 0;
@@ -401,10 +445,8 @@
             } else {
               balance = 0; targetRef = uRef;
             }
-            // credit
             const newBal = balance + WIN_REWARD;
             tx.set(targetRef, { balance: newBal }, { merge: true });
-            // record game doc if available: memoryGames/{id}
             if(gameIdRef){
               const gRef = doc(db, 'memoryGames', gameIdRef.id);
               tx.set(gRef, {
@@ -424,7 +466,6 @@
           log(`<div style="color:orange">Failed to credit reward: ${err.message || err}</div>`);
         }
       } else {
-        // no reward; just update game doc if any
         if(gameIdRef){
           try {
             await setDoc(doc(db, 'memoryGames', gameIdRef.id), {
@@ -435,13 +476,10 @@
               botScore,
               completedAt: serverTimestamp()
             }, { merge: true });
-          } catch(e){
-            console.warn('update game doc failed', e);
-          }
+          } catch(e){ console.warn('update game doc failed', e); }
         }
       }
 
-      // show modal summary
       modalTitle.textContent = didUserWin ? 'You won!' : (playerScore === botScore ? 'Draw' : 'You lost');
       modalBody.innerHTML = `Final score — You: <strong>${playerScore}</strong> • Bot: <strong>${botScore}</strong>${didUserWin ? `<div style="margin-top:8px;color:lightgreen">₦${WIN_REWARD} credited to your account.</div>` : ''}`;
       modal.style.display = 'flex';
@@ -449,7 +487,7 @@
       turn = 'none';
     }
 
-    // Play button: charge entry fee and create memoryGames doc inside transaction
+    // Play: charge entry fee and create memoryGames doc inside transaction
     playBtn.addEventListener('click', async () => {
       if(!currentUser){ alert('Sign in on the main site first.'); return; }
       if(!confirm(`Start a Memory game? ₦${ENTRY_FEE} will be deducted.`)) return;
@@ -457,16 +495,14 @@
       playBtn.disabled = true;
       gameNote.textContent = 'Charging entry fee...';
 
-      // prepare doc ref for this game record
       const gamesCol = collection(db, 'memoryGames');
       const newGameRef = doc(gamesCol);
-      gameIdRef = newGameRef; // keep locally so we can update on finish
+      gameIdRef = newGameRef;
 
       try {
         await runTransaction(db, async (tx) => {
           const uRef = doc(db, 'users', currentUser.uid);
           const bRef = doc(db, 'balances', currentUser.uid);
-          // read both first
           const uSnap = await tx.get(uRef);
           const bSnap = await tx.get(bRef);
           let balance = 0;
@@ -482,7 +518,6 @@
           }
           if(balance < ENTRY_FEE) throw new Error('insufficient-funds');
           const newBal = balance - ENTRY_FEE;
-          // now perform writes (after reads)
           tx.set(targetRef, { balance: newBal }, { merge: true });
           tx.set(newGameRef, {
             userId: currentUser.uid,
@@ -492,10 +527,11 @@
           });
         });
 
-        // success: update local UI balance and start the game
         await refreshBalanceDisplay();
         gameNote.textContent = 'Game in progress';
-        setupTiles(6); // 6 pairs => 12 tiles
+        setupTiles(10); // 10 pairs => 20 tiles
+        // start music if enabled
+        tryStartMusicOnUserGesture();
         playBtn.disabled = false;
       } catch(err){
         console.error('entry charge failed', err);
@@ -510,7 +546,7 @@
     // restart (local)
     restartBtn.addEventListener('click', ()=>{
       if(!confirm('Restart the board? This will not refund entry fee.')) return;
-      setupTiles(6);
+      setupTiles(10);
     });
 
     // back
@@ -519,10 +555,11 @@
     // modal close
     modalClose.addEventListener('click', ()=> { modal.style.display = 'none'; });
 
-    // onAuth set currentUser and refresh balance
+    // auth
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       await refreshBalanceDisplay();
+      initMusicControls();
       if(!user) {
         setStatus('Sign in on the main site to play');
         playBtn.disabled = true;
@@ -532,15 +569,29 @@
       }
     });
 
-    // initialize empty board disabled until play
+    // initialize empty 20-tile board disabled until play
     (function initEmpty(){
       boardEl.innerHTML = '';
-      for(let i=0;i<12;i++){
+      for(let i=0;i<20;i++){
         const el = document.createElement('div'); el.className='tile'; el.innerHTML = '<div style="font-size:18px;color:var(--muted)">?</div>';
         boardEl.appendChild(el);
       }
       playerScore = 0; botScore = 0; updateScores();
     })();
+
+    // on unload persist music volume & enabled
+    window.addEventListener('beforeunload', ()=> {
+      localStorage.setItem(MUSIC_VOL_KEY, String(bgMusic.volume));
+      const enabled = musicToggle.getAttribute('aria-pressed') === 'true';
+      localStorage.setItem(MUSIC_KEY, enabled ? '1' : '0');
+    });
+
+    // attempt to set bgMusic volume from storage at runtime start
+    try {
+      const vol = Number(localStorage.getItem(MUSIC_VOL_KEY) || volSlider.value);
+      volSlider.value = vol;
+      bgMusic.volume = vol;
+    } catch(e){ /* ignore */ }
 
   </script>
 </body>
