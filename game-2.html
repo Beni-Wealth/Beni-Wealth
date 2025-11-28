@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Spin the Wheel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg-1:#071021; --bg-2:#0d1224; --muted:rgba(255,255,255,0.66); --text:#eaf2ff;
+      --accent:#7a5fff; --success:#10b981; --danger:#ef4444;
+      font-family:"Poppins",system-ui,Segoe UI,Roboto,Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.06), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text);}
+    .wrap{max-width:980px;margin:28px auto;padding:20px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:16px; border:1px solid rgba(255,255,255,0.02)}
+    header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#35d6b1);display:grid;place-items:center;color:#041219;font-weight:800}
+    h1{margin:0;font-size:18px}
+    .muted{color:var(--muted);font-size:13px}
+    .controls{display:flex;gap:12px;align-items:center}
+    .btn{background:linear-gradient(90deg,var(--accent),#35d6b1); border:0;padding:10px 14px;border-radius:10px;color:#041219;font-weight:800;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06); color:var(--text)}
+    .layout{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px}
+    .left{flex:1;min-width:320px;display:flex;flex-direction:column;align-items:center;gap:12px}
+    .right{width:340px;min-width:280px}
+    canvas#wheel{width:320px;height:320px;border-radius:50%;background:transparent;touch-action:none}
+    .pointer{position:relative;width:320px;display:flex;justify-content:center;align-items:center}
+    .needle{position:absolute;top:8px;width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:32px solid #fffb;filter:drop-shadow(0 6px 12px rgba(0,0,0,0.5))}
+    .status{margin-top:8px;font-weight:700}
+    .balance{font-weight:800;font-size:20px}
+    .log{margin-top:12px;max-height:200px;overflow:auto;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);font-size:13px}
+    .modal{position:fixed;left:0;top:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);z-index:9999}
+    .modal .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:18px;border-radius:12px;min-width:300px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+    .result-amount{font-weight:900;font-size:28px;margin:12px 0}
+    .muted-note{color:var(--muted);font-size:13px;margin-top:6px}
+    @media(max-width:880px){ .layout{flex-direction:column;align-items:center} .right{width:100%} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">BW</div>
+        <div>
+          <h1>Spin the Wheel</h1>
+          <div class="muted">Cost: ₦10 per spin — prizes on the wheel</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div style="text-align:right">
+          <div class="muted">Balance</div>
+          <div class="balance" id="balance">₦0.00</div>
+        </div>
+        <button id="playBtn" class="btn">Play (₦10)</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <div class="left card">
+        <div class="pointer" aria-hidden="true">
+          <div class="needle" id="needle" style="transform: translateY(-10px)"></div>
+          <canvas id="wheel" width="640" height="640" role="img" aria-label="Prize wheel"></canvas>
+        </div>
+        <div class="status" id="status">Ready to play</div>
+        <div class="muted-note">Wheel weighted: ₦100 (5%) • ₦50 (10%) • ₦20 (30%) • ₦5 (25%) • ₦0 (30%)</div>
+      </div>
+
+      <div class="right">
+        <div class="card">
+          <div style="font-weight:900">Recent spins</div>
+          <div id="recentLog" class="log"><div class="muted">No spins yet</div></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div style="font-weight:900">How it works</div>
+          <div class="muted-note">Each play deducts ₦10. After deduction the wheel spins and the win (if any) is credited to your account. Transactions are recorded in Firestore.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- result modal -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true">
+    <div class="panel">
+      <div id="modalText" style="font-weight:800">You won</div>
+      <div class="result-amount" id="modalAmount">₦0</div>
+      <div id="modalBalance" class="muted-note">Updated balance: ₦0</div>
+      <div style="margin-top:12px"><button id="closeModal" class="btn">Close</button></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Firebase (same as yours)
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, runTransaction, serverTimestamp, collection, setDoc
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI refs
+    const canvas = document.getElementById('wheel');
+    const playBtn = document.getElementById('playBtn');
+    const statusEl = document.getElementById('status');
+    const balanceEl = document.getElementById('balance');
+    const recentLog = document.getElementById('recentLog');
+    const modal = document.getElementById('modal');
+    const modalAmount = document.getElementById('modalAmount');
+    const modalText = document.getElementById('modalText');
+    const modalBalance = document.getElementById('modalBalance');
+    const closeModal = document.getElementById('closeModal');
+    const needle = document.getElementById('needle');
+
+    // wheel configuration
+    const SEGMENTS = [
+      { label: '₦100', value: 100, prob: 0.05, color: '#ffd700' }, // 5%
+      { label: '₦50',  value: 50,  prob: 0.10, color: '#c0c0c0' }, // 10%
+      { label: '₦20',  value: 20,  prob: 0.30, color: '#ffe4b5' }, // 30%
+      { label: '₦5',   value: 5,   prob: 0.25, color: '#a7f3d0' }, // 25%
+      { label: '₦0',   value: 0,   prob: 0.30, color: '#f3f4f6' }  // 30%
+    ];
+    const COST = 10;
+
+    // wallet user state
+    let currentUser = null;
+    let userDocRef = null;
+    let balancesDocRef = null; // fallback
+    let activeDocRef = null;   // whichever we will update in transactions (users/{uid} or balances/{uid})
+    let userBalance = 0;
+
+    // canvas drawing (proportional sectors)
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    const cx = W/2, cy = H/2, radius = Math.min(W,H)/2 - 10;
+
+    function drawWheel(rotation = 0){
+      // rotation in degrees for drawing orientation offset
+      ctx.clearRect(0,0,W,H);
+      const totalProb = SEGMENTS.reduce((s,seg)=>s+seg.prob,0);
+      let startAngle = -Math.PI/2 + (rotation * Math.PI/180); // start at top
+      for(const seg of SEGMENTS){
+        const angle = (seg.prob/totalProb) * Math.PI*2;
+        ctx.beginPath();
+        ctx.moveTo(cx,cy);
+        ctx.arc(cx,cy, radius, startAngle, startAngle + angle, false);
+        ctx.closePath();
+        ctx.fillStyle = seg.color;
+        ctx.fill();
+        // label
+        const mid = startAngle + angle/2;
+        const tx = cx + Math.cos(mid) * (radius * 0.6);
+        const ty = cy + Math.sin(mid) * (radius * 0.6);
+        ctx.save();
+        ctx.translate(tx,ty);
+        ctx.rotate(mid + Math.PI/2);
+        ctx.fillStyle = '#041219';
+        ctx.font = 'bold 18px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(seg.label, 0, 0);
+        ctx.restore();
+        startAngle += angle;
+      }
+      // center circle
+      ctx.beginPath();
+      ctx.arc(cx,cy,50,0,Math.PI*2);
+      ctx.fillStyle = 'rgba(255,255,255,0.95)';
+      ctx.fill();
+      ctx.fillStyle = '#041219';
+      ctx.font = '700 14px Poppins, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('SPIN', cx, cy+6);
+    }
+
+    // on load draw static wheel
+    drawWheel(0);
+
+    // helper: pick a segment index based on weighted probs
+    function pickSegmentIndex(){
+      const r = Math.random();
+      let cum = 0;
+      for(let i=0;i<SEGMENTS.length;i++){
+        cum += SEGMENTS[i].prob;
+        if(r < cum) return i;
+      }
+      return SEGMENTS.length - 1;
+    }
+
+    // compute target rotation degrees so that segment center lands at top (needle)
+    function computeRotationToIndex(index){
+      // compute cumulative angle ranges to get center angle
+      const totalProb = SEGMENTS.reduce((s,seg)=>s+seg.prob,0);
+      let acc = 0;
+      for(let i=0;i<index;i++) acc += SEGMENTS[i].prob;
+      const seg = SEGMENTS[index];
+      const startFrac = acc / totalProb;
+      const endFrac = (acc + seg.prob) / totalProb;
+      const centerFrac = (startFrac + endFrac) / 2;
+      const centerAngleDeg = centerFrac * 360; // fraction -> degrees, measured clockwise from top
+      // we want wheel rotation (clockwise) so that centerAngleDeg maps to top (0deg).
+      // finalRotation = fullSpins*360 + (360 - centerAngleDeg) + random jitter within segment half-angle
+      const segAngleDeg = seg.prob / totalProb * 360;
+      const jitter = (Math.random() - 0.5) * (segAngleDeg * 0.6); // avoid edge
+      const fullSpins = Math.floor(Math.random()*3) + 4; // 4..6 spins for drama
+      const finalRotation = fullSpins * 360 + (360 - centerAngleDeg) + jitter;
+      return finalRotation;
+    }
+
+    // animate CSS transform of canvas parent wrapper
+    let spinning = false;
+    let currentRotation = 0;
+
+    function animateSpin(finalDeg, durationMs = 5200){
+      return new Promise((resolve) => {
+        const start = performance.now();
+        const initial = currentRotation % 360;
+        const delta = finalDeg - initial;
+        spinning = true;
+        statusEl.textContent = 'Spinning...';
+        function step(now){
+          const t = Math.min(1, (now - start)/durationMs);
+          // ease out cubic
+          const ease = 1 - Math.pow(1 - t, 3);
+          const rot = initial + delta * ease;
+          currentRotation = rot;
+          // draw with rotation
+          drawWheel(rot);
+          if(t < 1){
+            requestAnimationFrame(step);
+          } else {
+            spinning = false;
+            resolve();
+          }
+        }
+        requestAnimationFrame(step);
+      });
+    }
+
+    // format naira
+    function formatN(n){ return '₦' + Number(n||0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+    // show modal
+    function showResultModal(amount, newBalance){
+      modalAmount.textContent = formatN(amount);
+      modalText.textContent = amount > 0 ? 'You won' : 'No win this time';
+      modalBalance.textContent = 'Updated balance: ' + formatN(newBalance);
+      modal.style.display = 'flex';
+    }
+
+    closeModal.addEventListener('click', ()=> { modal.style.display='none'; });
+
+    // recent log helper
+    function appendLogLine(html){
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      recentLog.prepend(div);
+      // keep limited lines
+      while(recentLog.children.length > 40) recentLog.removeChild(recentLog.lastChild);
+    }
+
+    // read & show balance (best effort)
+    async function refreshBalanceDisplay(){
+      if(!currentUser) { balanceEl.textContent = formatN(0); return; }
+      try {
+        const uRef = doc(db, 'users', currentUser.uid);
+        const uSnap = await getDoc(uRef);
+        if(uSnap.exists()){
+          const d = uSnap.data();
+          const b = Number(d.balance ?? d.amount ?? 0);
+          userBalance = isFinite(b) ? b : 0; activeDocRef = uRef;
+        } else {
+          const bRef = doc(db, 'balances', currentUser.uid);
+          const bSnap = await getDoc(bRef);
+          if(bSnap.exists()){
+            const d = bSnap.data();
+            const b = Number(d.balance ?? d.amount ?? 0);
+            userBalance = isFinite(b) ? b : 0; activeDocRef = bRef;
+          } else {
+            userBalance = 0;
+            activeDocRef = uRef; // default to users/{uid} for future writes
+          }
+        }
+        balanceEl.textContent = formatN(userBalance);
+      } catch(e){
+        console.warn('refreshBalanceDisplay failed', e);
+        balanceEl.textContent = formatN(userBalance || 0);
+      }
+    }
+
+    // On auth state
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if(!user) {
+        statusEl.textContent = 'Sign in on the main site to play.';
+        playBtn.disabled = true;
+        return;
+      }
+      playBtn.disabled = false;
+      await refreshBalanceDisplay();
+      statusEl.textContent = 'Ready to play';
+    });
+
+    // MAIN flow: Play click
+    playBtn.addEventListener('click', async () => {
+      if(spinning) return;
+      if(!currentUser) return alert('Sign in on the main site first.');
+      if(!confirm('Play will cost ₦10. Continue?')) return;
+
+      playBtn.disabled = true;
+      statusEl.textContent = 'Checking balance & charging...';
+
+      // Prepare a spins doc ref with generated id so we can update it later
+      const spinsCol = collection(db, 'spins');
+      const spinRef = doc(spinsCol); // generated id
+      const spinId = spinRef.id;
+
+      // first transaction: read then deduct COST and create spins/{spinId} doc with status 'charged'
+      try {
+        await runTransaction(db, async (tx) => {
+          const uRef = doc(db, 'users', currentUser.uid);
+          const bRef = doc(db, 'balances', currentUser.uid);
+          const uSnap = await tx.get(uRef);
+          const bSnap = await tx.get(bRef);
+
+          let balance = null;
+          let targetRef = null;
+          if(uSnap.exists()){
+            balance = Number(uSnap.data().balance ?? uSnap.data().amount ?? 0);
+            targetRef = uRef;
+          } else if(bSnap.exists()){
+            balance = Number(bSnap.data().balance ?? bSnap.data().amount ?? 0);
+            targetRef = bRef;
+          } else {
+            balance = 0;
+            targetRef = uRef; // create user doc if missing
+          }
+          if(isNaN(balance)) balance = 0;
+          if(balance < COST) throw new Error('insufficient-funds');
+
+          const newBalance = balance - COST;
+          // write updated balance and a quick lastSpin stub
+          tx.set(targetRef, { balance: newBalance }, { merge: true });
+          // create spins doc inside tx so creation is atomic with deduction
+          tx.set(spinRef, {
+            userId: currentUser.uid,
+            cost: COST,
+            amountWon: null,
+            status: 'charged',
+            createdAt: serverTimestamp()
+          });
+        });
+      } catch(err){
+        console.error('charge transaction failed', err);
+        if(err.message && err.message.includes('insufficient-funds')){
+          alert('Insufficient funds. Please recharge your account.');
+          playBtn.disabled = false;
+          await refreshBalanceDisplay();
+          return;
+        }
+        alert('Could not charge account: ' + (err.message || err));
+        playBtn.disabled = false;
+        await refreshBalanceDisplay();
+        return;
+      }
+
+      // At this point spin doc exists with status 'charged' and cost deducted.
+      statusEl.textContent = 'Spinning the wheel...';
+
+      // client-side pick winner (weighted)
+      const chosenIndex = pickSegmentIndex();
+      const finalDeg = computeRotationToIndex(chosenIndex);
+
+      // animate spin (drawWheel is called on frames)
+      try {
+        await animateSpin(finalDeg, 5200);
+      } catch(e){
+        console.warn('animate error', e);
+      }
+
+      // After spin, determine reward
+      const prize = SEGMENTS[chosenIndex].value;
+
+      // second transaction: credit prize (if > 0) and update spin doc
+      try {
+        await runTransaction(db, async (tx) => {
+          // re-resolve which doc to update for balance
+          const uRef = doc(db, 'users', currentUser.uid);
+          const bRef = doc(db, 'balances', currentUser.uid);
+          const uSnap = await tx.get(uRef);
+          const bSnap = await tx.get(bRef);
+
+          let balance = null;
+          let targetRef = null;
+          if(uSnap.exists()){
+            balance = Number(uSnap.data().balance ?? uSnap.data().amount ?? 0);
+            targetRef = uRef;
+          } else if(bSnap.exists()){
+            balance = Number(bSnap.data().balance ?? bSnap.data().amount ?? 0);
+            targetRef = bRef;
+          } else {
+            // If neither exists we assume we deducted earlier so try to create user doc with -COST + prize
+            balance = 0; targetRef = uRef;
+          }
+          if(isNaN(balance)) balance = 0;
+          const newBalance = balance + prize;
+          tx.set(targetRef, { balance: newBalance }, { merge: true });
+
+          // update spin doc with result
+          const spinDocRef = doc(db, 'spins', spinId);
+          tx.update(spinDocRef, {
+            amountWon: prize,
+            status: 'completed',
+            completedAt: serverTimestamp()
+          });
+        });
+      } catch(err){
+        console.error('credit transaction failed', err);
+        // If crediting failed, we still show user the prize but warn them
+        appendLogLine(`<div style="color:orange">Spin credited locally but failed to update server: ${err.message || err}</div>`);
+      }
+
+      // refresh display balance from server
+      await refreshBalanceDisplay();
+
+      // show result modal & log
+      modalText.textContent = prize > 0 ? 'You won' : 'No win this time';
+      modalAmount.textContent = formatN(prize);
+      modalBalance.textContent = 'Updated balance: ' + formatN(userBalance);
+      modal.style.display = 'flex';
+      appendLogLine(`<div><strong>${formatN(prize)}</strong> — ${new Date().toLocaleString()}</div>`);
+      statusEl.textContent = (prize>0) ? `You won ${formatN(prize)}!` : 'No win this time — better luck next spin.';
+      playBtn.disabled = false;
+    });
+
+    // init: small interval refresh of balance (every 12s) while page open
+    setInterval(() => {
+      if(currentUser) refreshBalanceDisplay().catch(()=>{});
+    }, 12000);
+
+    // initial draw done above
+    // ensure wheel redraw on resize for crispness
+    window.addEventListener('resize', ()=> drawWheel(currentRotation));
+
+  </script>
+</body>
+</html>
