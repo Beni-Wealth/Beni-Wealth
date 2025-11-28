@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Beni-Wealth — Games</title>
+
+  <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
+
+  <!-- Favicons & Social preview (reuse your asset) -->
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="theme-color" content="#2fe0b8">
+
+  <style>
+    :root{
+      --bg-1:#071021; --bg-2:#0d1224;
+      --muted:rgba(255,255,255,0.66);
+      --text:#eaf2ff;
+      --accent-a:#7a5fff; --accent-b:#35d6b1;
+      --accent: linear-gradient(90deg,var(--accent-a),var(--accent-b));
+      font-family: "Poppins", system-ui, Roboto, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.04), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:980px;margin:26px auto;padding:20px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent-a),var(--accent-b));display:grid;place-items:center;color:#041219;font-weight:800;box-shadow:0 10px 30px rgba(58,40,110,0.35)}
+    h1{margin:0;font-size:18px}
+    .muted{color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:18px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:18px; border:1px solid rgba(255,255,255,0.02); display:flex;flex-direction:column;gap:12px;min-height:190px}
+    .card .icon{width:64px;height:64px;border-radius:12px;display:grid;place-items:center;font-weight:800;color:#041219;background:linear-gradient(135deg,var(--accent-a),var(--accent-b));box-shadow:0 10px 30px rgba(58,40,110,0.18)}
+    .card h3{margin:0;font-size:16px}
+    .card p{margin:0;color:var(--muted);font-size:13px;line-height:1.4}
+    .card .actions{margin-top:auto;display:flex;gap:8px;align-items:center;justify-content:flex-end}
+    .btn{background:linear-gradient(90deg,var(--accent-a),var(--accent-b)); border:0;padding:10px 14px;border-radius:10px;color:#041219;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06); color:var(--text)}
+    .subtitle{color:var(--muted);font-size:14px;margin-top:6px}
+    .info-row{display:flex;gap:10px;align-items:center}
+    .small{font-size:12px;color:var(--muted)}
+
+    /* responsive */
+    @media(max-width:920px){ .grid{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:600px){
+      .wrap{padding:14px;margin:12px}
+      .grid{grid-template-columns:1fr;gap:12px}
+      header{gap:8px;align-items:flex-start}
+      .logo{width:48px;height:48px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="main" aria-live="polite">
+    <header>
+      <div class="brand">
+        <div class="logo">BW</div>
+        <div>
+          <h1>Mini-Games</h1>
+          <div class="muted">Quick, fun ways to earn — play and win instantly.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <a href="dashboard.html" class="btn ghost" title="Back to dashboard">Back</a>
+      </div>
+    </header>
+
+    <div class="grid" role="list">
+      <!-- Game 1: Quiz -->
+      <article class="card" role="listitem" aria-labelledby="g1title">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="icon" aria-hidden="true">❓</div>
+          <div>
+            <h3 id="g1title">Quiz</h3>
+            <div class="subtitle">Answer timed questions, earn points for correct answers. Fast and competitive.</div>
+          </div>
+        </div>
+
+        <p class="small">Format: 10-second timer per question. Correct +10 points, wrong -5. Immediate feedback after each question.</p>
+
+        <div class="actions">
+          <a class="btn" href="game-1.html" role="button" aria-label="Open Quiz">Play Quiz →</a>
+        </div>
+      </article>
+
+      <!-- Game 2: Spin the Wheel -->
+      <article class="card" role="listitem" aria-labelledby="g2title">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="icon" aria-hidden="true">🎡</div>
+          <div>
+            <h3 id="g2title">Spin The Wheel</h3>
+            <div class="subtitle">Pay a small fee, spin, and win instant cash prizes or small rewards.</div>
+          </div>
+        </div>
+
+        <p class="small">Each spin costs ₦10. Results are immediate and recorded; recent spins persist locally for quick access.</p>
+
+        <div class="actions">
+          <a class="btn" href="game-2.html" role="button" aria-label="Open Spin the Wheel">Spin Now →</a>
+        </div>
+      </article>
+
+      <!-- Game 3: Memory Flip -->
+      <article class="card" role="listitem" aria-labelledby="g3title">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="icon" aria-hidden="true">🧠</div>
+          <div>
+            <h3 id="g3title">Memory Flip</h3>
+            <div class="subtitle">Flip tiles, find matching pairs — play against a bot and win rewards.</div>
+          </div>
+        </div>
+
+        <p class="small">Entry fee: ₦20. Win the match to receive a ₦50 reward credited automatically to your account.</p>
+
+        <div class="actions">
+          <a class="btn" href="game-3.html" role="button" aria-label="Open Memory Flip">Play Memory →</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</body>
+</html>
