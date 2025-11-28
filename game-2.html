@@ -17,26 +17,28 @@
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:16px; border:1px solid rgba(255,255,255,0.02)}
     header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px}
     .brand{display:flex;gap:12px;align-items:center}
-    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#35d6b1);display:grid;place-items:center;color:#041219;font-weight:800}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#35d6b1);display:grid;place-items:center;color:#041219;font-weight:800;box-shadow:0 10px 30px rgba(58,40,110,0.35)}
     h1{margin:0;font-size:18px}
     .muted{color:var(--muted);font-size:13px}
     .controls{display:flex;gap:12px;align-items:center}
-    .btn{background:linear-gradient(90deg,var(--accent),#35d6b1); border:0;padding:10px 14px;border-radius:10px;color:#041219;font-weight:800;cursor:pointer}
+    .btn{background:linear-gradient(90deg,var(--accent),#35d6b1); border:0;padding:10px 14px;border-radius:10px;color:#041219;font-weight:800;cursor:pointer;box-shadow:0 10px 30px rgba(58,40,110,0.18)}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06); color:var(--text)}
     .layout{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px}
     .left{flex:1;min-width:320px;display:flex;flex-direction:column;align-items:center;gap:12px}
     .right{width:340px;min-width:280px}
-    canvas#wheel{width:320px;height:320px;border-radius:50%;background:transparent;touch-action:none}
-    .pointer{position:relative;width:320px;display:flex;justify-content:center;align-items:center}
-    .needle{position:absolute;top:8px;width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:32px solid #fffb;filter:drop-shadow(0 6px 12px rgba(0,0,0,0.5))}
+    .wheel-wrap{width:320px;height:320px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.008));box-shadow:0 18px 60px rgba(0,0,0,0.6);position:relative}
+    canvas#wheel{width:100%;height:100%;border-radius:50%;touch-action:none;display:block}
+    .pointer{position:relative;width:320px;display:flex;justify-content:center;align-items:center;pointer-events:none}
+    .needle{position:absolute;top:6px;width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-bottom:28px solid #fff;border-radius:6px;filter:drop-shadow(0 6px 18px rgba(0,0,0,0.5));transform-origin:center 60px}
     .status{margin-top:8px;font-weight:700}
     .balance{font-weight:800;font-size:20px}
-    .log{margin-top:12px;max-height:200px;overflow:auto;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);font-size:13px}
-    .modal{position:fixed;left:0;top:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);z-index:9999}
-    .modal .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:18px;border-radius:12px;min-width:300px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+    .log{margin-top:12px;max-height:300px;overflow:auto;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);font-size:13px}
+    .log-item{padding:8px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));display:flex;justify-content:space-between;gap:10px}
+    .modal{position:fixed;left:0;top:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);z-index:9999}
+    .modal .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:18px;border-radius:12px;min-width:300px;text-align:center;border:1px solid rgba(255,255,255,0.03);box-shadow:0 30px 80px rgba(0,0,0,0.6)}
     .result-amount{font-weight:900;font-size:28px;margin:12px 0}
     .muted-note{color:var(--muted);font-size:13px;margin-top:6px}
-    @media(max-width:880px){ .layout{flex-direction:column;align-items:center} .right{width:100%} }
+    @media(max-width:880px){ .layout{flex-direction:column;align-items:center} .right{width:100%} .wheel-wrap,.pointer{width:280px;height:280px} canvas#wheel{width:280px;height:280px} }
   </style>
 </head>
 <body>
@@ -50,7 +52,7 @@
         </div>
       </div>
 
-      <div class="controls">
+      <div class="controls" aria-live="polite">
         <div style="text-align:right">
           <div class="muted">Balance</div>
           <div class="balance" id="balance">₦0.00</div>
@@ -61,23 +63,25 @@
 
     <div class="layout">
       <div class="left card">
-        <div class="pointer" aria-hidden="true">
-          <div class="needle" id="needle" style="transform: translateY(-10px)"></div>
+        <div class="wheel-wrap" aria-hidden="true">
           <canvas id="wheel" width="640" height="640" role="img" aria-label="Prize wheel"></canvas>
         </div>
+        <div class="pointer" aria-hidden="true">
+          <div class="needle" id="needle" style="transform: translateY(-8px)"></div>
+        </div>
         <div class="status" id="status">Ready to play</div>
-        <div class="muted-note">Wheel weighted: ₦100 (5%) • ₦50 (10%) • ₦20 (30%) • ₦5 (25%) • ₦0 (30%)</div>
+        <div class="muted-note" style="max-width:520px;text-align:center">Play to spin — results are immediate and recorded. Recent spins persist on this browser.</div>
       </div>
 
       <div class="right">
         <div class="card">
           <div style="font-weight:900">Recent spins</div>
-          <div id="recentLog" class="log"><div class="muted">No spins yet</div></div>
+          <div id="recentLog" class="log" aria-live="polite"><div class="muted">No spins yet</div></div>
         </div>
 
         <div class="card" style="margin-top:12px">
           <div style="font-weight:900">How it works</div>
-          <div class="muted-note">Each play deducts ₦10. After deduction the wheel spins and the win (if any) is credited to your account. Transactions are recorded in Firestore.</div>
+          <div class="muted-note">Each play deducts ₦10. After deduction the wheel spins and the win (if any) is credited to your account. Transactions are recorded in Firestore and recent spins are cached locally for instant persistence.</div>
         </div>
       </div>
     </div>
@@ -98,7 +102,7 @@
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, runTransaction, serverTimestamp, collection, setDoc
+      getFirestore, doc, getDoc, runTransaction, serverTimestamp, collection
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -125,73 +129,111 @@
     const modalText = document.getElementById('modalText');
     const modalBalance = document.getElementById('modalBalance');
     const closeModal = document.getElementById('closeModal');
-    const needle = document.getElementById('needle');
 
-    // wheel configuration
+    // wheel configuration (internal probabilities; not shown to user)
     const SEGMENTS = [
       { label: '₦100', value: 100, prob: 0.05, color: '#ffd700' }, // 5%
       { label: '₦50',  value: 50,  prob: 0.10, color: '#c0c0c0' }, // 10%
-      { label: '₦20',  value: 20,  prob: 0.30, color: '#ffe4b5' }, // 30%
+      { label: '₦20',  value: 20,  prob: 0.20, color: '#ffe4b5' }, // 20% (reduced per request)
       { label: '₦5',   value: 5,   prob: 0.25, color: '#a7f3d0' }, // 25%
-      { label: '₦0',   value: 0,   prob: 0.30, color: '#f3f4f6' }  // 30%
+      { label: '₦0',   value: 0,   prob: 0.40, color: '#f3f4f6' }  // 40% (remaining mass)
     ];
     const COST = 10;
 
-    // wallet user state
+    // client state
     let currentUser = null;
-    let userDocRef = null;
-    let balancesDocRef = null; // fallback
-    let activeDocRef = null;   // whichever we will update in transactions (users/{uid} or balances/{uid})
     let userBalance = 0;
+    let currentRotation = 0;
+    let spinning = false;
 
-    // canvas drawing (proportional sectors)
+    // canvas setup
     const ctx = canvas.getContext('2d');
     const W = canvas.width;
     const H = canvas.height;
     const cx = W/2, cy = H/2, radius = Math.min(W,H)/2 - 10;
 
+    // draw wheel with sleeker visuals
     function drawWheel(rotation = 0){
-      // rotation in degrees for drawing orientation offset
       ctx.clearRect(0,0,W,H);
+
+      // subtle background glow
+      const gBg = ctx.createRadialGradient(cx, cy, radius*0.2, cx, cy, radius*1.4);
+      gBg.addColorStop(0, 'rgba(255,255,255,0.04)');
+      gBg.addColorStop(1, 'rgba(0,0,0,0.0)');
+      ctx.fillStyle = gBg;
+      ctx.fillRect(0,0,W,H);
+
       const totalProb = SEGMENTS.reduce((s,seg)=>s+seg.prob,0);
-      let startAngle = -Math.PI/2 + (rotation * Math.PI/180); // start at top
+      let startAngle = -Math.PI/2 + (rotation * Math.PI/180);
+
+      // draw each segment
       for(const seg of SEGMENTS){
         const angle = (seg.prob/totalProb) * Math.PI*2;
+        const grad = ctx.createLinearGradient(cx + Math.cos(startAngle) * radius * 0.4, cy + Math.sin(startAngle) * radius * 0.4, cx + Math.cos(startAngle+angle) * radius * 0.4, cy + Math.sin(startAngle+angle) * radius * 0.4);
+        grad.addColorStop(0, seg.color);
+        grad.addColorStop(1, shadeColor(seg.color, -12));
         ctx.beginPath();
         ctx.moveTo(cx,cy);
         ctx.arc(cx,cy, radius, startAngle, startAngle + angle, false);
         ctx.closePath();
-        ctx.fillStyle = seg.color;
+        ctx.fillStyle = grad;
         ctx.fill();
-        // label
+
+        // segment border
+        ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // label (rotated nicely)
         const mid = startAngle + angle/2;
-        const tx = cx + Math.cos(mid) * (radius * 0.6);
-        const ty = cy + Math.sin(mid) * (radius * 0.6);
+        const tx = cx + Math.cos(mid) * (radius * 0.60);
+        const ty = cy + Math.sin(mid) * (radius * 0.60);
         ctx.save();
         ctx.translate(tx,ty);
         ctx.rotate(mid + Math.PI/2);
         ctx.fillStyle = '#041219';
-        ctx.font = 'bold 18px Poppins, sans-serif';
+        ctx.font = '700 20px Poppins, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(seg.label, 0, 0);
         ctx.restore();
+
         startAngle += angle;
       }
-      // center circle
+
+      // subtle center button
+      const centerGrad = ctx.createLinearGradient(cx - 40, cy - 40, cx + 40, cy + 40);
+      centerGrad.addColorStop(0, '#ffffff');
+      centerGrad.addColorStop(1, '#f0f6ff');
       ctx.beginPath();
-      ctx.arc(cx,cy,50,0,Math.PI*2);
-      ctx.fillStyle = 'rgba(255,255,255,0.95)';
+      ctx.arc(cx,cy,52,0,Math.PI*2);
+      ctx.fillStyle = centerGrad;
       ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+      ctx.stroke();
       ctx.fillStyle = '#041219';
-      ctx.font = '700 14px Poppins, sans-serif';
+      ctx.font = '800 18px Poppins, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('SPIN', cx, cy+6);
+      ctx.fillText('SPIN', cx, cy + 6);
     }
 
-    // on load draw static wheel
+    // small shade helper
+    function shadeColor(hex, percent) {
+      // hex like #rrggbb
+      const c = hex.replace('#','');
+      const num = parseInt(c,16);
+      let r = (num >> 16) + percent;
+      let g = ((num >> 8) & 0x00FF) + percent;
+      let b = (num & 0x0000FF) + percent;
+      r = Math.max(Math.min(255, r), 0);
+      g = Math.max(Math.min(255, g), 0);
+      b = Math.max(Math.min(255, b), 0);
+      return '#' + ( (1<<24) + (r<<16) + (g<<8) + b ).toString(16).slice(1);
+    }
+
     drawWheel(0);
 
-    // helper: pick a segment index based on weighted probs
+    // weighted pick
     function pickSegmentIndex(){
       const r = Math.random();
       let cum = 0;
@@ -202,9 +244,7 @@
       return SEGMENTS.length - 1;
     }
 
-    // compute target rotation degrees so that segment center lands at top (needle)
     function computeRotationToIndex(index){
-      // compute cumulative angle ranges to get center angle
       const totalProb = SEGMENTS.reduce((s,seg)=>s+seg.prob,0);
       let acc = 0;
       for(let i=0;i<index;i++) acc += SEGMENTS[i].prob;
@@ -212,20 +252,15 @@
       const startFrac = acc / totalProb;
       const endFrac = (acc + seg.prob) / totalProb;
       const centerFrac = (startFrac + endFrac) / 2;
-      const centerAngleDeg = centerFrac * 360; // fraction -> degrees, measured clockwise from top
-      // we want wheel rotation (clockwise) so that centerAngleDeg maps to top (0deg).
-      // finalRotation = fullSpins*360 + (360 - centerAngleDeg) + random jitter within segment half-angle
+      const centerAngleDeg = centerFrac * 360;
       const segAngleDeg = seg.prob / totalProb * 360;
-      const jitter = (Math.random() - 0.5) * (segAngleDeg * 0.6); // avoid edge
-      const fullSpins = Math.floor(Math.random()*3) + 4; // 4..6 spins for drama
+      const jitter = (Math.random() - 0.5) * (segAngleDeg * 0.6);
+      const fullSpins = Math.floor(Math.random()*3) + 4;
       const finalRotation = fullSpins * 360 + (360 - centerAngleDeg) + jitter;
       return finalRotation;
     }
 
-    // animate CSS transform of canvas parent wrapper
-    let spinning = false;
-    let currentRotation = 0;
-
+    // animate rotation by redrawing wheel at rotation value
     function animateSpin(finalDeg, durationMs = 5200){
       return new Promise((resolve) => {
         const start = performance.now();
@@ -233,18 +268,18 @@
         const delta = finalDeg - initial;
         spinning = true;
         statusEl.textContent = 'Spinning...';
+        playBtn.disabled = true;
         function step(now){
           const t = Math.min(1, (now - start)/durationMs);
-          // ease out cubic
           const ease = 1 - Math.pow(1 - t, 3);
           const rot = initial + delta * ease;
           currentRotation = rot;
-          // draw with rotation
           drawWheel(rot);
           if(t < 1){
             requestAnimationFrame(step);
           } else {
             spinning = false;
+            playBtn.disabled = false;
             resolve();
           }
         }
@@ -252,29 +287,60 @@
       });
     }
 
-    // format naira
+    // format
     function formatN(n){ return '₦' + Number(n||0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
 
-    // show modal
-    function showResultModal(amount, newBalance){
-      modalAmount.textContent = formatN(amount);
-      modalText.textContent = amount > 0 ? 'You won' : 'No win this time';
-      modalBalance.textContent = 'Updated balance: ' + formatN(newBalance);
-      modal.style.display = 'flex';
+    // recent spins persistence (per-user or guest)
+    function recentKey(){
+      return 'bw_recent_spins_' + (currentUser ? currentUser.uid : 'guest');
+    }
+    function loadRecentSpins(){
+      try {
+        const raw = localStorage.getItem(recentKey());
+        recentLog.innerHTML = '';
+        if(!raw) { recentLog.innerHTML = '<div class="muted">No spins yet</div>'; return; }
+        const list = JSON.parse(raw);
+        if(!Array.isArray(list) || list.length===0){ recentLog.innerHTML = '<div class="muted">No spins yet</div>'; return; }
+        for(const it of list.slice().reverse()){ // newest first visually
+          const node = makeLogItemNode(it);
+          recentLog.appendChild(node);
+        }
+      } catch(e){ console.warn('loadRecentSpins failed', e); recentLog.innerHTML = '<div class="muted">No spins yet</div>'; }
+    }
+    function saveRecentSpin(spin){
+      try {
+        const key = recentKey();
+        const raw = localStorage.getItem(key);
+        const list = raw ? JSON.parse(raw) : [];
+        list.push(spin);
+        // keep last 80
+        while(list.length > 80) list.shift();
+        localStorage.setItem(key, JSON.stringify(list));
+      } catch(e){ console.warn('saveRecentSpin failed', e); }
+    }
+    function makeLogItemNode(spin){
+      const d = document.createElement('div');
+      d.className = 'log-item';
+      const left = document.createElement('div');
+      left.innerHTML = `<div style="font-weight:800">${formatN(spin.amountWon)}</div><div style="font-size:12px;color:var(--muted)">${spin.when}</div>`;
+      const right = document.createElement('div');
+      right.style.textAlign='right';
+      right.innerHTML = `<div style="font-weight:800;color:${spin.amountWon>0? 'var(--success)':'var(--muted)'}">${spin.result}</div><div style="font-size:12px;color:var(--muted)">${spin.method || ''}</div>`;
+      d.appendChild(left); d.appendChild(right);
+      return d;
+    }
+    function appendLogLine(spin){
+      // spin: { amountWon, when, result, method }
+      saveRecentSpin(spin);
+      // prepend visually
+      const node = makeLogItemNode(spin);
+      if(recentLog.firstChild && recentLog.firstChild.className === 'muted') recentLog.innerHTML = '';
+      recentLog.prepend(node);
+      // cap
+      while(recentLog.children.length > 80) recentLog.removeChild(recentLog.lastChild);
     }
 
-    closeModal.addEventListener('click', ()=> { modal.style.display='none'; });
-
-    // recent log helper
-    function appendLogLine(html){
-      const div = document.createElement('div');
-      div.innerHTML = html;
-      recentLog.prepend(div);
-      // keep limited lines
-      while(recentLog.children.length > 40) recentLog.removeChild(recentLog.lastChild);
-    }
-
-    // read & show balance (best effort)
+    // read & show balance
     async function refreshBalanceDisplay(){
       if(!currentUser) { balanceEl.textContent = formatN(0); return; }
       try {
@@ -283,17 +349,16 @@
         if(uSnap.exists()){
           const d = uSnap.data();
           const b = Number(d.balance ?? d.amount ?? 0);
-          userBalance = isFinite(b) ? b : 0; activeDocRef = uRef;
+          userBalance = isFinite(b) ? b : 0;
         } else {
           const bRef = doc(db, 'balances', currentUser.uid);
           const bSnap = await getDoc(bRef);
           if(bSnap.exists()){
             const d = bSnap.data();
             const b = Number(d.balance ?? d.amount ?? 0);
-            userBalance = isFinite(b) ? b : 0; activeDocRef = bRef;
+            userBalance = isFinite(b) ? b : 0;
           } else {
             userBalance = 0;
-            activeDocRef = uRef; // default to users/{uid} for future writes
           }
         }
         balanceEl.textContent = formatN(userBalance);
@@ -303,34 +368,29 @@
       }
     }
 
-    // On auth state
+    // auth
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
-      if(!user) {
-        statusEl.textContent = 'Sign in on the main site to play.';
-        playBtn.disabled = true;
-        return;
-      }
-      playBtn.disabled = false;
       await refreshBalanceDisplay();
-      statusEl.textContent = 'Ready to play';
+      loadRecentSpins();
+      if(!user){ statusEl.textContent = 'Sign in on the main site to play.'; playBtn.disabled = true; } else { statusEl.textContent = 'Ready to play'; playBtn.disabled = false; }
     });
 
-    // MAIN flow: Play click
+    // play click
     playBtn.addEventListener('click', async () => {
       if(spinning) return;
       if(!currentUser) return alert('Sign in on the main site first.');
       if(!confirm('Play will cost ₦10. Continue?')) return;
 
       playBtn.disabled = true;
-      statusEl.textContent = 'Checking balance & charging...';
+      statusEl.textContent = 'Charging...';
 
-      // Prepare a spins doc ref with generated id so we can update it later
+      // prepare spin doc ref
       const spinsCol = collection(db, 'spins');
-      const spinRef = doc(spinsCol); // generated id
+      const spinRef = doc(spinsCol);
       const spinId = spinRef.id;
 
-      // first transaction: read then deduct COST and create spins/{spinId} doc with status 'charged'
+      // charge transaction (read then write & create spin doc)
       try {
         await runTransaction(db, async (tx) => {
           const uRef = doc(db, 'users', currentUser.uid);
@@ -348,15 +408,13 @@
             targetRef = bRef;
           } else {
             balance = 0;
-            targetRef = uRef; // create user doc if missing
+            targetRef = uRef;
           }
           if(isNaN(balance)) balance = 0;
           if(balance < COST) throw new Error('insufficient-funds');
-
           const newBalance = balance - COST;
-          // write updated balance and a quick lastSpin stub
+
           tx.set(targetRef, { balance: newBalance }, { merge: true });
-          // create spins doc inside tx so creation is atomic with deduction
           tx.set(spinRef, {
             userId: currentUser.uid,
             cost: COST,
@@ -366,40 +424,31 @@
           });
         });
       } catch(err){
-        console.error('charge transaction failed', err);
+        console.error('charge failed', err);
         if(err.message && err.message.includes('insufficient-funds')){
           alert('Insufficient funds. Please recharge your account.');
-          playBtn.disabled = false;
-          await refreshBalanceDisplay();
-          return;
+        } else {
+          alert('Could not charge account: ' + (err.message || err));
         }
-        alert('Could not charge account: ' + (err.message || err));
         playBtn.disabled = false;
         await refreshBalanceDisplay();
         return;
       }
 
-      // At this point spin doc exists with status 'charged' and cost deducted.
-      statusEl.textContent = 'Spinning the wheel...';
+      statusEl.textContent = 'Spinning...';
 
-      // client-side pick winner (weighted)
+      // client-side pick and spin
       const chosenIndex = pickSegmentIndex();
       const finalDeg = computeRotationToIndex(chosenIndex);
-
-      // animate spin (drawWheel is called on frames)
       try {
         await animateSpin(finalDeg, 5200);
-      } catch(e){
-        console.warn('animate error', e);
-      }
+      } catch(e){ console.warn('spin animate error', e); }
 
-      // After spin, determine reward
       const prize = SEGMENTS[chosenIndex].value;
 
-      // second transaction: credit prize (if > 0) and update spin doc
+      // credit prize & update spin doc
       try {
         await runTransaction(db, async (tx) => {
-          // re-resolve which doc to update for balance
           const uRef = doc(db, 'users', currentUser.uid);
           const bRef = doc(db, 'balances', currentUser.uid);
           const uSnap = await tx.get(uRef);
@@ -414,49 +463,57 @@
             balance = Number(bSnap.data().balance ?? bSnap.data().amount ?? 0);
             targetRef = bRef;
           } else {
-            // If neither exists we assume we deducted earlier so try to create user doc with -COST + prize
             balance = 0; targetRef = uRef;
           }
           if(isNaN(balance)) balance = 0;
           const newBalance = balance + prize;
           tx.set(targetRef, { balance: newBalance }, { merge: true });
 
-          // update spin doc with result
-          const spinDocRef = doc(db, 'spins', spinId);
-          tx.update(spinDocRef, {
-            amountWon: prize,
-            status: 'completed',
-            completedAt: serverTimestamp()
-          });
+          // update spin doc
+          const sRef = doc(db, 'spins', spinId);
+          tx.update(sRef, { amountWon: prize, status: 'completed', completedAt: serverTimestamp() });
         });
       } catch(err){
-        console.error('credit transaction failed', err);
-        // If crediting failed, we still show user the prize but warn them
-        appendLogLine(`<div style="color:orange">Spin credited locally but failed to update server: ${err.message || err}</div>`);
+        console.error('credit failed', err);
+        // warn but continue; still show local result and save to local recent spins
+        appendLocalSpinRecord(prize, 'server-update-failed');
       }
 
-      // refresh display balance from server
+      // update local UI & persist recent spin
       await refreshBalanceDisplay();
 
-      // show result modal & log
+      const spinRecord = {
+        amountWon: prize,
+        when: new Date().toLocaleString(),
+        result: prize>0 ? 'win' : 'no win',
+        method: 'spin'
+      };
+      appendLogLine(spinRecord);
+
       modalText.textContent = prize > 0 ? 'You won' : 'No win this time';
       modalAmount.textContent = formatN(prize);
       modalBalance.textContent = 'Updated balance: ' + formatN(userBalance);
       modal.style.display = 'flex';
-      appendLogLine(`<div><strong>${formatN(prize)}</strong> — ${new Date().toLocaleString()}</div>`);
-      statusEl.textContent = (prize>0) ? `You won ${formatN(prize)}!` : 'No win this time — better luck next spin.';
+      statusEl.textContent = prize>0 ? `You won ${formatN(prize)}!` : 'No win this time — better luck next spin.';
       playBtn.disabled = false;
     });
 
-    // init: small interval refresh of balance (every 12s) while page open
-    setInterval(() => {
-      if(currentUser) refreshBalanceDisplay().catch(()=>{});
-    }, 12000);
+    // local fallback record for errors
+    function appendLocalSpinRecord(prize, note){
+      const spinRecord = { amountWon: prize, when: new Date().toLocaleString(), result: prize>0? 'win' : 'no win', method: (note || 'local') };
+      appendLogLine(spinRecord);
+    }
 
-    // initial draw done above
-    // ensure wheel redraw on resize for crispness
+    // load persisted recent spins on start
+    loadRecentSpins();
+
+    closeModal.addEventListener('click', ()=> { modal.style.display='none'; });
+
+    // auto-refresh balance periodically
+    setInterval(()=> { if(currentUser) refreshBalanceDisplay().catch(()=>{}); }, 12000);
+
+    // redraw on resize for crispness
     window.addEventListener('resize', ()=> drawWheel(currentRotation));
-
   </script>
 </body>
 </html>
