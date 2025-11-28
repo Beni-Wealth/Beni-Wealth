@@ -3,16 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Spin the Wheel</title>
+  <title>Beni-Wealth — Spin the Wheel (responsive)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
 
-   <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Social preview -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="theme-color" content="#2fe0b8">
-  
   <style>
     :root{
       --bg-1:#071021; --bg-2:#0d1224; --muted:rgba(255,255,255,0.66); --text:#eaf2ff;
@@ -21,7 +14,7 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.06), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text);}
-    .wrap{max-width:980px;margin:28px auto;padding:20px}
+    .wrap{max-width:980px;margin:20px auto;padding:16px}
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:16px; border:1px solid rgba(255,255,255,0.02)}
     header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px}
     .brand{display:flex;gap:12px;align-items:center}
@@ -32,12 +25,23 @@
     .btn{background:linear-gradient(90deg,var(--accent),#35d6b1); border:0;padding:10px 14px;border-radius:10px;color:#041219;font-weight:800;cursor:pointer;box-shadow:0 10px 30px rgba(58,40,110,0.18)}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06); color:var(--text); box-shadow:none}
     .layout{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px}
-    .left{flex:1;min-width:320px;display:flex;flex-direction:column;align-items:center;gap:12px}
-    .right{width:340px;min-width:280px}
-    .wheel-wrap{width:320px;height:320px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.008));box-shadow:0 18px 60px rgba(0,0,0,0.6);position:relative;overflow:visible}
-    canvas#wheel{width:100%;height:100%;border-radius:50%;touch-action:none;display:block}
-    /* needle above the wheel */
-    .needle{position:absolute;top:-18px;left:50%;transform:translateX(-50%);z-index:30;width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:36px solid #ffffff;border-radius:4px;filter:drop-shadow(0 6px 18px rgba(0,0,0,0.5))}
+    .left{flex:1;min-width:260px;display:flex;flex-direction:column;align-items:center;gap:12px}
+    .right{width:340px;min-width:260px}
+
+    /* Responsive wheel sizing: use viewport-friendly units on small screens */
+    .wheel-wrap{
+      width:min(92vw,360px);
+      height:min(92vw,360px);
+      border-radius:50%;
+      display:grid;place-items:center;
+      background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.008));
+      box-shadow:0 18px 60px rgba(0,0,0,0.6);position:relative;overflow:visible;
+    }
+    canvas#wheel{width:100%;height:100%;border-radius:50%;touch-action:none;display:block;max-width:100%;aspect-ratio:1/1}
+
+    /* needle above the wheel sized responsively using clamp */
+    .needle{position:absolute;top:-10%;left:50%;transform:translateX(-50%);z-index:30;width:0;height:0;border-left:clamp(12px,3.2vw,18px) solid transparent;border-right:clamp(12px,3.2vw,18px) solid transparent;border-bottom:clamp(24px,6.5vw,36px) solid #ffffff;border-radius:4px;filter:drop-shadow(0 6px 18px rgba(0,0,0,0.5))}
+
     .status{margin-top:8px;font-weight:700}
     .balance{font-weight:800;font-size:20px}
     .log{margin-top:12px;max-height:300px;overflow:auto;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);font-size:13px}
@@ -46,7 +50,13 @@
     .modal .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:18px;border-radius:12px;min-width:300px;text-align:center;border:1px solid rgba(255,255,255,0.03);box-shadow:0 30px 80px rgba(0,0,0,0.6)}
     .result-amount{font-weight:900;font-size:28px;margin:12px 0}
     .muted-note{color:var(--muted);font-size:13px;margin-top:6px}
-    @media(max-width:880px){ .layout{flex-direction:column;align-items:center} .right{width:100%} .wheel-wrap,.pointer{width:280px;height:280px} canvas#wheel{width:280px;height:280px} }
+
+    @media(max-width:880px){
+      .layout{flex-direction:column;align-items:center}
+      .right{width:100%}
+      /* make sure wheel area shrinks naturally on narrow phones */
+      .wheel-wrap{width:min(92vw,320px);height:min(92vw,320px)}
+    }
   </style>
 </head>
 <body>
@@ -158,13 +168,28 @@
 
     // canvas setup
     const ctx = canvas.getContext('2d');
-    const W = canvas.width;
-    const H = canvas.height;
-    const cx = W/2, cy = H/2, radius = Math.min(W,H)/2 - 10;
+
+    // helper to resize canvas for crisp rendering on high-DPI devices
+    function resizeCanvasAndRedraw(){
+      const rect = canvas.getBoundingClientRect();
+      const DPR = window.devicePixelRatio || 1;
+      // set actual pixel size
+      canvas.width = Math.max(300, Math.floor(rect.width * DPR));
+      canvas.height = Math.max(300, Math.floor(rect.height * DPR));
+      // set transform so drawing commands use CSS pixels
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      drawWheel(currentRotation);
+    }
 
     // draw wheel using equal sectors (visual strokes equal)
     function drawWheel(rotation = 0){
-      ctx.clearRect(0,0,W,H);
+      // compute CSS-pixel dimensions (since transform maps DPR)
+      const DPR = window.devicePixelRatio || 1;
+      const W = canvas.width / DPR;
+      const H = canvas.height / DPR;
+      const cx = W/2, cy = H/2, radius = Math.min(W,H)/2 - 10;
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
 
       // subtle background glow
       const gBg = ctx.createRadialGradient(cx, cy, radius*0.2, cx, cy, radius*1.4);
@@ -208,7 +233,7 @@
         ctx.translate(tx,ty);
         ctx.rotate(mid + Math.PI/2);
         ctx.fillStyle = '#041219';
-        ctx.font = '700 20px Poppins, sans-serif';
+        ctx.font = Math.max(12, Math.floor(radius*0.12)) + 'px Poppins, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(seg.label, 0, 0);
         ctx.restore();
@@ -228,16 +253,16 @@
       centerGrad.addColorStop(0, '#ffffff');
       centerGrad.addColorStop(1, '#f0f6ff');
       ctx.beginPath();
-      ctx.arc(cx,cy,52,0,Math.PI*2);
+      ctx.arc(cx,cy,Math.max(36, radius*0.18),0,Math.PI*2);
       ctx.fillStyle = centerGrad;
       ctx.fill();
       ctx.lineWidth = 2;
       ctx.strokeStyle = 'rgba(0,0,0,0.08)';
       ctx.stroke();
       ctx.fillStyle = '#041219';
-      ctx.font = '800 18px Poppins, sans-serif';
+      ctx.font = '800 ' + Math.max(12, Math.floor(radius*0.13)) + 'px Poppins, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('SPIN', cx, cy + 6);
+      ctx.fillText('SPIN', cx, cy + Math.max(4, Math.floor(radius*0.03)));
     }
 
     // shade helper
@@ -252,8 +277,6 @@
       b = Math.max(Math.min(255, b), 0);
       return '#' + ( (1<<24) + (r<<16) + (g<<8) + b ).toString(16).slice(1);
     }
-
-    drawWheel(0);
 
     // weighted pick (internal only)
     function pickSegmentIndex(){
@@ -530,8 +553,17 @@
     // auto-refresh balance periodically
     setInterval(()=> { if(currentUser) refreshBalanceDisplay().catch(()=>{}); }, 12000);
 
-    // redraw on resize
-    window.addEventListener('resize', ()=> drawWheel(currentRotation));
+    // handle resizing for crisp canvas
+    window.addEventListener('resize', () => {
+      // debounce small resizes by using requestAnimationFrame
+      window.requestAnimationFrame(resizeCanvasAndRedraw);
+    });
+
+    // initial resize and draw once DOM is ready
+    window.addEventListener('load', () => {
+      resizeCanvasAndRedraw();
+    });
+
   </script>
 </body>
 </html>
