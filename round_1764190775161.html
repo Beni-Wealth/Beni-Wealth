@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Current Affairs Quiz (Next fixed)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <title>Beni-Wealth — Current Affairs Quiz</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
   <style>
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.62); --text:#eaf2ff;
@@ -281,6 +281,7 @@
       } catch(e){ console.warn('reconcile tx failed', e); }
     }
 
+    // RENDER & TIMER
     function showQuizUI(){
       if(!attemptData) return;
       quizCard.classList.remove('hidden'); resultCard.classList.add('hidden');
@@ -309,18 +310,15 @@
       timer = setInterval(async ()=>{ timeLeft--; timerEl.textContent = timeLeft; if(timeLeft<=0){ clearInterval(timer); await handleTimeout(); } },1000);
     }
 
-    // NEXT: fetch latest attempt doc and render the new question (fixes "click Next does nothing")
+    // Next button fetch latest attempt state (safety-net)
     nextBtn.addEventListener('click', async () => {
       if(!attemptRef) return alert('No active attempt found.');
       try {
         const snap = await getDoc(attemptRef);
         if(!snap.exists()) return alert('Attempt not found.');
         attemptData = snap.data();
-        // If it's already completed, show final
         if(attemptData.status === 'completed' || (attemptData.currentIndex || 0) >= QUESTIONS_COUNT) { showFinal(); return; }
-        // Render the current index (server advanced it when answer was saved)
         renderCurrentQuestion();
-        // compute timeLeft from questionStartAt
         const qsa = attemptData.questionStartAt;
         let elapsed = 0; if(qsa && qsa.seconds) elapsed = Math.floor(Date.now()/1000) - qsa.seconds;
         timeLeft = TIME_PER_QUESTION - (elapsed % TIME_PER_QUESTION); if(timeLeft <= 0) timeLeft = 1;
@@ -331,7 +329,7 @@
       }
     });
 
-    // answer handling (keeps arrayUnion & transaction & queue fallback)
+    // ANSWER HANDLING — we auto-advance here
     async function answerChoice(selectedIndex){
       clearInterval(timer);
       const idx = attemptData.currentIndex || 0; const q = questions[idx];
@@ -340,6 +338,7 @@
       const willFinish = (idx+1) >= QUESTIONS_COUNT;
       const choiceEls = questionArea.querySelectorAll('.choice'); choiceEls.forEach(c=>c.classList.add('disabled'));
 
+      // Try quick updateDoc first
       try {
         await updateDoc(attemptRef, {
           score: newScore,
@@ -349,11 +348,14 @@
           questionStartAt: willFinish ? null : serverTimestamp(),
           completedAt: willFinish ? serverTimestamp() : undefined
         });
-        const s = await getDoc(attemptRef); attemptData = s.data();
+        // fetch server state and render next
+        const s = await getDoc(attemptRef);
+        attemptData = s.data();
         applyAnswerFeedback(selectedIndex, q, correct);
-        if(attemptData.status === 'completed'){ showFinal(); } else { nextBtn.classList.remove('hidden'); }
+        // auto-advance immediately
+        if(attemptData.status === 'completed'){ showFinal(); } else { renderCurrentQuestion(); computeAndStartTimer(); }
         return;
-      } catch(e){ console.warn('updateDoc append failed', e); }
+      } catch (e) { console.warn('updateDoc append failed', e); }
 
       // transaction fallback
       try {
@@ -371,14 +373,29 @@
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
         applyAnswerFeedback(selectedIndex, q, correct);
-        if(attemptData.status === 'completed'){ showFinal(); } else { nextBtn.classList.remove('hidden'); }
+        if(attemptData.status === 'completed'){ showFinal(); } else { renderCurrentQuestion(); computeAndStartTimer(); }
         return;
       } catch(e){ console.warn('transaction failed', e); }
 
-      // queue locally as last resort
+      // Local queue fallback: update local attemptData optimistically and advance UI
       queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1), status: willFinish ? 'completed' : 'in_progress' });
+      // optimistic update of attemptData so UI moves forward immediately
+      attemptData = attemptData || {};
+      attemptData.score = newScore;
+      attemptData.currentIndex = willFinish ? QUESTIONS_COUNT : (idx+1);
+      attemptData.status = willFinish ? 'completed' : 'in_progress';
       applyAnswerFeedback(selectedIndex, q, correct, true);
-      if(willFinish) showFinal(); else nextBtn.classList.remove('hidden');
+      if(attemptData.status === 'completed'){ showFinal(); } else { renderCurrentQuestion(); computeAndStartTimer(); }
+    }
+
+    function computeAndStartTimer(){
+      // compute timeLeft from attemptData.questionStartAt if present, else reset to full TIME_PER_QUESTION
+      const qsa = attemptData && attemptData.questionStartAt;
+      let elapsed = 0;
+      if(qsa && qsa.seconds) elapsed = Math.floor(Date.now()/1000) - qsa.seconds;
+      timeLeft = TIME_PER_QUESTION - (elapsed % TIME_PER_QUESTION);
+      if(timeLeft <= 0) timeLeft = TIME_PER_QUESTION;
+      startTimer();
     }
 
     function applyAnswerFeedback(selectedIndex, q, correct, queued=false){
@@ -388,9 +405,10 @@
       const fb = document.createElement('div'); fb.style.marginTop='8px'; fb.style.fontWeight=700; fb.style.color= correct ? 'var(--success)' : 'var(--danger)';
       fb.textContent = correct ? `Correct! +${POINTS_CORRECT}` : `Wrong — ${POINTS_WRONG}. Correct: ${q.choices[q.answerIndex]}` + (queued ? ' (queued — will sync)' : '');
       questionArea.appendChild(fb);
-      scoreEl.textContent = attemptData && attemptData.score !== undefined ? attemptData.score : (Number(scoreEl.textContent||0) + (correct ? POINTS_CORRECT : POINTS_WRONG));
+      scoreEl.textContent = (attemptData && attemptData.score !== undefined) ? attemptData.score : (Number(scoreEl.textContent||0) + (correct ? POINTS_CORRECT : POINTS_WRONG));
     }
 
+    // TIMEOUT handling — auto-advance too
     async function handleTimeout(){
       const idx = attemptData.currentIndex || 0; const q = questions[idx];
       const newScore = (attemptData.score || 0) + POINTS_WRONG; const nowIso = new Date().toISOString();
@@ -407,7 +425,7 @@
           completedAt: willFinish ? serverTimestamp() : undefined
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
-        revealTimeout(q); if(attemptData.status === 'completed') showFinal(); else { nextBtn.classList.remove('hidden'); }
+        revealTimeout(q); if(attemptData.status === 'completed') showFinal(); else { renderCurrentQuestion(); computeAndStartTimer(); }
         return;
       } catch(e){ console.warn('timeout update failed', e); }
 
@@ -424,13 +442,18 @@
           });
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
-        revealTimeout(q); if(attemptData.status === 'completed') showFinal(); else { nextBtn.classList.remove('hidden'); }
+        revealTimeout(q); if(attemptData.status === 'completed') showFinal(); else { renderCurrentQuestion(); computeAndStartTimer(); }
         return;
       } catch(e){ console.warn('timeout tx failed', e); }
 
+      // queue locally and optimistically advance
       queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1), status: willFinish ? 'completed' : 'in_progress' });
+      attemptData = attemptData || {};
+      attemptData.score = newScore;
+      attemptData.currentIndex = willFinish ? QUESTIONS_COUNT : (idx+1);
+      attemptData.status = willFinish ? 'completed' : 'in_progress';
       revealTimeout(q, true);
-      if(willFinish) showFinal(); else nextBtn.classList.remove('hidden');
+      if(attemptData.status === 'completed') showFinal(); else { renderCurrentQuestion(); computeAndStartTimer(); }
     }
 
     function revealTimeout(q, queued=false){
