@@ -2,17 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Beni-Wealth — Memory Flip</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Beni-Wealth — Memory Flip (responsive)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
 
-   <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Social preview -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="theme-color" content="#2fe0b8">
-  
   <style>
     :root{
       --bg1:#071021; --bg2:#0d1224; --muted:rgba(255,255,255,0.66); --text:#eaf2ff;
@@ -20,37 +13,67 @@
       font-family:"Poppins",system-ui,Roboto,Arial;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.04), transparent), linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--text);}
-    .wrap{max-width:980px;margin:28px auto;padding:18px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#35d6b1);display:grid;place-items:center;color:#041219;font-weight:800}
+    html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.04), transparent), linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--text);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:980px;margin:18px auto;padding:14px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#35d6b1);display:grid;place-items:center;color:#041219;font-weight:800}
     .title{font-weight:800}
     .muted{color:var(--muted);font-size:13px}
-    .controls{display:flex;gap:12px;align-items:center}
+    .controls{display:flex;gap:10px;align-items:center}
     .btn{background:linear-gradient(90deg,var(--accent),#35d6b1);border:0;padding:10px 14px;border-radius:10px;color:#041219;font-weight:800;cursor:pointer}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
-    .layout{display:flex;gap:20px;flex-wrap:wrap}
-    .left{flex:1;min-width:360px}
-    .right{width:320px;min-width:280px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.02)}
-    /* 4 columns x 5 rows fits 20 tiles */
-    .board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
-    .tile{aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:grid;place-items:center;font-weight:800;font-size:22px;cursor:pointer;user-select:none;position:relative;border:2px solid rgba(255,255,255,0.03);transition:transform .14s ease}
+    .layout{display:flex;gap:16px;flex-wrap:wrap}
+    .left{flex:1;min-width:260px}
+    .right{width:320px;min-width:220px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.02)}
+
+    /* board responsive: tiles scale by viewport width while preserving 4 columns */
+    .board{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(56px, 1fr));
+      gap:10px;margin-top:12px;width:100%;
+      touch-action: manipulation;
+    }
+
+    .tile{
+      aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:grid;place-items:center;font-weight:800;font-size:clamp(14px,3.8vw,22px);cursor:pointer;user-select:none;position:relative;border:2px solid rgba(255,255,255,0.03);transition:transform .12s ease, background .18s ease; -webkit-tap-highlight-color: rgba(0,0,0,0)
+    }
     .tile:hover{transform:translateY(-4px)}
     .tile.flipped{background:linear-gradient(90deg,#fff,#fff0);color:#041219}
     .tile.matched{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.6);color:#041219;cursor:default}
+
     .hud{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:8px}
     .scorebox{font-weight:700}
     .log{margin-top:12px;max-height:260px;overflow:auto;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);font-size:13px}
     .muted-note{color:var(--muted);font-size:13px;margin-top:8px}
     .center{display:flex;align-items:center;justify-content:center}
     .modal{position:fixed;left:0;top:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);z-index:9999}
-    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:16px;border-radius:12px;min-width:300px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:14px;border-radius:12px;min-width:260px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+
     /* music controls */
     .music-controls{display:flex;gap:8px;align-items:center;margin-left:6px}
     .icon-btn{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,0.02);cursor:pointer;font-weight:800}
-    .volume{width:120px}
-    @media(max-width:720px){ .board{grid-template-columns:repeat(4,1fr); } } /* keeps 4 columns on mobile too */
+    .volume{width:110px}
+
+    /* mobile adjustments */
+    @media(max-width:880px){
+      .wrap{padding:12px;margin:12px}
+      header{gap:8px}
+      .logo{width:48px;height:48px}
+      .controls{flex-wrap:wrap;justify-content:flex-end}
+      .right{width:100%}
+      .board{gap:8px;grid-template-columns:repeat(4, minmax(48px, 1fr));}
+      .tile{font-size:clamp(12px,4.2vw,20px);border-radius:8px}
+      .muted-note{font-size:12px}
+      .btn{padding:10px 12px}
+    }
+
+    @media(max-width:420px){
+      /* Keep 4 columns but reduce spacing and increase tap area by larger border-radius */
+      .board{gap:6px;grid-template-columns:repeat(4, minmax(42px, 1fr));}
+      .tile{border-radius:6px}
+      header{align-items:flex-start}
+    }
   </style>
 </head>
 <body>
@@ -122,11 +145,8 @@
   </div>
 
   <!-- hidden looping background audio (replace src with your preferred track) -->
-  <!-- Important: user interaction (Play button or music toggle) will call .play() so browsers allow sound -->
   <audio id="bgMusic" loop crossorigin="anonymous">
-    <!-- Replace the src below with your hosted MP3 or local path (e.g. /assets/music/ambient.mp3) -->
     <source src="music/ambient-loop.mp3" type="audio/mpeg">
-    <!-- Fallback silent file helps avoid errors on missing file; replace as needed -->
   </audio>
 
   <!-- result modal -->
@@ -145,7 +165,6 @@
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, collection, runTransaction, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // --- Firebase config (your project) ---
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -230,14 +249,12 @@
     musicToggle.addEventListener('click', async () => {
       const isOn = localStorage.getItem(MUSIC_KEY) !== '0';
       if(isOn){
-        // turn off
         localStorage.setItem(MUSIC_KEY, '0');
         try{ bgMusic.pause(); }catch(e){}
         musicToggle.setAttribute('aria-pressed','false'); musicToggle.textContent = '♪';
       } else {
-        // turn on
         localStorage.setItem(MUSIC_KEY, '1');
-        try{ await bgMusic.play(); }catch(e){ /* play may fail if no user gesture — but Play button will start */ }
+        try{ await bgMusic.play(); }catch(e){}
         musicToggle.setAttribute('aria-pressed','true'); musicToggle.textContent = '♫';
       }
     });
@@ -248,14 +265,9 @@
       localStorage.setItem(MUSIC_VOL_KEY, String(v));
     });
 
-    // try to start music on first user Play action or toggle
     async function tryStartMusicOnUserGesture(){
-      if(localStorage.getItem(MUSIC_KEY) === '0') return; // user disabled
-      try {
-        await bgMusic.play();
-      } catch(e){
-        // ignore — will be retried on next gesture
-      }
+      if(localStorage.getItem(MUSIC_KEY) === '0') return;
+      try { await bgMusic.play(); } catch(e){}
     }
 
     // fetch & display balance (best-effort)
@@ -288,12 +300,8 @@
       tiles = paired.map((v, idx) => ({ id: idx, value: v, flipped:false, matched:false }));
       remainingPairs = pairs;
       firstFlip = null; secondFlip = null; lockBoard = false;
-      playerScore = 0; botScore = 0;
-      botMemory = {};
-      renderBoard();
-      updateScores();
-      setStatus('Your turn');
-      turn = 'player';
+      playerScore = 0; botScore = 0; botMemory = {};
+      renderBoard(); updateScores(); setStatus('Your turn'); turn = 'player';
       log(`<div style="color:lightgreen">Game started — pairs: ${pairs}</div>`);
     }
 
@@ -304,15 +312,13 @@
         el.className = 'tile' + (t.flipped ? ' flipped' : '') + (t.matched ? ' matched' : '');
         el.dataset.index = idx;
         el.innerHTML = t.flipped || t.matched ? `<div>${t.value}</div>` : `<div style="font-size:18px;color:var(--muted)">?</div>`;
-        el.addEventListener('click', onTileClick);
+        el.addEventListener('click', onTileClick, {passive:true});
+        el.style.touchAction = 'manipulation';
         boardEl.appendChild(el);
       });
     }
 
-    function updateScores(){
-      playerScoreEl.textContent = String(playerScore);
-      botScoreEl.textContent = String(botScore);
-    }
+    function updateScores(){ playerScoreEl.textContent = String(playerScore); botScoreEl.textContent = String(botScore); }
 
     // tile click handler (user)
     function onTileClick(e){
@@ -326,67 +332,45 @@
 
     function flipTile(idx, by){
       const tile = tiles[idx];
-      tile.flipped = true;
-      renderBoard();
+      tile.flipped = true; renderBoard();
       if(by === 'player' || by === 'bot'){
-        if(!tile.matched){
-          botMemory[tile.value] = botMemory[tile.value] || new Set();
-          botMemory[tile.value].add(idx);
-        }
+        if(!tile.matched){ botMemory[tile.value] = botMemory[tile.value] || new Set(); botMemory[tile.value].add(idx); }
       }
       if(firstFlip === null){ firstFlip = idx; return; }
       if(secondFlip === null && idx !== firstFlip){ secondFlip = idx; lockBoard = true; checkMatch(by); }
     }
 
     async function checkMatch(by){
-      const a = tiles[firstFlip];
-      const b = tiles[secondFlip];
-      const isMatch = a.value === b.value;
+      const a = tiles[firstFlip]; const b = tiles[secondFlip]; const isMatch = a.value === b.value;
       if(isMatch){
-        a.matched = b.matched = true;
-        remainingPairs--;
-        if(by === 'player') { playerScore++; log(`<div>You matched ${a.value} — +1</div>`); } 
+        a.matched = b.matched = true; remainingPairs--;
+        if(by === 'player') { playerScore++; log(`<div>You matched ${a.value} — +1</div>`); }
         else { botScore++; log(`<div style="color:orange">Bot matched ${a.value} — +1</div>`); }
-        if(botMemory[a.value]){
-          botMemory[a.value].delete(firstFlip); botMemory[a.value].delete(secondFlip);
-          if(botMemory[a.value].size===0) delete botMemory[a.value];
-        }
+        if(botMemory[a.value]){ botMemory[a.value].delete(firstFlip); botMemory[a.value].delete(secondFlip); if(botMemory[a.value].size===0) delete botMemory[a.value]; }
         updateScores();
-        setTimeout(()=> {
-          firstFlip = null; secondFlip = null; lockBoard = false;
-          renderBoard();
+        setTimeout(()=>{
+          firstFlip = null; secondFlip = null; lockBoard = false; renderBoard();
           if(remainingPairs <= 0) finishGame();
-          else {
-            if(by === 'player'){ setStatus("Your turn — you scored a match"); } else { setStatus("Bot's turn — bot scored a match"); botTurn(); }
-          }
-        }, 900);
+          else { if(by === 'player'){ setStatus("Your turn — you scored a match"); } else { setStatus("Bot's turn — bot scored a match"); botTurn(); } }
+        }, 700);
       } else {
         if(by === 'player') log(`<div>Wrong — ${a.value} ≠ ${b.value}</div>`); else log(`<div style="color:orange">Bot missed — ${a.value} ≠ ${b.value}</div>`);
-        setTimeout(()=> {
-          a.flipped = false; b.flipped = false;
-          firstFlip = null; secondFlip = null;
-          renderBoard();
+        setTimeout(()=>{
+          a.flipped = false; b.flipped = false; firstFlip = null; secondFlip = null; renderBoard();
           if(by === 'player'){ turn = 'bot'; setStatus("Bot's turn"); botTurn(); } else { turn = 'player'; setStatus("Your turn"); }
           lockBoard = false;
-        }, 900);
+        }, 700);
       }
     }
 
-    // BOT logic
+    // BOT logic (same as before)
     async function botTurn(){
-      if(remainingPairs <= 0) return;
-      turn = 'bot';
-      lockBoard = true;
-      setStatus("Bot is thinking...");
-      await sleep(600);
+      if(remainingPairs <= 0) return; turn = 'bot'; lockBoard = true; setStatus("Bot is thinking..."); await sleep(600);
 
       for(const val in botMemory){
         const idxs = Array.from(botMemory[val]);
         const usable = idxs.filter(i => !tiles[i].matched);
-        if(usable.length >= 2){
-          await botFlipSequence(usable[0], usable[1]);
-          return;
-        }
+        if(usable.length >= 2){ await botFlipSequence(usable[0], usable[1]); return; }
       }
 
       for(const val in botMemory){
@@ -394,105 +378,46 @@
         if(idxs.length === 1){
           const knownIdx = idxs[0];
           const candidate = tiles.map((t,i)=> i).filter(i=> !tiles[i].matched && i !== knownIdx && !tiles[i].flipped);
-          if(candidate.length>0){
-            const pick = candidate[Math.floor(Math.random()*candidate.length)];
-            await botFlipSequence(knownIdx, pick);
-            return;
-          }
+          if(candidate.length>0){ const pick = candidate[Math.floor(Math.random()*candidate.length)]; await botFlipSequence(knownIdx, pick); return; }
         }
       }
 
       const unseen = tiles.map((t,i)=> i).filter(i => !tiles[i].matched && !tiles[i].flipped);
       if(unseen.length === 0){ turn = 'player'; lockBoard = false; setStatus("Your turn"); return; }
-      const notSeen = unseen.filter(i => {
-        const v = tiles[i].value; return !botMemory[v] || botMemory[v].size === 0;
-      });
+      const notSeen = unseen.filter(i => { const v = tiles[i].value; return !botMemory[v] || botMemory[v].size === 0; });
       let pickA, pickB;
-      if(notSeen.length >= 2){
-        pickA = notSeen[Math.floor(Math.random()*notSeen.length)];
-        const rem = notSeen.filter(i=> i !== pickA);
-        pickB = rem[Math.floor(Math.random()*rem.length)];
-      } else {
-        pickA = unseen[Math.floor(Math.random()*unseen.length)];
-        const rem = unseen.filter(i => i !== pickA);
-        pickB = rem[Math.floor(Math.random()*rem.length)];
-      }
+      if(notSeen.length >= 2){ pickA = notSeen[Math.floor(Math.random()*notSeen.length)]; const rem = notSeen.filter(i=> i !== pickA); pickB = rem[Math.floor(Math.random()*rem.length)]; }
+      else { pickA = unseen[Math.floor(Math.random()*unseen.length)]; const rem = unseen.filter(i => i !== pickA); pickB = rem[Math.floor(Math.random()*rem.length)]; }
       await botFlipSequence(pickA, pickB);
     }
 
-    async function botFlipSequence(i1, i2){
-      await sleep(350);
-      flipTile(i1, 'bot');
-      await sleep(700);
-      flipTile(i2, 'bot');
-    }
-
+    async function botFlipSequence(i1, i2){ await sleep(350); flipTile(i1, 'bot'); await sleep(700); flipTile(i2, 'bot'); }
     function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
     async function finishGame(){
-      lockBoard = true;
-      setStatus('Game complete');
-      log(`<div style="font-weight:900">Final — You: ${playerScore} — Bot: ${botScore}</div>`);
+      lockBoard = true; setStatus('Game complete'); log(`<div style="font-weight:900">Final — You: ${playerScore} — Bot: ${botScore}</div>`);
       const didUserWin = playerScore > botScore;
-      if(didUserWin){
-        setStatus('You won — crediting reward...');
+      if(didUserWin){ setStatus('You won — crediting reward...');
         try {
-          await runTransaction(db, async (tx) => {
-            const uRef = doc(db, 'users', currentUser.uid);
-            const bRef = doc(db, 'balances', currentUser.uid);
-            const uSnap = await tx.get(uRef);
-            const bSnap = await tx.get(bRef);
-            let balance = 0;
-            let targetRef = uRef;
-            if(uSnap.exists()){
-              balance = Number(uSnap.data().balance ?? uSnap.data().amount ?? 0) || 0;
-              targetRef = uRef;
-            } else if(bSnap.exists()){
-              balance = Number(bSnap.data().balance ?? bSnap.data().amount ?? 0) || 0;
-              targetRef = bRef;
-            } else {
-              balance = 0; targetRef = uRef;
-            }
-            const newBal = balance + WIN_REWARD;
-            tx.set(targetRef, { balance: newBal }, { merge: true });
-            if(gameIdRef){
-              const gRef = doc(db, 'memoryGames', gameIdRef.id);
-              tx.set(gRef, {
-                userId: currentUser.uid,
-                entryFee: ENTRY_FEE,
-                result: 'win',
-                playerScore,
-                botScore,
-                completedAt: serverTimestamp()
-              }, { merge: true });
-            }
+          await runTransaction(db, async (tx)=>{
+            const uRef = doc(db, 'users', currentUser.uid); const bRef = doc(db, 'balances', currentUser.uid);
+            const uSnap = await tx.get(uRef); const bSnap = await tx.get(bRef);
+            let balance = 0; let targetRef = uRef;
+            if(uSnap.exists()){ balance = Number(uSnap.data().balance ?? uSnap.data().amount ?? 0) || 0; targetRef = uRef; }
+            else if(bSnap.exists()){ balance = Number(bSnap.data().balance ?? bSnap.data().amount ?? 0) || 0; targetRef = bRef; }
+            const newBal = balance + WIN_REWARD; tx.set(targetRef, { balance: newBal }, { merge: true });
+            if(gameIdRef){ const gRef = doc(db, 'memoryGames', gameIdRef.id); tx.set(gRef, { userId: currentUser.uid, entryFee: ENTRY_FEE, result: 'win', playerScore, botScore, completedAt: serverTimestamp() }, { merge: true }); }
           });
           log(`<div style="color:lightgreen">Credited ${formatN(WIN_REWARD)} to your account.</div>`);
           await refreshBalanceDisplay();
-        } catch(err){
-          console.error('credit failed', err);
-          log(`<div style="color:orange">Failed to credit reward: ${err.message || err}</div>`);
-        }
+        } catch(err){ console.error('credit failed', err); log(`<div style="color:orange">Failed to credit reward: ${err.message || err}</div>`); }
       } else {
-        if(gameIdRef){
-          try {
-            await setDoc(doc(db, 'memoryGames', gameIdRef.id), {
-              userId: currentUser.uid,
-              entryFee: ENTRY_FEE,
-              result: playerScore > botScore ? 'win' : (playerScore === botScore ? 'draw' : 'lose'),
-              playerScore,
-              botScore,
-              completedAt: serverTimestamp()
-            }, { merge: true });
-          } catch(e){ console.warn('update game doc failed', e); }
-        }
+        if(gameIdRef){ try { await setDoc(doc(db, 'memoryGames', gameIdRef.id), { userId: currentUser.uid, entryFee: ENTRY_FEE, result: playerScore > botScore ? 'win' : (playerScore === botScore ? 'draw' : 'lose'), playerScore, botScore, completedAt: serverTimestamp() }, { merge: true }); } catch(e){ console.warn('update game doc failed', e); } }
       }
 
       modalTitle.textContent = didUserWin ? 'You won!' : (playerScore === botScore ? 'Draw' : 'You lost');
       modalBody.innerHTML = `Final score — You: <strong>${playerScore}</strong> • Bot: <strong>${botScore}</strong>${didUserWin ? `<div style="margin-top:8px;color:lightgreen">₦${WIN_REWARD} credited to your account.</div>` : ''}`;
-      modal.style.display = 'flex';
-      lockBoard = true;
-      turn = 'none';
+      modal.style.display = 'flex'; lockBoard = true; turn = 'none';
     }
 
     // Play: charge entry fee and create memoryGames doc inside transaction
@@ -500,106 +425,41 @@
       if(!currentUser){ alert('Sign in on the main site first.'); return; }
       if(!confirm(`Start a Memory game? ₦${ENTRY_FEE} will be deducted.`)) return;
 
-      playBtn.disabled = true;
-      gameNote.textContent = 'Charging entry fee...';
-
-      const gamesCol = collection(db, 'memoryGames');
-      const newGameRef = doc(gamesCol);
-      gameIdRef = newGameRef;
+      playBtn.disabled = true; gameNote.textContent = 'Charging entry fee...';
+      const gamesCol = collection(db, 'memoryGames'); const newGameRef = doc(gamesCol); gameIdRef = newGameRef;
 
       try {
         await runTransaction(db, async (tx) => {
-          const uRef = doc(db, 'users', currentUser.uid);
-          const bRef = doc(db, 'balances', currentUser.uid);
-          const uSnap = await tx.get(uRef);
-          const bSnap = await tx.get(bRef);
-          let balance = 0;
-          let targetRef = uRef;
-          if(uSnap.exists()){
-            balance = Number(uSnap.data().balance ?? uSnap.data().amount ?? 0) || 0;
-            targetRef = uRef;
-          } else if(bSnap.exists()){
-            balance = Number(bSnap.data().balance ?? bSnap.data().amount ?? 0) || 0;
-            targetRef = bRef;
-          } else {
-            balance = 0; targetRef = uRef;
-          }
+          const uRef = doc(db, 'users', currentUser.uid); const bRef = doc(db, 'balances', currentUser.uid);
+          const uSnap = await tx.get(uRef); const bSnap = await tx.get(bRef);
+          let balance = 0; let targetRef = uRef;
+          if(uSnap.exists()){ balance = Number(uSnap.data().balance ?? uSnap.data().amount ?? 0) || 0; targetRef = uRef; }
+          else if(bSnap.exists()){ balance = Number(bSnap.data().balance ?? bSnap.data().amount ?? 0) || 0; targetRef = bRef; }
           if(balance < ENTRY_FEE) throw new Error('insufficient-funds');
-          const newBal = balance - ENTRY_FEE;
-          tx.set(targetRef, { balance: newBal }, { merge: true });
-          tx.set(newGameRef, {
-            userId: currentUser.uid,
-            entryFee: ENTRY_FEE,
-            startedAt: serverTimestamp(),
-            status: 'started'
-          });
+          const newBal = balance - ENTRY_FEE; tx.set(targetRef, { balance: newBal }, { merge: true });
+          tx.set(newGameRef, { userId: currentUser.uid, entryFee: ENTRY_FEE, startedAt: serverTimestamp(), status: 'started' });
         });
 
-        await refreshBalanceDisplay();
-        gameNote.textContent = 'Game in progress';
-        setupTiles(10); // 10 pairs => 20 tiles
-        // start music if enabled
-        tryStartMusicOnUserGesture();
-        playBtn.disabled = false;
-      } catch(err){
-        console.error('entry charge failed', err);
-        playBtn.disabled = false;
-        gameNote.textContent = 'Could not start game';
-        if(err.message && err.message.includes('insufficient-funds')) alert('Insufficient funds. Please recharge to play.');
-        else alert('Could not charge entry fee: ' + (err.message || err));
-        await refreshBalanceDisplay();
-      }
+        await refreshBalanceDisplay(); gameNote.textContent = 'Game in progress'; setupTiles(10); tryStartMusicOnUserGesture(); playBtn.disabled = false;
+      } catch(err){ console.error('entry charge failed', err); playBtn.disabled = false; gameNote.textContent = 'Could not start game'; if(err.message && err.message.includes('insufficient-funds')) alert('Insufficient funds. Please recharge to play.'); else alert('Could not charge entry fee: ' + (err.message || err)); await refreshBalanceDisplay(); }
     });
 
     // restart (local)
-    restartBtn.addEventListener('click', ()=>{
-      if(!confirm('Restart the board? This will not refund entry fee.')) return;
-      setupTiles(10);
-    });
-
-    // back
+    restartBtn.addEventListener('click', ()=>{ if(!confirm('Restart the board? This will not refund entry fee.')) return; setupTiles(10); });
     backBtn.addEventListener('click', ()=> { window.location.href = 'mini-games.html'; });
-
-    // modal close
     modalClose.addEventListener('click', ()=> { modal.style.display = 'none'; });
 
     // auth
-    onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
-      await refreshBalanceDisplay();
-      initMusicControls();
-      if(!user) {
-        setStatus('Sign in on the main site to play');
-        playBtn.disabled = true;
-      } else {
-        setStatus('Ready — press Play to start');
-        playBtn.disabled = false;
-      }
-    });
+    onAuthStateChanged(auth, async (user) => { currentUser = user; await refreshBalanceDisplay(); initMusicControls(); if(!user) { setStatus('Sign in on the main site to play'); playBtn.disabled = true; } else { setStatus('Ready — press Play to start'); playBtn.disabled = false; } });
 
     // initialize empty 20-tile board disabled until play
-    (function initEmpty(){
-      boardEl.innerHTML = '';
-      for(let i=0;i<20;i++){
-        const el = document.createElement('div'); el.className='tile'; el.innerHTML = '<div style="font-size:18px;color:var(--muted)">?</div>';
-        boardEl.appendChild(el);
-      }
-      playerScore = 0; botScore = 0; updateScores();
-    })();
+    (function initEmpty(){ boardEl.innerHTML = ''; for(let i=0;i<20;i++){ const el = document.createElement('div'); el.className='tile'; el.innerHTML = '<div style="font-size:18px;color:var(--muted)">?</div>'; boardEl.appendChild(el); } playerScore = 0; botScore = 0; updateScores(); })();
 
     // on unload persist music volume & enabled
-    window.addEventListener('beforeunload', ()=> {
-      localStorage.setItem(MUSIC_VOL_KEY, String(bgMusic.volume));
-      const enabled = musicToggle.getAttribute('aria-pressed') === 'true';
-      localStorage.setItem(MUSIC_KEY, enabled ? '1' : '0');
-    });
+    window.addEventListener('beforeunload', ()=> { localStorage.setItem(MUSIC_VOL_KEY, String(bgMusic.volume)); const enabled = musicToggle.getAttribute('aria-pressed') === 'true'; localStorage.setItem(MUSIC_KEY, enabled ? '1' : '0'); });
 
     // attempt to set bgMusic volume from storage at runtime start
-    try {
-      const vol = Number(localStorage.getItem(MUSIC_VOL_KEY) || volSlider.value);
-      volSlider.value = vol;
-      bgMusic.volume = vol;
-    } catch(e){ /* ignore */ }
+    try { const vol = Number(localStorage.getItem(MUSIC_VOL_KEY) || volSlider.value); volSlider.value = vol; bgMusic.volume = vol; } catch(e){}
 
   </script>
 </body>
