@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Current Affairs Quiz</title>
+  <title>Beni-Wealth — Nigerian Quiz</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
   <style>
     :root{
@@ -34,8 +34,12 @@
     .choices{display:flex;flex-direction:column;gap:8px;margin-top:8px}
     .choice{padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);cursor:pointer;border:1px solid rgba(255,255,255,0.02)}
     .choice.disabled{opacity:.6;pointer-events:none}
-    .choice.correct{background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.6)}
-    .choice.wrong{background:rgba(239,68,68,0.06);border-color:rgba(239,68,68,0.8)}
+    .choice.correct{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.6)}
+    .choice.wrong{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.8)}
+    .feedback{margin-top:8px;padding:8px;border-radius:8px;font-weight:700}
+    .feedback.correct{background:rgba(16,185,129,0.10);color: #041219}
+    .feedback.wrong{background:rgba(239,68,68,0.08);color:#041219}
+    .feedback.timeout{background:rgba(239,68,68,0.06);color:#041219}
     .btn{padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,#7a5fff,#5e47ff);color:#041219;font-weight:800;cursor:pointer}
     .btn-ghost{padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text);cursor:pointer}
     .note{margin-top:8px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);color:var(--muted);font-size:13px}
@@ -67,13 +71,13 @@
         <p id="uidline">UID: -</p>
       </div>
       <div style="margin-left:auto" class="center">
-        <div class="muted">Category: <strong id="category">Current Affairs</strong></div>
+        <div class="muted">Category: <strong id="category">General Nigerian</strong></div>
       </div>
     </div>
 
     <div class="card">
-      <div style="font-weight:800">Current Affairs Quiz</div>
-      <div class="muted small">10 questions • 10s each • Correct: +10 • Wrong: −5</div>
+      <div style="font-weight:800">General Nigerian Quiz</div>
+      <div class="muted small">10 questions • 20s each • Correct: +10 • Wrong: −5</div>
       <div class="note">You can refresh the page — the quiz will resume where you left off and the countdown continues.</div>
 
       <div class="action-row" style="margin-top:12px;display:flex;gap:8px;">
@@ -85,7 +89,7 @@
     <div id="quizCard" class="card hidden" aria-live="polite">
       <div class="quiz-header">
         <div class="score">Score: <span id="score">0</span></div>
-        <div class="timer">Time left: <span id="timer">10</span>s</div>
+        <div class="timer">Time left: <span id="timer">20</span>s</div>
       </div>
 
       <!-- tracker: shows per-question correctness -->
@@ -165,12 +169,14 @@
     const attemptsNote = document.getElementById('attemptsNote');
     const trackerEl = document.getElementById('tracker');
 
-    // rules & runtime
-    const QUIZ_ID = 'current_affairs_001';
+    // rules & runtime (changed per request)
+    const QUIZ_ID = 'nigeria_general_001';
     const QUESTIONS_COUNT = 10;
-    const TIME_PER_QUESTION = 10;
+    const TIME_PER_QUESTION = 20; // increased to 20s
     const POINTS_CORRECT = 10;
     const POINTS_WRONG = -5;
+    const FEEDBACK_DELAY_MS = 1600; // pause after correct/wrong
+    const TIMEOUT_FEEDBACK_MS = 2200; // pause after timeout
 
     let currentUser = null;
     let attemptRef = null;
@@ -179,20 +185,20 @@
     let timer = null;
     let timeLeft = TIME_PER_QUESTION;
 
-    document.getElementById('category').textContent = 'Current Affairs';
+    document.getElementById('category').textContent = 'General Nigerian';
 
-    // questions
+    // 10 general Nigerian questions
     const placeholder = [
-      { id:'c1', text:'Which country hosted COP28 in 2023?', choices:['United Arab Emirates','Egypt','Chile','South Africa'], answerIndex:0 },
-      { id:'c2', text:'Which major world leader changed office in 2024? (select the new office-holder shown)', choices:['Keir Starmer','Rishi Sunak','Emmanuel Macron','Olaf Scholz'], answerIndex:0 },
-      { id:'c3', text:'Which company released a prominent multimodal AI named "Gemini"?', choices:['OpenAI','Google','Microsoft','Meta'], answerIndex:1 },
-      { id:'c4', text:'Which African country reported a large offshore oil discovery in 2024?', choices:['Senegal','Nigeria','Gabon','Mozambique'], answerIndex:0 },
-      { id:'c5', text:'Which international summit faced postponement or notable disruption due to 2024 geopolitical tensions?', choices:['G7 Summit','UN General Assembly','COP29','Commonwealth Meeting'], answerIndex:0 },
-      { id:'c6', text:'Which currency saw notable volatility in 2024 after global rate shifts?', choices:['Japanese Yen','Argentine Peso','US Dollar','Nigerian Naira'], answerIndex:0 },
-      { id:'c7', text:'Which region advanced major digital privacy reforms in 2024?', choices:['European Union','India','Canada','Australia'], answerIndex:0 },
-      { id:'c8', text:'Which country brokered a normalization deal in the Middle East in 2023–2024?', choices:['Saudi Arabia','Qatar','UAE','Turkey'], answerIndex:2 },
-      { id:'c9', text:'Which major economy announced a large climate finance pledge in 2024?', choices:['United States','United Kingdom','European Union','China'], answerIndex:0 },
-      { id:'c10', text:'Which tech trend dominated headlines in 2024?', choices:['Generative AI','Web3','Blockchain games','Smart glasses'], answerIndex:0 }
+      { id:'n1', text:'What is the capital city of Nigeria?', choices:['Lagos','Abuja','Kano','Port Harcourt'], answerIndex:1 },
+      { id:'n2', text:'Which Nigerian city is the largest by population?', choices:['Abuja','Lagos','Kano','Ibadan'], answerIndex:1 },
+      { id:'n3', text:'Which river flows through the Niger Delta region?', choices:['Nile','Volta','Niger','Zambezi'], answerIndex:2 },
+      { id:'n4', text:'Which festival is famously celebrated in Benin City with coral beads and royal rituals?', choices:['Argungu','Igue','Eyo','Osun-Osogbo'], answerIndex:1 },
+      { id:'n5', text:'Who was the first President of independent Nigeria (1963 - as Republic)?', choices:['Nnamdi Azikiwe','Obafemi Awolowo','Ahmadu Bello','Abubakar Tafawa Balewa'], answerIndex:0 },
+      { id:'n6', text:'Which Nigerian author wrote "Things Fall Apart"?', choices:['Chinua Achebe','Wole Soyinka','Buchi Emecheta','Ben Okri'], answerIndex:0 },
+      { id:'n7', text:'Which language is widely spoken in the southwestern region of Nigeria?', choices:['Hausa','Yoruba','Igbo','Kanuri'], answerIndex:1 },
+      { id:'n8', text:'Which Nigerian state is famous for the Jos Plateau?', choices:['Plateau State','Kaduna State','Kogi State','Enugu State'], answerIndex:0 },
+      { id:'n9', text:'What is the currency of Nigeria?', choices:['Cedi','Naira','Shilling','Pound'], answerIndex:1 },
+      { id:'n10', text:'Which body of water borders southern Nigeria?', choices:['Gulf of Guinea','Red Sea','Atlantic Ocean (North)','Indian Ocean'], answerIndex:0 }
     ];
     questions = placeholder.slice(0, QUESTIONS_COUNT);
 
@@ -244,7 +250,7 @@
       if(!currentUser) return alert('Sign in on the main site first.');
       const completed = await hasCompleted(); if(completed) return alert('You already completed this quiz.');
       const inprog = await hasInProgress(); if(inprog){ await loadResumeAttempt(); showQuizUI(); return; }
-      if(!confirm('Start the Current Affairs quiz?')) return;
+      if(!confirm('Start the General Nigerian quiz?')) return;
 
       try {
         const payload = { quizId: QUIZ_ID, userId: currentUser.uid, userEmail: currentUser.email || null, currentIndex:0, score:0, status:'in_progress', questionStartAt: serverTimestamp(), startedAt: serverTimestamp(), answers:[] };
@@ -339,7 +345,6 @@
         if(ans){
           if(ans.correct) dot.classList.add('correct');
           else dot.classList.add('wrong');
-          // set aria to help screen readers
           dot.setAttribute('title', `Question ${i+1}: ${ans.correct ? 'correct' : (ans.timedOut ? 'timed out' : 'wrong')}`);
         } else {
           dot.setAttribute('title', `Question ${i+1}: not answered`);
@@ -389,7 +394,7 @@
       }
     });
 
-    // ANSWER HANDLING — auto-advance + tracker updates
+    // ANSWER HANDLING — auto-advance but pause to show feedback
     async function answerChoice(selectedIndex){
       clearInterval(timer);
       const idx = attemptData.currentIndex || 0; const q = questions[idx];
@@ -408,12 +413,16 @@
           questionStartAt: willFinish ? null : serverTimestamp(),
           completedAt: willFinish ? serverTimestamp() : undefined
         });
-        // fetch server state and render next
+        // fetch server state and render next after feedback pause
         const s = await getDoc(attemptRef);
         attemptData = s.data();
         applyAnswerFeedback(selectedIndex, q, correct);
         renderTracker();
-        if(attemptData.status === 'completed'){ showFinal(); } else { renderCurrentQuestion(); computeAndStartTimer(); }
+        if(attemptData.status === 'completed'){
+          setTimeout(()=> showFinal(), FEEDBACK_DELAY_MS);
+        } else {
+          setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, FEEDBACK_DELAY_MS);
+        }
         return;
       } catch (e) { console.warn('updateDoc append failed', e); }
 
@@ -434,11 +443,15 @@
         const s = await getDoc(attemptRef); attemptData = s.data();
         applyAnswerFeedback(selectedIndex, q, correct);
         renderTracker();
-        if(attemptData.status === 'completed'){ showFinal(); } else { renderCurrentQuestion(); computeAndStartTimer(); }
+        if(attemptData.status === 'completed'){
+          setTimeout(()=> showFinal(), FEEDBACK_DELAY_MS);
+        } else {
+          setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, FEEDBACK_DELAY_MS);
+        }
         return;
       } catch(e){ console.warn('transaction failed', e); }
 
-      // Local queue fallback: update local attemptData optimistically and advance UI
+      // Local queue fallback: update local attemptData optimistically and advance UI after feedback pause
       queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1), status: willFinish ? 'completed' : 'in_progress' });
       attemptData = attemptData || {};
       attemptData.score = newScore;
@@ -446,7 +459,11 @@
       attemptData.status = willFinish ? 'completed' : 'in_progress';
       applyAnswerFeedback(selectedIndex, q, correct, true);
       renderTracker();
-      if(attemptData.status === 'completed'){ showFinal(); } else { renderCurrentQuestion(); computeAndStartTimer(); }
+      if(attemptData.status === 'completed'){
+        setTimeout(()=> showFinal(), FEEDBACK_DELAY_MS);
+      } else {
+        setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, FEEDBACK_DELAY_MS);
+      }
     }
 
     function computeAndStartTimer(){
@@ -462,18 +479,25 @@
       const choiceEls = questionArea.querySelectorAll('.choice');
       if(choiceEls[selectedIndex]) choiceEls[selectedIndex].classList.add(correct ? 'correct' : 'wrong');
       if(!correct && choiceEls[q.answerIndex]) choiceEls[q.answerIndex].classList.add('correct');
-      const fb = document.createElement('div'); fb.style.marginTop='8px'; fb.style.fontWeight=700; fb.style.color= correct ? 'var(--success)' : 'var(--danger)';
+      const fb = document.createElement('div'); fb.className = 'feedback ' + (correct ? 'correct' : 'wrong');
       fb.textContent = correct ? `Correct! +${POINTS_CORRECT}` : `Wrong — ${POINTS_WRONG}. Correct: ${q.choices[q.answerIndex]}` + (queued ? ' (queued — will sync)' : '');
       questionArea.appendChild(fb);
       scoreEl.textContent = (attemptData && attemptData.score !== undefined) ? attemptData.score : (Number(scoreEl.textContent||0) + (correct ? POINTS_CORRECT : POINTS_WRONG));
     }
 
-    // TIMEOUT handling — auto-advance + tracker updates
+    // TIMEOUT handling — show timeout message then advance after a longer pause
     async function handleTimeout(){
       const idx = attemptData.currentIndex || 0; const q = questions[idx];
       const newScore = (attemptData.score || 0) + POINTS_WRONG; const nowIso = new Date().toISOString();
       const answerObj = { qIndex: idx, selectedIndex: null, correct:false, timedOut:true, ts: nowIso };
       const willFinish = (idx+1) >= QUESTIONS_COUNT;
+
+      // show timeout UI immediatelly (before server write) so user sees it
+      const choiceEls = questionArea.querySelectorAll('.choice'); choiceEls.forEach(c=>c.classList.add('disabled'));
+      const fb = document.createElement('div'); fb.className='feedback timeout';
+      fb.textContent = `Time expired — ${POINTS_WRONG}. Correct: ${q.choices[q.answerIndex]}`;
+      questionArea.appendChild(fb);
+      renderTracker();
 
       try {
         await updateDoc(attemptRef, {
@@ -485,8 +509,12 @@
           completedAt: willFinish ? serverTimestamp() : undefined
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
-        revealTimeout(q); renderTracker();
-        if(attemptData.status === 'completed') showFinal(); else { renderCurrentQuestion(); computeAndStartTimer(); }
+        // advance after TIMEOUT_FEEDBACK_MS
+        if(attemptData.status === 'completed'){
+          setTimeout(()=> showFinal(), TIMEOUT_FEEDBACK_MS);
+        } else {
+          setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, TIMEOUT_FEEDBACK_MS);
+        }
         return;
       } catch(e){ console.warn('timeout update failed', e); }
 
@@ -503,27 +531,25 @@
           });
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
-        revealTimeout(q); renderTracker();
-        if(attemptData.status === 'completed') showFinal(); else { renderCurrentQuestion(); computeAndStartTimer(); }
+        if(attemptData.status === 'completed'){
+          setTimeout(()=> showFinal(), TIMEOUT_FEEDBACK_MS);
+        } else {
+          setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, TIMEOUT_FEEDBACK_MS);
+        }
         return;
       } catch(e){ console.warn('timeout tx failed', e); }
 
-      // queue locally and optimistically advance
+      // queue locally and optimistically advance after delay
       queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1), status: willFinish ? 'completed' : 'in_progress' });
       attemptData = attemptData || {};
       attemptData.score = newScore;
       attemptData.currentIndex = willFinish ? QUESTIONS_COUNT : (idx+1);
       attemptData.status = willFinish ? 'completed' : 'in_progress';
-      revealTimeout(q, true);
-      renderTracker();
-      if(attemptData.status === 'completed') showFinal(); else { renderCurrentQuestion(); computeAndStartTimer(); }
-    }
-
-    function revealTimeout(q, queued=false){
-      const choiceEls = questionArea.querySelectorAll('.choice'); if(choiceEls[q.answerIndex]) choiceEls[q.answerIndex].classList.add('correct');
-      const fb = document.createElement('div'); fb.style.marginTop='8px'; fb.style.fontWeight=700; fb.style.color='var(--danger)';
-      fb.textContent = `Time expired — ${POINTS_WRONG}. Correct: ${q.choices[q.answerIndex]}` + (queued ? ' (queued — will sync)' : '');
-      questionArea.appendChild(fb); scoreEl.textContent = attemptData && attemptData.score !== undefined ? attemptData.score : scoreEl.textContent;
+      if(attemptData.status === 'completed'){
+        setTimeout(()=> showFinal(), TIMEOUT_FEEDBACK_MS);
+      } else {
+        setTimeout(()=> { renderCurrentQuestion(); computeAndStartTimer(); }, TIMEOUT_FEEDBACK_MS);
+      }
     }
 
     function queuePendingAnswer(item){
@@ -537,7 +563,7 @@
 
     function showFinal(){
       clearInterval(timer); quizCard.classList.add('hidden'); resultCard.classList.remove('hidden');
-      finalSummary.innerHTML = `<div style="font-weight:800">Your score: ${attemptData ? attemptData.score ?? 0 : 0}</div><div class="muted small" style="margin-top:8px">Thanks for playing Current Affairs.</div>`;
+      finalSummary.innerHTML = `<div style="font-weight:800">Your score: ${attemptData ? attemptData.score ?? 0 : 0}</div><div class="muted small" style="margin-top:8px">Thanks for playing.</div>`;
       clearLocalSnapshot();
     }
 
