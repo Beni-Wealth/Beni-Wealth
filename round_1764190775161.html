@@ -3,8 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Nigerian Quiz (timer carryover)</title>
+  <title>Beni-Wealth — Quiz</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
+
+   <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
+
+  <!-- Favicons & Social preview -->
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="theme-color" content="#2fe0b8">
   <style>
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(255,255,255,0.62); --text:#eaf2ff;
@@ -12,7 +19,7 @@
       font-family:'Poppins',system-ui,-apple-system,"Segoe UI",Roboto,Arial;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background: radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text);}
+    html,body{height:100%;margin:0;background: radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text);}    
     .phone{max-width:420px;width:100%;margin:20px auto;border-radius:20px;padding:18px 18px 120px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:0 18px 60px rgba(0,0,0,0.6)}
     .top{display:flex;gap:12px;align-items:center;margin-bottom:12px}
     .avatar{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:18px;color:#041219;background:var(--accent-grad)}
@@ -83,6 +90,8 @@
       <div class="action-row" style="margin-top:12px;display:flex;gap:8px;">
         <div id="playBtn" class="pill primary">Play</div>
         <div id="rulesBtn" class="pill ghost">Rules</div>
+        <!-- Back button added -->
+        <div id="backBtn" class="pill ghost" title="Back to mini-games">Back</div>
       </div>
     </div>
 
@@ -153,6 +162,7 @@
     const uidLine = document.getElementById('uidline');
     const playBtn = document.getElementById('playBtn');
     const rulesBtn = document.getElementById('rulesBtn');
+    const backBtn = document.getElementById('backBtn');
 
     const quizCard = document.getElementById('quizCard');
     const questionArea = document.getElementById('questionArea');
@@ -659,6 +669,9 @@
 
     // init UI
     scoreEl.textContent = '0'; timerEl.textContent = String(TIME_PER_QUESTION); progressEl.textContent = `Question 0 / ${QUESTIONS_COUNT}`; attemptsNote.textContent = 'Sign in to track attempts.';
+
+    // Back button behavior
+    backBtn.addEventListener('click', ()=> { window.location.href = 'mini-games.html'; });
 
     // small poll fallback
     (function pollAuth(retries=10, interval=400){ let tries=0; const p = setInterval(()=>{ tries++; if(auth.currentUser) clearInterval(p); if(tries>=retries) clearInterval(p); }, interval); })();
