@@ -280,29 +280,21 @@
     }
     .chat-fab[aria-hidden="true"]{ display:none; }
 
-    /* Responsive adjustments */
+    /* --- MORE overlay styles --- */
+    .more-overlay{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:1100; }
+    .more-panel{ width:92%; max-width:420px; border-radius:14px; padding:14px; background: linear-gradient(180deg,#081024,#02040a); border:1px solid rgba(255,255,255,0.04); box-shadow:0 30px 100px rgba(0,0,0,0.7); color:var(--text); }
+    .more-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .more-list{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
+    .more-option{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent); cursor:pointer; border:1px solid rgba(255,255,255,0.03); }
+    .more-option small{ color:var(--muted); display:block; }
+    .more-close{ background:transparent; border:1px solid rgba(255,255,255,0.04); padding:8px 10px; border-radius:8px; color:var(--muted); cursor:pointer; }
+
+    /* Responsive tweaks */
     @media(max-width:480px){
       body{ padding:14px; }
       .phone{ min-height:calc(100vh - 40px); padding-bottom:120px; border-radius:20px; }
-      .bottom-nav {
-        left: 14px;
-        right: 14px;
-        transform: none;
-        width: auto;
-        max-width: calc(100% - 28px);
-      }
-      .chat-fab {
-        left: auto;
-        right: 20px;
-        transform: none;
-        bottom: 100px;
-      }
-    }
-
-    @media(min-width:900px){
-      body{ padding:40px; }
-      .phone{ min-height:760px; max-width:480px; }
-      .chat-fab { transform: translateX(calc(var(--container-w) / 2 - 72px)); } /* keep alignment */
+      .bottom-nav { left: 14px; right: 14px; transform: none; width: auto; max-width: calc(100% - 28px); }
+      .chat-fab { left: auto; right: 20px; transform: none; bottom: 100px; }
     }
   </style>
 </head>
@@ -369,6 +361,16 @@
         </div>
         <div>›</div>
       </div>
+
+      <!-- NEW: More options menu item (added right below Referrals) -->
+      <div id="moreItem" class="menu-item" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="moreOverlay">
+        <div class="menu-left">
+          <div class="menu-icon">⋯</div>
+          <div class="menu-text"><h4>More</h4><p>extra options & links</p></div>
+        </div>
+        <div>›</div>
+      </div>
+
     </nav>
 
     <button id="logoutBtn" class="logout">Log out</button>
@@ -402,6 +404,58 @@
 
     <!-- floating contact button (redirects to contact.html) -->
     <a id="chatFab" class="chat-fab" href="contact.html" title="Contact support" aria-label="Contact support">💬</a>
+  </div>
+
+  <!-- MORE overlay (opens when user taps More) -->
+  <div id="moreOverlay" class="more-overlay" aria-hidden="true">
+    <div class="more-panel" role="dialog" aria-modal="true" aria-labelledby="moreTitle">
+      <div class="more-header">
+        <div id="moreTitle" style="font-weight:800">More options</div>
+        <button id="closeMore" class="more-close" aria-label="Close">✕</button>
+      </div>
+
+      <div class="more-list">
+        <div class="more-option" id="optProfile" role="button" tabindex="0">
+          <div>
+            <strong>Profile</strong>
+            <small>Edit profile & preferences</small>
+          </div>
+          <div>›</div>
+        </div>
+
+        <div class="more-option" id="optSupport" role="button" tabindex="0">
+          <div>
+            <strong>Support</strong>
+            <small>Contact support & tickets</small>
+          </div>
+          <div>›</div>
+        </div>
+
+        <div class="more-option" id="optInvite" role="button" tabindex="0">
+          <div>
+            <strong>Invite friends</strong>
+            <small>Share your referral link</small>
+          </div>
+          <div>›</div>
+        </div>
+
+        <div class="more-option" id="optFAQ" role="button" tabindex="0">
+          <div>
+            <strong>Help center</strong>
+            <small>FAQs & guides</small>
+          </div>
+          <div>›</div>
+        </div>
+
+        <div class="more-option" id="optTerms" role="button" tabindex="0">
+          <div>
+            <strong>Terms & privacy</strong>
+            <small>Legal & policies</small>
+          </div>
+          <div>›</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script type="module">
@@ -442,7 +496,17 @@
     const tasksItem = document.getElementById('tasksItem');
     const earningsItem = document.getElementById('earningsItem');
     const referralsItem = document.getElementById('referralsItem');
+    const moreItem = document.getElementById('moreItem');
     const logoutBtn = document.getElementById('logoutBtn');
+
+    // more overlay elements
+    const moreOverlay = document.getElementById('moreOverlay');
+    const closeMore = document.getElementById('closeMore');
+    const optProfile = document.getElementById('optProfile');
+    const optSupport = document.getElementById('optSupport');
+    const optInvite = document.getElementById('optInvite');
+    const optFAQ = document.getElementById('optFAQ');
+    const optTerms = document.getElementById('optTerms');
 
     // bottom nav
     const navHome = document.getElementById('navHome');
@@ -512,9 +576,36 @@
       container.style.transform = 'translateY(-6px)';
       setTimeout(()=> { container.style.transform = ''; window.location.href = 'referrals.html'; }, 240);
     });
-    logoutBtn.addEventListener('click', async ()=> {
-      try{ await signOut(auth); window.location.href = 'index.html'; }catch(e){ console.error('logout failed', e); alert('Logout failed'); }
+
+    // MORE item: open overlay
+    moreItem.addEventListener('click', (e) => {
+      e.preventDefault();
+      openMore();
     });
+    moreItem.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMore(); } });
+
+    function openMore(){
+      moreOverlay.style.display = 'flex';
+      moreOverlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+      // focus first option for keyboard users
+      optProfile.focus();
+    }
+    function closeMoreOverlay(){
+      moreOverlay.style.display = 'none';
+      moreOverlay.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+
+    closeMore.addEventListener('click', closeMoreOverlay);
+    moreOverlay.addEventListener('click', (ev) => { if(ev.target === moreOverlay) closeMoreOverlay(); });
+
+    // more option actions
+    optProfile.addEventListener('click', ()=> { closeMoreOverlay(); window.location.href = 'profile.html'; });
+    optSupport.addEventListener('click', ()=> { closeMoreOverlay(); window.location.href = 'contact.html'; });
+    optInvite.addEventListener('click', ()=> { closeMoreOverlay(); window.location.href = 'referrals.html'; });
+    optFAQ.addEventListener('click', ()=> { closeMoreOverlay(); window.location.href = 'help.html'; });
+    optTerms.addEventListener('click', ()=> { closeMoreOverlay(); window.location.href = 'terms.html'; });
 
     // bottom nav actions
     navHome.addEventListener('click', ()=> window.location.href = 'catalog.html');
