@@ -4,19 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Quiz Progress</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600,700&display=swap" rel="stylesheet"/>
-
-   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Social preview -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
-  
   <style>
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820; --card:rgba(255,255,255,0.03);
-      --muted:rgba(255,255,255,0.62); --accent:linear-gradient(90deg,#7a5fff,#35d6b1);
+      --muted:rgba(255,255,255,0.62); --accent-grad: linear-gradient(90deg,#7a5fff,#35d6b1);
       --bar-bg: rgba(255,255,255,0.04); --bar-fill: linear-gradient(90deg,#35d6b1,#5b3bff);
       --radius:14px; color:#eaf2ff; font-family:'Poppins',system-ui,-apple-system,"Segoe UI",Roboto,Arial;
     }
@@ -24,7 +17,7 @@
     .wrap{max-width:920px;margin:28px auto;padding:20px}
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent); border-radius:16px; padding:18px; border:1px solid rgba(255,255,255,0.02); color:var(--text); box-shadow:0 12px 40px rgba(0,0,0,0.45)}
     .top{display:flex;gap:12px;align-items:center}
-    .avatar{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;font-weight:800;background:var(--accent); color:#041219}
+    .avatar{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;font-weight:800;background:var(--accent-grad); color:#041219}
     h1{margin:0;font-size:18px}
     .muted{color:var(--muted);font-size:13px}
     .desc{margin-top:12px;color:var(--muted)}
@@ -32,11 +25,12 @@
     .bar{height:36px;border-radius:12px;background:var(--bar-bg);overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
     .bar-fill{height:100%;width:0%;background:var(--bar-fill);display:flex;align-items:center;justify-content:center;color:#041219;font-weight:800;transition:width 400ms ease}
     .stats{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
-    .btn{padding:10px 14px;border-radius:12px;border:0;background:var(--accent);color:#041219;font-weight:800;cursor:pointer}
+    .btn{padding:10px 14px;border-radius:12px;border:0;background:var(--accent-grad);color:#041219;font-weight:800;cursor:pointer}
     .btn-ghost{padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);cursor:pointer}
     .note{margin-top:12px;font-size:13px;color:var(--muted)}
     .center{display:flex;justify-content:center;align-items:center}
     .hidden{display:none}
+    input[type="text"], input[type="number"] { width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background: rgba(255,255,255,0.01); color:var(--text); margin-top:6px; box-sizing:border-box; }
 
     /* history */
     .history{margin-top:18px;display:flex;flex-direction:column;gap:12px}
@@ -45,6 +39,14 @@
     .top-list{display:flex;gap:10px;flex-wrap:wrap}
     .top-item{background:rgba(255,255,255,0.02);padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);min-width:140px}
     .small-muted{color:var(--muted);font-size:12px}
+    .published-badge { padding:6px 10px; border-radius:999px; font-weight:800; background:linear-gradient(90deg,#10b981,#06b6d4); color:#041219; font-size:13px; }
+    /* confetti styles */
+    .confetti-wrapper { pointer-events:none; position:fixed; inset:0; z-index:2000; overflow:hidden; }
+    .confetti { position:absolute; width:10px; height:16px; opacity:0.95; transform-origin:center; border-radius:2px; animation: fall linear forwards; }
+    @keyframes fall {
+      0% { transform: translateY(-10vh) rotate(0deg); opacity:1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity:0.95; }
+    }
     @media(max-width:720px){ .wrap{padding:12px} .top{flex-direction:row;gap:12px} }
   </style>
 </head>
@@ -82,21 +84,98 @@
       <div class="note" id="infoNote">After payment and successful join you will be redirected to the round page automatically.</div>
     </div>
 
-    <!-- Quiz history -->
-    <div id="history" class="history" aria-live="polite">
-      <div class="muted">Loading quiz history…</div>
+    <!-- Published rounds: visible to everyone -->
+    <div class="card" style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:800">Published rounds</div>
+        <div class="muted small">Visible to all users</div>
+      </div>
+      <div id="published" class="history" aria-live="polite" style="margin-top:12px">
+        <div class="muted">No published rounds yet</div>
+      </div>
+    </div>
+
+    <!-- Admin controls: visible only for admins -->
+    <div id="adminControls" class="card hidden" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:800">Admin: Publish Round (manual)</div>
+        <div class="muted small">Admins only</div>
+      </div>
+
+      <div style="margin-top:10px">
+        <label><small class="muted">Round ID</small></label>
+        <input id="adminRoundId" type="text" placeholder="e.g. current_affairs_001_r_161234567890" />
+      </div>
+
+      <div style="margin-top:8px; display:grid; grid-template-columns: repeat(3,1fr); gap:8px">
+        <div>
+          <small class="muted">Winner 1 - Display name</small>
+          <input id="w1_name" type="text" placeholder="Name" />
+          <small class="muted">Score</small>
+          <input id="w1_score" type="number" placeholder="Points" />
+          <small class="muted">Reward (₦)</small>
+          <input id="w1_reward" type="number" placeholder="Reward" />
+          <small class="muted">User ID (optional)</small>
+          <input id="w1_uid" type="text" placeholder="uid (optional)" />
+        </div>
+
+        <div>
+          <small class="muted">Winner 2 - Display name</small>
+          <input id="w2_name" type="text" placeholder="Name" />
+          <small class="muted">Score</small>
+          <input id="w2_score" type="number" placeholder="Points" />
+          <small class="muted">Reward (₦)</small>
+          <input id="w2_reward" type="number" placeholder="Reward" />
+          <small class="muted">User ID (optional)</small>
+          <input id="w2_uid" type="text" placeholder="uid (optional)" />
+        </div>
+
+        <div>
+          <small class="muted">Winner 3 - Display name</small>
+          <input id="w3_name" type="text" placeholder="Name" />
+          <small class="muted">Score</small>
+          <input id="w3_score" type="number" placeholder="Points" />
+          <small class="muted">Reward (₦)</small>
+          <input id="w3_reward" type="number" placeholder="Reward" />
+          <small class="muted">User ID (optional)</small>
+          <input id="w3_uid" type="text" placeholder="uid (optional)" />
+        </div>
+      </div>
+
+      <div style="margin-top:12px; display:flex; gap:8px; align-items:center">
+        <button id="publishBtn" class="btn">Publish Round</button>
+        <button id="clearAdminBtn" class="btn-ghost">Clear</button>
+        <div id="publishStatus" class="muted" style="margin-left:auto"></div>
+      </div>
+    </div>
+
+    <!-- Admin-only full history (manual load) -->
+    <div id="historyArea" class="card hidden" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:800">All rounds (admin)</div>
+        <div class="muted small">Admins can refresh</div>
+      </div>
+      <div id="history" class="history" style="margin-top:12px">
+        <div class="muted">Admin history unavailable (not loaded)</div>
+      </div>
+      <div style="margin-top:10px">
+        <button id="loadHistoryBtn" class="btn-ghost">Load full rounds (admins)</button>
+      </div>
     </div>
   </div>
+
+  <!-- confetti container (created dynamically) -->
+  <div id="confettiRoot" class="confetti-wrapper" style="display:none"></div>
 
   <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
       getFirestore, doc, getDoc, runTransaction, serverTimestamp, onSnapshot,
-      collection, query, where, orderBy, limit, getDocs, setDoc, writeBatch
+      collection, query, where, orderBy, limit, getDocs, setDoc
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // same config as your dashboard
+    // firebase config (same)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -106,358 +185,256 @@
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
-
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // UI
+    // UI refs
     const avatarEl = document.getElementById('avatar');
     const uidline = document.getElementById('uidline');
     const barFill = document.getElementById('barFill');
     const percentLabel = document.getElementById('percentLabel');
     const playBtn = document.getElementById('playBtn');
     const statusMsg = document.getElementById('statusMsg');
+    const publishedWrap = document.getElementById('published');
+
+    const adminControls = document.getElementById('adminControls');
+    const adminRoundId = document.getElementById('adminRoundId');
+    const publishBtn = document.getElementById('publishBtn');
+    const publishStatus = document.getElementById('publishStatus');
+    const clearAdminBtn = document.getElementById('clearAdminBtn');
+
+    const historyArea = document.getElementById('historyArea');
+    const loadHistoryBtn = document.getElementById('loadHistoryBtn');
     const historyWrap = document.getElementById('history');
 
-    // config (internal cap is 20 but UI displays only percentage)
+    const confettiRoot = document.getElementById('confettiRoot');
+
+    // config
     const QUIZ_ID = 'current_affairs_001';
     const MAX_PARTICIPANTS = 20;
     const ENTRY_FEE = 20;
     const REDIRECT_PAGE = 'round_1764190775161.html';
+    const ADMIN_EMAILS = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
 
     let currentUser = null;
-    let processingRound = false;
 
-    function extractBalance(d){
-      if(!d || typeof d !== 'object') return null;
-      if(typeof d.balance === 'number') return d.balance;
-      if(typeof d.walletBalance === 'number') return d.walletBalance;
-      if(d.wallet && typeof d.wallet.balance === 'number') return d.wallet.balance;
-      if(d.account && typeof d.account.balance === 'number') return d.account.balance;
-      const tryFields = ['balance','walletBalance','amount','bal'];
-      for(const f of tryFields){
-        if(typeof d[f] === 'string'){
-          const parsed = Number(String(d[f]).replace(/[^0-9.-]+/g,''));
-          if(!isNaN(parsed)) return parsed;
-        }
-      }
-      return null;
+    // show published rounds (public)
+    function subscribePublishedRounds(){
+      const q = query(collection(db, 'quizRounds'), where('quizId','==', QUIZ_ID), where('published','==', true), orderBy('publishedAt','desc'), limit(20));
+      return onSnapshot(q, snap => {
+        const rounds = [];
+        snap.forEach(s => rounds.push({ id: s.id, data: s.data() || {} }));
+        renderPublished(rounds);
+      }, err => {
+        console.warn('published rounds listener failed', err);
+      });
     }
 
-    const progressRef = doc(db, 'quizProgress', QUIZ_ID);
-
-    // Listen live progress
-    onSnapshot(progressRef, async (snap) => {
-      const data = snap.exists() ? (snap.data() || {}) : {};
-      const count = Number(data.participantsCount || 0);
-      updateProgress(count);
-
-      // If full, finalize and start new round automatically
-      if(count >= MAX_PARTICIPANTS){
-        try { await finalizeRoundIfNeeded(count); } catch(e){ console.warn('finalizeRoundIfNeeded failed', e); }
+    // render published for public
+    function renderPublished(rounds){
+      if(!rounds || rounds.length === 0){
+        publishedWrap.innerHTML = '<div class="muted">No published rounds yet</div>';
+        return;
       }
-    }, (err) => {
-      console.warn('progress onSnapshot err', err);
-      updateProgress(0);
+      publishedWrap.innerHTML = '';
+      for(const r of rounds){
+        const card = document.createElement('div'); card.className = 'round-card';
+        const head = document.createElement('div'); head.className = 'round-head';
+        head.innerHTML = `<div><strong>Round</strong> ${r.data.roundId || r.id}</div><div><span class="published-badge">Published</span></div>`;
+        card.appendChild(head);
+        const meta = document.createElement('div'); meta.className = 'small-muted';
+        const created = r.data.publishedAt && r.data.publishedAt.toDate ? r.data.publishedAt.toDate().toLocaleString() : (r.data.createdAt && r.data.createdAt.toDate ? r.data.createdAt.toDate().toLocaleString() : '-');
+        meta.textContent = `${r.data.participantsCount ?? '-'} players • ${created}`;
+        card.appendChild(meta);
+
+        const topArea = document.createElement('div'); topArea.style.marginTop = '6px';
+        if(Array.isArray(r.data.top) && r.data.top.length>0){
+          const lbl = document.createElement('div'); lbl.style.fontWeight='800'; lbl.textContent = 'Top players';
+          topArea.appendChild(lbl);
+          const list = document.createElement('div'); list.className = 'top-list';
+          for(const p of r.data.top){
+            const it = document.createElement('div'); it.className = 'top-item';
+            it.innerHTML = `<div style="font-weight:800">${p.displayName || p.userId}</div><div class="small-muted">Score: ${p.score ?? '-'}</div><div class="small-muted">Reward: ₦${Number(p.reward||0).toLocaleString()}</div>`;
+            list.appendChild(it);
+          }
+          topArea.appendChild(list);
+        } else {
+          topArea.innerHTML = `<div class="small-muted">Top players: not provided</div>`;
+        }
+        card.appendChild(topArea);
+        publishedWrap.appendChild(card);
+      }
+    }
+
+    // small helper to show confetti for X seconds
+    function showConfetti(durationMs = 5000, count = 90){
+      confettiRoot.style.display = 'block';
+      // clear previous
+      confettiRoot.innerHTML = '';
+      const colors = ['#ff3b3b','#ffb86b','#ffd166','#6ee7b7','#7a5fff','#35d6b1','#fff'];
+      for(let i=0;i<count;i++){
+        const el = document.createElement('div');
+        el.className = 'confetti';
+        el.style.background = colors[Math.floor(Math.random()*colors.length)];
+        el.style.left = (Math.random()*100) + '%';
+        el.style.top = (-10 - Math.random()*20) + 'vh';
+        el.style.width = (6 + Math.random()*12) + 'px';
+        el.style.height = (8 + Math.random()*16) + 'px';
+        el.style.opacity = (0.8 + Math.random()*0.3);
+        const speed = 3500 + Math.random()*3000;
+        el.style.animationDuration = (speed) + 'ms';
+        el.style.transform = `rotate(${Math.floor(Math.random()*360)}deg)`;
+        // small horizontal drift using CSS variable
+        el.style.setProperty('--drift', (Math.random()*160 - 80) + 'px');
+        confettiRoot.appendChild(el);
+      }
+      // hide after duration
+      setTimeout(()=>{ confettiRoot.style.display='none'; confettiRoot.innerHTML=''; }, durationMs + 400);
+    }
+
+    // ADMIN: publish handler
+    publishBtn.addEventListener('click', async () => {
+      if(!currentUser) return alert('Sign in as admin to publish.');
+      const mail = (currentUser.email || '').toLowerCase();
+      if(!ADMIN_EMAILS.includes(mail)) return alert('You are not authorized to publish rounds.');
+
+      const roundId = adminRoundId.value.trim();
+      if(!roundId) return alert('Round ID is required.');
+
+      const w1 = { displayName: document.getElementById('w1_name').value.trim(), userId: document.getElementById('w1_uid').value.trim() || null, score: Number(document.getElementById('w1_score').value) || 0, reward: Number(document.getElementById('w1_reward').value) || 0 };
+      const w2 = { displayName: document.getElementById('w2_name').value.trim(), userId: document.getElementById('w2_uid').value.trim() || null, score: Number(document.getElementById('w2_score').value) || 0, reward: Number(document.getElementById('w2_reward').value) || 0 };
+      const w3 = { displayName: document.getElementById('w3_name').value.trim(), userId: document.getElementById('w3_uid').value.trim() || null, score: Number(document.getElementById('w3_score').value) || 0, reward: Number(document.getElementById('w3_reward').value) || 0 };
+
+      if(!w1.displayName) return alert('Winner 1 name is required.');
+      // other winners optional but will be recorded if filled
+
+      const top = [w1, w2.displayName? w2 : null, w3.displayName? w3 : null].filter(Boolean);
+
+      publishStatus.textContent = 'Publishing…';
+      publishBtn.disabled = true;
+      try {
+        const rRef = doc(db, 'quizRounds', roundId);
+        await setDoc(rRef, {
+          quizId: QUIZ_ID,
+          roundId,
+          top,
+          published: true,
+          publishedAt: serverTimestamp(),
+          status: 'completed'
+        }, { merge: true });
+
+        publishStatus.textContent = 'Published ✔';
+        showConfetti(5000, 100);
+
+        // after publish, refresh published feed by a small delay (listener will pick up)
+        setTimeout(()=> publishStatus.textContent = '', 3500);
+        // clear inputs optionally
+      } catch(e){
+        console.error('publish failed', e);
+        publishStatus.textContent = 'Publish failed';
+        alert('Publish failed: ' + (e.message || e));
+      } finally {
+        publishBtn.disabled = false;
+      }
     });
 
-    // initial load
-    (async function loadInitialProgress(){
-      try {
-        const s = await getDoc(progressRef);
-        const cnt = s.exists() ? Number(s.data().participantsCount || 0) : 0;
-        updateProgress(cnt);
-      } catch(e) {
-        console.warn('initial progress read failed', e);
-        updateProgress(0);
-      }
-      subscribeRoundsHistory();
-    })();
+    clearAdminBtn.addEventListener('click', ()=>{
+      adminRoundId.value=''; document.getElementById('w1_name').value=''; document.getElementById('w2_name').value=''; document.getElementById('w3_name').value='';
+      document.getElementById('w1_score').value=''; document.getElementById('w2_score').value=''; document.getElementById('w3_score').value='';
+      document.getElementById('w1_reward').value=''; document.getElementById('w2_reward').value=''; document.getElementById('w3_reward').value='';
+      document.getElementById('w1_uid').value=''; document.getElementById('w2_uid').value=''; document.getElementById('w3_uid').value='';
+    });
 
-    function updateProgress(count){
-      const pct = Math.min(100, Math.round((count / MAX_PARTICIPANTS) * 100));
-      barFill.style.width = pct + '%';
-      barFill.textContent = pct + '%';
-      percentLabel.textContent = pct + '%';
-      if(count >= MAX_PARTICIPANTS){
-        playBtn.disabled = true;
-        playBtn.textContent = 'Full';
-        playBtn.style.opacity = 0.6;
-      } else {
-        playBtn.disabled = false;
-        playBtn.textContent = `Play (₦${ENTRY_FEE})`;
-        playBtn.style.opacity = 1;
+    // Admin: load full history (manual)
+    loadHistoryBtn.addEventListener('click', async () => {
+      if(!currentUser) return alert('Sign in as admin first.');
+      const mail = (currentUser.email || '').toLowerCase();
+      if(!ADMIN_EMAILS.includes(mail)) return alert('You are not authorized to load full history.');
+      historyWrap.innerHTML = '<div class="muted">Loading history…</div>';
+      try {
+        const q = query(collection(db, 'quizRounds'), where('quizId','==', QUIZ_ID), orderBy('createdAt','desc'), limit(100));
+        const snap = await getDocs(q);
+        const rounds = [];
+        snap.forEach(s => rounds.push({ id: s.id, data: s.data() || {} }));
+        if(rounds.length===0) historyWrap.innerHTML = '<div class="muted">No rounds available</div>';
+        else {
+          historyWrap.innerHTML = '';
+          for(const r of rounds){
+            historyWrap.appendChild(makeRoundNode(r));
+          }
+        }
+      } catch(e){
+        console.error('load history failed', e);
+        historyWrap.innerHTML = '<div class="muted">Could not load history</div>';
       }
-      const bar = document.querySelector('.bar');
-      if(bar) bar.setAttribute('aria-valuenow', String(pct));
+    });
+
+    function makeRoundNode(r){
+      const wrap = document.createElement('div'); wrap.className='round-card';
+      const head = document.createElement('div'); head.className='round-head';
+      head.innerHTML = `<div><strong>Round</strong> ${r.data.roundId || r.id}</div><div class="small-muted">${r.data.participantsCount ?? '-'} players</div>`;
+      wrap.appendChild(head);
+      const created = r.data.createdAt && r.data.createdAt.toDate ? r.data.createdAt.toDate().toLocaleString() : (r.data.publishedAt && r.data.publishedAt.toDate ? r.data.publishedAt.toDate().toLocaleString() : '-');
+      const meta = document.createElement('div'); meta.className='small-muted'; meta.textContent = `Created: ${created} • Status: ${r.data.status || '-'}`;
+      wrap.appendChild(meta);
+
+      if(Array.isArray(r.data.top) && r.data.top.length>0){
+        const lbl = document.createElement('div'); lbl.style.fontWeight='800'; lbl.textContent='Top players';
+        wrap.appendChild(lbl);
+        const list = document.createElement('div'); list.className='top-list';
+        for(const p of r.data.top){
+          const it = document.createElement('div'); it.className='top-item';
+          it.innerHTML = `<div style="font-weight:800">${p.displayName || p.userId}</div><div class="small-muted">Score: ${p.score ?? '-'}</div><div class="small-muted">Reward: ₦${Number(p.reward||0).toLocaleString()}</div>`;
+          list.appendChild(it);
+        }
+        wrap.appendChild(list);
+      } else {
+        const msg = document.createElement('div'); msg.className='small-muted'; msg.textContent='Top players: not recorded';
+        wrap.appendChild(msg);
+      }
+      return wrap;
     }
 
+    // small helper to show admin UI when user is admin
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
       if(!user){
         avatarEl.textContent = 'U';
         uidline.textContent = 'UID: -';
+        adminControls.classList.add('hidden');
+        historyArea.classList.add('hidden');
       } else {
         avatarEl.textContent = (user.displayName || user.email || 'U')[0].toUpperCase();
         uidline.textContent = `UID: ${user.uid.slice(0,6)}`;
-      }
-    });
-
-    // JOIN transaction (same logic as before)
-    playBtn.addEventListener('click', async () => {
-      statusMsg.textContent = '';
-      if(!currentUser) return alert('Please sign in on the site before joining.');
-
-      // quick client check
-      const pSnapNow = await getDoc(progressRef);
-      const currentCount = pSnapNow.exists() ? Number(pSnapNow.data().participantsCount || 0) : 0;
-      if(currentCount >= MAX_PARTICIPANTS) { alert('This round is full.'); return; }
-
-      if(!confirm(`Confirm: ₦${ENTRY_FEE} entry fee will be deducted to join this round.`)) return;
-
-      try {
-        await runTransaction(db, async (tx) => {
-          const uid = currentUser.uid;
-          const uRef = doc(db, 'users', uid);
-          const bRef = doc(db, 'balances', uid);
-          const entryId = `${QUIZ_ID}_${uid}_${Date.now()}`; // unique entry doc
-          const entryRef = doc(db, 'quizEntries', entryId);
-          const pRef = progressRef;
-
-          // --- ALL READS FIRST ---
-          const [entrySnap, uSnap, bSnap, pSnap] = await Promise.all([
-            tx.get(entryRef), // unlikely to exist
-            tx.get(uRef),
-            tx.get(bRef),
-            tx.get(pRef)
-          ]);
-
-          if(entrySnap.exists()){
-            throw new Error('already-joined');
-          }
-
-          // resolve balance
-          let bal = null;
-          if(uSnap.exists()){
-            bal = extractBalance(uSnap.data());
-          }
-          if(bal === null || bal === undefined){
-            if(bSnap.exists()){
-              const bd = bSnap.data();
-              bal = (typeof bd.balance === 'number') ? bd.balance : (typeof bd.amount === 'number' ? bd.amount : null);
-            }
-          }
-          if(bal === null || bal === undefined) bal = 0;
-
-          if(Number(bal) < ENTRY_FEE){
-            throw new Error('insufficient-funds');
-          }
-
-          const prevCount = pSnap.exists() ? Number(pSnap.data().participantsCount || 0) : 0;
-          if(prevCount >= MAX_PARTICIPANTS){
-            throw new Error('full');
-          }
-          const nextCount = Math.min(MAX_PARTICIPANTS, prevCount + 1);
-
-          // --- THEN ALL WRITES ---
-          const newBal = Number(bal) - ENTRY_FEE;
-          tx.set(uRef, { balance: newBal }, { merge: true });
-
-          tx.set(entryRef, {
-            quizId: QUIZ_ID,
-            userId: uid,
-            displayName: currentUser.displayName || currentUser.email || null,
-            joinedAt: serverTimestamp()
-          });
-
-          tx.set(pRef, { participantsCount: nextCount }, { merge: true });
-        });
-
-        statusMsg.textContent = 'Joined ✔ — redirecting…';
-        setTimeout(() => { window.location.href = REDIRECT_PAGE; }, 700);
-      } catch (err) {
-        console.error('join transaction failed', err);
-        const msg = (err && err.message) ? err.message : '';
-        if(msg === 'already-joined'){ alert('You have already joined this round.'); return; }
-        if(msg === 'insufficient-funds'){ alert('Insufficient balance to join. Please top up.'); return; }
-        if(msg === 'full'){ alert('This round became full while we attempted to join.'); return; }
-        alert('Could not join: ' + (err.message || err));
-      }
-    });
-
-    /**********************
-     * Finalize round code
-     * - creates quizRounds/{roundId}
-     * - resets quizProgress participantsCount to 0 (transactionally)
-     * - selects most recent entries for this quiz (best-effort)
-     * - computes top-3 using entry score fields if available
-     * - writes top into round doc and marks entries with roundId via batch
-     **********************/
-    async function finalizeRoundIfNeeded(observedCount){
-      if(processingRound) return;
-      processingRound = true;
-      try {
-        // transaction to create round doc and reset progress (ensures single-writer behavior)
-        const roundId = await runTransaction(db, async (tx) => {
-          const pSnap = await tx.get(progressRef);
-          const cnt = pSnap.exists() ? Number(pSnap.data().participantsCount || 0) : 0;
-          if(cnt < MAX_PARTICIPANTS){
-            throw new Error('not-full'); // someone else already cleared it
-          }
-          // new round id
-          const rid = `${QUIZ_ID}_r_${Date.now()}`;
-          const rRef = doc(db, 'quizRounds', rid);
-          tx.set(rRef, {
-            quizId: QUIZ_ID,
-            roundId: rid,
-            participantsCount: cnt,
-            status: 'finalizing',
-            createdAt: serverTimestamp()
-          });
-          tx.set(progressRef, { participantsCount: 0 }, { merge: true });
-          return rid;
-        });
-
-        // After transaction, do best-effort aggregation of the participants and top scores
-        try {
-          // pick most recent <observedCount> entries for this quiz
-          const entriesQ = query(
-            collection(db, 'quizEntries'),
-            where('quizId', '==', QUIZ_ID),
-            orderBy('joinedAt', 'desc'),
-            limit(observedCount || MAX_PARTICIPANTS)
-          );
-          const snap = await getDocs(entriesQ);
-          const entries = [];
-          snap.forEach(docSnap => {
-            const d = docSnap.data() || {};
-            entries.push({
-              id: docSnap.id,
-              userId: d.userId || null,
-              displayName: d.displayName || d.userEmail || null,
-              score: (typeof d.score === 'number') ? d.score : (typeof d.points === 'number' ? d.points : (typeof d.totalScore === 'number' ? d.totalScore : null)),
-              raw: d
-            });
-          });
-
-          // compute top-3 if scores are present
-          const entriesWithScore = entries.filter(e => e.score !== null && e.score !== undefined);
-          let top = [];
-          if(entriesWithScore.length > 0){
-            entriesWithScore.sort((a,b) => b.score - a.score);
-            top = entriesWithScore.slice(0,3).map(e => ({ userId: e.userId, displayName: e.displayName || '-', score: e.score }));
-          }
-
-          // write updates: set round completed data & mark entries with roundId
-          const batch = writeBatch(db);
-          const rRef = doc(db, 'quizRounds', roundId);
-          const roundUpdate = {
-            status: 'completed',
-            completedAt: serverTimestamp()
-          };
-          if(top.length > 0) roundUpdate.top = top;
-          batch.set(rRef, roundUpdate, { merge: true });
-
-          // mark the selected entries with roundId (best-effort)
-          for(const e of entries){
-            const eRef = doc(db, 'quizEntries', e.id);
-            batch.set(eRef, { roundId }, { merge: true });
-          }
-          await batch.commit();
-        } catch(e){
-          console.warn('post-round aggregation failed', e);
-          // still ok — round doc exists, progress reset, we'll show history (maybe without top)
-        }
-
-      } catch(e){
-        if(e && e.message === 'not-full'){
-          // someone else finalized in the meantime
+        const mail = (user.email || '').toLowerCase();
+        if(ADMIN_EMAILS.includes(mail)){
+          adminControls.classList.remove('hidden');
+          historyArea.classList.remove('hidden');
         } else {
-          console.error('finalizeRound transaction failed', e);
+          adminControls.classList.add('hidden');
+          historyArea.classList.add('hidden');
         }
-      } finally {
-        processingRound = false;
       }
-    }
-
-    /**********************
-     * Quiz history rendering
-     **********************/
-    let roundsUnsub = null;
-    function subscribeRoundsHistory(){
-      if(roundsUnsub){ try{ roundsUnsub(); }catch(e){}; roundsUnsub = null; }
-      const roundsQ = query(
-        collection(db, 'quizRounds'),
-        where('quizId', '==', QUIZ_ID),
-        orderBy('createdAt', 'desc'),
-        limit(30)
-      );
-      roundsUnsub = onSnapshot(roundsQ, snap => {
-        const rounds = [];
-        snap.forEach(s => rounds.push({ id: s.id, data: s.data() || {} }));
-        renderRounds(rounds);
-      }, err => {
-        console.warn('rounds onSnapshot failed', err);
-        historyWrap.innerHTML = '<div class="muted">Could not load history.</div>';
-      });
-    }
-
-    function renderRounds(rounds){
-      if(!rounds || rounds.length === 0){
-        historyWrap.innerHTML = '<div class="muted">No previous rounds yet.</div>';
-        return;
-      }
-      historyWrap.innerHTML = '';
-      for(const r of rounds){
-        const node = createRoundCard(r);
-        historyWrap.appendChild(node);
-      }
-    }
-
-    function createRoundCard(r){
-      const wrap = document.createElement('div');
-      wrap.className = 'round-card';
-      const head = document.createElement('div');
-      head.className = 'round-head';
-      const title = document.createElement('div');
-      title.innerHTML = `<strong>Round:</strong> ${r.data.roundId || r.id}`;
-      const meta = document.createElement('div');
-      const participants = r.data.participantsCount ?? '-';
-      const createdAt = r.data.createdAt && r.data.createdAt.toDate ? r.data.createdAt.toDate().toLocaleString() : (r.data.createdAt ? String(r.data.createdAt) : '-');
-      meta.innerHTML = `<div class="small-muted">${participants} players • ${createdAt}</div>`;
-      head.appendChild(title); head.appendChild(meta);
-      wrap.appendChild(head);
-
-      const desc = document.createElement('div');
-      desc.className = 'small-muted';
-      desc.textContent = r.data.status ? `Status: ${r.data.status}` : 'Status: -';
-      wrap.appendChild(desc);
-
-      const topArea = document.createElement('div');
-      topArea.style.marginTop = '8px';
-      if(Array.isArray(r.data.top) && r.data.top.length > 0){
-        const lbl = document.createElement('div'); lbl.style.fontWeight = '800'; lbl.textContent = 'Top players';
-        topArea.appendChild(lbl);
-        const list = document.createElement('div'); list.className = 'top-list';
-        for(const p of r.data.top){
-          const it = document.createElement('div'); it.className = 'top-item';
-          it.innerHTML = `<div style="font-weight:800">${p.displayName || p.userId}</div><div class="small-muted">Score: ${p.score}</div><div class="small-muted">ID: ${p.userId}</div>`;
-          list.appendChild(it);
-        }
-        topArea.appendChild(list);
-      } else {
-        topArea.innerHTML = `<div class="small-muted">Top players: unavailable</div>`;
-      }
-      wrap.appendChild(topArea);
-
-      return wrap;
-    }
-
-    // cleanup on unload
-    window.addEventListener('beforeunload', () => {
-      if(roundsUnsub){ try{ roundsUnsub(); }catch(e){}; roundsUnsub = null; }
     });
+
+    // subscribe published (public) on load
+    let pubUnsub = null;
+    window.addEventListener('load', () => {
+      if(pubUnsub) pubUnsub();
+      pubUnsub = subscribePublishedRounds();
+    });
+
+    // cleanup
+    window.addEventListener('beforeunload', () => {
+      if(pubUnsub) try{ pubUnsub(); }catch(e){}
+    });
+
+    // Important server-side note (put in your rules):
+    // Ensure Firestore security rules only allow writes to quizRounds/{id} publish field
+    // by admin server account or via Cloud Function or restrict to admin emails via auth.token.email_verified / custom claims.
+    // Client-side checks are not secure on their own.
+
   </script>
 </body>
 </html>
