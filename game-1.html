@@ -37,12 +37,20 @@
     .note{margin-top:12px;font-size:13px;color:var(--muted)}
     .center{display:flex;justify-content:center;align-items:center}
     .hidden{display:none}
+
+    /* history */
+    .history{margin-top:18px;display:flex;flex-direction:column;gap:12px}
+    .round-card{border-radius:12px;padding:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border:1px solid rgba(255,255,255,0.02);display:flex;flex-direction:column;gap:8px}
+    .round-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .top-list{display:flex;gap:10px;flex-wrap:wrap}
+    .top-item{background:rgba(255,255,255,0.02);padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);min-width:140px}
+    .small-muted{color:var(--muted);font-size:12px}
     @media(max-width:720px){ .wrap{padding:12px} .top{flex-direction:row;gap:12px} }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
+    <div class="card" id="progressCard">
       <div class="top">
         <div class="avatar" id="avatar">U</div>
         <div style="flex:1">
@@ -73,13 +81,19 @@
 
       <div class="note" id="infoNote">After payment and successful join you will be redirected to the round page automatically.</div>
     </div>
+
+    <!-- Quiz history -->
+    <div id="history" class="history" aria-live="polite">
+      <div class="muted">Loading quiz history…</div>
+    </div>
   </div>
 
   <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, runTransaction, serverTimestamp, onSnapshot
+      getFirestore, doc, getDoc, runTransaction, serverTimestamp, onSnapshot,
+      collection, query, where, orderBy, limit, getDocs, setDoc, writeBatch
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // same config as your dashboard
@@ -104,6 +118,7 @@
     const percentLabel = document.getElementById('percentLabel');
     const playBtn = document.getElementById('playBtn');
     const statusMsg = document.getElementById('statusMsg');
+    const historyWrap = document.getElementById('history');
 
     // config (internal cap is 20 but UI displays only percentage)
     const QUIZ_ID = 'current_affairs_001';
@@ -112,6 +127,7 @@
     const REDIRECT_PAGE = 'round_1764190775161.html';
 
     let currentUser = null;
+    let processingRound = false;
 
     function extractBalance(d){
       if(!d || typeof d !== 'object') return null;
@@ -131,16 +147,22 @@
 
     const progressRef = doc(db, 'quizProgress', QUIZ_ID);
 
-    // live listen and show percentage-only
-    onSnapshot(progressRef, (snap) => {
+    // Listen live progress
+    onSnapshot(progressRef, async (snap) => {
       const data = snap.exists() ? (snap.data() || {}) : {};
       const count = Number(data.participantsCount || 0);
       updateProgress(count);
+
+      // If full, finalize and start new round automatically
+      if(count >= MAX_PARTICIPANTS){
+        try { await finalizeRoundIfNeeded(count); } catch(e){ console.warn('finalizeRoundIfNeeded failed', e); }
+      }
     }, (err) => {
       console.warn('progress onSnapshot err', err);
       updateProgress(0);
     });
 
+    // initial load
     (async function loadInitialProgress(){
       try {
         const s = await getDoc(progressRef);
@@ -150,6 +172,7 @@
         console.warn('initial progress read failed', e);
         updateProgress(0);
       }
+      subscribeRoundsHistory();
     })();
 
     function updateProgress(count){
@@ -181,7 +204,7 @@
       }
     });
 
-    // FIXED transaction: read all docs first, then perform writes
+    // JOIN transaction (same logic as before)
     playBtn.addEventListener('click', async () => {
       statusMsg.textContent = '';
       if(!currentUser) return alert('Please sign in on the site before joining.');
@@ -198,13 +221,13 @@
           const uid = currentUser.uid;
           const uRef = doc(db, 'users', uid);
           const bRef = doc(db, 'balances', uid);
-          const entryId = `${QUIZ_ID}_${uid}`;
+          const entryId = `${QUIZ_ID}_${uid}_${Date.now()}`; // unique entry doc
           const entryRef = doc(db, 'quizEntries', entryId);
           const pRef = progressRef;
 
           // --- ALL READS FIRST ---
           const [entrySnap, uSnap, bSnap, pSnap] = await Promise.all([
-            tx.get(entryRef),
+            tx.get(entryRef), // unlikely to exist
             tx.get(uRef),
             tx.get(bRef),
             tx.get(pRef)
@@ -244,7 +267,7 @@
           tx.set(entryRef, {
             quizId: QUIZ_ID,
             userId: uid,
-            userEmail: currentUser.email || null,
+            displayName: currentUser.displayName || currentUser.email || null,
             joinedAt: serverTimestamp()
           });
 
@@ -261,6 +284,179 @@
         if(msg === 'full'){ alert('This round became full while we attempted to join.'); return; }
         alert('Could not join: ' + (err.message || err));
       }
+    });
+
+    /**********************
+     * Finalize round code
+     * - creates quizRounds/{roundId}
+     * - resets quizProgress participantsCount to 0 (transactionally)
+     * - selects most recent entries for this quiz (best-effort)
+     * - computes top-3 using entry score fields if available
+     * - writes top into round doc and marks entries with roundId via batch
+     **********************/
+    async function finalizeRoundIfNeeded(observedCount){
+      if(processingRound) return;
+      processingRound = true;
+      try {
+        // transaction to create round doc and reset progress (ensures single-writer behavior)
+        const roundId = await runTransaction(db, async (tx) => {
+          const pSnap = await tx.get(progressRef);
+          const cnt = pSnap.exists() ? Number(pSnap.data().participantsCount || 0) : 0;
+          if(cnt < MAX_PARTICIPANTS){
+            throw new Error('not-full'); // someone else already cleared it
+          }
+          // new round id
+          const rid = `${QUIZ_ID}_r_${Date.now()}`;
+          const rRef = doc(db, 'quizRounds', rid);
+          tx.set(rRef, {
+            quizId: QUIZ_ID,
+            roundId: rid,
+            participantsCount: cnt,
+            status: 'finalizing',
+            createdAt: serverTimestamp()
+          });
+          tx.set(progressRef, { participantsCount: 0 }, { merge: true });
+          return rid;
+        });
+
+        // After transaction, do best-effort aggregation of the participants and top scores
+        try {
+          // pick most recent <observedCount> entries for this quiz
+          const entriesQ = query(
+            collection(db, 'quizEntries'),
+            where('quizId', '==', QUIZ_ID),
+            orderBy('joinedAt', 'desc'),
+            limit(observedCount || MAX_PARTICIPANTS)
+          );
+          const snap = await getDocs(entriesQ);
+          const entries = [];
+          snap.forEach(docSnap => {
+            const d = docSnap.data() || {};
+            entries.push({
+              id: docSnap.id,
+              userId: d.userId || null,
+              displayName: d.displayName || d.userEmail || null,
+              score: (typeof d.score === 'number') ? d.score : (typeof d.points === 'number' ? d.points : (typeof d.totalScore === 'number' ? d.totalScore : null)),
+              raw: d
+            });
+          });
+
+          // compute top-3 if scores are present
+          const entriesWithScore = entries.filter(e => e.score !== null && e.score !== undefined);
+          let top = [];
+          if(entriesWithScore.length > 0){
+            entriesWithScore.sort((a,b) => b.score - a.score);
+            top = entriesWithScore.slice(0,3).map(e => ({ userId: e.userId, displayName: e.displayName || '-', score: e.score }));
+          }
+
+          // write updates: set round completed data & mark entries with roundId
+          const batch = writeBatch(db);
+          const rRef = doc(db, 'quizRounds', roundId);
+          const roundUpdate = {
+            status: 'completed',
+            completedAt: serverTimestamp()
+          };
+          if(top.length > 0) roundUpdate.top = top;
+          batch.set(rRef, roundUpdate, { merge: true });
+
+          // mark the selected entries with roundId (best-effort)
+          for(const e of entries){
+            const eRef = doc(db, 'quizEntries', e.id);
+            batch.set(eRef, { roundId }, { merge: true });
+          }
+          await batch.commit();
+        } catch(e){
+          console.warn('post-round aggregation failed', e);
+          // still ok — round doc exists, progress reset, we'll show history (maybe without top)
+        }
+
+      } catch(e){
+        if(e && e.message === 'not-full'){
+          // someone else finalized in the meantime
+        } else {
+          console.error('finalizeRound transaction failed', e);
+        }
+      } finally {
+        processingRound = false;
+      }
+    }
+
+    /**********************
+     * Quiz history rendering
+     **********************/
+    let roundsUnsub = null;
+    function subscribeRoundsHistory(){
+      if(roundsUnsub){ try{ roundsUnsub(); }catch(e){}; roundsUnsub = null; }
+      const roundsQ = query(
+        collection(db, 'quizRounds'),
+        where('quizId', '==', QUIZ_ID),
+        orderBy('createdAt', 'desc'),
+        limit(30)
+      );
+      roundsUnsub = onSnapshot(roundsQ, snap => {
+        const rounds = [];
+        snap.forEach(s => rounds.push({ id: s.id, data: s.data() || {} }));
+        renderRounds(rounds);
+      }, err => {
+        console.warn('rounds onSnapshot failed', err);
+        historyWrap.innerHTML = '<div class="muted">Could not load history.</div>';
+      });
+    }
+
+    function renderRounds(rounds){
+      if(!rounds || rounds.length === 0){
+        historyWrap.innerHTML = '<div class="muted">No previous rounds yet.</div>';
+        return;
+      }
+      historyWrap.innerHTML = '';
+      for(const r of rounds){
+        const node = createRoundCard(r);
+        historyWrap.appendChild(node);
+      }
+    }
+
+    function createRoundCard(r){
+      const wrap = document.createElement('div');
+      wrap.className = 'round-card';
+      const head = document.createElement('div');
+      head.className = 'round-head';
+      const title = document.createElement('div');
+      title.innerHTML = `<strong>Round:</strong> ${r.data.roundId || r.id}`;
+      const meta = document.createElement('div');
+      const participants = r.data.participantsCount ?? '-';
+      const createdAt = r.data.createdAt && r.data.createdAt.toDate ? r.data.createdAt.toDate().toLocaleString() : (r.data.createdAt ? String(r.data.createdAt) : '-');
+      meta.innerHTML = `<div class="small-muted">${participants} players • ${createdAt}</div>`;
+      head.appendChild(title); head.appendChild(meta);
+      wrap.appendChild(head);
+
+      const desc = document.createElement('div');
+      desc.className = 'small-muted';
+      desc.textContent = r.data.status ? `Status: ${r.data.status}` : 'Status: -';
+      wrap.appendChild(desc);
+
+      const topArea = document.createElement('div');
+      topArea.style.marginTop = '8px';
+      if(Array.isArray(r.data.top) && r.data.top.length > 0){
+        const lbl = document.createElement('div'); lbl.style.fontWeight = '800'; lbl.textContent = 'Top players';
+        topArea.appendChild(lbl);
+        const list = document.createElement('div'); list.className = 'top-list';
+        for(const p of r.data.top){
+          const it = document.createElement('div'); it.className = 'top-item';
+          it.innerHTML = `<div style="font-weight:800">${p.displayName || p.userId}</div><div class="small-muted">Score: ${p.score}</div><div class="small-muted">ID: ${p.userId}</div>`;
+          list.appendChild(it);
+        }
+        topArea.appendChild(list);
+      } else {
+        topArea.innerHTML = `<div class="small-muted">Top players: unavailable</div>`;
+      }
+      wrap.appendChild(topArea);
+
+      return wrap;
+    }
+
+    // cleanup on unload
+    window.addEventListener('beforeunload', () => {
+      if(roundsUnsub){ try{ roundsUnsub(); }catch(e){}; roundsUnsub = null; }
     });
   </script>
 </body>
