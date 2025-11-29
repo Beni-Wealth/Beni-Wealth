@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Quiz Admin</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
   <meta name="theme-color" content="#2fe0b8">
   <style>
@@ -21,7 +22,7 @@
 
     /* form controls */
     label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
-    input[type=text], textarea, select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);outline:none}
+    input[type=text], textarea, select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);outline:none}
     textarea{min-height:84px}
     .row{display:flex;gap:8px}
     .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;font-weight:800;cursor:pointer}
@@ -41,6 +42,7 @@
     .round-card{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
 
     .notice{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:12px}
+    .batch-list .batch-item{padding:8px;border-radius:8px;border:1px dashed rgba(255,255,255,0.04);margin-bottom:6px;background:transparent}
 
     @media(max-width:940px){ .grid{grid-template-columns:1fr} .wrap{padding:12px} }
   </style>
@@ -51,7 +53,7 @@
       <div class="brand">
         <div class="logo">BW</div>
         <div>
-          <h1>Quiz Admin • Beni‑Wealth</h1>
+          <h1>Quiz Admin • Beni-Wealth</h1>
           <div class="muted">Powerful question & rounds manager — admin-only</div>
         </div>
       </div>
@@ -111,6 +113,20 @@
               <button id="clearQBtn" class="btn ghost">Clear</button>
             </div>
 
+            <!-- Batch controls -->
+            <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.02);padding-top:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div style="font-weight:800">Draft Batch</div>
+                <div class="small muted">Draft items: <span id="batchCount">0</span></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="addToBatch" class="btn ghost">Add Current → Batch</button>
+                <button id="saveBatch" class="btn">Save Batch to Bank</button>
+                <button id="clearBatch" class="btn ghost">Clear Batch</button>
+              </div>
+              <div id="batchList" class="batch-list" style="margin-top:8px;max-height:160px;overflow:auto"></div>
+            </div>
+
           </div>
         </div>
 
@@ -126,16 +142,16 @@
 
           <div style="margin-top:12px">
             <div style="font-weight:800">Create Round</div>
-            <div class="small">Select questions and publish a round</div>
+            <div class="small">Select questions and publish a round (exactly 10 questions required)</div>
             <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
               <input id="roundTitle" type="text" placeholder="Round title (optional)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted)">
               <input id="maxParticipants" type="text" placeholder="Max (20)" style="width:92px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted)">
             </div>
             <div style="margin-top:8px">
-              <div class="small">Select from question list (right panel) then press Publish</div>
+              <div class="small">Select exactly 10 questions from the question list (right panel) then press Publish</div>
               <div style="display:flex;gap:8px;margin-top:8px">
-                <button id="publishRound" class="btn">Publish & Start</button>
-                <button id="saveDraft" class="btn ghost">Save Draft</button>
+                <button id="publishRound" class="btn">Publish & Start (10 Qs)</button>
+                <button id="saveDraft" class="btn ghost">Save Draft Round</button>
               </div>
             </div>
           </div>
@@ -177,7 +193,7 @@
   <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, doc, setDoc, getDocs, query, where, orderBy, deleteDoc, updateDoc, getDoc, runTransaction, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, setDoc, getDocs, query, where, orderBy, deleteDoc, updateDoc, runTransaction, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // ########## CONFIG - same as your apps ###########
     const firebaseConfig = {
@@ -193,9 +209,9 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Allowed admin emails
+    // Allowed admin emails (updated as requested)
     const ADMINS = [
-      'nemiwealth70@gmail.com',
+      'beniwealth70@gmail.com',
       'owanaomubo76@gmail.com'
     ];
 
@@ -233,6 +249,12 @@
 
     const roundsList = document.getElementById('roundsList');
 
+    const addToBatchBtn = document.getElementById('addToBatch');
+    const saveBatchBtn = document.getElementById('saveBatch');
+    const clearBatchBtn = document.getElementById('clearBatch');
+    const batchListEl = document.getElementById('batchList');
+    const batchCountEl = document.getElementById('batchCount');
+
     allowedEmailsPreview.textContent = ADMINS.join(', ');
 
     // local state
@@ -241,6 +263,7 @@
     let editingId = null; // question id if editing
     let questionsCache = []; // array of { id, data }
     let selectedForRound = new Set();
+    let draftBatch = []; // local batch of question objects before saving to quizBank
 
     // ---------- AUTH ----------
     signBtn.addEventListener('click', async () => {
@@ -256,22 +279,24 @@
       currentUser = user;
       if(!user){ adminEmail.textContent = 'Not signed in'; authStatus.textContent = 'Locked'; signBtn.textContent = 'Sign in'; notAllowed.classList.remove('hidden'); isAdmin = false; enableUI(false); return; }
       adminEmail.textContent = user.email || user.uid; signBtn.textContent = 'Sign out';
-      isAdmin = ADMINS.includes(user.email);
+      isAdmin = ADMINS.includes((user.email||'').toLowerCase());
       authStatus.textContent = isAdmin ? 'Admin' : 'Not admin';
       notAllowed.classList.toggle('hidden', isAdmin);
       enableUI(isAdmin);
-      if(isAdmin) loadQuestions(); loadRoundsList();
+      if(isAdmin) loadQuestions();
+      loadRoundsList();
     });
 
     function enableUI(flag){
+      // disable all by default, then selectively re-enable controls for admin
       const els = document.querySelectorAll('input, textarea, select, button');
       els.forEach(el => {
         if(el === signBtn) return;
         el.disabled = !flag;
       });
-      if(!flag){ // leave refresh & preview allowed for inspection
-        refreshBtn.disabled = false; previewQBtn.disabled = false;
-      }
+      // keep refresh & preview allowed even if not admin so they can inspect
+      refreshBtn.disabled = false;
+      previewQBtn.disabled = false;
     }
 
     // ---------- QUESTION CRUD ----------
@@ -302,7 +327,7 @@
     previewQBtn.addEventListener('click', ()=>{
       const text = qText.value || '(question)';
       const choices = [c0.value||'A', c1.value||'B', c2.value||'C', c3.value||'D'];
-      const html = `<div style=\"padding:12px;background:#fff;color:#041219;border-radius:12px\"><strong>${escapeHtml(text)}</strong><ul>${choices.map(ch=>`<li>${escapeHtml(ch)}</li>`).join('')}</ul></div>`;
+      const html = `<div style="padding:12px;background:#fff;color:#041219;border-radius:12px"><strong>${escapeHtml(text)}</strong><ul>${choices.map(ch=>`<li>${escapeHtml(ch)}</li>`).join('')}</ul></div>`;
       const w = window.open('about:blank','preview','width=420,height=360'); w.document.write(html); w.document.close();
     });
 
@@ -326,7 +351,7 @@
       for(const item of list){
         const d = item.data;
         const div = document.createElement('div'); div.className='question-item';
-        div.innerHTML = `<div style=\"display:flex;justify-content:space-between;gap:8px\"><div style=\"font-weight:800\">${escapeHtml(d.text || '(no text)')}</div><div class=\"question-actions\"></div></div>`;
+        div.innerHTML = `<div style="display:flex;justify-content:space-between;gap:8px"><div style="font-weight:800">${escapeHtml(d.text || '(no text)')}</div><div class="question-actions"></div></div>`;
         const actions = div.querySelector('.question-actions');
         const sel = document.createElement('button'); sel.textContent = selectedForRound.has(item.id)?'Deselect':'Select'; sel.className='btn ghost'; sel.addEventListener('click', ()=>{ toggleSelect(item.id); sel.textContent = selectedForRound.has(item.id)?'Deselect':'Select'; renderSelected(); });
         const edit = document.createElement('button'); edit.textContent='Edit'; edit.className='btn ghost'; edit.addEventListener('click', ()=>{ loadIntoForm(item); });
@@ -334,7 +359,7 @@
         actions.appendChild(sel); actions.appendChild(edit); actions.appendChild(del);
 
         // choices preview
-        const choicesHtml = (d.choices || []).map((c,i)=> `<span class=\"chip\" style=\"background:${i===d.answerIndex?'#e6ffef':'transparent'};color:${i===d.answerIndex?'#041219':'var(--muted)'};border:1px solid rgba(255,255,255,0.02)\">${String.fromCharCode(65+i)}. ${escapeHtml(c)}</span>`).join('');
+        const choicesHtml = (d.choices || []).map((c,i)=> `<span class="chip" style="${i===d.answerIndex? 'background:#e6ffef;color:#041219;border:1px solid rgba(0,0,0,0.06)':''}">${String.fromCharCode(65+i)}. ${escapeHtml(c)}</span>`).join('');
         const meta = document.createElement('div'); meta.className='chips'; meta.innerHTML = choicesHtml;
         div.appendChild(meta);
         questionsList.appendChild(div);
@@ -349,22 +374,83 @@
     function toggleSelect(id){ if(selectedForRound.has(id)) selectedForRound.delete(id); else selectedForRound.add(id); renderSelected(); }
     function renderSelected(){ selectedList.innerHTML=''; selectedCount.textContent=String(selectedForRound.size); if(selectedForRound.size===0){ selectedList.innerHTML='<div class="small muted">No questions selected</div>'; return; } for(const id of selectedForRound){ const it = questionsCache.find(x=>x.id===id); if(!it) continue; const d=it.data; const el = document.createElement('div'); el.className='question-item'; el.innerHTML = `<div style="font-weight:800">${escapeHtml(d.text)}</div><div class="small">Points: ${d.points||10}</div>`; selectedList.appendChild(el); } }
 
-    // publish round
+    // ---------- BATCH (draft) handling ----------
+    function renderBatch(){
+      batchListEl.innerHTML = '';
+      batchCountEl.textContent = String(draftBatch.length);
+      if(draftBatch.length === 0){ batchListEl.innerHTML = '<div class="small muted">Draft batch empty</div>'; return; }
+      draftBatch.forEach((q,i)=>{
+        const div = document.createElement('div'); div.className = 'batch-item';
+        div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:800">${escapeHtml(q.text)}</div><div style="display:flex;gap:8px"><button class="btn ghost" data-idx="${i}" data-action="edit">Load</button><button class="btn ghost" data-idx="${i}" data-action="remove">Remove</button></div></div><div class="small muted">${(q.tags||[]).join(', ')} • ${q.points} pts</div>`;
+        batchListEl.appendChild(div);
+      });
+      // wire actions
+      batchListEl.querySelectorAll('button[data-action=edit]').forEach(b => b.addEventListener('click', (e)=> {
+        const i = Number(e.currentTarget.dataset.idx); const itm = draftBatch[i];
+        if(!itm) return;
+        qText.value = itm.text; c0.value = itm.choices[0]; c1.value = itm.choices[1]; c2.value = itm.choices[2]; c3.value = itm.choices[3]; correctSelect.value = String(itm.answerIndex||0); tagsInput.value = (itm.tags||[]).join(','); pointsInput.value = String(itm.points||10);
+        // remove from batch because we're editing it in form
+        draftBatch.splice(i,1); renderBatch();
+      }));
+      batchListEl.querySelectorAll('button[data-action=remove]').forEach(b => b.addEventListener('click', (e)=> {
+        const i = Number(e.currentTarget.dataset.idx); if(confirm('Remove item from batch?')) { draftBatch.splice(i,1); renderBatch(); }
+      }));
+    }
+
+    addToBatchBtn.addEventListener('click', ()=>{
+      const text = qText.value.trim();
+      const choices = [c0.value.trim(), c1.value.trim(), c2.value.trim(), c3.value.trim()];
+      const correct = Number(correctSelect.value || 0);
+      const tags = tagsInput.value.split(',').map(s=>s.trim()).filter(Boolean);
+      const points = Number(pointsInput.value || 10) || 10;
+      if(!text || choices.some(ch=>!ch)){ return alert('Please provide question text and all 4 choices before adding to batch.'); }
+      draftBatch.push({ text, choices, answerIndex: correct, tags, points });
+      renderBatch();
+      clearForm();
+    });
+
+    clearBatchBtn.addEventListener('click', ()=>{
+      if(!draftBatch.length) return;
+      if(!confirm('Clear draft batch?')) return;
+      draftBatch = [];
+      renderBatch();
+    });
+
+    saveBatchBtn.addEventListener('click', async ()=>{
+      if(draftBatch.length === 0) return alert('Draft batch is empty.');
+      if(!confirm(`Save ${draftBatch.length} questions to quizBank?`)) return;
+      try{
+        const batch = writeBatch(db);
+        for(const q of draftBatch){
+          const docRef = doc(collection(db,'quizBank'));
+          batch.set(docRef, { ...q, createdAt: serverTimestamp() });
+        }
+        await batch.commit();
+        draftBatch = [];
+        renderBatch();
+        loadQuestions();
+        alert('Saved draft batch to quizBank.');
+      }catch(e){ console.error('saveBatch failed', e); alert('Save batch failed: ' + (e.message||e)); }
+    });
+
+    // ---------- publish round ----------
     publishRound.addEventListener('click', async ()=>{
-      if(selectedForRound.size === 0) return alert('Select at least one question to publish a round.');
+      if(selectedForRound.size !== 10){
+        return alert('Each round must have exactly 10 questions. Please select exactly 10 questions in the right panel.');
+      }
       const title = (roundTitle.value || '').trim();
       const maxP = Number(maxParticipants.value) || 20;
-      if(!confirm(`Publish round${title?(' "'+title+'"'):''} with ${selectedForRound.size} questions and max ${maxP} participants?`)) return;
+      if(!confirm(`Publish round${title?(' "'+title+'"'):''} with 10 questions and max ${maxP} participants?`)) return;
       try{
         // create new round doc and set quizProgress.currentRoundId atomically
-        const roundId = `admin_${Date.now()}`;
+        const roundId = `round_${Date.now()}`;
         const rRef = doc(db, 'quizRounds', roundId);
         const pRef = doc(db, 'quizProgress', 'nigeria_general_001');
 
         await runTransaction(db, async (tx) => {
-          // create round with question refs
+          // prepare question refs array
           const qArr = Array.from(selectedForRound).map(id=> ({ id }));
-          tx.set(rRef, { roundId, title: title || null, quizId: 'nigeria_general_001', questions: qArr, maxParticipants: maxP, status:'running', createdAt: serverTimestamp() });
+          tx.set(rRef, { roundId, title: title || null, quizId: 'nigeria_general_001', questions: qArr, maxParticipants: maxP, status:'running', createdAt: serverTimestamp(), participantsCount:0 });
           // point progress to new round and reset participants count
           tx.set(pRef, { currentRoundId: roundId, participantsCount: 0 }, { merge: true });
         });
@@ -373,9 +459,9 @@
       }catch(e){ console.error('publishRound failed', e); alert('Publish failed: '+(e.message||e)); }
     });
 
-    // save draft: create a round doc with status draft
+    // save draft round
     saveDraft.addEventListener('click', async ()=>{
-      if(selectedForRound.size===0) return alert('Select questions first');
+      if(selectedForRound.size === 0) return alert('Select questions first');
       const title = (roundTitle.value || '').trim();
       const maxP = Number(maxParticipants.value) || 20;
       try{
@@ -394,6 +480,7 @@
         snaps.forEach(s=> batch.delete(doc(db,'quizBank',s.id)));
         await batch.commit();
         loadQuestions();
+        alert('All questions deleted.');
       }catch(e){ console.error('deleteAll failed', e); alert('Delete all failed'); }
     });
 
@@ -415,7 +502,7 @@
       try{
         const batch = writeBatch(db);
         for(const s of samples){ const r = doc(collection(db,'quizBank')); batch.set(r, { ...s, createdAt: serverTimestamp() }); }
-        await batch.commit(); loadQuestions();
+        await batch.commit(); loadQuestions(); alert('Imported 10 sample questions');
       }catch(e){ console.error('importSample failed', e); alert('Import failed'); }
     });
 
@@ -433,8 +520,8 @@
         roundsList.innerHTML = '';
         snaps.forEach(s=>{
           const d = s.data()||{}; const el = document.createElement('div'); el.className='round-card';
-          const topPlayers = (d.top || []).map(tp=>`<div style=\"font-weight:800\">${escapeHtml(tp.displayName||tp.userId||'-')}</div><div class=\"small\">${tp.score} pts</div>`).join('');
-          el.innerHTML = `<div style=\"display:flex;justify-content:space-between;align-items:center\"><div style=\"font-weight:900\">${escapeHtml(d.title||s.id)}</div><div class=\"small\">${d.status||'—'}</div></div><div class=\"small muted\">${new Date((d.createdAt && d.createdAt.seconds?d.createdAt.seconds*1000:Date.now())).toLocaleString()}</div><div style=\"margin-top:8px\">${d.questions?d.questions.length+' questions':'0 questions'}</div><div style=\"margin-top:8px\">Top players:</div><div style=\"margin-top:6px;min-height:40px\">${topPlayers||'<div class=\"small muted\">No top players yet</div>'}</div><div style=\"display:flex;gap:8px;margin-top:8px\"><button class=\"btn ghost\" data-id=\"${s.id}\" data-action=\"finalize\">Finalize</button><button class=\"btn ghost\" data-id=\"${s.id}\" data-action=\"view\">View</button></div>`;
+          const topPlayers = (d.top || []).map(tp=>`<div style="font-weight:800">${escapeHtml(tp.displayName||tp.userId||'-')}</div><div class="small">${tp.score} pts</div>`).join('');
+          el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:900">${escapeHtml(d.title||s.id)}</div><div class="small">${d.status||'—'}</div></div><div class="small muted">${new Date((d.createdAt && d.createdAt.seconds?d.createdAt.seconds*1000:Date.now())).toLocaleString()}</div><div style="margin-top:8px">Questions: ${d.questions?d.questions.length:0}</div><div style="margin-top:8px">Top players:</div><div style="margin-top:6px;min-height:40px">${topPlayers||'<div class=\"small muted\">No top players yet</div>'}</div><div style="display:flex;gap:8px;margin-top:8px"><button class=\"btn ghost\" data-id=\"${s.id}\" data-action=\"finalize\">Finalize</button><button class=\"btn ghost\" data-id=\"${s.id}\" data-action=\"view\">View</button></div>`;
           roundsList.appendChild(el);
         });
         // wire up finalize buttons
@@ -446,9 +533,9 @@
     async function finalizeRoundManually(roundId){
       try{
         // try to aggregate top players and mark round completed
-        const snap = await getDocs(query(collection(db,'quizAttempts'), where('roundId','==', roundId)));
+        const snaps = await getDocs(query(collection(db,'quizAttempts'), where('roundId','==', roundId)));
         const arr = [];
-        snap.forEach(s=>{ const d=s.data(); arr.push({ id:s.id, userId:d.userId, score:d.score||0 }); });
+        snaps.forEach(s=>{ const d=s.data(); arr.push({ id:s.id, userId:d.userId, score:d.score||0 }); });
         arr.sort((a,b)=>b.score - a.score);
         const top = arr.slice(0,3).map(x=>({ userId:x.userId, score:x.score }));
         await updateDoc(doc(db,'quizRounds',roundId), { status:'completed', finalizedAt: serverTimestamp(), top });
@@ -458,9 +545,7 @@
 
     // utility: initial load
     (async function init(){
-      try{ // quietly attempt to load public questions (UI disabled if not admin)
-        await loadQuestions(); await loadRoundsList();
-      }catch(e){}
+      try{ await loadQuestions(); await loadRoundsList(); renderBatch(); }catch(e){}
     })();
   </script>
 </body>
