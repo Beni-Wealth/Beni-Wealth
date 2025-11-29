@@ -172,7 +172,7 @@
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
       getFirestore, doc, getDoc, runTransaction, serverTimestamp, onSnapshot,
-      collection, query, where, orderBy, limit, getDocs, setDoc
+      collection, query, where, orderBy, limit, getDocs, setDoc, writeBatch
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // firebase config (same)
@@ -218,8 +218,214 @@
     const ADMIN_EMAILS = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
 
     let currentUser = null;
+    let processingRound = false;
 
-    // show published rounds (public)
+    // progressRef (live progress doc)
+    const progressRef = doc(db, 'quizProgress', QUIZ_ID);
+
+    /*******************
+     * LIVE PROGRESS HANDLING
+     *******************/
+    function updateProgress(count){
+      const pct = Math.min(100, Math.round((count / MAX_PARTICIPANTS) * 100));
+      barFill.style.width = pct + '%';
+      barFill.textContent = pct + '%';
+      percentLabel.textContent = pct + '%';
+      if(count >= MAX_PARTICIPANTS){
+        playBtn.disabled = true;
+        playBtn.textContent = 'Full';
+        playBtn.style.opacity = 0.6;
+      } else {
+        playBtn.disabled = false;
+        playBtn.textContent = `Play (₦${ENTRY_FEE})`;
+        playBtn.style.opacity = 1;
+      }
+      const bar = document.querySelector('.bar');
+      if(bar) bar.setAttribute('aria-valuenow', String(pct));
+    }
+
+    // subscribe progress doc
+    const unsubProgress = onSnapshot(progressRef, async (snap) => {
+      const data = snap.exists() ? snap.data() || {} : {};
+      const count = Number(data.participantsCount || 0);
+      updateProgress(count);
+      if(count >= MAX_PARTICIPANTS){
+        try { await finalizeRoundIfNeeded(count); } catch(e){ console.warn('finalizeRoundIfNeeded failed', e); }
+      }
+    }, (err) => {
+      console.warn('progress onSnapshot err', err);
+      updateProgress(0);
+    });
+
+    /**********************
+     * Join / Play handler (prevents multiple joins by same user)
+     **********************/
+    playBtn.addEventListener('click', async () => {
+      statusMsg.textContent = '';
+      if(!currentUser) return alert('Please sign in on the site before joining.');
+
+      // quick client check
+      const pSnapNow = await getDoc(progressRef);
+      const currentCount = pSnapNow.exists() ? Number(pSnapNow.data().participantsCount || 0) : 0;
+      if(currentCount >= MAX_PARTICIPANTS) { alert('This round is full.'); return; }
+
+      if(!confirm(`Confirm: ₦${ENTRY_FEE} entry fee will be deducted to join this round.`)) return;
+
+      try {
+        await runTransaction(db, async (tx) => {
+          const uid = currentUser.uid;
+          const uRef = doc(db, 'users', uid);
+          const bRef = doc(db, 'balances', uid);
+          // deterministic entry id so user can't join twice
+          const entryId = `${QUIZ_ID}_${uid}`;
+          const entryRef = doc(db, 'quizEntries', entryId);
+          const pRef = progressRef;
+
+          // --- READS FIRST ---
+          const [entrySnap, uSnap, bSnap, pSnap] = await Promise.all([
+            tx.get(entryRef),
+            tx.get(uRef),
+            tx.get(bRef),
+            tx.get(pRef)
+          ]);
+
+          if(entrySnap.exists()){
+            throw new Error('already-joined');
+          }
+
+          // resolve balance
+          let bal = null;
+          if(uSnap.exists()){
+            const ud = uSnap.data() || {};
+            bal = (typeof ud.balance === 'number') ? ud.balance : (typeof ud.amount === 'number' ? ud.amount : null);
+          }
+          if((bal === null || bal === undefined) && bSnap.exists()){
+            const bd = bSnap.data() || {};
+            bal = (typeof bd.balance === 'number') ? bd.balance : (typeof bd.amount === 'number' ? bd.amount : null);
+          }
+          if(bal === null || bal === undefined) bal = 0;
+
+          if(Number(bal) < ENTRY_FEE){
+            throw new Error('insufficient-funds');
+          }
+
+          const prevCount = pSnap.exists() ? Number(pSnap.data().participantsCount || 0) : 0;
+          if(prevCount >= MAX_PARTICIPANTS){
+            throw new Error('full');
+          }
+          const nextCount = Math.min(MAX_PARTICIPANTS, prevCount + 1);
+
+          // --- WRITES ---
+          const newBal = Number(bal) - ENTRY_FEE;
+          tx.set(uRef, { balance: newBal }, { merge: true });
+
+          tx.set(entryRef, {
+            quizId: QUIZ_ID,
+            userId: uid,
+            displayName: currentUser.displayName || currentUser.email || null,
+            joinedAt: serverTimestamp()
+          });
+
+          tx.set(pRef, { participantsCount: nextCount }, { merge: true });
+        });
+
+        statusMsg.textContent = 'Joined ✔ — redirecting…';
+        setTimeout(() => { window.location.href = REDIRECT_PAGE; }, 700);
+      } catch (err) {
+        console.error('join transaction failed', err);
+        const msg = (err && err.message) ? err.message : '';
+        if(msg === 'already-joined'){ alert('You have already joined this round.'); return; }
+        if(msg === 'insufficient-funds'){ alert('Insufficient balance to join. Please top up.'); return; }
+        if(msg === 'full'){ alert('This round became full while we attempted to join.'); return; }
+        alert('Could not join: ' + (err.message || err));
+      }
+    });
+
+    /**********************
+     * Finalize round code (transactional)
+     **********************/
+    async function finalizeRoundIfNeeded(observedCount){
+      if(processingRound) return;
+      processingRound = true;
+      try {
+        // create round doc + reset progress in a transaction (single-writer pattern)
+        const roundId = await runTransaction(db, async (tx) => {
+          const pSnap = await tx.get(progressRef);
+          const cnt = pSnap.exists() ? Number(pSnap.data().participantsCount || 0) : 0;
+          if(cnt < MAX_PARTICIPANTS){
+            throw new Error('not-full');
+          }
+          const rid = `${QUIZ_ID}_r_${Date.now()}`;
+          const rRef = doc(db, 'quizRounds', rid);
+          tx.set(rRef, {
+            quizId: QUIZ_ID,
+            roundId: rid,
+            participantsCount: cnt,
+            status: 'finalizing',
+            createdAt: serverTimestamp()
+          });
+          tx.set(progressRef, { participantsCount: 0 }, { merge: true });
+          return rid;
+        });
+
+        // after transaction: best-effort aggregate top players from quizEntries
+        try {
+          const entriesQ = query(
+            collection(db, 'quizEntries'),
+            where('quizId', '==', QUIZ_ID),
+            orderBy('joinedAt', 'desc'),
+            limit(observedCount || MAX_PARTICIPANTS)
+          );
+          const snap = await getDocs(entriesQ);
+          const entries = [];
+          snap.forEach(docSnap => {
+            const d = docSnap.data() || {};
+            entries.push({
+              id: docSnap.id,
+              userId: d.userId || null,
+              displayName: d.displayName || d.userEmail || null,
+              score: (typeof d.score === 'number') ? d.score : (typeof d.points === 'number' ? d.points : null),
+              raw: d
+            });
+          });
+
+          const entriesWithScore = entries.filter(e => e.score !== null && e.score !== undefined);
+          let top = [];
+          if(entriesWithScore.length > 0){
+            entriesWithScore.sort((a,b) => b.score - a.score);
+            top = entriesWithScore.slice(0,3).map(e => ({ userId: e.userId, displayName: e.displayName || '-', score: e.score, reward: 0 }));
+          }
+
+          const batch = writeBatch(db);
+          const rRef = doc(db, 'quizRounds', roundId);
+          const roundUpdate = { status:'completed', completedAt: serverTimestamp() };
+          if(top.length > 0) roundUpdate.top = top;
+          batch.set(rRef, roundUpdate, { merge: true });
+
+          // mark selected entries with roundId
+          for(const e of entries){
+            const eRef = doc(db, 'quizEntries', e.id);
+            batch.set(eRef, { roundId }, { merge: true });
+          }
+          await batch.commit();
+        } catch(e){
+          console.warn('post-round aggregation failed', e);
+        }
+
+      } catch(e){
+        if(e && e.message === 'not-full'){
+          // someone else already finalized it
+        } else {
+          console.error('finalizeRound transaction failed', e);
+        }
+      } finally {
+        processingRound = false;
+      }
+    }
+
+    /**********************
+     * Published rounds subscription (public)
+     **********************/
     function subscribePublishedRounds(){
       const q = query(collection(db, 'quizRounds'), where('quizId','==', QUIZ_ID), where('published','==', true), orderBy('publishedAt','desc'), limit(20));
       return onSnapshot(q, snap => {
@@ -231,7 +437,6 @@
       });
     }
 
-    // render published for public
     function renderPublished(rounds){
       if(!rounds || rounds.length === 0){
         publishedWrap.innerHTML = '<div class="muted">No published rounds yet</div>';
@@ -267,10 +472,11 @@
       }
     }
 
-    // small helper to show confetti for X seconds
+    /**********************
+     * Admin publish UI & confetti
+     **********************/
     function showConfetti(durationMs = 5000, count = 90){
       confettiRoot.style.display = 'block';
-      // clear previous
       confettiRoot.innerHTML = '';
       const colors = ['#ff3b3b','#ffb86b','#ffd166','#6ee7b7','#7a5fff','#35d6b1','#fff'];
       for(let i=0;i<count;i++){
@@ -285,15 +491,11 @@
         const speed = 3500 + Math.random()*3000;
         el.style.animationDuration = (speed) + 'ms';
         el.style.transform = `rotate(${Math.floor(Math.random()*360)}deg)`;
-        // small horizontal drift using CSS variable
-        el.style.setProperty('--drift', (Math.random()*160 - 80) + 'px');
         confettiRoot.appendChild(el);
       }
-      // hide after duration
       setTimeout(()=>{ confettiRoot.style.display='none'; confettiRoot.innerHTML=''; }, durationMs + 400);
     }
 
-    // ADMIN: publish handler
     publishBtn.addEventListener('click', async () => {
       if(!currentUser) return alert('Sign in as admin to publish.');
       const mail = (currentUser.email || '').toLowerCase();
@@ -307,7 +509,6 @@
       const w3 = { displayName: document.getElementById('w3_name').value.trim(), userId: document.getElementById('w3_uid').value.trim() || null, score: Number(document.getElementById('w3_score').value) || 0, reward: Number(document.getElementById('w3_reward').value) || 0 };
 
       if(!w1.displayName) return alert('Winner 1 name is required.');
-      // other winners optional but will be recorded if filled
 
       const top = [w1, w2.displayName? w2 : null, w3.displayName? w3 : null].filter(Boolean);
 
@@ -326,10 +527,7 @@
 
         publishStatus.textContent = 'Published ✔';
         showConfetti(5000, 100);
-
-        // after publish, refresh published feed by a small delay (listener will pick up)
         setTimeout(()=> publishStatus.textContent = '', 3500);
-        // clear inputs optionally
       } catch(e){
         console.error('publish failed', e);
         publishStatus.textContent = 'Publish failed';
@@ -346,7 +544,6 @@
       document.getElementById('w1_uid').value=''; document.getElementById('w2_uid').value=''; document.getElementById('w3_uid').value='';
     });
 
-    // Admin: load full history (manual)
     loadHistoryBtn.addEventListener('click', async () => {
       if(!currentUser) return alert('Sign in as admin first.');
       const mail = (currentUser.email || '').toLowerCase();
@@ -396,7 +593,9 @@
       return wrap;
     }
 
-    // small helper to show admin UI when user is admin
+    /**********************
+     * Auth state: admin UI toggle + avatar
+     **********************/
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
       if(!user){
@@ -418,23 +617,18 @@
       }
     });
 
-    // subscribe published (public) on load
+    // subscribe published rounds on load
     let pubUnsub = null;
     window.addEventListener('load', () => {
-      if(pubUnsub) pubUnsub();
+      if(pubUnsub) try{ pubUnsub(); }catch(e){}
       pubUnsub = subscribePublishedRounds();
     });
 
     // cleanup
     window.addEventListener('beforeunload', () => {
       if(pubUnsub) try{ pubUnsub(); }catch(e){}
+      if(unsubProgress) try{ unsubProgress(); }catch(e){}
     });
-
-    // Important server-side note (put in your rules):
-    // Ensure Firestore security rules only allow writes to quizRounds/{id} publish field
-    // by admin server account or via Cloud Function or restrict to admin emails via auth.token.email_verified / custom claims.
-    // Client-side checks are not secure on their own.
-
   </script>
 </body>
 </html>
