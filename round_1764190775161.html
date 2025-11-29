@@ -93,6 +93,8 @@
         <!-- Back button added -->
         <div id="backBtn" class="pill ghost" title="Back to mini-games">Back</div>
       </div>
+
+      <div id="roundInfo" style="margin-top:12px" class="muted small">Round: <span id="roundId">—</span> • Players in round: <span id="roundCount">0</span></div>
     </div>
 
     <div id="quizCard" class="card hidden" aria-live="polite">
@@ -138,7 +140,8 @@
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, updateDoc, addDoc, collection, getDocs, query, where, limit, serverTimestamp, runTransaction, arrayUnion
+      getFirestore, doc, getDoc, updateDoc, addDoc, collection, getDocs, query, where, limit, serverTimestamp, runTransaction, arrayUnion,
+      orderBy, writeBatch, onSnapshot
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -179,6 +182,9 @@
     const attemptsNote = document.getElementById('attemptsNote');
     const trackerEl = document.getElementById('tracker');
 
+    const roundIdEl = document.getElementById('roundId');
+    const roundCountEl = document.getElementById('roundCount');
+
     // rules & runtime (changed per request)
     const QUIZ_ID = 'nigeria_general_001';
     const QUESTIONS_COUNT = 10;
@@ -188,12 +194,20 @@
     const FEEDBACK_DELAY_MS = 1600; // pause after correct/wrong
     const TIMEOUT_FEEDBACK_MS = 2200; // pause after timeout
 
+    // round config
+    const MAX_PARTICIPANTS = 20;
+
     let currentUser = null;
     let attemptRef = null;
     let attemptData = null;
     let questions = [];
     let timer = null;
     let timeLeft = TIME_PER_QUESTION; // visible seconds
+
+    // track current round id & participants count
+    let currentRoundId = null;
+    let currentParticipantsCount = 0;
+    let processingRound = false;
 
     document.getElementById('category').textContent = 'General Nigerian';
 
@@ -232,7 +246,6 @@
                 answers: arrayUnion(item.answer),
                 currentIndex: item.currentIndex,
                 status: item.status,
-                // restore the saved client-side carryover time
                 questionTimeLeftMs: item.questionTimeLeftMs || (TIME_PER_QUESTION*1000),
                 questionTimeLeftUpdatedAt: serverTimestamp()
               });
@@ -247,7 +260,6 @@
     function computeTimeLeftFromAttempt(aData){
       try{
         if(!aData) return TIME_PER_QUESTION;
-        // prefer explicit stored remaining + timestamp
         if(aData.questionTimeLeftMs !== undefined && aData.questionTimeLeftUpdatedAt){
           const leftMs = Number(aData.questionTimeLeftMs) || 0;
           const updated = aData.questionTimeLeftUpdatedAt;
@@ -259,7 +271,6 @@
           }
           return Math.ceil(leftMs/1000) || TIME_PER_QUESTION;
         }
-        // fallback: if older "questionStartAt" exists we convert to timeLeft (compat)
         if(aData.questionStartAt && aData.questionStartAt.seconds){
           const startSec = aData.questionStartAt.seconds;
           const elapsed = Math.floor(Date.now()/1000) - startSec;
@@ -275,6 +286,29 @@
       try { const key = pendingKey(); if(!key) return; const raw = localStorage.getItem(key); const list = raw ? JSON.parse(raw) : []; list.push(item); localStorage.setItem(key, JSON.stringify(list)); } catch(e){ console.warn('queue failed', e); }
     }
 
+    // PROGRESS doc ref
+    const progressRef = doc(db, 'quizProgress', QUIZ_ID);
+
+    // subscribe to progress to track current round / participants count and auto-finalize when full
+    onSnapshot(progressRef, async (snap) => {
+      try {
+        const data = snap.exists() ? (snap.data() || {}) : {};
+        currentRoundId = data.currentRoundId || data.roundId || currentRoundId || null;
+        currentParticipantsCount = Number(data.participantsCount || 0);
+        roundIdEl.textContent = currentRoundId || '—';
+        roundCountEl.textContent = String(currentParticipantsCount || 0);
+
+        // if full, finalize
+        if(currentParticipantsCount >= MAX_PARTICIPANTS){
+          try { await finalizeRoundIfNeeded(); } catch(e){ console.warn('finalizeRoundIfNeeded failed', e); }
+        }
+      } catch(e){
+        console.warn('progress snapshot handler err', e);
+      }
+    }, (err) => {
+      console.warn('progress onSnapshot err', err);
+    });
+
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       if(!user){
@@ -284,127 +318,155 @@
       greetingEl.textContent = user.displayName || (user.email?user.email.split('@')[0]:'User');
       avatarEl.textContent = (user.displayName || user.email || 'U')[0].toUpperCase();
       uidLine.textContent = 'UID: ' + user.uid.slice(0,6);
+
+      // ensure we have latest round id locally
+      await loadCurrentRoundId();
       await loadResumeAttempt();
       await flushPending();
       await loadAttemptsNote();
     });
 
-    // create attempt
+    async function loadCurrentRoundId(){
+      try {
+        const s = await getDoc(progressRef);
+        if(s.exists()){
+          const d = s.data() || {};
+          currentRoundId = d.currentRoundId || d.roundId || null;
+          currentParticipantsCount = Number(d.participantsCount || 0);
+          roundIdEl.textContent = currentRoundId || '—';
+          roundCountEl.textContent = String(currentParticipantsCount || 0);
+        }
+      } catch(e){ console.warn('loadCurrentRoundId failed', e); }
+    }
+
+    // create attempt — now tied to currentRoundId and increments quizProgress.participantsCount atomically
     playBtn.addEventListener('click', async () => {
       if(!currentUser) return alert('Sign in on the main site first.');
-      const completed = await hasCompleted(); if(completed) return alert('You already completed this quiz.');
-      const inprog = await hasInProgress(); if(inprog){ await loadResumeAttempt(); showQuizUI(); return; }
-      if(!confirm('Start the General Nigerian quiz?')) return;
 
+      // ensure we have an up-to-date currentRoundId
+      await loadCurrentRoundId();
+
+      // Check whether user has already completed this current round
+      const completed = await hasCompletedCurrentRound();
+      if(completed) return alert('You already completed this round. Wait for the next one or join another quiz.');
+
+      // check if user already has in-progress attempt for this round
+      const inprog = await hasInProgressCurrentRound();
+      if(inprog){ await loadResumeAttempt(); showQuizUI(); return; }
+
+      if(!confirm('Start the General Nigerian quiz for the current round?')) return;
+
+      // transactionally: ensure participantsCount < MAX_PARTICIPANTS, possibly create currentRoundId, create attempt, increment participantsCount
       try {
-        const payload = {
-          quizId: QUIZ_ID,
-          userId: currentUser.uid,
-          userEmail: currentUser.email || null,
-          currentIndex:0,
-          score:0,
-          status:'in_progress',
-          // start with full time for first question
-          questionTimeLeftMs: TIME_PER_QUESTION * 1000,
-          questionTimeLeftUpdatedAt: serverTimestamp(),
-          startedAt: serverTimestamp(),
-          answers:[]
-        };
-        const ref = await addDoc(collection(db,'quizAttempts'), payload);
-        attemptRef = doc(db,'quizAttempts', ref.id);
-        const snap = await getDoc(attemptRef); attemptData = snap.data();
-        saveLocalSnapshot();
+        const result = await runTransaction(db, async (tx) => {
+          const pSnap = await tx.get(progressRef);
+          let pData = pSnap.exists() ? (pSnap.data() || {}) : {};
+          let participants = Number(pData.participantsCount || 0);
+          // if no round id, create one now
+          let rid = pData.currentRoundId || pData.roundId || null;
+          if(!rid){
+            rid = `${QUIZ_ID}_r_${Date.now()}`;
+            // set initial round doc (optional minimal info) -- we'll finalize later
+            const rRef = doc(db, 'quizRounds', rid);
+            tx.set(rRef, { quizId: QUIZ_ID, roundId: rid, status: 'running', createdAt: serverTimestamp() });
+          }
+
+          if(participants >= MAX_PARTICIPANTS){
+            throw new Error('full');
+          }
+          const nextCount = participants + 1;
+
+          // create attempt doc with deterministic id so tx can set it
+          const attemptsCol = collection(db, 'quizAttempts');
+          const newAttemptRef = doc(attemptsCol);
+          const payload = {
+            quizId: QUIZ_ID,
+            roundId: rid,
+            userId: currentUser.uid,
+            userEmail: currentUser.email || null,
+            currentIndex: 0,
+            score: 0,
+            status: 'in_progress',
+            questionTimeLeftMs: TIME_PER_QUESTION * 1000,
+            questionTimeLeftUpdatedAt: serverTimestamp(),
+            startedAt: serverTimestamp(),
+            answers: []
+          };
+          tx.set(newAttemptRef, payload);
+          // update progress
+          tx.set(progressRef, { participantsCount: nextCount, currentRoundId: rid }, { merge: true });
+
+          return { attemptId: newAttemptRef.id, roundId: rid };
+        });
+
+        // transaction succeeded; set local attemptRef & data
+        attemptRef = doc(db, 'quizAttempts', result.attemptId);
+        const snap = await getDoc(attemptRef);
+        attemptData = snap.exists() ? snap.data() : null;
+        // update UI
+        roundIdEl.textContent = result.roundId || '—';
+        await loadAttemptsNote();
         showQuizUI();
-      } catch(e){ console.error('start failed', e); alert('Could not start quiz: ' + (e.message || e)); }
+      } catch(e){
+        console.error('start attempt transaction failed', e);
+        if(e && e.message && e.message.includes('full')) alert('This round is full. Wait until a new round starts.');
+        else alert('Could not start attempt: ' + (e.message || e));
+      }
     });
 
-    async function hasCompleted(){
-      try { const col = collection(db,'quizAttempts'); const q = query(col, where('quizId','==', QUIZ_ID), where('userId','==', currentUser.uid), where('status','==','completed'), limit(1)); const snaps = await getDocs(q); return !snaps.empty; } catch(e){ return false; }
+    async function hasCompletedCurrentRound(){
+      try {
+        if(!currentRoundId) await loadCurrentRoundId();
+        if(!currentUser || !currentRoundId) return false;
+        const col = collection(db,'quizAttempts');
+        const q = query(col, where('quizId','==', QUIZ_ID), where('roundId','==', currentRoundId), where('userId','==', currentUser.uid), where('status','==','completed'), limit(1));
+        const snaps = await getDocs(q);
+        return !snaps.empty;
+      } catch(e){ console.warn('hasCompletedCurrentRound failed', e); return false; }
     }
-    async function hasInProgress(){
-      try { const col = collection(db,'quizAttempts'); const q = query(col, where('quizId','==', QUIZ_ID), where('userId','==', currentUser.uid), where('status','==','in_progress'), limit(1)); const snaps = await getDocs(q); return !snaps.empty; } catch(e){ return false; }
+    async function hasInProgressCurrentRound(){
+      try {
+        if(!currentRoundId) await loadCurrentRoundId();
+        if(!currentUser || !currentRoundId) return false;
+        const col = collection(db,'quizAttempts');
+        const q = query(col, where('quizId','==', QUIZ_ID), where('roundId','==', currentRoundId), where('userId','==', currentUser.uid), where('status','==','in_progress'), limit(1));
+        const snaps = await getDocs(q);
+        return !snaps.empty;
+      } catch(e){ console.warn('hasInProgressCurrentRound failed', e); return false; }
     }
 
     async function loadResumeAttempt(){
       attemptRef = null; attemptData = null;
       try {
+        if(!currentUser) return;
+        if(!currentRoundId) await loadCurrentRoundId();
+        if(!currentRoundId) return;
         const col = collection(db,'quizAttempts');
-        const q = query(col, where('quizId','==', QUIZ_ID), where('userId','==', currentUser.uid), where('status','==','in_progress'), limit(1));
+        const q = query(col, where('quizId','==', QUIZ_ID), where('roundId','==', currentRoundId), where('userId','==', currentUser.uid), where('status','==','in_progress'), limit(1));
         const snaps = await getDocs(q);
         if(!snaps.empty){
           attemptRef = snaps.docs[0].ref;
           attemptData = snaps.docs[0].data();
-          // adjust for elapsed using our stored time-left fields
+          // reconcile elapsed time
           await reconcileExpired();
           showQuizUI();
         }
       } catch(e){ console.warn('loadResumeAttempt', e); }
     }
 
-    // reconcileExpired: best-effort using questionTimeLeftMs + timestamp
-    async function reconcileExpired(){
-      if(!attemptData || !attemptRef) return;
-      try{
-        const qLeftMs = attemptData.questionTimeLeftMs;
-        const qUpdated = attemptData.questionTimeLeftUpdatedAt;
-        if(qLeftMs !== undefined && qUpdated && qUpdated.seconds){
-          const elapsed = Date.now() - (qUpdated.seconds*1000 + Math.floor((qUpdated.nanoseconds||0)/1000000));
-          if(elapsed < qLeftMs){
-            // still within current question
-            return;
-          }
-          // elapsed covers current question and possibly more; compute how many questions expired
-          const overMs = elapsed - qLeftMs; // ms beyond current question
-          const expiredCount = 1 + Math.floor(overMs / (TIME_PER_QUESTION*1000));
-          if(expiredCount <= 0) return;
-
-          const nowIso = new Date().toISOString();
-          const timeoutAnswers = [];
-          for(let i=0;i<expiredCount && (attemptData.currentIndex + i) < QUESTIONS_COUNT;i++){
-            timeoutAnswers.push({ qIndex: attemptData.currentIndex + i, selectedIndex: null, correct:false, timedOut:true, ts: nowIso });
-          }
-          let newIndex = (attemptData.currentIndex || 0) + expiredCount;
-          let newScore = (attemptData.score || 0) + (expiredCount * POINTS_WRONG);
-
-          // compute leftover ms for next question (if not completed)
-          const remainderMs = overMs % (TIME_PER_QUESTION*1000);
-          const nextLeftMs = newIndex >= QUESTIONS_COUNT ? 0 : Math.max(0, TIME_PER_QUESTION*1000 - remainderMs);
-
-          await runTransaction(db, async (tx) => {
-            const snap = await tx.get(attemptRef);
-            if(!snap.exists()) throw new Error('attempt-missing');
-            tx.update(attemptRef, {
-              score: newScore,
-              currentIndex: newIndex >= QUESTIONS_COUNT ? QUESTIONS_COUNT : newIndex,
-              answers: arrayUnion(...timeoutAnswers),
-              status: newIndex >= QUESTIONS_COUNT ? 'completed' : 'in_progress',
-              completedAt: newIndex >= QUESTIONS_COUNT ? serverTimestamp() : undefined,
-              questionTimeLeftMs: nextLeftMs,
-              questionTimeLeftUpdatedAt: newIndex >= QUESTIONS_COUNT ? null : serverTimestamp()
-            });
-          });
-
-          const s = await getDoc(attemptRef); attemptData = s.data();
-          if(attemptData.status === 'completed') showFinal();
-        }
-      }catch(e){ console.warn('reconcileExpired failed', e); }
-    }
-
-    // RENDER & TIMER
+    // RENDER & TIMER (no changes from previous logic)
     function showQuizUI(){
       if(!attemptData) return;
       quizCard.classList.remove('hidden'); resultCard.classList.add('hidden');
       renderTracker();
       renderCurrentQuestion();
 
-      // compute timeLeft using stored questionTimeLeftMs + timestamp
       timeLeft = computeTimeLeftFromAttempt(attemptData);
       if(timeLeft <= 0) timeLeft = 1;
       startTimer(); saveLocalSnapshot();
     }
 
     function renderTracker(){
-      // build answers map from attemptData.answers
       const answersArr = (attemptData && Array.isArray(attemptData.answers)) ? attemptData.answers : [];
       const byIndex = {};
       for(const a of answersArr){
@@ -441,8 +503,6 @@
       scoreEl.textContent = attemptData.score ?? 0;
       progressEl.textContent = `Question ${ (idx+1) } / ${QUESTIONS_COUNT}`;
       nextBtn.classList.add('hidden');
-
-      // update tracker to show current highlight
       renderTracker();
     }
 
@@ -452,7 +512,6 @@
       timer = setInterval(async ()=>{ timeLeft--; timerEl.textContent = timeLeft; if(timeLeft<=0){ clearInterval(timer); await handleTimeout(); } },1000);
     }
 
-    // Next button fetch latest attempt state (safety-net)
     nextBtn.addEventListener('click', async () => {
       if(!attemptRef) return alert('No active attempt found.');
       try {
@@ -462,7 +521,6 @@
         if(attemptData.status === 'completed' || (attemptData.currentIndex || 0) >= QUESTIONS_COUNT) { showFinal(); return; }
         renderTracker();
         renderCurrentQuestion();
-        // compute timeLeft from saved fields
         timeLeft = computeTimeLeftFromAttempt(attemptData);
         if(timeLeft <= 0) timeLeft = 1;
         startTimer();
@@ -472,7 +530,7 @@
       }
     });
 
-    // ANSWER HANDLING — carries remaining time to next question
+    // ANSWER handling (ties into attemptRef which includes roundId)
     async function answerChoice(selectedIndex){
       clearInterval(timer);
       const idx = attemptData.currentIndex || 0; const q = questions[idx];
@@ -481,10 +539,9 @@
       const willFinish = (idx+1) >= QUESTIONS_COUNT;
       const choiceEls = questionArea.querySelectorAll('.choice'); choiceEls.forEach(c=>c.classList.add('disabled'));
 
-      // compute carryover: keep current timeLeft as next question's starting time
       const carryMs = Math.max(0, (timeLeft || 0) * 1000);
 
-      // Try quick updateDoc first and include carryover fields
+      // optimistic update via updateDoc
       try {
         await updateDoc(attemptRef, {
           score: newScore,
@@ -495,7 +552,6 @@
           questionTimeLeftUpdatedAt: willFinish ? null : serverTimestamp(),
           completedAt: willFinish ? serverTimestamp() : undefined
         });
-        // fetch server state and render next after feedback pause
         const s = await getDoc(attemptRef);
         attemptData = s.data();
         applyAnswerFeedback(selectedIndex, q, correct);
@@ -503,17 +559,12 @@
         if(attemptData.status === 'completed'){
           setTimeout(()=> showFinal(), FEEDBACK_DELAY_MS);
         } else {
-          setTimeout(()=> { renderCurrentQuestion();
-            // compute timeLeft from stored carryover
-            timeLeft = computeTimeLeftFromAttempt(attemptData);
-            if(timeLeft <= 0) timeLeft = 1;
-            startTimer();
-          }, FEEDBACK_DELAY_MS);
+          setTimeout(()=> { renderCurrentQuestion(); timeLeft = computeTimeLeftFromAttempt(attemptData); if(timeLeft <= 0) timeLeft = 1; startTimer(); }, FEEDBACK_DELAY_MS);
         }
         return;
       } catch (e) { console.warn('updateDoc append failed', e); }
 
-      // transaction fallback (same fields)
+      // transaction fallback
       try {
         await runTransaction(db, async (tx) => {
           const snap = await tx.get(attemptRef);
@@ -534,33 +585,25 @@
         if(attemptData.status === 'completed'){
           setTimeout(()=> showFinal(), FEEDBACK_DELAY_MS);
         } else {
-          setTimeout(()=> { renderCurrentQuestion();
-            timeLeft = computeTimeLeftFromAttempt(attemptData);
-            if(timeLeft <= 0) timeLeft = 1;
-            startTimer();
-          }, FEEDBACK_DELAY_MS);
+          setTimeout(()=> { renderCurrentQuestion(); timeLeft = computeTimeLeftFromAttempt(attemptData); if(timeLeft<=0) timeLeft=1; startTimer(); }, FEEDBACK_DELAY_MS);
         }
         return;
       } catch(e){ console.warn('transaction failed', e); }
 
-      // Local queue fallback: update local attemptData optimistically and advance UI after feedback pause
+      // local queue fallback
       queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1), status: willFinish ? 'completed' : 'in_progress', questionTimeLeftMs: willFinish ? 0 : carryMs });
       attemptData = attemptData || {};
       attemptData.score = newScore;
       attemptData.currentIndex = willFinish ? QUESTIONS_COUNT : (idx+1);
       attemptData.status = willFinish ? 'completed' : 'in_progress';
       attemptData.questionTimeLeftMs = willFinish ? 0 : carryMs;
-      attemptData.questionTimeLeftUpdatedAt = null; // local only
+      attemptData.questionTimeLeftUpdatedAt = null;
       applyAnswerFeedback(selectedIndex, q, correct, true);
       renderTracker();
       if(attemptData.status === 'completed'){
         setTimeout(()=> showFinal(), FEEDBACK_DELAY_MS);
       } else {
-        setTimeout(()=> { renderCurrentQuestion();
-          timeLeft = computeTimeLeftFromAttempt(attemptData);
-          if(timeLeft <= 0) timeLeft = 1;
-          startTimer();
-        }, FEEDBACK_DELAY_MS);
+        setTimeout(()=> { renderCurrentQuestion(); timeLeft = computeTimeLeftFromAttempt(attemptData); if(timeLeft<=0) timeLeft=1; startTimer(); }, FEEDBACK_DELAY_MS);
       }
     }
 
@@ -574,21 +617,19 @@
       scoreEl.textContent = (attemptData && attemptData.score !== undefined) ? attemptData.score : (Number(scoreEl.textContent||0) + (correct ? POINTS_CORRECT : POINTS_WRONG));
     }
 
-    // TIMEOUT handling — show timeout message then advance after a longer pause
+    // TIMEOUT handling
     async function handleTimeout(){
       const idx = attemptData.currentIndex || 0; const q = questions[idx];
       const newScore = (attemptData.score || 0) + POINTS_WRONG; const nowIso = new Date().toISOString();
       const answerObj = { qIndex: idx, selectedIndex: null, correct:false, timedOut:true, ts: nowIso };
       const willFinish = (idx+1) >= QUESTIONS_COUNT;
 
-      // show timeout UI immediatelly (before server write) so user sees it
       const choiceEls = questionArea.querySelectorAll('.choice'); choiceEls.forEach(c=>c.classList.add('disabled'));
       const fb = document.createElement('div'); fb.className='feedback timeout';
       fb.textContent = `Time expired — ${POINTS_WRONG}. Correct: ${q.choices[q.answerIndex]}`;
       questionArea.appendChild(fb);
       renderTracker();
 
-      // For timeout we do NOT carry remaining time (next question starts with full TIME_PER_QUESTION)
       const nextLeftMs = willFinish ? 0 : TIME_PER_QUESTION*1000;
 
       try {
@@ -602,7 +643,6 @@
           completedAt: willFinish ? serverTimestamp() : undefined
         });
         const s = await getDoc(attemptRef); attemptData = s.data();
-        // advance after TIMEOUT_FEEDBACK_MS
         if(attemptData.status === 'completed'){
           setTimeout(()=> showFinal(), TIMEOUT_FEEDBACK_MS);
         } else {
@@ -633,7 +673,6 @@
         return;
       } catch(e){ console.warn('timeout tx failed', e); }
 
-      // queue locally and optimistically advance after delay
       queuePendingAnswer({ answer: answerObj, score: newScore, currentIndex: willFinish ? QUESTIONS_COUNT : (idx+1), status: willFinish ? 'completed' : 'in_progress', questionTimeLeftMs: nextLeftMs });
       attemptData = attemptData || {};
       attemptData.score = newScore;
@@ -655,7 +694,7 @@
 
     function showFinal(){
       clearInterval(timer); quizCard.classList.add('hidden'); resultCard.classList.remove('hidden');
-      finalSummary.innerHTML = `<div style="font-weight:800">Your score: ${attemptData ? attemptData.score ?? 0 : 0}</div><div class="muted small" style="margin-top:8px">Thanks for playing.</div>`;
+      finalSummary.innerHTML = `<div style="font-weight:800">Your score: ${attemptData ? attemptData.score ?? 0 : 0}</div><div class="muted small" style="margin-top:8px">Thanks for playing. Your result has been recorded for round <strong>${attemptData ? attemptData.roundId : currentRoundId}</strong>.</div>`;
       clearLocalSnapshot();
     }
 
@@ -667,15 +706,146 @@
 
     async function loadAttemptsNote(){ try { if(!currentUser) { attemptsNote.textContent = 'Sign in to track attempts.'; return; } const col = collection(db,'quizAttempts'); const q = query(col, where('quizId','==', QUIZ_ID), where('userId','==', currentUser.uid), where('status','==','completed'), limit(10)); const snaps = await getDocs(q); attemptsNote.textContent = `Completed attempts: ${snaps.size}`; } catch(e){ attemptsNote.textContent = 'Could not load attempts count'; } }
 
-    // init UI
-    scoreEl.textContent = '0'; timerEl.textContent = String(TIME_PER_QUESTION); progressEl.textContent = `Question 0 / ${QUESTIONS_COUNT}`; attemptsNote.textContent = 'Sign in to track attempts.';
+    // reconcileExpired (same logic)
+    async function reconcileExpired(){
+      if(!attemptData || !attemptRef) return;
+      try{
+        const qLeftMs = attemptData.questionTimeLeftMs;
+        const qUpdated = attemptData.questionTimeLeftUpdatedAt;
+        if(qLeftMs !== undefined && qUpdated && qUpdated.seconds){
+          const elapsed = Date.now() - (qUpdated.seconds*1000 + Math.floor((qUpdated.nanoseconds||0)/1000000));
+          if(elapsed < qLeftMs){
+            return;
+          }
+          const overMs = elapsed - qLeftMs;
+          const expiredCount = 1 + Math.floor(overMs / (TIME_PER_QUESTION*1000));
+          if(expiredCount <= 0) return;
+          const nowIso = new Date().toISOString();
+          const timeoutAnswers = [];
+          for(let i=0;i<expiredCount && (attemptData.currentIndex + i) < QUESTIONS_COUNT;i++){
+            timeoutAnswers.push({ qIndex: attemptData.currentIndex + i, selectedIndex: null, correct:false, timedOut:true, ts: nowIso });
+          }
+          let newIndex = (attemptData.currentIndex || 0) + expiredCount;
+          let newScore = (attemptData.score || 0) + (expiredCount * POINTS_WRONG);
+          const remainderMs = overMs % (TIME_PER_QUESTION*1000);
+          const nextLeftMs = newIndex >= QUESTIONS_COUNT ? 0 : Math.max(0, TIME_PER_QUESTION*1000 - remainderMs);
+
+          await runTransaction(db, async (tx) => {
+            const snap = await tx.get(attemptRef);
+            if(!snap.exists()) throw new Error('attempt-missing');
+            tx.update(attemptRef, {
+              score: newScore,
+              currentIndex: newIndex >= QUESTIONS_COUNT ? QUESTIONS_COUNT : newIndex,
+              answers: arrayUnion(...timeoutAnswers),
+              status: newIndex >= QUESTIONS_COUNT ? 'completed' : 'in_progress',
+              completedAt: newIndex >= QUESTIONS_COUNT ? serverTimestamp() : undefined,
+              questionTimeLeftMs: nextLeftMs,
+              questionTimeLeftUpdatedAt: newIndex >= QUESTIONS_COUNT ? null : serverTimestamp()
+            });
+          });
+
+          const s = await getDoc(attemptRef); attemptData = s.data();
+          if(attemptData.status === 'completed') showFinal();
+        }
+      }catch(e){ console.warn('reconcileExpired failed', e); }
+    }
 
     // Back button behavior
     backBtn.addEventListener('click', ()=> { window.location.href = 'mini-games.html'; });
 
-    // small poll fallback
+    // -----------------------
+    // Round finalization logic
+    // -----------------------
+    async function finalizeRoundIfNeeded(){
+      // guard against concurrent finalization
+      if(processingRound) return;
+      processingRound = true;
+      try {
+        // transactionally capture the finished round id and reset progress to a new round
+        const finishedRoundId = await runTransaction(db, async (tx) => {
+          const pSnap = await tx.get(progressRef);
+          const pdata = pSnap.exists() ? (pSnap.data() || {}) : {};
+          const cnt = Number(pdata.participantsCount || 0);
+          if(cnt < MAX_PARTICIPANTS) throw new Error('not-full');
+
+          // the round that finished (prefer existing id)
+          const finishedRid = pdata.currentRoundId || pdata.roundId || `${QUIZ_ID}_r_${Date.now()}`;
+          const finishedRef = doc(db, 'quizRounds', finishedRid);
+          tx.set(finishedRef, {
+            quizId: QUIZ_ID,
+            roundId: finishedRid,
+            participantsCount: cnt,
+            status: 'finalizing',
+            completedAt: serverTimestamp()
+          }, { merge: true });
+
+          // create a new round id for next round and reset participantsCount
+          const nextRid = `${QUIZ_ID}_r_${Date.now()+1}`;
+          const nextRef = doc(db, 'quizRounds', nextRid);
+          tx.set(nextRef, { quizId: QUIZ_ID, roundId: nextRid, status: 'running', createdAt: serverTimestamp() });
+
+          tx.set(progressRef, { participantsCount: 0, currentRoundId: nextRid }, { merge: true });
+          return finishedRid;
+        });
+
+        // post-transaction: aggregate best-effort top players for finishedRoundId
+        try {
+          // get recent attempts for that finished round
+          const attemptsQ = query(collection(db,'quizAttempts'), where('quizId','==', QUIZ_ID), where('roundId','==', finishedRoundId), orderBy('startedAt','desc'), limit(MAX_PARTICIPANTS));
+          const snap = await getDocs(attemptsQ);
+          const entries = [];
+          snap.forEach(s => {
+            const d = s.data() || {};
+            entries.push({
+              id: s.id,
+              userId: d.userId || null,
+              displayName: d.displayName || d.userEmail || null,
+              score: (typeof d.score === 'number') ? d.score : (typeof d.points === 'number' ? d.points : (typeof d.totalScore === 'number' ? d.totalScore : null)),
+              raw: d
+            });
+          });
+
+          const entriesWithScore = entries.filter(e => e.score !== null && e.score !== undefined);
+          let top = [];
+          if(entriesWithScore.length > 0){
+            entriesWithScore.sort((a,b) => b.score - a.score);
+            top = entriesWithScore.slice(0,3).map(e => ({ userId: e.userId, displayName: e.displayName || '-', score: e.score }));
+          }
+
+          // write top into quizRounds/{finishedRoundId}
+          const batch = writeBatch(db);
+          const rRef = doc(db, 'quizRounds', finishedRoundId);
+          const rUpdate = { status: 'completed', finalizedAt: serverTimestamp() };
+          if(top.length > 0) rUpdate.top = top;
+          batch.set(rRef, rUpdate, { merge: true });
+
+          // ensure all attempts are marked (they should already contain roundId) -- best-effort mark
+          for(const e of entries){
+            const eRef = doc(db, 'quizAttempts', e.id);
+            batch.set(eRef, { roundId: finishedRoundId }, { merge: true });
+          }
+          await batch.commit();
+        } catch(e){
+          console.warn('post-finalize aggregation failed', e);
+        }
+      } catch(e){
+        if(e && e.message === 'not-full'){
+          // already processed
+        } else {
+          console.error('finalizeRound transaction failed', e);
+        }
+      } finally {
+        processingRound = false;
+        // refresh local currentRoundId
+        await loadCurrentRoundId();
+      }
+    }
+
+    // small poll fallback to ensure auth attempts are noticed
     (function pollAuth(retries=10, interval=400){ let tries=0; const p = setInterval(()=>{ tries++; if(auth.currentUser) clearInterval(p); if(tries>=retries) clearInterval(p); }, interval); })();
 
+    // Small init UI values
+    scoreEl.textContent = '0'; timerEl.textContent = String(TIME_PER_QUESTION); progressEl.textContent = `Question 0 / ${QUESTIONS_COUNT}`; attemptsNote.textContent = 'Sign in to track attempts.';
   </script>
 </body>
 </html>
