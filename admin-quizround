@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Quiz Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
+  <meta name="theme-color" content="#2fe0b8">
+  <style>
+    :root{ --bg:#060717; --glass:rgba(255,255,255,0.04); --muted:rgba(255,255,255,0.66); --accent1:#6f4bff; --accent2:#32d6b1; --card:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008)); font-family:Poppins,system-ui,Roboto,Arial; color:#eaf2ff }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:radial-gradient(900px 500px at 10% 10%, rgba(111,75,255,0.08), transparent), linear-gradient(180deg,var(--bg),#071022);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:1200px;margin:26px auto;padding:20px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:64px;height:64px;border-radius:14px;display:grid;place-items:center;font-weight:900;background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#041219}
+    h1{margin:0;font-size:20px}
+    .muted{color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+    .card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+
+    /* form controls */
+    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+    input[type=text], textarea, select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);outline:none}
+    textarea{min-height:84px}
+    .row{display:flex;gap:8px}
+    .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;font-weight:800;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .small{font-size:13px;color:var(--muted)}
+    .list{max-height:520px;overflow:auto;padding:6px;border-radius:8px}
+
+    .question-item{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);margin-bottom:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
+    .question-actions{display:flex;gap:8px}
+    .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .chip{padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02);font-weight:700}
+
+    .topbar{display:flex;gap:8px;align-items:center}
+    .status{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.02);font-weight:700}
+
+    .rounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+    .round-card{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
+
+    .notice{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:12px}
+
+    @media(max-width:940px){ .grid{grid-template-columns:1fr} .wrap{padding:12px} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">BW</div>
+        <div>
+          <h1>Quiz Admin • Beni‑Wealth</h1>
+          <div class="muted">Powerful question & rounds manager — admin-only</div>
+        </div>
+      </div>
+      <div class="topbar">
+        <div id="adminEmail" class="muted">Not signed in</div>
+        <div id="authStatus" class="status">Locked</div>
+        <button id="signBtn" class="btn ghost">Sign in</button>
+      </div>
+    </header>
+
+    <div id="notAllowed" class="notice hidden">This admin area is restricted. If you believe this is an error sign in with an authorized admin account.</div>
+
+    <div class="grid">
+      <!-- LEFT: Question builder + controls -->
+      <div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:900">Question Builder</div>
+            <div class="small">Only admins: <span id="allowedEmailsPreview">•••</span></div>
+          </div>
+
+          <div style="margin-top:12px">
+            <label>Question text</label>
+            <textarea id="qText" placeholder="Type the question..."></textarea>
+
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <div style="flex:1">
+                <label>Choice A</label>
+                <input type="text" id="c0" placeholder="Choice A">
+              </div>
+              <div style="width:120px">
+                <label>Correct</label>
+                <select id="correctSelect"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <input type="text" id="c1" placeholder="Choice B" style="flex:1">
+              <input type="text" id="c2" placeholder="Choice C" style="flex:1">
+              <input type="text" id="c3" placeholder="Choice D" style="flex:1">
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+              <div style="flex:1">
+                <label>Tags (comma separated)</label>
+                <input type="text" id="tags" placeholder="e.g. current-affairs,nigeria">
+              </div>
+              <div style="width:140px">
+                <label>Points</label>
+                <input type="text" id="points" placeholder="10">
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button id="saveQBtn" class="btn">Save Question</button>
+              <button id="previewQBtn" class="btn ghost">Preview</button>
+              <button id="clearQBtn" class="btn ghost">Clear</button>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:900">Quick actions</div>
+            <div class="small">Use with care</div>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button id="importSample" class="btn ghost">Import sample 10</button>
+            <button id="deleteAll" class="btn ghost">Delete all questions</button>
+          </div>
+
+          <div style="margin-top:12px">
+            <div style="font-weight:800">Create Round</div>
+            <div class="small">Select questions and publish a round</div>
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+              <input id="roundTitle" type="text" placeholder="Round title (optional)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted)">
+              <input id="maxParticipants" type="text" placeholder="Max (20)" style="width:92px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted)">
+            </div>
+            <div style="margin-top:8px">
+              <div class="small">Select from question list (right panel) then press Publish</div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="publishRound" class="btn">Publish & Start</button>
+                <button id="saveDraft" class="btn ghost">Save Draft</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div style="font-weight:900">Rounds</div>
+          <div class="muted small">Recent rounds & top players</div>
+          <div id="roundsList" class="rounds" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Questions list, selection, preview -->
+      <div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:900">Question Bank</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="search" type="text" placeholder="Search…" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted)">
+              <button id="refreshBtn" class="btn ghost">Refresh</button>
+            </div>
+          </div>
+
+          <div style="margin-top:12px" class="list" id="questionsList"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div style="font-weight:900">Selected for new round (<span id="selectedCount">0</span>)</div>
+          <div id="selectedList" class="list" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width:1200px;margin:18px auto">
+      <div class="muted small">Security: This page only restricts UI access — you should also enforce server-side Firestore rules and Cloud Functions to prevent unauthorized writes. Use an authenticated admin-only Cloud Function for critical operations when possible.</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, doc, setDoc, getDocs, query, where, orderBy, deleteDoc, updateDoc, getDoc, runTransaction, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // ########## CONFIG - same as your apps ###########
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Allowed admin emails
+    const ADMINS = [
+      'nemiwealth70@gmail.com',
+      'owanaomubo76@gmail.com'
+    ];
+
+    // DOM refs
+    const signBtn = document.getElementById('signBtn');
+    const adminEmail = document.getElementById('adminEmail');
+    const authStatus = document.getElementById('authStatus');
+    const notAllowed = document.getElementById('notAllowed');
+    const allowedEmailsPreview = document.getElementById('allowedEmailsPreview');
+
+    const qText = document.getElementById('qText');
+    const c0 = document.getElementById('c0');
+    const c1 = document.getElementById('c1');
+    const c2 = document.getElementById('c2');
+    const c3 = document.getElementById('c3');
+    const correctSelect = document.getElementById('correctSelect');
+    const tagsInput = document.getElementById('tags');
+    const pointsInput = document.getElementById('points');
+    const saveQBtn = document.getElementById('saveQBtn');
+    const clearQBtn = document.getElementById('clearQBtn');
+    const previewQBtn = document.getElementById('previewQBtn');
+    const importSample = document.getElementById('importSample');
+    const deleteAll = document.getElementById('deleteAll');
+
+    const questionsList = document.getElementById('questionsList');
+    const selectedList = document.getElementById('selectedList');
+    const selectedCount = document.getElementById('selectedCount');
+    const search = document.getElementById('search');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    const publishRound = document.getElementById('publishRound');
+    const saveDraft = document.getElementById('saveDraft');
+    const roundTitle = document.getElementById('roundTitle');
+    const maxParticipants = document.getElementById('maxParticipants');
+
+    const roundsList = document.getElementById('roundsList');
+
+    allowedEmailsPreview.textContent = ADMINS.join(', ');
+
+    // local state
+    let currentUser = null;
+    let isAdmin = false;
+    let editingId = null; // question id if editing
+    let questionsCache = []; // array of { id, data }
+    let selectedForRound = new Set();
+
+    // ---------- AUTH ----------
+    signBtn.addEventListener('click', async () => {
+      if(!currentUser){
+        const provider = new GoogleAuthProvider();
+        try{ await signInWithPopup(auth, provider); }catch(e){ alert('Sign in failed: ' + (e.message||e)); }
+      } else {
+        await signOut(auth);
+      }
+    });
+
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      if(!user){ adminEmail.textContent = 'Not signed in'; authStatus.textContent = 'Locked'; signBtn.textContent = 'Sign in'; notAllowed.classList.remove('hidden'); isAdmin = false; enableUI(false); return; }
+      adminEmail.textContent = user.email || user.uid; signBtn.textContent = 'Sign out';
+      isAdmin = ADMINS.includes(user.email);
+      authStatus.textContent = isAdmin ? 'Admin' : 'Not admin';
+      notAllowed.classList.toggle('hidden', isAdmin);
+      enableUI(isAdmin);
+      if(isAdmin) loadQuestions(); loadRoundsList();
+    });
+
+    function enableUI(flag){
+      const els = document.querySelectorAll('input, textarea, select, button');
+      els.forEach(el => {
+        if(el === signBtn) return;
+        el.disabled = !flag;
+      });
+      if(!flag){ // leave refresh & preview allowed for inspection
+        refreshBtn.disabled = false; previewQBtn.disabled = false;
+      }
+    }
+
+    // ---------- QUESTION CRUD ----------
+    async function saveQuestion(){
+      const text = qText.value.trim();
+      const choices = [c0.value.trim(), c1.value.trim(), c2.value.trim(), c3.value.trim()];
+      const correct = Number(correctSelect.value || 0);
+      const tags = tagsInput.value.split(',').map(s=>s.trim()).filter(Boolean);
+      const points = Number(pointsInput.value || 10) || 10;
+      if(!text || choices.some(ch=>!ch)){ return alert('Please provide question text and all 4 choices.'); }
+      const payload = { text, choices, answerIndex: correct, tags, points, createdAt: serverTimestamp() };
+      try{
+        if(editingId){
+          await updateDoc(doc(db,'quizBank',editingId), payload);
+          editingId = null; saveQBtn.textContent = 'Save Question';
+        } else {
+          await addDoc(collection(db,'quizBank'), payload);
+        }
+        clearForm(); loadQuestions();
+      }catch(e){ console.error('saveQuestion failed', e); alert('Could not save: '+(e.message||e)); }
+    }
+
+    saveQBtn.addEventListener('click', saveQuestion);
+    clearQBtn.addEventListener('click', clearForm);
+
+    function clearForm(){ qText.value=''; c0.value=''; c1.value=''; c2.value=''; c3.value=''; correctSelect.value='0'; tagsInput.value=''; pointsInput.value='10'; editingId = null; saveQBtn.textContent = 'Save Question'; }
+
+    previewQBtn.addEventListener('click', ()=>{
+      const text = qText.value || '(question)';
+      const choices = [c0.value||'A', c1.value||'B', c2.value||'C', c3.value||'D'];
+      const html = `<div style=\"padding:12px;background:#fff;color:#041219;border-radius:12px\"><strong>${escapeHtml(text)}</strong><ul>${choices.map(ch=>`<li>${escapeHtml(ch)}</li>`).join('')}</ul></div>`;
+      const w = window.open('about:blank','preview','width=420,height=360'); w.document.write(html); w.document.close();
+    });
+
+    function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // load questions
+    async function loadQuestions(){
+      try{
+        questionsList.innerHTML = '<div class="small muted">Loading…</div>';
+        const q = query(collection(db,'quizBank'), orderBy('createdAt','desc'));
+        const snaps = await getDocs(q);
+        questionsCache = [];
+        snaps.forEach(s => questionsCache.push({ id: s.id, data: s.data() }));
+        renderQuestions(questionsCache);
+      }catch(e){ console.warn('loadQuestions failed', e); questionsList.innerHTML = '<div class="small muted">Could not load</div>'; }
+    }
+
+    function renderQuestions(list){
+      questionsList.innerHTML = '';
+      if(list.length === 0) questionsList.innerHTML = '<div class="small muted">No questions yet</div>';
+      for(const item of list){
+        const d = item.data;
+        const div = document.createElement('div'); div.className='question-item';
+        div.innerHTML = `<div style=\"display:flex;justify-content:space-between;gap:8px\"><div style=\"font-weight:800\">${escapeHtml(d.text || '(no text)')}</div><div class=\"question-actions\"></div></div>`;
+        const actions = div.querySelector('.question-actions');
+        const sel = document.createElement('button'); sel.textContent = selectedForRound.has(item.id)?'Deselect':'Select'; sel.className='btn ghost'; sel.addEventListener('click', ()=>{ toggleSelect(item.id); sel.textContent = selectedForRound.has(item.id)?'Deselect':'Select'; renderSelected(); });
+        const edit = document.createElement('button'); edit.textContent='Edit'; edit.className='btn ghost'; edit.addEventListener('click', ()=>{ loadIntoForm(item); });
+        const del = document.createElement('button'); del.textContent='Delete'; del.className='btn ghost'; del.addEventListener('click', ()=>{ if(confirm('Delete question?')) deleteQuestion(item.id); });
+        actions.appendChild(sel); actions.appendChild(edit); actions.appendChild(del);
+
+        // choices preview
+        const choicesHtml = (d.choices || []).map((c,i)=> `<span class=\"chip\" style=\"background:${i===d.answerIndex?'#e6ffef':'transparent'};color:${i===d.answerIndex?'#041219':'var(--muted)'};border:1px solid rgba(255,255,255,0.02)\">${String.fromCharCode(65+i)}. ${escapeHtml(c)}</span>`).join('');
+        const meta = document.createElement('div'); meta.className='chips'; meta.innerHTML = choicesHtml;
+        div.appendChild(meta);
+        questionsList.appendChild(div);
+      }
+    }
+
+    function loadIntoForm(item){ const d=item.data; editingId=item.id; qText.value=d.text||''; c0.value=d.choices?.[0]||''; c1.value=d.choices?.[1]||''; c2.value=d.choices?.[2]||''; c3.value=d.choices?.[3]||''; correctSelect.value=String(d.answerIndex||0); tagsInput.value=(d.tags||[]).join(','); pointsInput.value=String(d.points||10); saveQBtn.textContent='Update Question'; window.scrollTo({top:0,behavior:'smooth'}); }
+
+    async function deleteQuestion(id){ try{ await deleteDoc(doc(db,'quizBank',id)); selectedForRound.delete(id); renderSelected(); loadQuestions(); }catch(e){ console.error('deleteQuestion failed', e); alert('Delete failed'); } }
+
+    // select / deselect for round
+    function toggleSelect(id){ if(selectedForRound.has(id)) selectedForRound.delete(id); else selectedForRound.add(id); renderSelected(); }
+    function renderSelected(){ selectedList.innerHTML=''; selectedCount.textContent=String(selectedForRound.size); if(selectedForRound.size===0){ selectedList.innerHTML='<div class="small muted">No questions selected</div>'; return; } for(const id of selectedForRound){ const it = questionsCache.find(x=>x.id===id); if(!it) continue; const d=it.data; const el = document.createElement('div'); el.className='question-item'; el.innerHTML = `<div style="font-weight:800">${escapeHtml(d.text)}</div><div class="small">Points: ${d.points||10}</div>`; selectedList.appendChild(el); } }
+
+    // publish round
+    publishRound.addEventListener('click', async ()=>{
+      if(selectedForRound.size === 0) return alert('Select at least one question to publish a round.');
+      const title = (roundTitle.value || '').trim();
+      const maxP = Number(maxParticipants.value) || 20;
+      if(!confirm(`Publish round${title?(' "'+title+'"'):''} with ${selectedForRound.size} questions and max ${maxP} participants?`)) return;
+      try{
+        // create new round doc and set quizProgress.currentRoundId atomically
+        const roundId = `admin_${Date.now()}`;
+        const rRef = doc(db, 'quizRounds', roundId);
+        const pRef = doc(db, 'quizProgress', 'nigeria_general_001');
+
+        await runTransaction(db, async (tx) => {
+          // create round with question refs
+          const qArr = Array.from(selectedForRound).map(id=> ({ id }));
+          tx.set(rRef, { roundId, title: title || null, quizId: 'nigeria_general_001', questions: qArr, maxParticipants: maxP, status:'running', createdAt: serverTimestamp() });
+          // point progress to new round and reset participants count
+          tx.set(pRef, { currentRoundId: roundId, participantsCount: 0 }, { merge: true });
+        });
+        alert('Round published and started: ' + roundId);
+        selectedForRound.clear(); renderSelected(); loadRoundsList();
+      }catch(e){ console.error('publishRound failed', e); alert('Publish failed: '+(e.message||e)); }
+    });
+
+    // save draft: create a round doc with status draft
+    saveDraft.addEventListener('click', async ()=>{
+      if(selectedForRound.size===0) return alert('Select questions first');
+      const title = (roundTitle.value || '').trim();
+      const maxP = Number(maxParticipants.value) || 20;
+      try{
+        const rRef = await addDoc(collection(db,'quizRounds'), { quizId:'nigeria_general_001', title:title||null, questions:Array.from(selectedForRound).map(id=>({id})), maxParticipants: maxP, status:'draft', createdAt: serverTimestamp() });
+        alert('Draft saved: ' + rRef.id);
+        selectedForRound.clear(); renderSelected(); loadRoundsList();
+      }catch(e){ console.error('saveDraft failed', e); alert('Save draft failed'); }
+    });
+
+    // delete all questions (danger)
+    deleteAll.addEventListener('click', async ()=>{
+      if(!confirm('Delete ALL questions in quizBank? This cannot be undone via UI.')) return;
+      try{
+        const snaps = await getDocs(collection(db,'quizBank'));
+        const batch = writeBatch(db);
+        snaps.forEach(s=> batch.delete(doc(db,'quizBank',s.id)));
+        await batch.commit();
+        loadQuestions();
+      }catch(e){ console.error('deleteAll failed', e); alert('Delete all failed'); }
+    });
+
+    // import sample questions (a small set)
+    importSample.addEventListener('click', async ()=>{
+      if(!confirm('Import 10 sample questions?')) return;
+      const samples = [
+        { text:'Capital of Nigeria?', choices:['Lagos','Abuja','Kano','Ibadan'], answerIndex:1, tags:['general'], points:10 },
+        { text:'Currency of Nigeria?', choices:['Naira','Cedi','Dollar','Pound'], answerIndex:0, tags:['general'], points:10 },
+        { text:'Author of "Things Fall Apart"?', choices:['Achebe','Soyinka','Okri','Emecheta'], answerIndex:0, tags:['literature'], points:10 },
+        { text:'Which sea borders southern Nigeria?', choices:['Gulf of Guinea','Red Sea','Mediterranean','Indian Ocean'], answerIndex:0, tags:['geography'], points:10 },
+        { text:'Largest city by population in Nigeria?', choices:['Abuja','Lagos','Kano','Port Harcourt'], answerIndex:1, tags:['general'], points:10 },
+        { text:'Nigerian independence year?', choices:['1960','1970','1950','1980'], answerIndex:0, tags:['history'], points:10 },
+        { text:'Traditional sport in Northern Nigeria?', choices:['Wrestling','Football','Basketball','Rugby'], answerIndex:0, tags:['culture'], points:10 },
+        { text:'Famous Nigerian festival in Lagos?', choices:['Eyo','Igue','Durbar','Osun'], answerIndex:0, tags:['culture'], points:10 },
+        { text:'Main language in the southwest?', choices:['Yoruba','Hausa','Igbo','Kanuri'], answerIndex:0, tags:['language'], points:10 },
+        { text:'Plateau city known for cooler climate?', choices:['Jos','Kano','Lagos','Enugu'], answerIndex:0, tags:['geography'], points:10 }
+      ];
+      try{
+        const batch = writeBatch(db);
+        for(const s of samples){ const r = doc(collection(db,'quizBank')); batch.set(r, { ...s, createdAt: serverTimestamp() }); }
+        await batch.commit(); loadQuestions();
+      }catch(e){ console.error('importSample failed', e); alert('Import failed'); }
+    });
+
+    // search & refresh
+    refreshBtn.addEventListener('click', loadQuestions);
+    search.addEventListener('input', ()=>{
+      const q = (search.value||'').toLowerCase(); const filtered = questionsCache.filter(it => (it.data.text||'').toLowerCase().includes(q) || (it.data.tags||[]).join(',').toLowerCase().includes(q)); renderQuestions(filtered);
+    });
+
+    // rounds list
+    async function loadRoundsList(){
+      try{
+        roundsList.innerHTML = '<div class="small muted">Loading…</div>';
+        const snaps = await getDocs(query(collection(db,'quizRounds'), orderBy('createdAt','desc')));
+        roundsList.innerHTML = '';
+        snaps.forEach(s=>{
+          const d = s.data()||{}; const el = document.createElement('div'); el.className='round-card';
+          const topPlayers = (d.top || []).map(tp=>`<div style=\"font-weight:800\">${escapeHtml(tp.displayName||tp.userId||'-')}</div><div class=\"small\">${tp.score} pts</div>`).join('');
+          el.innerHTML = `<div style=\"display:flex;justify-content:space-between;align-items:center\"><div style=\"font-weight:900\">${escapeHtml(d.title||s.id)}</div><div class=\"small\">${d.status||'—'}</div></div><div class=\"small muted\">${new Date((d.createdAt && d.createdAt.seconds?d.createdAt.seconds*1000:Date.now())).toLocaleString()}</div><div style=\"margin-top:8px\">${d.questions?d.questions.length+' questions':'0 questions'}</div><div style=\"margin-top:8px\">Top players:</div><div style=\"margin-top:6px;min-height:40px\">${topPlayers||'<div class=\"small muted\">No top players yet</div>'}</div><div style=\"display:flex;gap:8px;margin-top:8px\"><button class=\"btn ghost\" data-id=\"${s.id}\" data-action=\"finalize\">Finalize</button><button class=\"btn ghost\" data-id=\"${s.id}\" data-action=\"view\">View</button></div>`;
+          roundsList.appendChild(el);
+        });
+        // wire up finalize buttons
+        roundsList.querySelectorAll('button[data-action=finalize]').forEach(b => b.addEventListener('click', async (e)=>{
+          const id = e.currentTarget.dataset.id; if(!confirm('Force finalize round '+id+'?')) return; await finalizeRoundManually(id); loadRoundsList(); }));
+      }catch(e){ console.warn('loadRoundsList failed', e); roundsList.innerHTML = '<div class="small muted">Could not load rounds</div>'; }
+    }
+
+    async function finalizeRoundManually(roundId){
+      try{
+        // try to aggregate top players and mark round completed
+        const snap = await getDocs(query(collection(db,'quizAttempts'), where('roundId','==', roundId)));
+        const arr = [];
+        snap.forEach(s=>{ const d=s.data(); arr.push({ id:s.id, userId:d.userId, score:d.score||0 }); });
+        arr.sort((a,b)=>b.score - a.score);
+        const top = arr.slice(0,3).map(x=>({ userId:x.userId, score:x.score }));
+        await updateDoc(doc(db,'quizRounds',roundId), { status:'completed', finalizedAt: serverTimestamp(), top });
+        alert('Round finalized');
+      }catch(e){ console.error('finalizeRoundManually failed', e); alert('Could not finalize: '+(e.message||e)); }
+    }
+
+    // utility: initial load
+    (async function init(){
+      try{ // quietly attempt to load public questions (UI disabled if not admin)
+        await loadQuestions(); await loadRoundsList();
+      }catch(e){}
+    })();
+  </script>
+</body>
+</html>
