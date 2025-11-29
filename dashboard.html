@@ -13,8 +13,8 @@
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
-    /* (same CSS as you had; unchanged) */
     :root{
+      /* widened container for desktop */
       --bg-1: #0b0613;
       --bg-2: #0f0820;
       --panel: rgba(255,255,255,0.03);
@@ -25,7 +25,7 @@
       --accent-grad: linear-gradient(135deg, var(--accent-a), #5b3bff 45%, var(--accent-b) 100%);
       --glass: rgba(255,255,255,0.03);
       --radius: 16px;
-      --container-w: 420px;
+      --container-w: 980px; /* changed from 420px so page fits desktop */
       font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
     *{box-sizing:border-box}
@@ -44,12 +44,13 @@
       justify-content:center;
     }
 
+    /* phone container centered on viewport (desktop & mobile) */
     .phone {
       width:100%;
       max-width:var(--container-w);
-      min-height:700px;
-      border-radius:28px;
-      padding:18px 18px 120px;
+      min-height:600px;
+      border-radius:18px;
+      padding:18px 18px 100px; /* extra bottom padding to ensure content doesn't hide behind fixed nav */
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       box-shadow: 0 18px 60px rgba(0,0,0,0.6);
       overflow:auto;
@@ -83,41 +84,207 @@
       background:#00ff9d; border:2px solid rgba(0,0,0,0.22);
     }
 
-    .greeting { flex:1; }
-    .greeting h2{ margin:0; font-size:17px; font-weight:700; letter-spacing:0.2px;}
-    .greeting p{ margin:6px 0 0; color:var(--muted); font-size:12px; }
+    .greeting {
+      flex:1;
+    }
+    .greeting h2{
+      margin:0;
+      font-size:17px;
+      font-weight:700;
+      letter-spacing:0.2px;
+    }
+    .greeting p{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:12px;
+    }
 
-    .asset-card{ margin:8px 0 16px; border-radius:18px; padding:14px; position:relative; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.03); overflow:hidden; }
-    .asset-top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-    .asset-left { display:flex; flex-direction:column; gap:8px; }
-    .asset-sub { color:var(--muted); font-size:12px; }
-    .asset-amount { font-size:28px; font-weight:800; line-height:1; letter-spacing:0.6px; margin-top:6px; }
+    /* Total assets card */
+    .asset-card{
+      margin:8px 0 16px;
+      border-radius:12px;
+      padding:14px;
+      position:relative;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.03);
+      overflow:hidden;
+    }
+    .asset-top {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .asset-left {
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .asset-sub {
+      color:var(--muted); font-size:12px;
+    }
+    .asset-amount {
+      font-size:28px;
+      font-weight:800;
+      line-height:1;
+      letter-spacing:0.6px;
+      margin-top:6px;
+    }
     .asset-approx { color:var(--muted); font-size:12px; margin-top:6px; }
 
-    .eye-btn{ width:44px; height:44px; border-radius:12px; display:grid; place-items:center; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.03); cursor:pointer; }
+    .eye-btn{
+      width:44px; height:44px; border-radius:12px; display:grid; place-items:center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.03);
+      cursor:pointer;
+    }
 
+    /* Recharge / Withdraw */
     .action-row{ display:flex; gap:10px; margin-top:14px; }
-    .pill { flex:1; padding:12px; border-radius:999px; text-align:center; font-weight:700; cursor:pointer; user-select:none; border:1px solid rgba(255,255,255,0.04); }
-    .pill.primary{ background: linear-gradient(90deg, #7a5fff, #5e47ff 40%, #35d6b1 100%); color:#041219; box-shadow: 0 8px 30px rgba(87,52,164,0.18); }
-    .pill.ghost{ background: transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.05); }
+    .pill {
+      flex:1;
+      padding:12px;
+      border-radius:999px;
+      text-align:center;
+      font-weight:700;
+      cursor:pointer;
+      user-select:none;
+      border:1px solid rgba(255,255,255,0.04);
+    }
+    .pill.primary{
+      background: linear-gradient(90deg, #7a5fff, #5e47ff 40%, #35d6b1 100%);
+      color:#041219;
+      box-shadow: 0 8px 30px rgba(87,52,164,0.18);
+    }
+    .pill.ghost{
+      background: transparent;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,0.05);
+    }
 
-    .menu { margin-top:18px; display:flex; flex-direction:column; gap:12px; }
-    .menu-item{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); border:1px solid rgba(255,255,255,0.02); cursor:pointer; }
+    /* menu list */
+    .menu {
+      margin-top:18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .menu-item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      border:1px solid rgba(255,255,255,0.02);
+      cursor:pointer;
+    }
     .menu-left{ display:flex; gap:12px; align-items:center; }
     .menu-icon{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px; }
     .menu-text h4{ margin:0; font-size:14px; color:#e7e9ff; text-transform:capitalize; }
     .menu-text p{ margin:4px 0 0; color:var(--muted); font-size:12px; }
 
-    .logout { margin-top:20px; padding:12px; border-radius:999px; text-align:center; font-weight:700; background: transparent; border: 1px solid rgba(255,255,255,0.06); color:var(--muted); cursor:pointer; }
+    .logout {
+      margin-top:20px;
+      padding:12px;
+      border-radius:999px;
+      text-align:center;
+      font-weight:700;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.06);
+      color:var(--muted);
+      cursor:pointer;
+    }
 
-    .bottom-nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: 20px; height: 74px; width: calc(min(var(--container-w), 100%) - 28px); max-width: var(--container-w); background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); border-radius: 38px; padding: 10px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; box-shadow: 0 18px 60px rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.04); z-index: 999; backdrop-filter: blur(6px); }
-    .nav-btn{ width:56px; text-align:center; color:var(--muted); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; user-select:none; }
-    .nav-btn .icon-wrap{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px; }
-    .nav-center { position:relative; flex:0 0 92px; display:flex; justify-content:center; align-items:center; }
-    .center-btn { width:78px; height:78px; border-radius:50%; background: linear-gradient(135deg,#7a5fff,#35d6b1); display:grid; place-items:center; color:#041219; font-size:26px; box-shadow:0 18px 60px rgba(87,52,164,0.2); transform:translateY(-18px); border: none; cursor:pointer; }
+    /* bottom-nav fixed to viewport and centered to match .phone width */
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 20px;
+      height: 74px;
+      width: calc(min(var(--container-w), 100%) - 28px);
+      max-width: var(--container-w);
+      background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border-radius: 38px;
+      padding: 10px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.04);
+      z-index: 999;
+      backdrop-filter: blur(6px);
+    }
+    .nav-btn{
+      width:56px;
+      text-align:center;
+      color:var(--muted);
+      font-size:11px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .nav-btn .icon-wrap{
+      width:44px;
+      height:44px;
+      border-radius:10px;
+      display:grid;
+      place-items:center;
+      background: rgba(255,255,255,0.02);
+      font-size:18px;
+    }
+    .nav-center {
+      position:relative;
+      flex:0 0 92px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+    .center-btn {
+      width:78px;
+      height:78px;
+      border-radius:50%;
+      background: linear-gradient(135deg,#7a5fff,#35d6b1);
+      display:grid;
+      place-items:center;
+      color:#041219;
+      font-size:26px;
+      box-shadow:0 18px 60px rgba(87,52,164,0.2);
+      transform:translateY(-18px);
+      border: none;
+      cursor:pointer;
+    }
 
-    .chat-fab { position: fixed; bottom: 110px; left: 50%; transform: translateX(calc(var(--container-w) / 2 - 72px)); width:56px; height:56px; border-radius:50%; display:grid; place-items:center; font-size:22px; background: linear-gradient(135deg,#35d6b1,#5e47ff); color:#041219; box-shadow: 0 18px 50px rgba(87,52,164,0.18); z-index: 1000; text-decoration:none; border: none; cursor:pointer; }
+    /* contact floating action button (prominent access) */
+    .chat-fab {
+      position: fixed;
+      bottom: 110px;
+      left: calc(50% + (var(--container-w) / 2) - 88px); /* align near right edge of phone on wide screens */
+      width:56px;
+      height:56px;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      font-size:22px;
+      background: linear-gradient(135deg,#35d6b1,#5e47ff);
+      color:#041219;
+      box-shadow: 0 18px 50px rgba(87,52,164,0.18);
+      z-index: 1000;
+      text-decoration:none;
+      border: none;
+      cursor:pointer;
+    }
     .chat-fab[aria-hidden="true"]{ display:none; }
+
+    /* Responsive adjustments */
+    @media(max-width:980px){
+      :root{ --container-w: 420px; } /* fallback on narrow screens */
+      .chat-fab { left: auto; right: 20px; transform: none; } /* align to right on small screens */
+    }
 
     @media(max-width:480px){
       body{ padding:14px; }
@@ -204,6 +371,7 @@
 
     <button id="logoutBtn" class="logout">Log out</button>
 
+    <!-- bottom navigation (fixed) - Chat item removed -->
     <div class="bottom-nav" role="navigation" aria-label="Main navigation">
       <div id="navHome" class="nav-btn" title="Home">
         <div class="icon-wrap">🏠</div>
@@ -230,6 +398,7 @@
       </div>
     </div>
 
+    <!-- floating contact button (redirects to contact.html) -->
     <a id="chatFab" class="chat-fab" href="contact.html" title="Contact support" aria-label="Contact support">💬</a>
   </div>
 
@@ -289,6 +458,7 @@
     function getPersistedHidden(uid){ try{ return localStorage.getItem(makeHiddenKey(uid)) === '1'; }catch(e){return false;} }
     function setPersistedHidden(uid, hidden){ try{ localStorage.setItem(makeHiddenKey(uid), hidden ? '1' : '0'); }catch(e){} }
 
+    // fallback: try balances collection/doc if users/{uid} doesn't provide balance
     async function tryBalanceFallback(uid){
       try{
         const bRef = doc(db, 'balances', uid);
@@ -307,6 +477,7 @@
       return null;
     }
 
+    // show/hide balance
     function setBalanceVisibility(hidden, uid){
       setPersistedHidden(uid, hidden);
       eyeBtn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
@@ -327,7 +498,7 @@
       setBalanceVisibility(!hidden, uid);
     });
 
-    // navigation handlers
+    // nav / btn handlers (preserve behavior)
     settingsBtn.addEventListener('click', ()=> window.location.href='profile.html');
     rechargeBtn.addEventListener('click', ()=> window.location.href='recharge.html');
     withdrawBtn.addEventListener('click', ()=> window.location.href='withdraw.html');
@@ -341,9 +512,22 @@
       setTimeout(()=> { container.style.transform = ''; window.location.href = 'referrals.html'; }, 240);
     });
 
-    // MORE: simple redirect to mini-games.html (no overlay)
+    // MORE item: redirect to mini-games.html (no overlay)
     moreItem.addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'mini-games.html'; });
     moreItem.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location.href = 'mini-games.html'; } });
+
+    // LOGOUT: ensure signOut is called and user is redirected
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        // clear any UI-sensitive localStorage flags if desired
+        // example: localStorage.removeItem(`bw_balance_hidden_${auth?.currentUser?.uid}`);
+        window.location.href = 'index.html';
+      } catch (err) {
+        console.error('logout failed', err);
+        alert('Logout failed: ' + (err.message || err));
+      }
+    });
 
     // bottom nav actions
     navHome.addEventListener('click', ()=> window.location.href = 'catalog.html');
@@ -352,15 +536,17 @@
     navNews.addEventListener('click', ()=> window.location.href = 'news.html');
     navAssets.addEventListener('click', ()=> window.location.href = 'dashboard.html');
 
+    // FAB keyboard support (the anchor already navigates on click)
     chatFab.addEventListener('keydown', (e) => {
       if(e.key === 'Enter' || e.key === ' ') { window.location.href = 'contact.html'; }
     });
 
-    // auth & live wiring
+    // live wiring: read users/{uid} and keep balance stable
     let userUnsub = null;
     onAuthStateChanged(auth, async (user) => {
+      // default to guest visibility
       eyeBtn.dataset.uid = 'guest';
-      setBalanceVisibility(getPersistedHidden('guest'),'guest');
+      setBalanceVisibility(getPersistedHidden('guest'), 'guest');
 
       if(!user){
         const demo = gen5();
@@ -368,7 +554,7 @@
         greetingEl.textContent = 'Hello, User';
         balanceEl.dataset.realText = formatN(0);
         approxEl.dataset.realText = `≈ ${formatN(0)}`;
-        setBalanceVisibility(getPersistedHidden('guest'),'guest');
+        setBalanceVisibility(getPersistedHidden('guest'), 'guest');
         if(userUnsub){ try{ userUnsub(); }catch(e){}; userUnsub = null; }
         return;
       }
@@ -379,11 +565,13 @@
 
       const uRef = doc(db, 'users', user.uid);
 
+      // teardown previous
       if(userUnsub) { try{ userUnsub(); }catch(e){}; userUnsub = null; }
 
       userUnsub = onSnapshot(uRef, async (snap) => {
         try{
           if(!snap.exists()){
+            // fallback if no user doc
             const fb = await tryBalanceFallback(user.uid);
             const bal = fb !== null ? fb : 0;
             balanceEl.dataset.realText = formatN(bal);
@@ -399,6 +587,7 @@
           if(username){ greetingEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); }
           else { greetingEl.textContent = 'Hello, User'; avatarEl.textContent = (user.email && user.email[0]) ? user.email[0].toUpperCase() : 'U'; }
 
+          // balance — prefer numeric in doc, otherwise fallback
           const balNum = (data.balance !== undefined && data.balance !== null) ? Number(data.balance) : null;
           if(balNum !== null && !isNaN(balNum)){
             balanceEl.dataset.realText = formatN(balNum);
@@ -413,6 +602,7 @@
 
         }catch(e){
           console.error('onSnapshot handler error', e);
+          // graceful fallback: attempt one-time read
           try{
             const oned = await getDoc(uRef);
             if(oned && oned.exists()){
@@ -428,6 +618,7 @@
         }
       }, async (err) => {
         console.warn('users/{uid} onSnapshot error', err);
+        // fallback one-time read
         try{
           const uSnap = await getDoc(uRef);
           if(uSnap.exists()){
@@ -449,6 +640,7 @@
       });
     });
 
+    // cleanup listeners on unload
     window.addEventListener('beforeunload', () => {
       if(userUnsub){ try{ userUnsub(); } catch(e){}; userUnsub = null; }
     });
