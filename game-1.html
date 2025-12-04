@@ -232,7 +232,28 @@
     const progressRef = doc(db, 'quizProgress', QUIZ_ID);
 
     /*******************
-     * LIVE PROGRESS HANDLING
+     * Helper UI states
+     *******************/
+    function setNoActiveRoundUI(){
+      // show message, disable Play
+      updateProgress(0);
+      statusMsg.textContent = 'No active quiz round — waiting for admin to publish one.';
+      playBtn.disabled = true;
+      playBtn.textContent = 'No active round';
+      playBtn.style.opacity = 0.6;
+      // keep published list visible (published rounds may still be shown below)
+    }
+
+    function setActiveRoundUI(count){
+      statusMsg.textContent = '';
+      updateProgress(count);
+      playBtn.disabled = false;
+      playBtn.textContent = `Play (₦${ENTRY_FEE})`;
+      playBtn.style.opacity = 1;
+    }
+
+    /*******************
+     * LIVE PROGRESS HANDLING (updated)
      *******************/
     function updateProgress(count){
       const pct = Math.min(100, Math.round((count / MAX_PARTICIPANTS) * 100));
@@ -244,25 +265,45 @@
         playBtn.textContent = 'Full';
         playBtn.style.opacity = 0.6;
       } else {
-        playBtn.disabled = false;
-        playBtn.textContent = `Play (₦${ENTRY_FEE})`;
-        playBtn.style.opacity = 1;
+        // only set text if play is enabled (active round)
+        if(!playBtn.disabled){
+          playBtn.textContent = `Play (₦${ENTRY_FEE})`;
+          playBtn.style.opacity = 1;
+        }
       }
       const bar = document.querySelector('.bar');
       if(bar) bar.setAttribute('aria-valuenow', String(pct));
     }
 
-    // subscribe progress doc
+    // subscribe progress doc and respect currentRoundId
     const unsubProgress = onSnapshot(progressRef, async (snap) => {
-      const data = snap.exists() ? snap.data() || {} : {};
-      const count = Number(data.participantsCount || 0);
-      updateProgress(count);
-      if(count >= MAX_PARTICIPANTS){
-        try { await finalizeRoundIfNeeded(count); } catch(e){ console.warn('finalizeRoundIfNeeded failed', e); }
+      try {
+        const data = snap.exists() ? snap.data() || {} : {};
+        // IMPORTANT: check for presence of currentRoundId
+        const currentRoundId = data.currentRoundId || null;
+        const count = Number(data.participantsCount || 0);
+
+        if(!currentRoundId){
+          // no active round -> show message and disable join
+          setNoActiveRoundUI();
+          return;
+        }
+
+        // active round present
+        setActiveRoundUI(count);
+
+        // if full, attempt finalize flow (existing behaviour)
+        if(count >= MAX_PARTICIPANTS){
+          try { await finalizeRoundIfNeeded(count); } catch(e){ console.warn('finalizeRoundIfNeeded failed', e); }
+        }
+      } catch(e){
+        console.warn('progress onSnapshot handler error', e);
+        // fallback to no active
+        setNoActiveRoundUI();
       }
     }, (err) => {
       console.warn('progress onSnapshot err', err);
-      updateProgress(0);
+      setNoActiveRoundUI();
     });
 
     /**********************
@@ -272,10 +313,20 @@
       statusMsg.textContent = '';
       if(!currentUser) return alert('Please sign in on the site before joining.');
 
-      // quick client check
+      // read progress doc to verify there is a currentRoundId and space
       const pSnapNow = await getDoc(progressRef);
-      const currentCount = pSnapNow.exists() ? Number(pSnapNow.data().participantsCount || 0) : 0;
-      if(currentCount >= MAX_PARTICIPANTS) { alert('This round is full.'); return; }
+      const pData = pSnapNow.exists() ? pSnapNow.data() || {} : {};
+      const currentRoundId = pData.currentRoundId || null;
+      const currentCount = Number(pData.participantsCount || 0);
+
+      if(!currentRoundId){
+        alert('No active round is currently available. Please wait for an admin to publish a round.');
+        // ensure UI reflects this too
+        setNoActiveRoundUI();
+        return;
+      }
+
+      if(currentCount >= MAX_PARTICIPANTS) { alert('This round is full.'); setNoActiveRoundUI(); return; }
 
       if(!confirm(`Confirm: ₦${ENTRY_FEE} entry fee will be deducted to join this round.`)) return;
 
@@ -318,6 +369,12 @@
           }
 
           const prevCount = pSnap.exists() ? Number(pSnap.data().participantsCount || 0) : 0;
+          const prevRoundId = pSnap.exists() ? (pSnap.data().currentRoundId || null) : null;
+
+          // re-check there is still an active round
+          if(!prevRoundId){
+            throw new Error('no-active-round');
+          }
           if(prevCount >= MAX_PARTICIPANTS){
             throw new Error('full');
           }
@@ -329,6 +386,7 @@
 
           tx.set(entryRef, {
             quizId: QUIZ_ID,
+            roundId: prevRoundId,
             userId: uid,
             displayName: currentUser.displayName || currentUser.email || null,
             joinedAt: serverTimestamp()
@@ -345,12 +403,14 @@
         if(msg === 'already-joined'){ alert('You have already joined this round.'); return; }
         if(msg === 'insufficient-funds'){ alert('Insufficient balance to join. Please top up.'); return; }
         if(msg === 'full'){ alert('This round became full while we attempted to join.'); return; }
+        if(msg === 'no-active-round'){ alert('Round is no longer active. Please wait for admin.'); setNoActiveRoundUI(); return; }
         alert('Could not join: ' + (err.message || err));
       }
     });
 
     /**********************
      * Finalize round code (transactional)
+     * (unchanged - used by auto-finalize when full)
      **********************/
     async function finalizeRoundIfNeeded(observedCount){
       if(processingRound) return;
@@ -481,7 +541,7 @@
     }
 
     /**********************
-     * Admin publish UI & confetti
+     * Admin publish UI & confetti (unchanged)
      **********************/
     function showConfetti(durationMs = 5000, count = 90){
       confettiRoot.style.display = 'block';
@@ -532,6 +592,13 @@
           publishedAt: serverTimestamp(),
           status: 'completed'
         }, { merge: true });
+
+        // Also set currentRoundId in progress doc so progress page becomes active immediately
+        try {
+          await setDoc(doc(db,'quizProgress', QUIZ_ID), { currentRoundId: roundId, participantsCount: 0 }, { merge: true });
+        } catch(e){
+          console.warn('Could not set currentRoundId in quizProgress:', e);
+        }
 
         publishStatus.textContent = 'Published ✔';
         showConfetti(5000, 100);
@@ -587,7 +654,7 @@
       if(Array.isArray(r.data.top) && r.data.top.length>0){
         const lbl = document.createElement('div'); lbl.style.fontWeight='800'; lbl.textContent='Top players';
         wrap.appendChild(lbl);
-        const list = document.createElement('div'); list.className='top-list';
+        const list = document.createElement('div'); list.className = 'top-list';
         for(const p of r.data.top){
           const it = document.createElement('div'); it.className='top-item';
           it.innerHTML = `<div style="font-weight:800">${p.displayName || p.userId}</div><div class="small-muted">Score: ${p.score ?? '-'}</div><div class="small-muted">Reward: ₦${Number(p.reward||0).toLocaleString()}</div>`;
