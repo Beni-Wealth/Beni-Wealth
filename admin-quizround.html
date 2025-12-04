@@ -372,7 +372,7 @@
 
     // select / deselect for round
     function toggleSelect(id){ if(selectedForRound.has(id)) selectedForRound.delete(id); else selectedForRound.add(id); renderSelected(); }
-    function renderSelected(){ selectedList.innerHTML=''; selectedCount.textContent=String(selectedForRound.size); if(selectedForRound.size===0){ selectedList.innerHTML='<div class="small muted">No questions selected</div>'; return; } for(const id of selectedForRound){ const it = questionsCache.find(x=>x.id===id); if(!it) continue; const d=it.data; const el = document.createElement('div'); el.className='question-item'; el.innerHTML = `<div style="font-weight:800">${escapeHtml(d.text)}</div><div class="small">Points: ${d.points||10}</div>`; selectedList.appendChild(el); } }
+    function renderSelected(){ selectedList.innerHTML=''; selectedCount.textContent = String(selectedForRound.size); if(selectedForRound.size===0){ selectedList.innerHTML='<div class="small muted">No questions selected</div>'; return; } for(const id of selectedForRound){ const it = questionsCache.find(x=>x.id===id); if(!it) continue; const d=it.data; const el = document.createElement('div'); el.className='question-item'; el.innerHTML = `<div style="font-weight:800">${escapeHtml(d.text)}</div><div class="small">Points: ${d.points||10}</div>`; selectedList.appendChild(el); } }
 
     // ---------- BATCH (draft) handling ----------
     function renderBatch(){
@@ -532,14 +532,28 @@
 
     async function finalizeRoundManually(roundId){
       try{
-        // try to aggregate top players and mark round completed
+        // gather attempts for aggregation
         const snaps = await getDocs(query(collection(db,'quizAttempts'), where('roundId','==', roundId)));
         const arr = [];
         snaps.forEach(s=>{ const d=s.data(); arr.push({ id:s.id, userId:d.userId, score:d.score||0 }); });
         arr.sort((a,b)=>b.score - a.score);
         const top = arr.slice(0,3).map(x=>({ userId:x.userId, score:x.score }));
-        await updateDoc(doc(db,'quizRounds',roundId), { status:'completed', finalizedAt: serverTimestamp(), top });
-        alert('Round finalized');
+
+        // apply updates in a batch:
+        const batch = writeBatch(db);
+        const roundRef = doc(db,'quizRounds',roundId);
+        // mark round completed and attach top players
+        const roundUpdate = { status:'completed', finalizedAt: serverTimestamp() };
+        if(top && top.length) roundUpdate.top = top;
+        batch.set(roundRef, roundUpdate, { merge: true });
+
+        // clear active progress so public progress page shows "no active quiz round"
+        const progressRef = doc(db, 'quizProgress', 'nigeria_general_001');
+        batch.set(progressRef, { currentRoundId: null, participantsCount: 0 }, { merge: true });
+
+        await batch.commit();
+
+        alert('Round finalized and progress cleared. Public progress page will show no active round.');
       }catch(e){ console.error('finalizeRoundManually failed', e); alert('Could not finalize: '+(e.message||e)); }
     }
 
