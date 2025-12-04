@@ -90,6 +90,9 @@
       </div>
 
       <div class="note" id="infoNote">After payment and successful join you will be redirected to the round page automatically.</div>
+
+      <!-- show active round id for debugging / UX -->
+      <div style="margin-top:12px" class="muted small">Active round id: <strong id="activeRoundId">—</strong></div>
     </div>
 
     <!-- Published rounds: visible to everyone -->
@@ -205,6 +208,7 @@
     const playBtn = document.getElementById('playBtn');
     const statusMsg = document.getElementById('statusMsg');
     const publishedWrap = document.getElementById('published');
+    const activeRoundIdEl = document.getElementById('activeRoundId');
 
     const adminControls = document.getElementById('adminControls');
     const adminRoundId = document.getElementById('adminRoundId');
@@ -241,15 +245,17 @@
       playBtn.disabled = true;
       playBtn.textContent = 'No active round';
       playBtn.style.opacity = 0.6;
+      activeRoundIdEl.textContent = '—';
       // keep published list visible (published rounds may still be shown below)
     }
 
-    function setActiveRoundUI(count){
+    function setActiveRoundUI(count, roundId){
       statusMsg.textContent = '';
       updateProgress(count);
       playBtn.disabled = false;
       playBtn.textContent = `Play (₦${ENTRY_FEE})`;
       playBtn.style.opacity = 1;
+      if(roundId) activeRoundIdEl.textContent = roundId;
     }
 
     /*******************
@@ -290,7 +296,7 @@
         }
 
         // active round present
-        setActiveRoundUI(count);
+        setActiveRoundUI(count, currentRoundId);
 
         // if full, attempt finalize flow (existing behaviour)
         if(count >= MAX_PARTICIPANTS){
@@ -305,6 +311,41 @@
       console.warn('progress onSnapshot err', err);
       setNoActiveRoundUI();
     });
+
+    /*****************************************************************
+     * NEW: subscribe to latest published quizRounds and sync progress
+     * This ensures the progress page automatically picks up a newly
+     * published round created by the admin page.
+     *****************************************************************/
+    function subscribePublishedAndSync(){
+      const q = query(collection(db, 'quizRounds'), where('quizId','==', QUIZ_ID), where('published','==', true), orderBy('publishedAt','desc'), limit(1));
+      return onSnapshot(q, async (snap) => {
+        try {
+          if(snap.empty) return;
+          const doc0 = snap.docs[0];
+          const rid = doc0.id;
+          // read current progress doc to avoid unnecessary writes
+          const pSnap = await getDoc(progressRef);
+          const pData = pSnap.exists() ? pSnap.data() || {} : {};
+          if(pData.currentRoundId === rid) {
+            // already synced, update UI only
+            setActiveRoundUI(Number(pData.participantsCount || 0), rid);
+            return;
+          }
+          // attempt to set progress.currentRoundId to keep both pages in sync
+          try {
+            await setDoc(progressRef, { currentRoundId: rid, participantsCount: pData.participantsCount || 0 }, { merge: true });
+            console.info('Synced progress.currentRoundId ->', rid);
+            // update UI to reflect newly active round
+            setActiveRoundUI(Number(pData.participantsCount || 0), rid);
+          } catch(e){
+            console.warn('Could not sync progress doc to published round:', e);
+          }
+        } catch(e){
+          console.warn('subscribePublishedAndSync handler failed', e);
+        }
+      }, (err) => { console.warn('published-and-sync onSnapshot err', err); });
+    }
 
     /**********************
      * Join / Play handler (prevents multiple joins by same user)
@@ -694,14 +735,18 @@
 
     // subscribe published rounds on load
     let pubUnsub = null;
+    let publishSyncUnsub = null;
     window.addEventListener('load', () => {
       if(pubUnsub) try{ pubUnsub(); }catch(e){}
       pubUnsub = subscribePublishedRounds();
+      if(publishSyncUnsub) try{ publishSyncUnsub(); }catch(e){}
+      publishSyncUnsub = subscribePublishedAndSync();
     });
 
     // cleanup
     window.addEventListener('beforeunload', () => {
       if(pubUnsub) try{ pubUnsub(); }catch(e){}
+      if(publishSyncUnsub) try{ publishSyncUnsub(); }catch(e){}
       if(unsubProgress) try{ unsubProgress(); }catch(e){}
     });
   </script>
