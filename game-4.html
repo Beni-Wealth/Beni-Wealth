@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Snakes & Ladders (PvBot)</title>
+  <meta name="theme-color" content="#2fe0b8" />
+  <style>
+    :root{ --bg:#071026; --card:#0b1220; --accent:#7a5fff; --muted:rgba(255,255,255,0.66); --win:#10b981; --lose:#ef4444; font-family:Inter, Poppins, system-ui, Arial; color:#eaf2ff }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#041022);display:flex;align-items:center;justify-content:center;padding:18px}
+    .app{width:100%;max-width:1024px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:12px;display:grid;grid-template-columns:1fr 360px;gap:12px}
+    @media(max-width:880px){ .app{grid-template-columns:1fr;max-width:420px} }
+    .board-wrap{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+    .controls{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px}
+    .grid{width:100%;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+    .cell{background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:6px;display:grid;align-items:start;justify-items:end;padding:6px;font-size:11px;color:var(--muted);position:relative}
+    .cell .num{position:absolute;left:6px;top:6px;font-weight:700;color:var(--muted);font-size:12px}
+    .token{position:absolute;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#041219;z-index:5}
+    .token.player{background:linear-gradient(90deg,var(--accent),#35d6b1);left:6px;bottom:6px}
+    .token.bot{background:linear-gradient(90deg,#ffb86b,#ff7a7a);right:6px;bottom:6px}
+    .dice{font-weight:900;font-size:28px;padding:14px;border-radius:10px;background:rgba(255,255,255,0.02);text-align:center}
+    .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#5b3bff);color:#041219;font-weight:800;cursor:pointer}
+    .btn-ghost{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
+    .muted{color:var(--muted);font-size:13px}
+    .history{height:120px;overflow:auto;border-radius:8px;padding:8px;background:rgba(255,255,255,0.01);font-size:13px}
+    .status{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:800}
+    .small{font-size:13px;color:var(--muted)}
+    .footer{display:flex;gap:8px;align-items:center;justify-content:space-between}
+  </style>
+</head>
+<body>
+  <div class="app" role="application">
+    <div class="board-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-weight:900">Snakes & Ladders • Beni-Wealth</div>
+        <div class="small">Player vs Bot (50% bias)</div>
+      </div>
+
+      <div id="board" class="grid" aria-label="game board"></div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <div id="playerToken" class="token player">P</div>
+        <div id="botToken" class="token bot">B</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="status" id="status">Welcome — press <strong>Start</strong> to play</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="dice" id="dice">—</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button id="rollBtn" class="btn">Roll</button>
+          <button id="startBtn" class="btn-ghost">Start New Game</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:6px"><div class="small">Bias:</div><div id="biasTag" class="small muted">—</div></div>
+
+      <div style="display:flex;gap:8px;margin-top:6px;align-items:center"><label class="small">Sound</label><input type="checkbox" id="soundToggle" checked></div>
+
+      <div style="margin-top:8px">
+        <div style="font-weight:800">Game log</div>
+        <div id="log" class="history"></div>
+      </div>
+
+      <div class="footer">
+        <div class="small">Made for Beni-Wealth</div>
+        <div>
+          <button id="saveBtn" class="btn-ghost">Save result</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Firebase (modular) - inserted with your project details
+    import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // UI refs
+    const boardEl = document.getElementById('board');
+    const playerToken = document.getElementById('playerToken');
+    const botToken = document.getElementById('botToken');
+    const rollBtn = document.getElementById('rollBtn');
+    const startBtn = document.getElementById('startBtn');
+    const diceEl = document.getElementById('dice');
+    const statusEl = document.getElementById('status');
+    const logEl = document.getElementById('log');
+    const biasTag = document.getElementById('biasTag');
+    const saveBtn = document.getElementById('saveBtn');
+
+    // game state
+    const SIZE = 10; // 10x10
+    const CELL_COUNT = SIZE * SIZE;
+    const snakes = { 98: 79, 95:75, 92:88, 87:24, 64:60, 62:19, 54:34, 17:7 };
+    const ladders = { 4:14, 9:31, 20:38, 28:84, 40:59, 51:67, 63:81, 71:91 };
+
+    let playerPos = 1, botPos = 1;
+    let playerTurn = true;
+    let running = false;
+    let currentUser = null;
+
+    // bias: decide at start whether bot is favored. 50% chance.
+    // if botFavored -> bot gets advantage on its rolls (re-roll and take higher occasionally)
+    // if playerFavored -> bot gets disadvantage (re-roll and take lower occasionally)
+    let bias = null; // 'botFavored' | 'playerFavored'
+
+    function buildBoard(){
+      boardEl.innerHTML = '';
+      // numbers arranged zig-zag from bottom-left 1 to top-right 100
+      const cells = [];
+      for(let row=SIZE-1; row>=0; row--){
+        const leftToRight = ( (SIZE-1-row) % 2 === 0 );
+        for(let col=0; col<SIZE; col++){
+          const idx = leftToRight ? (row*SIZE + (col+1)) : (row*SIZE + (SIZE-col));
+          cells.push(idx);
+        }
+      }
+      // cells now top-left -> bottom-right sequence; we want placement accordingly
+      // create actual grid putting numbers in each cell in natural order 100..1 mapping
+      for(let i=0;i<CELL_COUNT;i++){
+        const num = i+1;
+        const cell = document.createElement('div'); cell.className='cell'; cell.dataset.num = String(num);
+        const n = document.createElement('div'); n.className='num'; n.textContent = num;
+        cell.appendChild(n);
+        boardEl.appendChild(cell);
+      }
+    }
+
+    // For visual placement we will compute cell positions differently: cells ordered by display index
+    function getCellElementByNumber(n){
+      // compute display index (1..100) mapping to grid order zig-zag
+      const row = Math.floor((n-1)/SIZE);
+      const rowFromBottom = row; // 0-based from bottom
+      const displayRow = SIZE - 1 - rowFromBottom; // map to DOM order (top-down)
+      const leftToRight = (rowFromBottom % 2 === 0);
+      const col = leftToRight ? ((n-1) % SIZE) : (SIZE-1 - ((n-1) % SIZE));
+      const displayIndex = displayRow * SIZE + col;
+      return boardEl.children[displayIndex];
+    }
+
+    function placeTokens(){
+      // attach tokens inside their cell
+      for(const el of [playerToken, botToken]) el.style.display='none';
+      const pCell = getCellElementByNumber(playerPos);
+      const bCell = getCellElementByNumber(botPos);
+      if(pCell){ playerToken.style.display='grid'; playerToken.style.transform = 'translate(0,0)'; pCell.appendChild(playerToken); }
+      if(bCell){ botToken.style.display='grid'; botToken.style.transform = 'translate(0,0)'; bCell.appendChild(botToken); }
+    }
+
+    function rollDie(){ return Math.floor(Math.random()*6)+1; }
+
+    function log(msg){ const d=document.createElement('div'); d.textContent = msg; logEl.prepend(d); }
+
+    function setStatus(s){ statusEl.textContent = s; }
+
+    function applySnakesLadders(pos){ if(ladders[pos]) return ladders[pos]; if(snakes[pos]) return snakes[pos]; return pos; }
+
+    function decideBias(){ bias = Math.random() < 0.5 ? 'botFavored' : 'playerFavored'; biasTag.textContent = bias === 'botFavored' ? 'Bot favored (bot has advantage)' : 'Player favored (bot disadvantaged)'; }
+
+    async function botMove(){
+      if(!running) return;
+      setStatus('Bot is thinking...');
+      await wait(700 + Math.random()*600);
+      let roll = rollDie();
+      // bias effect
+      if(bias === 'botFavored'){
+        if(Math.random() < 0.6){ // 60% chance to get advantage roll
+          const r2 = rollDie(); roll = Math.max(roll,r2);
+        }
+      } else {
+        if(Math.random() < 0.6){ // 60% chance to get disadvantage
+          const r2 = rollDie(); roll = Math.min(roll,r2);
+        }
+      }
+      diceEl.textContent = String(roll);
+      log('Bot rolled ' + roll);
+      let next = Math.min(CELL_COUNT, botPos + roll);
+      next = applySnakesLadders(next);
+      botPos = next;
+      placeTokens();
+      if(botPos >= CELL_COUNT){
+        endGame('bot');
+        return;
+      }
+      playerTurn = true;
+      setStatus('Your turn');
+    }
+
+    function wait(ms){ return new Promise(res=>setTimeout(res, ms)); }
+
+    async function playerRoll(){
+      if(!running) return;
+      if(!playerTurn) return;
+      rollBtn.disabled = true;
+      let roll = rollDie();
+      // player always fair roll (we bias only bot via initial bias)
+      diceEl.textContent = String(roll);
+      log('You rolled ' + roll);
+      let next = Math.min(CELL_COUNT, playerPos + roll);
+      next = applySnakesLadders(next);
+      playerPos = next;
+      placeTokens();
+      if(playerPos >= CELL_COUNT){ endGame('player'); return; }
+      playerTurn = false;
+      // small delay then bot moves
+      await wait(600);
+      await botMove();
+      rollBtn.disabled = false;
+    }
+
+    function endGame(winner){
+      running = false; rollBtn.disabled = true; startBtn.disabled = false;
+      const msg = winner === 'player' ? 'You win! 🎉' : 'Bot wins — try again!';
+      setStatus(msg);
+      log('Game ended — winner: ' + winner + ' (bias: ' + bias + ')');
+    }
+
+    function resetGame(){
+      playerPos = 1; botPos = 1; playerTurn = true; running = false; rollBtn.disabled = true; startBtn.disabled = false; diceEl.textContent = '—'; logEl.innerHTML=''; biasTag.textContent = '—'; setStatus('Press Start to begin'); placeTokens(); }
+
+    function startGame(){
+      playerPos = 1; botPos = 1; playerTurn = Math.random() < 0.5; // random who starts
+      decideBias(); running = true; rollBtn.disabled = false; startBtn.disabled = true; log('New game started — ' + (playerTurn ? 'You start' : 'Bot starts') + ' • bias: ' + bias);
+      placeTokens();
+      if(!playerTurn){ setTimeout(() => botMove(), 800); }
+      setStatus(playerTurn ? 'Your turn' : 'Bot is moving...');
+    }
+
+    // Save result to Firestore
+    async function saveResultToFirebase(winner){
+      try{
+        await addDoc(collection(db,'snakesAndLaddersResults'), {
+          winner, bias, playerPos, botPos, ts: serverTimestamp(), user: currentUser ? (currentUser.uid||currentUser.email||null) : null
+        });
+        alert('Result saved to Firebase');
+      }catch(e){ console.warn('save failed', e); alert('Could not save result: ' + (e.message||e)); }
+    }
+
+    // wire UI
+    rollBtn.addEventListener('click', playerRoll);
+    startBtn.addEventListener('click', () => { resetGame(); startGame(); });
+    saveBtn.addEventListener('click', ()=>{
+      if(running) return alert('Save after the game ends');
+      // determine winner
+      const winner = playerPos >= CELL_COUNT ? 'player' : (botPos >= CELL_COUNT ? 'bot' : 'none');
+      if(winner === 'none') return alert('Game not finished yet');
+      saveResultToFirebase(winner);
+    });
+
+    // initial build
+    buildBoard(); resetGame(); placeTokens();
+
+    // simple auth watcher (optional) to capture user id when saving
+    onAuthStateChanged(auth, user => { currentUser = user; });
+
+    // small helper: allow keyboard space to roll when it's player's turn
+    window.addEventListener('keydown', (e)=>{ if(e.code === 'Space'){ if(!rollBtn.disabled) playerRoll(); e.preventDefault(); } });
+  </script>
+</body>
+</html>
