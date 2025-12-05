@@ -11,7 +11,8 @@
       --card:#0b1220;
       --accent:#7a5fff;
       --accent-2:#35d6b1;
-      --muted:rgba(255,255,255,0.66);
+      --muted:rgba(255,255,255,0.72);
+      --muted-2:rgba(255,255,255,0.45);
       --win:#10b981;
       --lose:#ef4444;
       font-family:Inter, Poppins, system-ui, Arial;
@@ -19,32 +20,31 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#031022);display:flex;align-items:center;justify-content:center;padding:18px}
-    .app{width:100%;max-width:1100px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:16px;display:grid;grid-template-columns:1fr 360px;gap:12px;box-shadow:0 30px 80px rgba(2,6,23,0.7)}
+    .app{width:100%;max-width:1100px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:18px;display:grid;grid-template-columns:1fr 360px;gap:14px;box-shadow:0 30px 80px rgba(2,6,23,0.75)}
     @media(max-width:920px){ .app{grid-template-columns:1fr;max-width:420px;padding:12px} }
-    .board-wrap{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
-    .controls{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px}
-    .grid{width:100%;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(10,1fr);gap:6px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);padding:6px;border-radius:8px}
-    .cell{background:linear-gradient(180deg,rgba(255,255,255,0.012),transparent);border-radius:6px;display:block;padding:6px;font-size:12px;color:var(--muted);position:relative;overflow:visible;min-height:0}
-    .cell .num{position:absolute;left:6px;top:6px;font-weight:800;color:var(--muted);font-size:12px;z-index:2}
-    .cell .feature{position:absolute;right:6px;top:6px;font-size:18px;opacity:0.92;z-index:2}
-    .cell.snake-start{box-shadow: inset 0 0 0 2px rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.06)}
-    .cell.ladder-start{box-shadow: inset 0 0 0 2px rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.06)}
+    .board-wrap{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+    .controls{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:12px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:12px}
+    .grid{width:100%;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(10,1fr);gap:6px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);padding:8px;border-radius:10px}
+    .cell{border-radius:8px;display:block;padding:8px;font-size:12px;color:var(--muted);position:relative;overflow:visible;min-height:0; user-select:none}
+    .cell .num{position:absolute;left:8px;top:6px;font-weight:800;color:var(--muted-2);font-size:12px;z-index:2}
+    .cell .feature{position:absolute;right:8px;top:6px;font-size:18px;opacity:0.95;z-index:2}
+    .cell.ladder-start{box-shadow:0 6px 18px rgba(16,185,129,0.06) inset;border:1px solid rgba(16,185,129,0.06)}
+    .cell.snake-start{box-shadow:0 6px 18px rgba(239,68,68,0.04) inset;border:1px solid rgba(239,68,68,0.05)}
     .cell.hl{animation: pulse 700ms ease 0s 2; } @keyframes pulse { 0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)} }
 
-    .token{position:absolute;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#041219;z-index:40;transition:transform 320ms cubic-bezier(.2,.9,.2,1), box-shadow 320ms}
-    .token.player{background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 10px 30px rgba(122,95,255,0.18)}
-    .token.bot{background:linear-gradient(90deg,#ffb86b,#ff7a7a); box-shadow:0 10px 30px rgba(255,120,110,0.18)}
-    .dice{width:84px;height:84px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:34px;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);text-align:center}
+    .token{position:absolute;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#041219;z-index:60;transition:transform 320ms cubic-bezier(.2,.9,.2,1), box-shadow 320ms}
+    .token.player{background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 12px 40px rgba(122,95,255,0.18)}
+    .token.bot{background:linear-gradient(90deg,#ffb86b,#ff7a7a); box-shadow:0 12px 40px rgba(255,120,110,0.18)}
+    .dice{width:92px;height:92px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:36px;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);text-align:center;box-shadow:0 8px 32px rgba(2,6,23,0.6)}
     .dice.rolling{animation: dice-spin 900ms linear infinite}
     @keyframes dice-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
-
     .roll-anim { transform: translateY(-8px) scale(1.06); transition: transform 220ms cubic-bezier(.2,.9,.2,1); }
 
-    .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#5b3bff);color:#041219;font-weight:800;cursor:pointer}
+    .btn{padding:10px 14px;border-radius:12px;border:0;background:linear-gradient(90deg,var(--accent),#5b3bff);color:#041219;font-weight:800;cursor:pointer;box-shadow:0 10px 30px rgba(90,50,180,0.12)}
     .btn-ghost{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
     .muted{color:var(--muted);font-size:13px}
-    .history{height:140px;overflow:auto;border-radius:8px;padding:8px;background:rgba(255,255,255,0.01);font-size:13px}
-    .status{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:800}
+    .history{height:160px;overflow:auto;border-radius:10px;padding:10px;background:rgba(255,255,255,0.01);font-size:13px}
+    .status{padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);font-weight:800}
     .small{font-size:13px;color:var(--muted)}
     .footer{display:flex;gap:8px;align-items:center;justify-content:space-between}
 
@@ -53,7 +53,6 @@
     .confetti { position:absolute; width:10px; height:16px; opacity:0.95; transform-origin:center; border-radius:2px; animation: fall linear forwards; }
     @keyframes fall { 0% { transform: translateY(-10vh) rotate(0deg); opacity:1; } 100% { transform: translateY(110vh) rotate(720deg); opacity:0.95; } }
 
-    /* step animation for sliding down snake or ladder */
     .slide-anim { transition: transform 700ms cubic-bezier(.2,.9,.2,1); transform-origin:center; filter:drop-shadow(0 18px 40px rgba(2,6,23,0.7)); }
   </style>
 </head>
@@ -62,12 +61,12 @@
     <div class="board-wrap" aria-live="polite">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="font-weight:900">Snakes & Ladders • Beni-Wealth</div>
-        <div class="small">Player vs Bot — fair, visual and dramatic</div>
+        <div class="small">Player vs Bot — fair, visual and dramatic. Entry fee: ₦50 (charged at start).</div>
       </div>
 
       <div id="board" class="grid" aria-label="game board"></div>
 
-      <!-- hidden tokens placed absolutely into cells -->
+      <!-- tokens -->
       <div id="playerToken" class="token player" aria-hidden="true">P</div>
       <div id="botToken" class="token bot" aria-hidden="true">B</div>
 
@@ -86,8 +85,8 @@
       </div>
 
       <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-        <div class="small">Bias</div>
-        <div id="biasTag" class="small muted">—</div>
+        <div class="small">Rule</div>
+        <div style="margin-left:6px" class="muted small">Ladder: +15 — Snake: -10. Overshoot (need exact): turn skipped.</div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
           <label class="small">Sound</label><input type="checkbox" id="soundToggle" checked />
         </div>
@@ -112,10 +111,13 @@
   <script type="module">
     // Firebase (modular)
     import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import {
+      getFirestore, collection, addDoc, serverTimestamp,
+      doc, runTransaction, setDoc
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
-    // Your Firebase config (keeps your project details)
+    // Firebase config (your project)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -138,88 +140,75 @@
     const diceEl = document.getElementById('dice');
     const statusEl = document.getElementById('status');
     const logEl = document.getElementById('log');
-    const biasTag = document.getElementById('biasTag');
     const saveBtn = document.getElementById('saveBtn');
     const confettiRoot = document.getElementById('confettiRoot');
     const soundToggle = document.getElementById('soundToggle');
 
-    // game config
+    // config
     const SIZE = 10;
-    const CELL_COUNT = SIZE*SIZE;
-    // classic-ish snakes & ladders layout (start -> end)
-    const snakes = { 98: 78, 95:75, 92:88, 87:24, 64:60, 62:19, 54:34, 17:7 };
-    const ladders = { 4:14, 9:31, 20:38, 28:84, 40:59, 51:67, 63:81, 71:91 };
+    const CELL_COUNT = SIZE * SIZE;
+    const ENTRY_FEE = 50;
+    const REWARD = 70;
+
+    // defines
+    const ladderStarts = new Set([4,9,20,28,40,51,63,71]);
+    const snakeStarts = new Set([98,95,92,87,64,62,54,17]);
 
     // state
+    let currentUser = null;
     let playerPos = 1, botPos = 1;
     let playerTurn = true;
     let running = false;
-    let currentUser = null;
-    let bias = null; // 'botFavored' | 'playerFavored'
     let isRolling = false;
+    let feeTaken = false;
+    let currentSessionId = null; // id of session doc in snakesSessions
 
-    // build board visually & mark snake/ladder starts
+    // build board visually
     function buildBoard(){
       boardEl.innerHTML = '';
-      // fill numbers 1..100 but DOM order top->bottom left->right
-      // We'll append elements in DOM top-left -> bottom-right with display mapping handled when placing tokens
-      for(let i=1;i<=CELL_COUNT;i++){
+      for(let num = 1; num <= CELL_COUNT; num++){
         const cell = document.createElement('div');
         cell.className = 'cell';
-        cell.dataset.num = i;
-        const n = document.createElement('div'); n.className='num'; n.textContent = i;
+        cell.dataset.num = num;
+        const rowFromBottom = Math.floor((num-1)/SIZE);
+        const shade = ((rowFromBottom + (num % 2)) % 2 === 0) ? 'rgba(255,255,255,0.018)' : 'rgba(255,255,255,0.01)';
+        cell.style.background = `linear-gradient(180deg, ${shade}, transparent)`;
+        const n = document.createElement('div'); n.className = 'num'; n.textContent = num;
         cell.appendChild(n);
-
-        // mark start of ladder/snake
-        if(ladders[i]){
-          const f = document.createElement('div'); f.className='feature'; f.textContent='🪜';
-          cell.classList.add('ladder-start');
-          cell.appendChild(f);
-        } else if(snakes[i]){
-          const f = document.createElement('div'); f.className='feature'; f.textContent='🐍';
-          cell.classList.add('snake-start');
-          cell.appendChild(f);
+        if(ladderStarts.has(num)){
+          const f = document.createElement('div'); f.className = 'feature'; f.textContent = '🪜';
+          cell.classList.add('ladder-start'); cell.appendChild(f);
+        } else if(snakeStarts.has(num)){
+          const f = document.createElement('div'); f.className = 'feature'; f.textContent = '🐍';
+          cell.classList.add('snake-start'); cell.appendChild(f);
         }
         boardEl.appendChild(cell);
       }
     }
 
-    // mapping number -> DOM index (display)
     function getDisplayIndexForNumber(n){
-      // compute row from bottom (0-based)
       const rowFromBottom = Math.floor((n-1)/SIZE);
       const leftToRight = (rowFromBottom % 2 === 0);
       const col = leftToRight ? ((n-1) % SIZE) : (SIZE - 1 - ((n-1) % SIZE));
-      // DOM rows are top to bottom
       const displayRow = SIZE - 1 - rowFromBottom;
       return displayRow * SIZE + col;
     }
-
     function getCellElementByNumber(n){
       const idx = getDisplayIndexForNumber(n);
       return boardEl.children[idx];
     }
 
-    // place tokens inside their cell (visually)
     function placeTokens(){
-      // remove tokens from current parent if any
-      // tokens are absolutely positioned and will be appended to the cell
       const pCell = getCellElementByNumber(playerPos);
       const bCell = getCellElementByNumber(botPos);
-
-      if(pCell){
-        pCell.appendChild(playerToken);
-        // small translation reset
-        playerToken.style.transform = 'translate(0,0)';
-      }
-      if(bCell){
-        bCell.appendChild(botToken);
-        botToken.style.transform = 'translate(0,0)';
-      }
+      if(pCell) pCell.appendChild(playerToken);
+      if(bCell) bCell.appendChild(botToken);
+      playerToken.style.transform = 'translate(0,0)';
+      botToken.style.transform = 'translate(0,0)';
     }
 
-    // dice helpers: dramatic roll with animation + sound
-    function playBeep(freq=440, dur=120){
+    // audio helper
+    function playBeep(freq=440, dur=110){
       try{
         if(!soundToggle.checked) return;
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -229,144 +218,226 @@
         o.connect(g); g.connect(ctx.destination);
         g.gain.value = 0.0001;
         o.start();
-        // ramp up then down
         g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.01);
         g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + (dur/1000));
         setTimeout(()=>{ try{ o.stop(); ctx.close(); }catch(_){} }, dur+50);
       }catch(e){}
     }
 
-    async function dramaticRoll(finalCallback){
-      if(isRolling) return;
+    // dramatic roll
+    async function dramaticRoll(){
+      if(isRolling) return null;
       isRolling = true;
       diceEl.classList.add('rolling','roll-anim');
-      const start = Date.now();
-      const duration = 700 + Math.floor(Math.random()*600); // 700-1300ms
-      let last = 0;
-      // rapidly change numbers
+      const duration = 700 + Math.floor(Math.random()*600);
+      let final = 1;
       return new Promise(resolve => {
         const i = setInterval(()=>{
           const r = Math.floor(Math.random()*6)+1;
           diceEl.textContent = r;
-          // small click sound
-          playBeep(350 + r*60, 40);
-          last = r;
+          playBeep(320 + r*50, 36);
+          final = r;
         }, 60);
-
         setTimeout(()=>{
           clearInterval(i);
-          // final settle
-          const final = Math.floor(Math.random()*6)+1;
+          final = Math.floor(Math.random()*6)+1;
           diceEl.textContent = final;
-          playBeep(740 + final*40, 220);
+          playBeep(760 + final*40, 220);
           diceEl.classList.remove('rolling');
-          setTimeout(()=> diceEl.classList.remove('roll-anim'), 260);
+          setTimeout(()=> diceEl.classList.remove('roll-anim'), 240);
           isRolling = false;
-          if(typeof finalCallback === 'function') finalCallback(final);
           resolve(final);
         }, duration);
       });
     }
 
-    function rollDie(){ return Math.floor(Math.random()*6)+1; }
-
-    // step animation: move token one cell at a time with small delay
     async function animateTokenStepwise(token, from, to){
-      const path = [];
-      for(let p = from+1; p<=to; p++) path.push(p);
-      for(const pos of path){
-        // small highlight of target cell
-        const cell = getCellElementByNumber(pos);
+      if(from === to) return;
+      const step = (to > from) ? 1 : -1;
+      for(let p = from + step; (step > 0 ? p <= to : p >= to); p += step){
+        const cell = getCellElementByNumber(p);
         cell.classList.add('hl');
-        // place token into the cell (token appended to cell)
         cell.appendChild(token);
-        // give subtle jump
-        token.style.transform = 'translateY(-6px)';
-        await wait(130);
+        token.style.transform = (step>0) ? 'translateY(-6px)' : 'translateY(6px)';
+        await wait(120);
         token.style.transform = 'translateY(0)';
         cell.classList.remove('hl');
         await wait(80);
       }
     }
 
-    // animate snake/ladder slide (longer dramatic)
     async function animateSlide(token, from, to){
-      // highlight both cells
       const fromCell = getCellElementByNumber(from);
       const toCell = getCellElementByNumber(to);
       fromCell.classList.add('hl'); toCell.classList.add('hl');
-      // clone token for overlay animation so user sees smooth path while original snaps to target
       const clone = token.cloneNode(true);
       clone.classList.add('slide-anim');
       document.body.appendChild(clone);
-      // compute screen positions
       const rectFrom = fromCell.getBoundingClientRect();
       const rectTo = toCell.getBoundingClientRect();
-      // position clone absolutely at rectFrom center
       clone.style.position = 'fixed';
       clone.style.left = (rectFrom.left + rectFrom.width/2 - clone.offsetWidth/2) + 'px';
       clone.style.top = (rectFrom.top + rectFrom.height/2 - clone.offsetHeight/2) + 'px';
-      // animate to rectTo
       await wait(40);
       clone.style.transform = `translate(${rectTo.left - rectFrom.left}px, ${rectTo.top - rectFrom.top}px) scale(1.06)`;
       playBeep(560, 220);
       await wait(700);
-      // cleanup and set real token to destination cell
       clone.remove();
       try{ toCell.appendChild(token); }catch(e){}
       fromCell.classList.remove('hl'); toCell.classList.remove('hl');
     }
 
-    function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
+    function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+    function logMsg(msg){ const d=document.createElement('div'); d.textContent = `${(new Date()).toLocaleTimeString()} — ${msg}`; logEl.prepend(d); if(logEl.children.length>200) logEl.removeChild(logEl.lastChild); }
+    function setStatus(t){ statusEl.textContent = t; }
 
-    function logMsg(t){
-      const d = document.createElement('div');
-      d.textContent = `${(new Date()).toLocaleTimeString()} — ${t}`;
-      logEl.prepend(d);
-      // keep log scroll top
-      if(logEl.children.length > 200) logEl.removeChild(logEl.lastChild);
-    }
-
-    function applySnakesLadders(pos){
-      if(ladders[pos]) return { next: ladders[pos], type: 'ladder' };
-      if(snakes[pos]) return { next: snakes[pos], type: 'snake' };
+    function applyFeature(pos){
+      if(ladderStarts.has(pos)){
+        const next = Math.min(CELL_COUNT, pos + 15);
+        return { next, type: 'ladder' };
+      }
+      if(snakeStarts.has(pos)){
+        const next = Math.max(1, pos - 10);
+        return { next, type: 'snake' };
+      }
       return { next: pos, type: null };
     }
+    function wouldOvershoot(pos, roll){ return (pos + roll) > CELL_COUNT; }
 
+    // --- Billing: charge entry fee before starting ---
+    async function chargeEntryFee(){
+      if(!currentUser) { alert('Please sign in before playing.'); throw new Error('not-signed-in'); }
+      const uid = currentUser.uid;
+      const userRef = doc(db, 'users', uid);
+      const balancesRef = doc(db, 'balances', uid);
+      try {
+        // transaction: read both docs, decide balance, write new balance and create session doc
+        const sessionId = await runTransaction(db, async (tx) => {
+          const [uSnap, bSnap] = await Promise.all([tx.get(userRef), tx.get(balancesRef)]);
+          let bal = null;
+          if(uSnap.exists()){
+            const ud = uSnap.data() || {};
+            bal = (typeof ud.balance === 'number') ? ud.balance : (typeof ud.amount === 'number' ? ud.amount : null);
+          }
+          if((bal === null || bal === undefined) && bSnap.exists()){
+            const bd = bSnap.data() || {};
+            bal = (typeof bd.balance === 'number') ? bd.balance : (typeof bd.amount === 'number' ? bd.amount : null);
+          }
+          if(bal === null || bal === undefined) bal = 0;
+          if(bal < ENTRY_FEE) throw new Error('insufficient-funds');
+          const newBal = Number(bal) - ENTRY_FEE;
+          tx.set(userRef, { balance: newBal }, { merge: true });
+          // create session doc
+          const sessionRef = doc(collection(db, 'snakesSessions'));
+          tx.set(sessionRef, {
+            userId: uid,
+            startedAt: serverTimestamp(),
+            feeCharged: ENTRY_FEE,
+            credited: false,
+            status: 'started'
+          });
+          // return session id so client can reference it
+          return sessionRef.id;
+        });
+        // success
+        feeTaken = true;
+        currentSessionId = sessionId;
+        // discreet confirmation to user
+        setStatus(`₦${ENTRY_FEE.toLocaleString()} debited — game started.`);
+        logMsg(`Entry fee ₦${ENTRY_FEE} debited (session ${sessionId})`);
+        return true;
+      } catch (err) {
+        if(err && err.message === 'insufficient-funds'){
+          alert('Insufficient balance to join the game. Please top up.');
+        } else {
+          console.warn('chargeEntryFee failed', err);
+          alert('Could not charge entry fee: ' + (err.message || err));
+        }
+        throw err;
+      }
+    }
+
+    // credit reward to user when they win
+    async function creditReward(){
+      if(!currentUser) return;
+      const uid = currentUser.uid;
+      const userRef = doc(db, 'users', uid);
+      let sessionRef = null;
+      if(currentSessionId) sessionRef = doc(db, 'snakesSessions', currentSessionId);
+
+      try {
+        await runTransaction(db, async (tx) => {
+          // optionally verify session hasn't already been credited
+          if(sessionRef){
+            const sSnap = await tx.get(sessionRef);
+            if(sSnap.exists()){
+              const sdata = sSnap.data() || {};
+              if(sdata.credited) {
+                // already credited
+                return;
+              }
+            }
+          }
+          // read user doc and balances doc to compute existing balance
+          const uSnap = await tx.get(userRef);
+          let bal = null;
+          if(uSnap.exists()){
+            const ud = uSnap.data() || {};
+            bal = (typeof ud.balance === 'number') ? ud.balance : (typeof ud.amount === 'number' ? ud.amount : null);
+          }
+          if(bal === null || bal === undefined) bal = 0;
+          const newBal = Number(bal) + REWARD;
+          tx.set(userRef, { balance: newBal }, { merge: true });
+          // update session doc to mark credited
+          if(sessionRef){
+            tx.set(sessionRef, { credited: true, creditedAt: serverTimestamp(), reward: REWARD, status: 'completed' }, { merge: true });
+          } else {
+            // best-effort: create a session doc if missing
+            const sessionRefAuto = doc(collection(db, 'snakesSessions'));
+            tx.set(sessionRefAuto, { userId: uid, startedAt: serverTimestamp(), feeCharged: feeTaken ? ENTRY_FEE : 0, credited: true, creditedAt: serverTimestamp(), reward: REWARD, status:'completed', note:'auto-created' });
+            currentSessionId = sessionRefAuto.id;
+          }
+        });
+        // notify user discreetly
+        setStatus(`You won — ₦${REWARD.toLocaleString()} credited.`);
+        logMsg(`Reward ₦${REWARD} credited (session ${currentSessionId})`);
+      } catch(e){
+        console.warn('creditReward failed', e);
+        // still show win message but mention credit couldn't be completed
+        setStatus('You won! Reward pending (could not credit automatically).');
+        logMsg('Reward credit failed — admin will reconcile.');
+      }
+    }
+
+    // Bot move
     async function botMove(){
       if(!running) return;
-      setStatus('Bot is thinking...');
-      await wait(600 + Math.random()*700);
-      // perform dramatic roll but with bias effect
-      let final;
-      // we want bot bias applied after randomizing final result via reroll logic
-      await dramaticRoll((rolled) => { final = rolled; }); // final is randomized here (but we adjust below)
-      // bias adjustments
-      if(bias === 'botFavored'){
-        if(Math.random() < 0.6){
-          // roll again and take higher
-          const r2 = rollDie();
-          final = Math.max(final, r2);
-        }
-      } else {
-        if(Math.random() < 0.6){
-          const r2 = rollDie();
-          final = Math.min(final, r2);
-        }
+      setStatus('Bot thinking...');
+      await wait(550 + Math.random()*600);
+      let roll = await dramaticRoll();
+      diceEl.textContent = roll;
+
+      if(wouldOvershoot(botPos, roll)){
+        const need = CELL_COUNT - botPos;
+        logMsg(`Bot rolled ${roll} (needs ${need}). Overshoot — turn skipped.`);
+        playerTurn = true;
+        setStatus('Your turn');
+        return;
       }
-      diceEl.textContent = final;
-      logMsg('Bot rolled ' + final);
-      const next = Math.min(CELL_COUNT, botPos + final);
-      // animate bot movement stepwise
+
+      logMsg('Bot rolled ' + roll);
+      const next = Math.min(CELL_COUNT, botPos + roll);
       await animateTokenStepwise(botToken, botPos, next);
       botPos = next;
-      // check snake/ladder
-      const res = applySnakesLadders(botPos);
-      if(res.next !== botPos){
-        logMsg('Bot encountered ' + (res.type||'') + ' to ' + res.next);
+
+      const res = applyFeature(botPos);
+      if(res.type){
+        logMsg(`Bot hit ${res.type === 'ladder' ? 'a ladder (+15)' : 'a snake (-10)'}`);
         await animateSlide(botToken, botPos, res.next);
         botPos = res.next;
+        playBeep(res.type === 'ladder' ? 880 : 240, 200);
       }
+
       placeTokens();
       if(botPos >= CELL_COUNT){
         endGame('bot');
@@ -378,85 +449,104 @@
 
     function endGame(winner){
       running = false;
-      rollBtn.disabled = true;
-      startBtn.disabled = false;
+      rollBtn.disabled = true; startBtn.disabled = false;
       const msg = winner === 'player' ? 'You win! 🎉' : 'Bot wins — try again!';
       setStatus(msg);
-      logMsg('Game ended — winner: ' + winner + ' (bias: ' + bias + ')');
-      if(winner === 'player') showConfetti(3500, 120);
+      logMsg(`Game ended — winner: ${winner}`);
+      if(winner === 'player'){
+        showConfetti(3000, 100);
+        // credit user (firestore transaction)
+        creditReward();
+      } else {
+        // mark session status as completed (no credit)
+        if(currentSessionId){
+          const sRef = doc(db, 'snakesSessions', currentSessionId);
+          // best-effort update (no need to wait)
+          setDoc(sRef, { status: 'completed', credited: false, completedAt: serverTimestamp() }, { merge: true }).catch(()=>{});
+        }
+      }
     }
 
-    // when player clicks roll - use dramatic roll and animate token
     async function playerRoll(){
       if(!running) return;
       if(!playerTurn) return;
       rollBtn.disabled = true;
-      let final;
-      await dramaticRoll((rolled)=>{ final = rolled; });
-      diceEl.textContent = final;
-      logMsg('You rolled ' + final);
-      // animate move
-      const next = Math.min(CELL_COUNT, playerPos + final);
+      let roll = await dramaticRoll();
+      diceEl.textContent = roll;
+
+      if(wouldOvershoot(playerPos, roll)){
+        const need = CELL_COUNT - playerPos;
+        logMsg(`You rolled ${roll} (need ${need}). Overshoot — turn skipped.`);
+        playerTurn = false;
+        await wait(400);
+        await botMove();
+        rollBtn.disabled = !playerTurn;
+        return;
+      }
+
+      logMsg('You rolled ' + roll);
+      const next = Math.min(CELL_COUNT, playerPos + roll);
       await animateTokenStepwise(playerToken, playerPos, next);
       playerPos = next;
-      // check snakes/ladders
-      const res = applySnakesLadders(playerPos);
-      if(res.next !== playerPos){
-        logMsg('You encountered ' + (res.type||'') + ' to ' + res.next);
+
+      const res = applyFeature(playerPos);
+      if(res.type){
+        logMsg(`${res.type === 'ladder' ? 'Ladder (+15)' : 'Snake (-10)'} encountered`);
         await animateSlide(playerToken, playerPos, res.next);
         playerPos = res.next;
+        playBeep(res.type === 'ladder' ? 880 : 240, 200);
       }
+
       placeTokens();
       if(playerPos >= CELL_COUNT){
         endGame('player');
-        rollBtn.disabled = true;
         return;
       }
-      // pass to bot
+
       playerTurn = false;
       await wait(420);
-      rollBtn.disabled = false;
-      await wait(300);
       await botMove();
       rollBtn.disabled = !playerTurn;
     }
 
     function resetGame(){
-      playerPos = 1; botPos = 1; playerTurn = true; running = false; rollBtn.disabled = true; startBtn.disabled = false; diceEl.textContent = '—'; logEl.innerHTML=''; biasTag.textContent = '—'; setStatus('Press Start to begin'); placeTokens();
+      playerPos = 1; botPos = 1; playerTurn = true; running = false; rollBtn.disabled = true; startBtn.disabled = false; diceEl.textContent = '—'; logEl.innerHTML = ''; setStatus('Press Start to begin'); feeTaken = false; currentSessionId = null; placeTokens();
     }
-
-    function decideBias(){
-      bias = Math.random() < 0.5 ? 'botFavored' : 'playerFavored';
-      biasTag.textContent = bias === 'botFavored' ? 'Bot favored (advantage)' : 'Player favored (bot disadvantaged)';
-    }
-
-    function setStatus(t){ statusEl.textContent = t; }
-    function log(s){ logMsg(s); }
 
     async function startGame(){
-      // fresh game
-      playerPos = 1; botPos = 1; logEl.innerHTML='';
-      // randomly decide who starts (50/50)
+      // require sign-in and charge entry fee
+      if(!currentUser){
+        alert('Please sign in to play.');
+        return;
+      }
+      try {
+        await chargeEntryFee(); // this will throw if insufficient funds
+      } catch(e){
+        return; // aborted
+      }
+
+      // start actual gameplay
+      playerPos = 1; botPos = 1; logEl.innerHTML = '';
       playerTurn = Math.random() < 0.5;
-      decideBias();
       running = true; rollBtn.disabled = false; startBtn.disabled = true;
-      logMsg(`New game started — ${playerTurn ? 'You start' : 'Bot starts'} • bias: ${bias}`);
+      logMsg(`New game started — ${playerTurn ? 'You start' : 'Bot starts'}`);
       placeTokens();
       setStatus(playerTurn ? 'Your turn' : 'Bot is moving...');
-      await wait(350);
-      if(!playerTurn){
-        await botMove();
-      }
+      await wait(300);
+      if(!playerTurn) await botMove();
     }
 
-    // Save result to Firestore (requires your Firestore rules to allow writes or user signed in)
+    // Save result to Firestore (manual save)
     async function saveResultToFirebase(winner){
       try{
         await addDoc(collection(db,'snakesAndLaddersResults'), {
-          winner, bias, playerPos, botPos, ts: serverTimestamp(), user: currentUser ? (currentUser.uid||currentUser.email||null) : null
+          winner, playerPos, botPos, sessionId: currentSessionId || null, feeCharged: feeTaken?ENTRY_FEE:0, rewardGiven: (winner==='player' ? REWARD : 0), ts: serverTimestamp(), user: currentUser ? (currentUser.uid || currentUser.email || null) : null
         });
         alert('Result saved to Firebase');
-      }catch(e){ console.warn('save failed', e); alert('Could not save result: ' + (e.message||e)); }
+      }catch(e){
+        console.warn('save failed', e);
+        alert('Could not save result: ' + (e.message || e));
+      }
     }
 
     // confetti
@@ -472,8 +562,8 @@
         el.style.top = (-10 - Math.random()*20) + 'vh';
         el.style.width = (6 + Math.random()*12) + 'px';
         el.style.height = (8 + Math.random()*16) + 'px';
-        el.style.opacity = (0.8 + Math.random()*0.3);
-        const speed = 2500 + Math.random()*3500;
+        el.style.opacity = (0.75 + Math.random()*0.3);
+        const speed = 2000 + Math.random()*3600;
         el.style.animationDuration = (speed) + 'ms';
         el.style.transform = `rotate(${Math.floor(Math.random()*360)}deg)`;
         confettiRoot.appendChild(el);
@@ -499,11 +589,12 @@
     resetGame();
     placeTokens();
 
-    // auth watcher to capture user id for saves
     onAuthStateChanged(auth, user => { currentUser = user; });
 
-    // keyboard: space to roll when available
-    window.addEventListener('keydown', (e)=>{ if(e.code === 'Space'){ if(!rollBtn.disabled) playerRoll(); e.preventDefault(); } });
+    // keyboard
+    window.addEventListener('keydown', (e)=>{
+      if(e.code === 'Space'){ if(!rollBtn.disabled) playerRoll(); e.preventDefault(); }
+    });
   </script>
 </body>
 </html>
