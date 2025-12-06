@@ -4,8 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Referrals — Beni-Wealth</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,500,700&display=swap" rel="stylesheet">
   <meta name="theme-color" content="#2fe0b8">
   <style>
     :root{
@@ -76,20 +75,21 @@
       <div class="muted">Users on non-Basic plans</div>
     </div>
 
+    <!-- Combined referral card (represents stored + computed) -->
     <div class="card">
-      <h3>Computed Referral Balance</h3>
-      <div class="big" id="computedReferralBalance">₦0</div>
-      <div class="muted">Sum of bonuses from activated referrals (computed)</div>
-    </div>
+      <h3>Referral Balance</h3>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="muted">Stored (available for transfer)</div>
+        <div class="big" id="storedReferralBalance">₦0</div>
 
-    <div class="card">
-      <h3>Stored Referral Balance</h3>
-      <div class="big" id="storedReferralBalance">₦0</div>
-      <div class="muted">Stored on your account (used for transfers)</div>
-      <div style="margin-top:10px" class="transfer-row">
-        <button id="syncBtn" class="btn small">Sync computed → stored</button>
-        <button id="transferBtn" class="btn small" style="background:linear-gradient(90deg,#ffd166,#ff7a7a)">Transfer All</button>
+        <div class="muted">Computed (sum of bonuses from activated referrals)</div>
+        <div class="big" style="font-size:1.05rem;font-weight:700" id="computedReferralBalance">₦0</div>
+
+        <div style="margin-top:10px" class="transfer-row">
+          <button id="transferBtn" class="btn small" style="background:linear-gradient(90deg,#ffd166,#ff7a7a)">Transfer All</button>
+        </div>
       </div>
+      <div class="muted" style="margin-top:8px;font-size:12px">Transfer moves stored referral balance into your main balance. Transfers are transactional and logged.</div>
     </div>
   </div>
 
@@ -131,7 +131,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import {
-      getFirestore, collection, query, where, getDocs, doc, getDoc, runTransaction, setDoc, limit
+      getFirestore, collection, query, where, getDocs, doc, getDoc,
+      runTransaction, setDoc, limit, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
@@ -156,12 +157,9 @@
     const refCodeEl = document.getElementById('refCode');
     const totalRefEl = document.getElementById('totalRef');
     const activatedCountEl = document.getElementById('activatedCount');
-    const searchInput = document.getElementById('searchInput') || { addEventListener: ()=>{} }; // optional
     const copyBtn = document.getElementById('copyBtn');
-    const refreshBtn = document.getElementById('refreshBtn') || { addEventListener: ()=>{} };
     const computedReferralBalanceEl = document.getElementById('computedReferralBalance');
     const storedReferralBalanceEl = document.getElementById('storedReferralBalance');
-    const syncBtn = document.getElementById('syncBtn');
     const transferBtn = document.getElementById('transferBtn');
 
     let allRefs = [];
@@ -234,7 +232,6 @@
     }
 
     async function safeQueryReferrals(myCode){
-      // Try field-by-field queries and merge results. If nothing found or query errors, fallback to a bounded scan.
       const foundDocs = new Map();
       const qPromises = REFERRAL_FIELDS.map(field => {
         const q = query(collection(db,'users'), where(field, '==', myCode));
@@ -254,10 +251,8 @@
         });
       });
 
-      // If we got something, return it
       if(foundDocs.size > 0) return { docs: Array.from(foundDocs.values()), usedFallback: false };
 
-      // Either queries succeeded but returned empty, or they errored. Use fallback scan (bounded).
       try {
         console.log('Per-field queries returned none — using bounded fallback scan (limit 2000).');
         const fallbackQ = query(collection(db,'users'), limit(2000));
@@ -266,7 +261,6 @@
           const d = docSnap.data() || {};
           for(const f of REFERRAL_FIELDS){
             if(!d[f]) continue;
-            // compare string values loosely
             if(String(d[f]).toLowerCase() === String(myCode).toLowerCase()){
               if(!foundDocs.has(docSnap.id)) foundDocs.set(docSnap.id, d);
               break;
@@ -317,7 +311,6 @@
           if(userObj.referralBonus) computedReferralBalance += userObj.referralBonus;
         });
 
-        // sort by registration date desc
         const getTime = t => {
           try{ if(!t) return 0; if(typeof t.toDate === 'function') return t.toDate().getTime(); const n = Date.parse(t); return isNaN(n)?0:n; }catch(e){return 0;}
         };
@@ -354,28 +347,12 @@
       if(el) el.style.display = 'block';
     }));
 
-    // Sync computed to stored referralBalance (writes user.referralBalance)
-    syncBtn.addEventListener('click', async ()=>{
-      if(!currentUser) return alert('Sign in first');
-      const uid = currentUser.uid;
-      if(!confirm(`Sync computed referral balance (₦${computedReferralBalance.toLocaleString()}) to your stored referral balance? This will overwrite stored referralBalance.`)) return;
-      try{
-        await setDoc(doc(db,'users',uid), { referralBalance: computedReferralBalance }, { merge: true });
-        storedReferralBalance = computedReferralBalance;
-        updateTopCards();
-        alert('Stored referral balance updated.');
-      }catch(e){
-        console.error('sync failed', e);
-        alert('Could not sync referral balance: ' + (e.message||e));
-      }
-    });
-
     // Transfer all stored referral balance to main balance (transactional)
     transferBtn.addEventListener('click', async ()=>{
       if(!currentUser) return alert('Sign in first');
       const uid = currentUser.uid;
       if(!storedReferralBalance || storedReferralBalance <= 0) return alert('No stored referral balance to transfer.');
-      if(!confirm(`Confirm transfer of ₦${storedReferralBalance.toLocaleString()} from referral balance to your main balance?`)) return;
+      if(!confirm(`Confirm transfer of ₦${storedReferralBalance.toLocaleString()} from stored referral balance to your main balance?`)) return;
       try{
         await runTransaction(db, async (tx) => {
           const uRef = doc(db,'users',uid);
@@ -384,20 +361,24 @@
           const data = snap.data() || {};
           const curReferral = Number(data.referralBalance || 0);
           const curBal = Number(data.balance || data.wallet || 0);
-          if(curReferral < storedReferralBalance) throw new Error('insufficient-referral-balance');
-          const newReferral = curReferral - storedReferralBalance;
-          const newBal = curBal + storedReferralBalance;
+          if(curReferral <= 0) throw new Error('insufficient-referral-balance');
+          // move entire current referral balance
+          const amountToTransfer = curReferral;
+          const newReferral = 0;
+          const newBal = curBal + amountToTransfer;
           tx.set(uRef, { referralBalance: newReferral, balance: newBal }, { merge: true });
-          // write audit record
-          const rec = {
-            uid, amount: storedReferralBalance, from: 'referralBalance', to: 'balance', ts: serverTimestamp()
-          };
-          const recRef = doc(collection(db,'referralTransfers'));
-          tx.set(recRef, rec);
+          // write audit record with server timestamp
+          const recRef = doc(collection(db,'referralTransfers')); // auto-id doc
+          tx.set(recRef, {
+            uid,
+            amount: amountToTransfer,
+            from: 'referralBalance',
+            to: 'balance',
+            ts: serverTimestamp()
+          });
         });
-        // success
         alert('Transfer successful — your main balance has been credited.');
-        // update local storedReferralBalance & display
+        // refresh local storedReferralBalance and UI
         storedReferralBalance = 0;
         updateTopCards();
       }catch(e){
@@ -421,7 +402,6 @@
         refCodeEl.textContent = myCode || '';
         // load referrals (computed) and update UI
         await loadData(myCode);
-        // after loadData computedReferralBalance is set — update stored display (in case it changed)
         updateTopCards();
       }catch(err){
         console.error('Error fetching current user doc', err);
@@ -432,7 +412,7 @@
       }
     });
 
-    // initial small safety: attempt to update displays
+    // initial display
     computedReferralBalance = 0; storedReferralBalance = 0; updateTopCards();
   </script>
 </body>
