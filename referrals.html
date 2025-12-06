@@ -95,10 +95,10 @@
     <div class="card">
       <h3>Referral Balance</h3>
       <div style="display:flex;flex-direction:column;gap:6px">
-        <div class="muted">Stored (available for transfer)</div>
+        <div class="muted">available for transfer</div>
         <div class="big" id="storedReferralBalance">₦0</div>
 
-        <div class="muted">Computed (sum of bonuses from activated referrals)</div>
+        <div class="muted">Total Referral earnings</div>
         <div class="big" style="font-size:1.05rem;font-weight:700" id="computedReferralBalance">₦0</div>
 
         <div style="margin-top:10px" class="transfer-row">
@@ -148,7 +148,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import {
       getFirestore, collection, query, where, getDocs, doc, getDoc,
-      runTransaction, setDoc, limit, serverTimestamp
+      runTransaction, setDoc, limit, serverTimestamp, onSnapshot
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
@@ -184,6 +184,7 @@
     let currentUser = null;
     let storedReferralBalance = 0;
     let computedReferralBalance = 0;
+    let userDocUnsub = null;
 
     const REFERRAL_FIELDS = [
       'referral', 'referralCode', 'ref', 'referrer', 'referredBy', 'referred_by',
@@ -243,7 +244,7 @@
     function updateTopCards(){
       totalRefEl.textContent = allRefs.length;
       activatedCountEl.textContent = activatedRefs.length;
-      computedReferralBalanceEl.textContent = '₦' + computedReferralBalance.toLocaleString('en-NG');
+      computedReferralBalanceEl.textContent = '₦' + (computedReferralBalance || 0).toLocaleString('en-NG');
       storedReferralBalanceEl.textContent = '₦' + (storedReferralBalance || 0).toLocaleString('en-NG');
     }
 
@@ -369,6 +370,9 @@
       const uid = currentUser.uid;
       if(!storedReferralBalance || storedReferralBalance <= 0) return alert('No stored referral balance to transfer.');
       if(!confirm(`Confirm transfer of ₦${storedReferralBalance.toLocaleString()} from stored referral balance to your main balance?`)) return;
+
+      transferBtn.disabled = true;
+      const amountToTransferLocal = Number(storedReferralBalance || 0);
       try{
         await runTransaction(db, async (tx) => {
           const uRef = doc(db,'users',uid);
@@ -378,58 +382,67 @@
           const curReferral = Number(data.referralBalance || 0);
           const curBal = Number(data.balance || data.wallet || 0);
           if(curReferral <= 0) throw new Error('insufficient-referral-balance');
-          // move entire current referral balance
-          const amountToTransfer = curReferral;
-          const newReferral = 0;
-          const newBal = curBal + amountToTransfer;
+          const transferAmount = Math.min(curReferral, amountToTransferLocal);
+          const newReferral = curReferral - transferAmount;
+          const newBal = curBal + transferAmount;
           tx.set(uRef, { referralBalance: newReferral, balance: newBal }, { merge: true });
-          // write audit record with server timestamp
-          const recRef = doc(collection(db,'referralTransfers')); // auto-id doc
+
+          // write audit record with server timestamp (auto-id)
+          const recRef = doc(collection(db,'referralTransfers'));
           tx.set(recRef, {
             uid,
-            amount: amountToTransfer,
+            amount: transferAmount,
             from: 'referralBalance',
             to: 'balance',
             ts: serverTimestamp()
           });
         });
+
+        // success message; UI will update when onSnapshot user doc fires
         alert('Transfer successful — your main balance has been credited.');
-        // refresh local storedReferralBalance and UI
-        storedReferralBalance = 0;
-        updateTopCards();
       }catch(e){
         console.error('transfer failed', e);
         if(e && e.message === 'insufficient-referral-balance') alert('Transfer failed — stored referral balance changed (insufficient). Please refresh and try again.');
         else alert('Transfer failed: ' + (e.message||e));
+      } finally {
+        transferBtn.disabled = false;
       }
     });
 
-    // auth watcher
-    onAuthStateChanged(auth, async user=>{
+    // auth watcher + user doc realtime listener
+    onAuthStateChanged(auth, async user =>{
       if(!user) return location.href='login.html';
       currentUser = user;
-      try{
-        const userRef = doc(db,'users',user.uid);
-        const userSnap = await getDoc(userRef);
-        const myData = userSnap.exists() ? userSnap.data() : {};
+
+      // remove previous user snapshot if any
+      if(userDocUnsub) { try{ userDocUnsub(); }catch(_){ } userDocUnsub = null; }
+
+      const userRef = doc(db,'users',user.uid);
+      // use onSnapshot so storedReferralBalance will update automatically when changed
+      userDocUnsub = onSnapshot(userRef, async snap => {
+        const myData = snap.exists() ? snap.data() : {};
         signerPlan = (myData.plan || (myData.accountPlan || 'basic')).toString().toLowerCase() || 'basic';
         storedReferralBalance = Number(myData.referralBalance || 0) || 0;
         const myCode = String(myData.username || myData.name || user.email?.split('@')?.[0] || user.uid || '').trim();
         refCodeEl.textContent = myCode || '';
-        // load referrals (computed) and update UI
-        await loadData(myCode);
         updateTopCards();
-      }catch(err){
-        console.error('Error fetching current user doc', err);
-        refCodeEl.textContent = user.email ? user.email.split('@')[0] : user.uid;
-        storedReferralBalance = 0; signerPlan = 'basic';
-        await loadData(refCodeEl.textContent);
-        updateTopCards();
-      }
+
+        // load referral list computed against the current code.
+        // we debounce slightly to avoid repeated loads if multiple user fields change quickly.
+        try {
+          await loadData(myCode);
+        } catch(e){ console.warn('loadData after snapshot failed', e); }
+      }, err => {
+        console.warn('user onSnapshot error', err);
+      });
+
+      // initial small UI update while snapshot settles
+      refCodeEl.textContent = user.email ? user.email.split('@')[0] : user.uid;
     });
 
     // initial display
     computedReferralBalance = 0; storedReferralBalance = 0; updateTopCards();
+
   </script>
 </body>
 </html>
