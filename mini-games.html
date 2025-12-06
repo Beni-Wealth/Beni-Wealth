@@ -6,18 +6,10 @@
   <title>Beni-Wealth — Games</title>
 
   <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
 
-  <!-- Favicons & Social preview -->
+  <!-- Favicons & Social preview (reuse your asset) -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete ptcs and blogs, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
@@ -31,7 +23,6 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.04), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text);-webkit-font-smoothing:antialiased}
-    /* Center container and cap width for desktop */
     .wrap{
       width: min(1100px, 96vw);
       max-width: 1100px;
@@ -44,7 +35,6 @@
     .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent-a),var(--accent-b));display:grid;place-items:center;color:#041219;font-weight:800;box-shadow:0 14px 40px rgba(58,40,110,0.35)}
     h1{margin:0;font-size:20px}
     .muted{color:var(--muted);font-size:13px}
-    /* Make grid auto-fit to available width so cards remain a sensible size on desktop */
     .grid{display:grid;grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:20px; margin-top:18px; align-items:start}
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:20px; border:1px solid rgba(255,255,255,0.02); display:flex;flex-direction:column;gap:12px;min-height:200px}
     .card .icon{width:72px;height:72px;border-radius:12px;display:grid;place-items:center;font-weight:800;color:#041219;background:linear-gradient(135deg,var(--accent-a),var(--accent-b));box-shadow:0 12px 36px rgba(58,40,110,0.18)}
@@ -96,20 +86,20 @@
     </header>
 
     <div class="grid" role="list">
-      <!-- Game 1: Quiz -->
-      <article class="card" role="listitem" aria-labelledby="g1title">
+      <!-- Game: Snakes & Ladders (added) -->
+      <article class="card" role="listitem" aria-labelledby="g-snl-title">
         <div style="display:flex;align-items:center;gap:14px">
-          <div class="icon" aria-hidden="true">❓</div>
+          <div class="icon" aria-hidden="true">🐍🪜</div>
           <div>
-            <h3 id="g1title">Quiz</h3>
-            <div class="subtitle">Answer timed questions, earn points for correct answers. Fast and competitive.</div>
+            <h3 id="g-snl-title">Snakes & Ladders</h3>
+            <div class="subtitle">Player vs Bot — quick matches with visual dice and dramatic effects.</div>
           </div>
         </div>
 
-        <p class="small">Format: 10-second timer per question. Correct +10 points, wrong -5. Immediate feedback after each question.</p>
+        <p class="small">Entry: ₦50 (debited at start). Win reward: ₦70 credited on victory. Fair 50/50 starting bias.</p>
 
         <div class="actions">
-          <a class="btn" href="game-1.html" role="button" aria-label="Open Quiz">Play Quiz →</a>
+          <a class="btn" href="snakes-ladders.html" role="button" aria-label="Open Snakes & Ladders">Play Snakes →</a>
         </div>
       </article>
 
@@ -144,23 +134,6 @@
 
         <div class="actions">
           <a class="btn" href="game-3.html" role="button" aria-label="Open Memory Flip">Play Memory →</a>
-        </div>
-      </article>
-
-      <!-- Game 4: Snakes & Ladders (added) -->
-      <article class="card" role="listitem" aria-labelledby="g4title">
-        <div style="display:flex;align-items:center;gap:14px">
-          <div class="icon" aria-hidden="true">🐍🎲</div>
-          <div>
-            <h3 id="g4title">Snakes &amp; Ladders</h3>
-            <div class="subtitle">Classic board game</div>
-          </div>
-        </div>
-
-        <p class="small">Bot plays with a simple bias so each match has roughly a 50% chance for either side</p>
-
-        <div class="actions">
-          <a class="btn" href="game-4.html" role="button" aria-label="Open Snakes and Ladders">Play Snakes &amp; Ladders →</a>
         </div>
       </article>
     </div>
