@@ -44,6 +44,8 @@
     footer{margin-top:auto;padding:14px;text-align:center;background:transparent;color:var(--muted)}
     .transfer-row{display:flex;gap:8px;align-items:center}
     @media (max-width:860px){ .top-row{flex-direction:column} table{min-width:600px} .ref-box{flex-direction:column;align-items:flex-end} }
+    /* tiny toast */
+    .toast { position:fixed; right:18px; bottom:18px; background:#0b1220; padding:12px 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); box-shadow:0 10px 30px rgba(0,0,0,0.6); z-index:9999; color:var(--text); }
   </style>
 </head>
 <body>
@@ -61,29 +63,23 @@
   </header>
 
   <div class="top-row">
-    <!-- Removed 'Total Referred' card per instruction -->
-
     <div class="card">
       <h3>Activated</h3>
       <div class="big" id="activatedCount">—</div>
       <div class="muted">Users on non-Basic plans</div>
     </div>
 
-    <!-- Referral Balance (primary place where activations get credited) -->
     <div class="card">
       <h3>Referral Balance</h3>
       <div style="display:flex;flex-direction:column;gap:6px">
         <div class="muted">available for transfer (credited from activations)</div>
         <div class="big" id="storedReferralBalance">₦0</div>
 
-        <div class="muted">Total referral earnings (computed)</div>
-        <div class="big" style="font-size:1.05rem;font-weight:700" id="computedReferralBalance">₦0</div>
-
         <div style="margin-top:10px" class="transfer-row">
           <button id="transferBtn" class="btn small" style="background:linear-gradient(90deg,#ffd166,#ff7a7a)">Transfer All</button>
         </div>
       </div>
-      <div class="muted" style="margin-top:8px;font-size:12px">Referral activation money is credited into this balance automatically (server-verified when available). Transfers debit this field and credit your main balance.</div>
+      <div class="muted" style="margin-top:8px;font-size:12px">Referral activation money is credited into this balance once per referred user. Transfers move the referral balance into your main balance.</div>
     </div>
   </div>
 
@@ -120,6 +116,7 @@
     </div>
   </div>
 
+  <div id="toastRoot" aria-live="polite"></div>
   <footer>© 2025 Beni-Wealth</footer>
 
   <script type="module">
@@ -130,7 +127,6 @@
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    // firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -145,32 +141,35 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // DOM refs
+    // DOM
     const activatedBody = document.getElementById('activatedBody');
     const allBody = document.getElementById('allBody');
     const refCodeEl = document.getElementById('refCode');
     const activatedCountEl = document.getElementById('activatedCount');
     const copyBtn = document.getElementById('copyBtn');
-    const computedReferralBalanceEl = document.getElementById('computedReferralBalance');
     const storedReferralBalanceEl = document.getElementById('storedReferralBalance');
     const transferBtn = document.getElementById('transferBtn');
+    const toastRoot = document.getElementById('toastRoot');
 
     let allRefs = [];
     let activatedRefs = [];
     let signerPlan = 'basic';
     let currentUser = null;
     let storedReferralBalance = 0;
-    let computedReferralBalance = 0;
 
     const REFERRAL_FIELDS = [
       'referral', 'referralCode', 'ref', 'referrer', 'referredBy', 'referred_by',
       'sponsor', 'invitedBy', 'referred', 'referred_by_username'
     ];
 
-    // realtime snapshot bookkeeping
-    let userUnsub = null;
-    let referralUnsubs = [];
-    const snapshotsByField = {};
+    // tiny toast
+    function showToast(msg, ms = 2200){
+      const n = document.createElement('div');
+      n.className = 'toast';
+      n.textContent = msg;
+      toastRoot.appendChild(n);
+      setTimeout(()=>{ n.remove(); }, ms);
+    }
 
     function fmtDate(ts){
       try{
@@ -224,33 +223,50 @@
 
     function updateTopCards(){
       activatedCountEl.textContent = activatedRefs.length;
-      computedReferralBalanceEl.textContent = '₦' + computedReferralBalance.toLocaleString('en-NG');
       storedReferralBalanceEl.textContent = '₦' + (storedReferralBalance || 0).toLocaleString('en-NG');
     }
 
-    /* ------------- Realtime referral subscriptions ------------- */
+    /* Realtime management */
+    let userUnsub = null;
+    let referralUnsubs = [];
+    const snapshotsByField = {};
+
     function clearReferralListeners(){
       referralUnsubs.forEach(u => { try{ u(); } catch(_){} });
       referralUnsubs = [];
       for(const k in snapshotsByField) delete snapshotsByField[k];
     }
 
-    function recomputeFromSnapshots(){
+    // Build unique referred list from current snapshots; returns array of {referredUid, data, bonus}
+    function buildReferredListFromSnapshots(){
       const foundDocs = new Map();
       Object.values(snapshotsByField).forEach(snap => {
         if(!snap) return;
         snap.forEach(docSnap => {
-          if(!foundDocs.has(docSnap.id)) foundDocs.set(docSnap.id, docSnap.data());
+          if(!foundDocs.has(docSnap.id)) foundDocs.set(docSnap.id, { id: docSnap.id, data: docSnap.data() });
         });
       });
-
-      const docs = Array.from(foundDocs.values());
-      allRefs = []; activatedRefs = []; computedReferralBalance = 0;
-
-      docs.forEach(data=>{
+      const arr = [];
+      foundDocs.forEach((v, id) => {
+        const data = v.data || {};
         const planRaw = (data.plan || data.accountPlan || 'basic').toString();
         const plan = planRaw.toLowerCase();
         const isActivated = plan && plan !== 'basic';
+        const bonus = computeReferralBonus(signerPlan, plan, isActivated);
+        arr.push({ referredUid: id, data, bonus, isActivated });
+      });
+      return arr;
+    }
+
+    // Called after snapshots change
+    async function recomputeFromSnapshots(){
+      const docs = buildReferredListFromSnapshots();
+      allRefs = []; activatedRefs = []; // repurpose arrays for rendering
+      docs.forEach(item=>{
+        const data = item.data || {};
+        const planRaw = (data.plan || data.accountPlan || 'basic').toString();
+        const plan = planRaw.toLowerCase();
+        const isActivated = item.isActivated;
         const userObj = {
           username: (data.username || data.name || '').toString(),
           email: (data.email || '').toString(),
@@ -258,11 +274,11 @@
           registeredAt: data.createdAt || data.registeredAt || data.created_at || data.registered_at || null,
           plan: plan,
           isActivated: isActivated,
-          referralBonus: computeReferralBonus(signerPlan, plan, isActivated)
+          referralBonus: item.bonus || 0,
+          referredUid: item.referredUid
         };
         allRefs.push(userObj);
         if(userObj.isActivated) activatedRefs.push(userObj);
-        if(userObj.referralBonus) computedReferralBalance += userObj.referralBonus;
       });
 
       const getTime = t => {
@@ -275,10 +291,11 @@
       renderRows(activatedRefs, activatedBody);
       renderRows(allRefs, allBody);
 
-      // attempt auto-credit (DB) if computed earnings exceed stored referral balance
-      tryAutoCreditToStored();
+      // Now attempt to credit any missing referral bonuses (idempotent)
+      await creditMissingBonuses(docs);
     }
 
+    // Subscribe to users collection entries that match referral code fields (realtime)
     function subscribeReferralsRealtime(myCode){
       clearReferralListeners();
       if(!myCode) return;
@@ -287,7 +304,7 @@
           const q = query(collection(db,'users'), where(field, '==', myCode));
           const unsub = onSnapshot(q, snap => {
             snapshotsByField[field] = snap;
-            recomputeFromSnapshots();
+            recomputeFromSnapshots().catch(e=>console.warn('recompute error', e));
           }, err => {
             console.warn('onSnapshot error for field', field, err);
             snapshotsByField[field] = null;
@@ -298,7 +315,7 @@
         }
       });
 
-      // bounded fallback (one-off) if equality queries didn't find anything initially
+      // fallback one-off scan if no equality matches found (keeps behavior robust)
       setTimeout(async () => {
         const currentlyFound = Object.values(snapshotsByField).some(snap => snap && snap.size>0);
         if(!currentlyFound){
@@ -311,40 +328,15 @@
               for(const f of REFERRAL_FIELDS){
                 if(!d[f]) continue;
                 if(String(d[f]).toLowerCase() === String(myCode).toLowerCase()){
-                  if(!foundDocs.has(docSnap.id)) foundDocs.set(docSnap.id, d);
+                  if(!foundDocs.has(docSnap.id)) foundDocs.set(docSnap.id, { id: docSnap.id, data: d });
                   break;
                 }
               }
             });
             if(foundDocs.size > 0){
-              allRefs = []; activatedRefs = []; computedReferralBalance = 0;
-              Array.from(foundDocs.values()).forEach(data=>{
-                const planRaw = (data.plan || data.accountPlan || 'basic').toString();
-                const plan = planRaw.toLowerCase();
-                const isActivated = plan && plan !== 'basic';
-                const userObj = {
-                  username: (data.username || data.name || '').toString(),
-                  email: (data.email || '').toString(),
-                  balance: Number(data.balance ?? data.wallet ?? 0) || 0,
-                  registeredAt: data.createdAt || data.registeredAt || data.created_at || data.registered_at || null,
-                  plan: plan,
-                  isActivated: isActivated,
-                  referralBonus: computeReferralBonus(signerPlan, plan, isActivated)
-                };
-                allRefs.push(userObj);
-                if(userObj.isActivated) activatedRefs.push(userObj);
-                if(userObj.referralBonus) computedReferralBalance += userObj.referralBonus;
-              });
-              const getTime = t => {
-                try{ if(!t) return 0; if(typeof t.toDate === 'function') return t.toDate().getTime(); const n = Date.parse(t); return isNaN(n)?0:n; }catch(e){return 0;}
-              };
-              const sortFn = (a,b) => getTime(b.registeredAt) - getTime(a.registeredAt);
-              allRefs.sort(sortFn); activatedRefs.sort(sortFn);
-              updateTopCards();
-              renderRows(activatedRefs, activatedBody);
-              renderRows(allRefs, allBody);
-              // auto-credit check
-              tryAutoCreditToStored();
+              // translate into snapshotsByField temporary container and recompute
+              snapshotsByField['__fallback'] = { forEach: (cb) => { foundDocs.forEach((v,k)=>cb({ id:k, data:v.data })); }, size: foundDocs.size };
+              recomputeFromSnapshots().catch(e=>console.warn('recompute error', e));
             }
           }catch(e){
             console.warn('Fallback scan failed', e);
@@ -353,7 +345,64 @@
       }, 900);
     }
 
-    /* ------------- user doc listener (realtime) ------------- */
+    // Idempotent credit: for each activated referred user with a >0 bonus, if there's no referralCredits doc for it, create one and increment referralBalance.
+    async function creditMissingBonuses(referredDocs){
+      if(!currentUser) return;
+      try{
+        // build map of candidate bonuses keyed by referredUid
+        const candidates = referredDocs.filter(d => d.bonus > 0 && d.isActivated).reduce((acc, it) => { acc[it.referredUid] = it.bonus; return acc; }, {});
+        const referredUids = Object.keys(candidates);
+        if(referredUids.length === 0) return;
+
+        // fetch existing credits for this referrer
+        const creditsQ = query(collection(db,'referralCredits'), where('referrerUid','==', currentUser.uid));
+        const creditsSnap = await getDocs(creditsQ);
+        const existing = new Set();
+        creditsSnap.forEach(s => {
+          const data = s.data() || {};
+          if(data.referredUid) existing.add(String(data.referredUid));
+        });
+
+        // Filter missing
+        const missing = referredUids.filter(id => !existing.has(id));
+        if(missing.length === 0) return;
+
+        // compute total to credit
+        const total = missing.reduce((sum, id) => sum + Number(candidates[id] || 0), 0);
+        if(total <= 0) return;
+
+        // perform single transaction: create credit docs and increment referralBalance
+        await runTransaction(db, async (tx) => {
+          const uRef = doc(db,'users', currentUser.uid);
+          const uSnap = await tx.get(uRef);
+          if(!uSnap.exists()) throw new Error('user-not-found');
+          const udata = uSnap.data() || {};
+          const curReferral = Number(udata.referralBalance ?? udata.referral ?? 0) || 0;
+          const newReferral = curReferral + total;
+          tx.set(uRef, { referralBalance: newReferral }, { merge: true });
+
+          for(const rid of missing){
+            const docId = `${currentUser.uid}_${rid}`;
+            const cRef = doc(db, 'referralCredits', docId);
+            tx.set(cRef, {
+              referrerUid: currentUser.uid,
+              referredUid: rid,
+              amount: Number(candidates[rid] || 0),
+              ts: serverTimestamp(),
+              source: 'auto_credit'
+            });
+          }
+        });
+
+        // success — UI will update via user onSnapshot
+        showToast(`Referral bonuses credited: ₦${total.toLocaleString()}`);
+
+      }catch(e){
+        console.warn('creditMissingBonuses failed', e);
+      }
+    }
+
+    // subscribe to current user doc realtime to reflect referralBalance changes
     function subscribeCurrentUserDocRealtime(uid){
       if(userUnsub) { try{ userUnsub(); }catch(_){} userUnsub = null; }
       const uRef = doc(db, 'users', uid);
@@ -366,62 +415,24 @@
           return;
         }
         const data = snap.data() || {};
-        storedReferralBalance = Number(data.referralBalance ?? data.referral_balance ?? data.referral ?? 0) || 0;
+        storedReferralBalance = Number(data.referralBalance ?? data.referral ?? 0) || 0;
         signerPlan = (data.plan || (data.accountPlan || 'basic')).toString().toLowerCase() || 'basic';
         const myCode = String(data.username || data.name || data.referralCode || data.email?.split('@')?.[0] || uid).trim();
         refCodeEl.textContent = myCode || '';
-        // ensure referral listener is using the latest code
-        subscribeReferralsRealtime(myCode);
         updateTopCards();
+        // Ensure referral subscriptions are using current code
+        subscribeReferralsRealtime(myCode);
       }, err => {
         console.warn('user doc snapshot err', err);
       });
     }
 
-    /* ------------- Auto-credit logic -------------
-       If computed referral earnings (based on our computed view of activations)
-       exceed the stored referral balance in DB, we perform a transaction to
-       set referralBalance up to the computed amount and write an audit record.
-       This keeps "available for transfer" in sync with computed activation earnings.
-    ----------------------------------------------------------------------- */
-    async function tryAutoCreditToStored(){
-      if(!currentUser) return;
-      const amount = Math.max(0, Math.floor(computedReferralBalance || 0));
-      if(amount <= 0) return;
-      try{
-        await runTransaction(db, async (tx) => {
-          const uRef = doc(db, 'users', currentUser.uid);
-          const snap = await tx.get(uRef);
-          if(!snap.exists()) return;
-          const data = snap.data() || {};
-          const curReferral = Number(data.referralBalance ?? data.referral ?? 0) || 0;
-          if(curReferral >= amount) return; // nothing to do
-          // set referralBalance to computed (or add difference - here we set to computed)
-          tx.set(uRef, { referralBalance: amount }, { merge: true });
-          // audit record
-          const recRef = doc(collection(db,'referralAutoCredits'));
-          tx.set(recRef, {
-            uid: currentUser.uid,
-            amount: amount - curReferral,
-            oldReferral: curReferral,
-            newReferral: amount,
-            source: 'computed_activations',
-            ts: serverTimestamp()
-          });
-        });
-        // onSnapshot will update storedReferralBalance automatically
-      }catch(e){
-        console.warn('auto-credit transaction failed', e);
-      }
-    }
-
-    /* ------------- Transfer handler (debits referralBalance -> credits main balance) ------------- */
+    // Transfer handler
     transferBtn.addEventListener('click', async () => {
       if(!currentUser) return alert('Sign in first');
       const uid = currentUser.uid;
       transferBtn.disabled = true;
       try{
-        // fetch latest user doc first
         const uRef = doc(db, 'users', uid);
         const uSnap = await getDoc(uRef);
         if(!uSnap.exists()){
@@ -436,7 +447,6 @@
           transferBtn.disabled = false;
           return;
         }
-
         if(!confirm(`Confirm transfer of ₦${curReferral.toLocaleString()} from stored referral balance to your main balance?`)){
           transferBtn.disabled = false;
           return;
@@ -450,7 +460,7 @@
           const dbBal = Number(data.balance ?? data.wallet ?? 0) || 0;
           if(dbReferral <= 0) throw new Error('insufficient-referral-balance');
 
-          const transferAmount = dbReferral; // transfer everything currently stored
+          const transferAmount = dbReferral;
           const newReferral = 0;
           const newBal = dbBal + transferAmount;
 
@@ -467,7 +477,6 @@
         });
 
         alert('Transfer successful — your main balance has been credited.');
-        // onSnapshot will update UI
       }catch(e){
         console.error('transfer failed', e);
         if(e && e.message === 'insufficient-referral-balance') alert('Transfer failed — stored referral balance changed (insufficient). Please refresh and try again.');
@@ -477,14 +486,14 @@
       }
     });
 
-    /* ------------- auth watcher ------------- */
-    onAuthStateChanged(auth, async user => {
-      if(!user) return location.href='login.html';
-      currentUser = user;
-      subscribeCurrentUserDocRealtime(user.uid);
+    // UI helpers
+    copyBtn.addEventListener('click', ()=>{
+      const code = (refCodeEl.textContent || '').toString().trim();
+      if(!code){ alert('No referral code available to copy.'); return; }
+      const url = `https://beni-wealth.github.io/Beni-Wealth/register.html?ref=${encodeURIComponent(code)}`;
+      navigator.clipboard.writeText(url).then(()=>{ const prev = copyBtn.textContent; copyBtn.textContent='Copied'; setTimeout(()=>copyBtn.textContent=prev,1400); }).catch(()=>{ alert('Copy failed — please copy the link manually:\n' + url); });
     });
 
-    // tabs
     document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', e=>{
       document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
       e.currentTarget.classList.add('active');
@@ -494,16 +503,15 @@
       if(el) el.style.display = 'block';
     }));
 
-    // copy button
-    copyBtn.addEventListener('click', ()=>{
-      const code = (refCodeEl.textContent || '').toString().trim();
-      if(!code){ alert('No referral code available to copy.'); return; }
-      const url = `https://beni-wealth.github.io/Beni-Wealth/register.html?ref=${encodeURIComponent(code)}`;
-      navigator.clipboard.writeText(url).then(()=>{ const prev = copyBtn.textContent; copyBtn.textContent='Copied'; setTimeout(()=>copyBtn.textContent=prev,1400); }).catch(()=>{ alert('Copy failed — please copy the link manually:\n' + url); });
+    // auth watcher: start real-time subscriptions
+    onAuthStateChanged(auth, async user => {
+      if(!user) return location.href='login.html';
+      currentUser = user;
+      subscribeCurrentUserDocRealtime(user.uid);
     });
 
     // initial UI
-    computedReferralBalance = 0; storedReferralBalance = 0; updateTopCards();
+    storedReferralBalance = 0; updateTopCards();
   </script>
 </body>
 </html>
