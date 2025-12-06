@@ -6,22 +6,6 @@
   <title>My Referrals — Beni-Wealth</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,500,700&display=swap" rel="stylesheet">
   <meta name="theme-color" content="#2fe0b8">
-
-    <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Social preview -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete ptcs and blogs, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#2fe0b8">
-
   <style>
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(233,240,255,0.6);
@@ -46,8 +30,6 @@
     .big{font-size:1.4rem;font-weight:700;color:var(--text)}
     .muted{color:var(--muted);font-size:0.85rem}
     .controls{display:flex;gap:12px;align-items:center}
-    .search{flex:1;min-width:200px}
-    .search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--text)}
     .tabs{display:flex;gap:12px;justify-content:center;margin:6px auto;max-width:1100px;width:95%}
     .tab{padding:10px 16px;border-radius:999px;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.02);font-weight:600;color:var(--muted)}
     .tab.active{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;box-shadow:0 8px 18px rgba(122,95,255,0.08)}
@@ -79,11 +61,7 @@
   </header>
 
   <div class="top-row">
-    <div class="card">
-      <h3>Total Referred</h3>
-      <div class="big" id="totalRef">—</div>
-      <div class="muted">Users who signed up with your code</div>
-    </div>
+    <!-- Removed 'Total Referred' card per instruction -->
 
     <div class="card">
       <h3>Activated</h3>
@@ -91,21 +69,21 @@
       <div class="muted">Users on non-Basic plans</div>
     </div>
 
-    <!-- Combined referral card -->
+    <!-- Referral Balance (primary place where activations get credited) -->
     <div class="card">
       <h3>Referral Balance</h3>
       <div style="display:flex;flex-direction:column;gap:6px">
-        <div class="muted">available for transfer</div>
+        <div class="muted">available for transfer (credited from activations)</div>
         <div class="big" id="storedReferralBalance">₦0</div>
 
-        <div class="muted">Total referral earnings</div>
+        <div class="muted">Total referral earnings (computed)</div>
         <div class="big" style="font-size:1.05rem;font-weight:700" id="computedReferralBalance">₦0</div>
 
         <div style="margin-top:10px" class="transfer-row">
           <button id="transferBtn" class="btn small" style="background:linear-gradient(90deg,#ffd166,#ff7a7a)">Transfer All</button>
         </div>
       </div>
-      <div class="muted" style="margin-top:8px;font-size:12px">Transfer moves stored referral balance into your main balance. Transfers are transactional and logged.</div>
+      <div class="muted" style="margin-top:8px;font-size:12px">Referral activation money is credited into this balance automatically (server-verified when available). Transfers debit this field and credit your main balance.</div>
     </div>
   </div>
 
@@ -144,7 +122,6 @@
 
   <footer>© 2025 Beni-Wealth</footer>
 
-  <!-- ------------- Script (real-time + robust transfer) ------------- -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import {
@@ -153,7 +130,7 @@
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    // firebase config (unchanged)
+    // firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -172,7 +149,6 @@
     const activatedBody = document.getElementById('activatedBody');
     const allBody = document.getElementById('allBody');
     const refCodeEl = document.getElementById('refCode');
-    const totalRefEl = document.getElementById('totalRef');
     const activatedCountEl = document.getElementById('activatedCount');
     const copyBtn = document.getElementById('copyBtn');
     const computedReferralBalanceEl = document.getElementById('computedReferralBalance');
@@ -191,10 +167,10 @@
       'sponsor', 'invitedBy', 'referred', 'referred_by_username'
     ];
 
-    // snapshot bookkeeping
+    // realtime snapshot bookkeeping
     let userUnsub = null;
-    let referralUnsubs = []; // list of unsub functions for per-field listeners
-    const snapshotsByField = {}; // keep snapshots so we can merge
+    let referralUnsubs = [];
+    const snapshotsByField = {};
 
     function fmtDate(ts){
       try{
@@ -247,13 +223,12 @@
     }
 
     function updateTopCards(){
-      totalRefEl.textContent = allRefs.length;
       activatedCountEl.textContent = activatedRefs.length;
       computedReferralBalanceEl.textContent = '₦' + computedReferralBalance.toLocaleString('en-NG');
       storedReferralBalanceEl.textContent = '₦' + (storedReferralBalance || 0).toLocaleString('en-NG');
     }
 
-    /* ------------- Referral listeners (real-time) ------------- */
+    /* ------------- Realtime referral subscriptions ------------- */
     function clearReferralListeners(){
       referralUnsubs.forEach(u => { try{ u(); } catch(_){} });
       referralUnsubs = [];
@@ -299,6 +274,9 @@
       updateTopCards();
       renderRows(activatedRefs, activatedBody);
       renderRows(allRefs, allBody);
+
+      // attempt auto-credit (DB) if computed earnings exceed stored referral balance
+      tryAutoCreditToStored();
     }
 
     function subscribeReferralsRealtime(myCode){
@@ -365,6 +343,8 @@
               updateTopCards();
               renderRows(activatedRefs, activatedBody);
               renderRows(allRefs, allBody);
+              // auto-credit check
+              tryAutoCreditToStored();
             }
           }catch(e){
             console.warn('Fallback scan failed', e);
@@ -373,7 +353,7 @@
       }, 900);
     }
 
-    /* ------------- user doc listener ------------- */
+    /* ------------- user doc listener (realtime) ------------- */
     function subscribeCurrentUserDocRealtime(uid){
       if(userUnsub) { try{ userUnsub(); }catch(_){} userUnsub = null; }
       const uRef = doc(db, 'users', uid);
@@ -390,7 +370,7 @@
         signerPlan = (data.plan || (data.accountPlan || 'basic')).toString().toLowerCase() || 'basic';
         const myCode = String(data.username || data.name || data.referralCode || data.email?.split('@')?.[0] || uid).trim();
         refCodeEl.textContent = myCode || '';
-        // if code changed, re-subscribe referral listeners
+        // ensure referral listener is using the latest code
         subscribeReferralsRealtime(myCode);
         updateTopCards();
       }, err => {
@@ -398,12 +378,50 @@
       });
     }
 
-    /* ------------- transfer handler ------------- */
+    /* ------------- Auto-credit logic -------------
+       If computed referral earnings (based on our computed view of activations)
+       exceed the stored referral balance in DB, we perform a transaction to
+       set referralBalance up to the computed amount and write an audit record.
+       This keeps "available for transfer" in sync with computed activation earnings.
+    ----------------------------------------------------------------------- */
+    async function tryAutoCreditToStored(){
+      if(!currentUser) return;
+      const amount = Math.max(0, Math.floor(computedReferralBalance || 0));
+      if(amount <= 0) return;
+      try{
+        await runTransaction(db, async (tx) => {
+          const uRef = doc(db, 'users', currentUser.uid);
+          const snap = await tx.get(uRef);
+          if(!snap.exists()) return;
+          const data = snap.data() || {};
+          const curReferral = Number(data.referralBalance ?? data.referral ?? 0) || 0;
+          if(curReferral >= amount) return; // nothing to do
+          // set referralBalance to computed (or add difference - here we set to computed)
+          tx.set(uRef, { referralBalance: amount }, { merge: true });
+          // audit record
+          const recRef = doc(collection(db,'referralAutoCredits'));
+          tx.set(recRef, {
+            uid: currentUser.uid,
+            amount: amount - curReferral,
+            oldReferral: curReferral,
+            newReferral: amount,
+            source: 'computed_activations',
+            ts: serverTimestamp()
+          });
+        });
+        // onSnapshot will update storedReferralBalance automatically
+      }catch(e){
+        console.warn('auto-credit transaction failed', e);
+      }
+    }
+
+    /* ------------- Transfer handler (debits referralBalance -> credits main balance) ------------- */
     transferBtn.addEventListener('click', async () => {
       if(!currentUser) return alert('Sign in first');
       const uid = currentUser.uid;
       transferBtn.disabled = true;
       try{
+        // fetch latest user doc first
         const uRef = doc(db, 'users', uid);
         const uSnap = await getDoc(uRef);
         if(!uSnap.exists()){
@@ -412,23 +430,14 @@
           return;
         }
         const udata = uSnap.data() || {};
-        const possibleFields = ['referralBalance','referral_balance','referral','referralAmt','referralAmtNg'];
-        let latestReferral = null;
-        for(const f of possibleFields){
-          if(udata[f] !== undefined && udata[f] !== null){
-            latestReferral = Number(udata[f]) || 0;
-            break;
-          }
-        }
-        if(latestReferral === null) latestReferral = Number(udata.referralBalance || udata.referral || 0) || 0;
-
-        if(!latestReferral || latestReferral <= 0){
+        const curReferral = Number(udata.referralBalance ?? udata.referral ?? 0) || 0;
+        if(!curReferral || curReferral <= 0){
           alert('No stored referral balance to transfer.');
           transferBtn.disabled = false;
           return;
         }
 
-        if(!confirm(`Confirm transfer of ₦${latestReferral.toLocaleString()} from stored referral balance to your main balance?`)){
+        if(!confirm(`Confirm transfer of ₦${curReferral.toLocaleString()} from stored referral balance to your main balance?`)){
           transferBtn.disabled = false;
           return;
         }
@@ -437,13 +446,13 @@
           const snap = await tx.get(uRef);
           if(!snap.exists()) throw new Error('user-not-found');
           const data = snap.data() || {};
-          const curReferral = Number(data.referralBalance ?? data.referral ?? data.referral_balance ?? 0) || 0;
-          const curBal = Number(data.balance ?? data.wallet ?? 0) || 0;
-          if(curReferral <= 0) throw new Error('insufficient-referral-balance');
+          const dbReferral = Number(data.referralBalance ?? data.referral ?? 0) || 0;
+          const dbBal = Number(data.balance ?? data.wallet ?? 0) || 0;
+          if(dbReferral <= 0) throw new Error('insufficient-referral-balance');
 
-          const transferAmount = Math.min(curReferral, latestReferral);
-          const newReferral = curReferral - transferAmount;
-          const newBal = curBal + transferAmount;
+          const transferAmount = dbReferral; // transfer everything currently stored
+          const newReferral = 0;
+          const newBal = dbBal + transferAmount;
 
           tx.set(uRef, { referralBalance: newReferral, balance: newBal }, { merge: true });
 
@@ -458,7 +467,7 @@
         });
 
         alert('Transfer successful — your main balance has been credited.');
-        // user doc snapshot updates UI automatically
+        // onSnapshot will update UI
       }catch(e){
         console.error('transfer failed', e);
         if(e && e.message === 'insufficient-referral-balance') alert('Transfer failed — stored referral balance changed (insufficient). Please refresh and try again.');
