@@ -7,48 +7,126 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <meta name="theme-color" content="#7a5fff" />
   <style>
-    :root{ --bg:#0b0613; --panel:#0f0820; --muted:rgba(255,255,255,0.62); --card:#0f1120; --accent1:#7a5fff; --accent2:#35d6b1; --text:#eaf2ff }
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;font-family:Poppins,system-ui,Arial;background:linear-gradient(180deg,var(--bg),var(--panel));color:var(--text);padding:18px}
+    :root{
+      --bg:#0b0613;
+      --panel:#0f0820;
+      --muted:rgba(255,255,255,0.62);
+      --card:#0f1120;
+      --accent1:#7a5fff;
+      --accent2:#35d6b1;
+      --text:#eaf2ff;
+      --gap:14px;
+      --radius:12px;
+    }
 
-    .wrap{max-width:1100px;margin:0 auto}
-    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:'Poppins',system-ui,Arial;
+      background:linear-gradient(180deg,var(--bg),var(--panel));
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:18px;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+    }
+
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:18px;
+    }
+    .brand { display:flex; flex-direction:column; gap:4px; }
     h1{margin:0;font-size:20px}
-    .hint{color:var(--muted);font-size:13px}
+    .hint{color:var(--muted);font-size:13px;margin-top:2px}
 
     .controls{display:flex;gap:12px;align-items:center}
-    .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);min-width:220px}
-    .filter{padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
+    .search{
+      padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);
+      background:transparent;color:var(--text);min-width:200px;font-size:14px;
+      outline:none;
+    }
+    .search::placeholder{color:rgba(255,255,255,0.32)}
+    .filter{
+      padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
+      background:transparent;color:var(--muted);font-size:14px;
+    }
 
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+    /* Grid */
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:var(--gap);
+    }
 
-    .card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 14px 40px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:8px}
-    .card h3{margin:0;font-size:16px;color:var(--accent1)}
-    .meta{color:var(--muted);font-size:13px}
-    .reward{font-weight:800;font-size:18px;margin-top:6px}
+    .card{
+      background:var(--card);
+      padding:14px;
+      border-radius:var(--radius);
+      border:1px solid rgba(255,255,255,0.03);
+      box-shadow:0 14px 40px rgba(0,0,0,0.55);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      transition:transform .14s ease, box-shadow .14s ease;
+    }
+    .card:active, .card:focus-within { transform: translateY(2px); }
+    .card h3{margin:0;font-size:16px;color:var(--accent1);font-weight:700}
+    .meta{color:var(--muted);font-size:13px;margin-top:4px}
+    .reward{font-weight:800;font-size:16px;margin-top:6px;color:var(--text)}
 
-    .actions{margin-top:auto;display:flex;gap:8px}
-    .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:800}
-    .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    .actions{margin-top:auto;display:flex;gap:8px;align-items:center}
+    .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:800;font-size:14px}
+    .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;flex:1;min-width:0}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);border-radius:10px;padding:10px 12px;font-weight:700}
 
-    .visited{opacity:0.7;box-shadow:0 8px 24px rgba(0,0,0,0.45);border:1px solid rgba(61,46,111,0.16)}
-    .visited-badge{font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted)}
+    .visited{opacity:0.8;box-shadow:0 8px 24px rgba(0,0,0,0.45);border:1px solid rgba(61,46,111,0.12)}
+    .visited-badge{font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);display:inline-block;margin-left:6px}
 
     footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
 
-    @media(max-width:520px){body{padding:12px}.search{min-width:120px}}
+    /* Mobile friendliness */
+    @media (max-width:720px) {
+      body{padding:12px}
+      header{flex-direction:column;align-items:flex-start;gap:8px}
+      .controls{width:100%;display:flex;gap:8px}
+      .search{flex:1;min-width:0}
+      .grid{grid-template-columns:1fr;gap:12px}
+      .actions{flex-direction:column-reverse}
+      .btn.primary{width:100%}
+      .btn.ghost{width:100%}
+      .card{padding:12px}
+      h1{font-size:18px}
+    }
+
+    @media (max-width:420px){
+      .search{padding:10px}
+      .filter{padding:8px}
+      .brand h1{font-size:16px}
+      .hint{font-size:12px}
+      .btn{font-size:15px;padding:12px;border-radius:12px}
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div>
+      <div class="brand">
         <h1>PTC Catalog</h1>
-        <div class="hint">Click any card to open the PTC page (ptc-1.html → ptc-20.html)</div>
+        <div class="hint">Tap a card to open the PTC page (ptc-1.html → ptc-20.html)</div>
       </div>
-      <div class="controls">
-        <input id="searchInput" class="search" placeholder="Search PTC or reward..." aria-label="Search PTCs">
+
+      <div class="controls" role="search" aria-label="Search PTCs">
+        <input id="searchInput" class="search" placeholder="Search PTC title or description..." aria-label="Search PTCs">
         <select id="filterSelect" class="filter" aria-label="Filter PTCs">
           <option value="all">All</option>
           <option value="fresh">Unvisited</option>
@@ -58,7 +136,7 @@
     </header>
 
     <main>
-      <div id="grid" class="grid" role="list"></div>
+      <div id="grid" class="grid" role="list" aria-live="polite"></div>
     </main>
 
     <footer>20 PTC links • Each opens the corresponding <code>ptc-X.html</code> page in a new tab.</footer>
@@ -70,19 +148,19 @@
     const searchInput = document.getElementById('searchInput');
     const filterSelect = document.getElementById('filterSelect');
 
-    // simple sample rewards / descriptions; feel free to replace with backend data
+    // Fixed reward for all PTCs: ₦0.20
     function makePTC(i){
       return {
         id: i,
         title: `PTC #${i}`,
-        description: `Visit page and complete small action to earn.`,
-        reward: (0.2 + (i%5)*0.1).toFixed(2) // varied reward for demo
-      }
+        description: `Visit the page and complete a small task to earn.`,
+        reward: '0.20' // fixed reward
+      };
     }
 
     const PTCs = Array.from({length:20}, (_,k)=> makePTC(k+1));
 
-    function storageKey(id){ return `ptc_visited_${id}` }
+    function storageKey(id){ return `ptc_visited_${id}`; }
     function isVisited(id){ try { return localStorage.getItem(storageKey(id)) === '1'; } catch(e){ return false; } }
     function markVisited(id){ try{ localStorage.setItem(storageKey(id), '1'); }catch(e){} }
 
@@ -90,6 +168,7 @@
       const item = document.createElement('div');
       item.className = 'card';
       item.setAttribute('role','listitem');
+      item.tabIndex = 0;
 
       const h = document.createElement('h3'); h.textContent = ptc.title;
       const meta = document.createElement('div'); meta.className='meta'; meta.textContent = ptc.description;
@@ -110,7 +189,23 @@
         applyVisitedStyle(item, visitedBadge, ptc.id);
       });
 
-      btnDetails.addEventListener('click', () => {
+      // allow tapping the card itself to open (mobile-friendly)
+      item.addEventListener('click', (e) => {
+        // avoid double-trigger when clicking a button
+        if(e.target.closest('button')) return;
+        btnOpen.click();
+      });
+
+      // keyboard support: Enter opens
+      item.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          btnOpen.click();
+        }
+      });
+
+      btnDetails.addEventListener('click', (e) => {
+        e.stopPropagation();
         alert(`${ptc.title}\nReward: ₦${ptc.reward}\n\n${ptc.description}`);
       });
 
@@ -120,8 +215,17 @@
       item.appendChild(h);
       item.appendChild(meta);
       item.appendChild(reward);
-      item.appendChild(visitedBadge);
-      item.appendChild(actions);
+
+      // row with badge + actions (keeps actions at bottom on tall cards)
+      const bottomRow = document.createElement('div');
+      bottomRow.style.display = 'flex';
+      bottomRow.style.alignItems = 'center';
+      bottomRow.style.justifyContent = 'space-between';
+      bottomRow.style.gap = '10px';
+      bottomRow.appendChild(visitedBadge);
+      bottomRow.appendChild(actions);
+
+      item.appendChild(bottomRow);
 
       // initial visited state
       applyVisitedStyle(item, visitedBadge, ptc.id);
