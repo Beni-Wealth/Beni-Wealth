@@ -288,6 +288,25 @@
     }
     .chat-fab[aria-hidden="true"]{ display:none; }
 
+    /* overlay styles */
+    .overlay{ position:fixed; inset:0; display:none; z-index:1100; }
+    .overlay.open{ display:block; }
+    .overlay-backdrop{ position:absolute; inset:0; background: rgba(2,6,23,0.6); backdrop-filter: blur(6px); }
+    .overlay-panel{
+      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+      width: min(480px, 92%);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius:12px; padding:18px; box-shadow: 0 30px 80px rgba(4,6,20,0.6);
+      color:var(--text);
+    }
+    .overlay-close{ position:absolute; right:12px; top:12px; background:transparent; border:none; color:var(--muted); font-size:18px; cursor:pointer; }
+    .overlay-panel h3{ margin:0 0 12px; font-size:16px; }
+    .overlay-options{ display:flex; flex-direction:column; gap:10px; }
+    .overlay-option{ display:block; padding:12px; text-align:center; border-radius:10px; text-decoration:none; font-weight:800; }
+    .overlay-option.primary{ background: linear-gradient(90deg, #7a5fff, #35d6b1); color:#041219; }
+    .overlay-option.ghost{ background: transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); }
+
     /* Responsive adjustments */
     @media(max-width:980px){
       :root{ --container-w: 420px; } /* fallback on narrow screens */
@@ -367,7 +386,7 @@
       </div>
 
       <!-- NEW: More options menu item (added right below Referrals) -->
-      <div id="moreItem" class="menu-item" role="button" tabindex="0" aria-haspopup="false">
+      <div id="moreItem" class="menu-item" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="moreOverlay">
         <div class="menu-left">
           <div class="menu-icon">⋯</div>
           <div class="menu-text"><h4>More</h4><p>extra options & links</p></div>
@@ -408,6 +427,21 @@
 
     <!-- floating contact button (redirects to contact.html) -->
     <a id="chatFab" class="chat-fab" href="contact.html" title="Contact support" aria-label="Contact support">💬</a>
+
+    <!-- Overlay for More options -->
+    <div id="moreOverlay" class="overlay" aria-hidden="true">
+      <div class="overlay-backdrop" id="overlayBackdrop"></div>
+      <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+        <button id="overlayClose" class="overlay-close" aria-label="Close">✕</button>
+        <h3 id="overlayTitle">More options</h3>
+        <div class="overlay-options">
+          <a href="ptc.html" class="overlay-option primary" id="optPtc">PTC</a>
+          <a href="blog.html" class="overlay-option primary" id="optBlog">Blog</a>
+          <a href="mini-games.html" class="overlay-option primary" id="optGames">Games</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script type="module">
@@ -449,6 +483,9 @@
     const earningsItem = document.getElementById('earningsItem');
     const referralsItem = document.getElementById('referralsItem');
     const moreItem = document.getElementById('moreItem');
+    const moreOverlay = document.getElementById('moreOverlay');
+    const overlayBackdrop = document.getElementById('overlayBackdrop');
+    const overlayClose = document.getElementById('overlayClose');
     const logoutBtn = document.getElementById('logoutBtn');
 
     // bottom nav
@@ -520,9 +557,29 @@
       setTimeout(()=> { container.style.transform = ''; window.location.href = 'referrals.html'; }, 240);
     });
 
-    // MORE item: redirect to mini-games.html (no overlay)
-    moreItem.addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'mini-games.html'; });
-    moreItem.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location.href = 'mini-games.html'; } });
+    // MORE item: show overlay with options (ptc, blog, games)
+    function openMoreOverlay(){
+      moreOverlay.classList.add('open');
+      moreOverlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+      // focus first option for keyboard users
+      const opt = moreOverlay.querySelector('.overlay-option'); if(opt) opt.focus();
+    }
+    function closeMoreOverlay(){
+      moreOverlay.classList.remove('open');
+      moreOverlay.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+      moreItem.focus();
+    }
+
+    moreItem.addEventListener('click', (e) => { e.preventDefault(); openMoreOverlay(); });
+    moreItem.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMoreOverlay(); } });
+
+    overlayClose.addEventListener('click', (e)=>{ e.preventDefault(); closeMoreOverlay(); });
+    overlayBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); closeMoreOverlay(); });
+
+    // close on ESC
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && moreOverlay.classList.contains('open')) closeMoreOverlay(); });
 
     // LOGOUT: ensure signOut is called and user is redirected
     logoutBtn.addEventListener('click', async () => {
