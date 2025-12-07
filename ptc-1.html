@@ -172,7 +172,14 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-functions.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // === your firebase config (already provided) ===
     const FIREBASE_CONFIG = {
@@ -191,11 +198,14 @@
     const COUNTDOWN_SECONDS = 10;    // user requested 10s countdown
     const INTERNAL_RETRY_COUNT = 7;  // retry cooldown on internal error
     const FALLBACK_REGION = 'us-central1'; // change if you deployed to another region
+    const CLAIM_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 
     // init firebase
     const app = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
-    const functions = getFunctions(app);
+
+    // ensure functions uses the same region your cloud function is deployed.
+    const functions = getFunctions(app, FALLBACK_REGION);
     const db = getFirestore(app);
 
     // DOM
@@ -242,6 +252,8 @@
           clearInterval(countdownTimer);
           // show claim overlay once timer finishes
           showClaimOverlay();
+          // auto-trigger claim immediately (this mirrors how other pages behave)
+          claimAndHandle();
         }
       }, 1000);
     }
@@ -274,6 +286,7 @@
       const url = `https://${FALLBACK_REGION}-${projectId}.cloudfunctions.net/claimReward`;
 
       // get id token for authorization
+      if(!currentUser) throw new Error('Not authenticated (cannot call function).');
       const idToken = await currentUser.getIdToken();
 
       const body = JSON.stringify({ data: { articleUrl } });
@@ -304,11 +317,8 @@
         // typically r.data = { success, message, newBalance }
         return r.data ?? r;
       } catch (errPrimary) {
-        // if httpsCallable fails, try REST fallback
         console.warn('httpsCallable failed, attempting direct REST fallback', errPrimary);
-        // rethrow internal errors to let caller handle them if they specifically are internal
         const errMsg = (errPrimary && errPrimary.message) ? errPrimary.message : String(errPrimary);
-        const errCode = errPrimary && errPrimary.code ? errPrimary.code : null;
 
         // Try the REST fallback — but still surface internal-like errors
         try {
@@ -316,10 +326,8 @@
           const fallbackRes = await callFunctionDirectREST(articleUrl);
           return fallbackRes;
         } catch (errFallback) {
-          // If fallback also fails, attach both messages for debugging
           console.error('Fallback function call failed', errFallback);
           const combined = `${errMsg} — fallback: ${errFallback && errFallback.message ? errFallback.message : String(errFallback)}`;
-          // mimic an HttpsError-like shape so calling code can test for 'internal'
           const e = new Error(combined);
           e.code = errPrimary?.code ?? errFallback?.code ?? null;
           throw e;
@@ -327,9 +335,54 @@
       }
     }
 
-    // Claim button handler
-    claimBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
+    // --- Claim cooldown helpers (client-side check using Firestore) ---
+    async function getLastReadClaimMillis(uid){
+      try {
+        const uDocRef = doc(db, 'users', uid);
+        const uSnap = await getDoc(uDocRef);
+        if(!uSnap.exists()) return null;
+        const d = uSnap.data();
+        const ts = d?.last_read_claim;
+        if(!ts) return null;
+        // Firestore Timestamp has toMillis()
+        if (typeof ts.toMillis === 'function') return ts.toMillis();
+        // if stored as number
+        if (typeof ts === 'number') return ts;
+        // fallback try parse
+        const parsed = Date.parse(String(ts));
+        return isNaN(parsed) ? null : parsed;
+      } catch (err) {
+        console.warn('getLastReadClaimMillis failed', err);
+        return null;
+      }
+    }
+
+    async function writeLastReadClaimNow(uid){
+      try {
+        const uDocRef = doc(db, 'users', uid);
+        // If user doc exists update otherwise create (merge)
+        await setDoc(uDocRef, { last_read_claim: serverTimestamp() }, { merge: true });
+      } catch (err) {
+        console.warn('writeLastReadClaimNow failed', err);
+      }
+    }
+
+    // Returns { allowed: boolean, remainingMs: number }
+    async function checkClaimAllowed(uid) {
+      const lastMillis = await getLastReadClaimMillis(uid);
+      if(!lastMillis) return { allowed: true, remainingMs: 0 };
+      const now = Date.now();
+      const diff = now - lastMillis;
+      if (diff >= CLAIM_COOLDOWN_MS) return { allowed: true, remainingMs: 0 };
+      return { allowed: false, remainingMs: CLAIM_COOLDOWN_MS - diff };
+    }
+    // --- end cooldown helpers ---
+
+    // unified claim handler used by both automatic flow and button click
+    let claimInProgress = false;
+    async function claimAndHandle() {
+      if (claimInProgress) return;
+      claimInProgress = true;
       claimBtn.disabled = true;
       claimBtn.textContent = 'Processing...';
       claimStatus.textContent = '';
@@ -337,25 +390,48 @@
       if(!currentUser){
         claimBtn.disabled = false;
         claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+        claimInProgress = false;
         if(confirm('You need to sign in to claim. Go to login now?')) window.location.href = 'login.html';
         return;
       }
 
       try {
+        // client-side cooldown check
+        const allowedRes = await checkClaimAllowed(currentUser.uid);
+        if(!allowedRes.allowed){
+          const sec = Math.ceil(allowedRes.remainingMs / 1000);
+          const mins = Math.floor(sec / 60);
+          const remSec = sec % 60;
+          const msg = `You already claimed recently. Try again in ${mins}m ${remSec}s`;
+          claimStatus.textContent = msg;
+          toast(msg);
+          // restart top countdown to show remaining time visually (keeps UX consistent)
+          hideClaimOverlay();
+          startTopCountdown(Math.min(Math.ceil(allowedRes.remainingMs / 1000), INTERNAL_RETRY_COUNT)); // short visual retry OR you can set to full remaining
+          claimInProgress = false;
+          claimBtn.disabled = false;
+          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+          return;
+        }
+
+        // proceed to server call
         const res = await performClaim(ARTICLE_URL);
-        // server expected to return something like { success:true, message:'Claimed ₦0.20', newBalance: X }
         const msg = (res && (res.message || res.success && 'Claim successful')) || 'Claim succeeded';
         const newBal = res && (res.newBalance ?? res.new_balance ?? res.new_balance_in_currency);
         toast(msg);
         claimStatus.textContent = msg + (newBal !== undefined ? ` — New balance: ₦${Number(newBal).toFixed(2)}` : '');
-        // update top timer text to show claimed
         topTimer.textContent = 'Claimed';
+
+        // Write last_read_claim to Firestore (client-side). Prefer server-side enforcement inside cloud function too.
+        await writeLastReadClaimNow(currentUser.uid);
+
         // optionally refresh user's balance doc once
         try {
           const uDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if(uDoc.exists()) console.log('Refreshed balance:', uDoc.data().balance);
         } catch(e){ console.warn('refresh failed', e); }
-        // disable claim button permanently (prevent double-click attempts)
+
+        // final UI state
         claimBtn.disabled = true;
         claimBtn.textContent = 'Claimed';
         setTimeout(()=> hideClaimOverlay(), 1200);
@@ -365,19 +441,25 @@
         claimStatus.textContent = msgText;
         toast(msgText);
 
-        // If this looks like an "internal" server error, restart a 7s cooldown
+        // If this looks like an "internal" server error, restart a retry cooldown
         if(/internal/i.test(msgText) || (err && err.code === 'internal')) {
           toast('Server reported internal error — retrying in 7 seconds');
           hideClaimOverlay();
           startTopCountdown(INTERNAL_RETRY_COUNT);
-        }
-      } finally {
-        // Only reset the claim button if still not successfully claimed
-        if(claimBtn.textContent !== 'Claimed'){
+        } else {
+          // allow user to retry manually
           claimBtn.disabled = false;
           claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
         }
+      } finally {
+        claimInProgress = false;
       }
+    }
+
+    // Claim button handler (manual)
+    claimBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await claimAndHandle();
     });
 
     // accessibility: close overlay on escape
@@ -386,8 +468,7 @@
     });
 
     // Safety note visible in console for admins
-    console.log('Read & Claim page loaded. COUNTDOWN_SECONDS=', COUNTDOWN_SECONDS, 'FALLBACK_REGION=', FALLBACK_REGION);
-
+    console.log('Read & Claim page loaded. COUNTDOWN_SECONDS=', COUNTDOWN_SECONDS, 'FALLBACK_REGION=', FALLBACK_REGION, 'CLIENT_COOLDOWN_MS=', CLAIM_COOLDOWN_MS);
   </script>
 </body>
 </html>
