@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Read & Claim</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <meta name="theme-color" content="#2fe0b8" />
+  <style>
+    :root{
+      --bg:#0b0613; --panel:#0f0820; --muted:rgba(255,255,255,0.65);
+      --accent1:#7a5fff; --accent2:#35d6b1; --card:rgba(255,255,255,0.03);
+      --text:#eaf2ff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; font-family:Poppins,system-ui,Arial;
+      background: linear-gradient(180deg,var(--bg),var(--panel)); color:var(--text);
+      display:flex; align-items:center; justify-content:center; padding:28px;
+    }
+
+    .card{
+      width:100%;
+      max-width:980px;
+      border-radius:14px;
+      background:linear-gradient(180deg,rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.03);
+    }
+
+    .header{
+      display:flex; align-items:center; justify-content:space-between; padding:16px 20px;
+      gap:12px;
+    }
+    .title{font-size:18px; font-weight:700; margin:0}
+    .subtitle{color:var(--muted); font-size:13px; margin-top:6px}
+
+    .iframe-wrap{ position:relative; width:100%; height:560px; background:#05040a }
+    iframe{ width:100%; height:100%; border:0; display:block; }
+
+    /* Countdown overlay */
+    .overlay {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(90deg, rgba(2,6,23,0.65), rgba(2,6,23,0.55));
+      color:var(--text); z-index:20; transition:opacity .24s ease;
+    }
+    .overlay .box{
+      text-align:center; background:linear-gradient(180deg,#0f1224, rgba(255,255,255,0.02));
+      padding:18px; border-radius:12px; min-width:260px; border:1px solid rgba(255,255,255,0.03);
+    }
+    .counter{
+      font-weight:900; font-size:38px; letter-spacing:-1px; margin:6px 0;
+    }
+    .muted{ color:var(--muted); font-size:13px; }
+
+    /* Claim panel */
+    .claim-panel{ display:flex; flex-direction:column; gap:10px; align-items:center; }
+    .claim-btn{
+      padding:10px 16px; border-radius:10px; border:0; cursor:pointer; font-weight:800;
+      background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#041219; font-size:15px;
+      box-shadow:0 10px 30px rgba(61,46,111,0.18);
+    }
+    .secondary{ background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); padding:9px 12px; border-radius:9px; cursor:pointer; font-weight:700; }
+
+    .small-note{ font-size:12px; color:var(--muted) }
+
+    /* blocked notice */
+    .blocked{
+      display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center; padding:20px;
+      color:var(--muted); text-align:center;
+    }
+
+    /* top-right user badge */
+    .user-badge{ font-size:13px; color:var(--muted); background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.03); }
+
+    /* toast */
+    .toast{ position:fixed; right:20px; bottom:20px; background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#041219; padding:10px 14px; border-radius:10px; font-weight:700; box-shadow:0 12px 40px rgba(0,0,0,0.6); z-index:9999 }
+
+    @media(max-width:700px){
+      .iframe-wrap{ height:420px }
+      .counter{ font-size:30px }
+      .card{ margin:8px }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="region" aria-label="Article viewer and claim">
+    <div class="header">
+      <div>
+        <div class="title">Read & Claim — Earn ₦0.20</div>
+        <div class="subtitle">View the article and claim a small reward</div>
+      </div>
+      <div class="user-badge" id="userBadge">Not signed in</div>
+    </div>
+
+    <div class="iframe-wrap" id="iframeWrap" aria-live="polite">
+      <iframe id="articleFrame"
+              src="https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters"
+              title="Article"
+              sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+              loading="lazy"></iframe>
+
+      <!-- Countdown overlay -->
+      <div id="countOverlay" class="overlay" aria-hidden="false" role="status" aria-live="polite">
+        <div class="box">
+          <div class="muted">Please wait while we load the article</div>
+          <div class="counter" id="counter">5</div>
+          <div class="small-note">You'll be able to claim ₦0.20 when the countdown finishes</div>
+        </div>
+      </div>
+
+      <!-- Claim overlay (hidden initially) -->
+      <div id="claimOverlay" class="overlay" aria-hidden="true" style="display:none;">
+        <div class="box claim-panel" role="dialog" aria-modal="true" aria-label="Claim reward">
+          <div style="font-size:16px;font-weight:900">Claim ₦0.20</div>
+          <div class="small-note">Thanks for reading — tap below to add ₦0.20 to your account.</div>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <button id="claimBtn" class="claim-btn">Claim ₦0.20</button>
+            <button id="dismissBtn" class="secondary">Maybe later</button>
+          </div>
+          <div id="claimStatus" class="small-note" style="margin-top:6px"></div>
+        </div>
+      </div>
+
+      <!-- Blocked overlay (if site refuses iframe) -->
+      <div id="blockedOverlay" class="overlay" aria-hidden="true" style="display:none;">
+        <div class="box blocked">
+          <div style="font-weight:800">Article can't be embedded</div>
+          <div class="small-note">Some websites prevent embedding. Open the article in a new tab to continue and then claim.</div>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <a id="openTabBtn" class="claim-btn" href="#" target="_blank" rel="noopener">Open article</a>
+            <button id="continueClaimBtn" class="secondary">Continue anyway</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastRoot" aria-live="polite" style="position:fixed;right:20px;bottom:20px;z-index:9999"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-functions.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    /********* CONFIG - your firebase config (from your message) *********/
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    /*******************************************************************/
+
+    // Article url & settings
+    const ARTICLE_URL = "https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters";
+    const CLAIM_AMOUNT = 0.2; // NGN
+    const COUNTDOWN_SECONDS = 5;
+
+    // init firebase
+    const app = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const functions = getFunctions(app);
+    const db = getFirestore(app);
+
+    // DOM
+    const countOverlay = document.getElementById('countOverlay');
+    const claimOverlay = document.getElementById('claimOverlay');
+    const blockedOverlay = document.getElementById('blockedOverlay');
+    const counterEl = document.getElementById('counter');
+    const claimBtn = document.getElementById('claimBtn');
+    const dismissBtn = document.getElementById('dismissBtn');
+    const userBadge = document.getElementById('userBadge');
+    const openTabBtn = document.getElementById('openTabBtn');
+    const continueClaimBtn = document.getElementById('continueClaimBtn');
+    const claimStatus = document.getElementById('claimStatus');
+    const articleFrame = document.getElementById('articleFrame');
+    const toastRoot = document.getElementById('toastRoot');
+
+    // set href for openTabBtn
+    openTabBtn.href = ARTICLE_URL;
+
+    // toast helper
+    function toast(msg, ms = 3500){
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = msg;
+      toastRoot.appendChild(t);
+      setTimeout(()=> t.remove(), ms);
+    }
+
+    // user state
+    let currentUser = null;
+
+    onAuthStateChanged(auth, async (u) => {
+      currentUser = u;
+      if(!u){
+        userBadge.textContent = 'Not signed in';
+      } else {
+        // show username or email local part
+        const name = u.displayName || (u.email ? u.email.split('@')[0] : u.uid.slice(0,6));
+        userBadge.textContent = `Signed in • ${name}`;
+      }
+    });
+
+    // Detect if iframe embedding is blocked (best-effort).
+    let iframeBlocked = false;
+    articleFrame.addEventListener('load', () => {
+      try {
+        const doc = articleFrame.contentDocument || articleFrame.contentWindow.document;
+        if(!doc || !doc.body || doc.body.innerHTML.length < 20){
+          // may be empty — we'll show blocked notice after small delay
+        } else {
+          iframeBlocked = false;
+        }
+      } catch (err) {
+        iframeBlocked = true;
+        setTimeout(()=> {
+          if(!claimOverlay.classList.contains('open')){
+            showBlockedOverlay();
+          }
+        }, 700);
+      }
+    });
+
+    continueClaimBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      hideBlockedOverlay();
+      showClaimOverlay();
+    });
+
+    function showBlockedOverlay(){
+      blockedOverlay.style.display = 'flex';
+      blockedOverlay.setAttribute('aria-hidden','false');
+    }
+    function hideBlockedOverlay(){
+      blockedOverlay.style.display = 'none';
+      blockedOverlay.setAttribute('aria-hidden','true');
+    }
+
+    // Countdown
+    let seconds = COUNTDOWN_SECONDS;
+    counterEl.textContent = seconds;
+    const countdownTick = () => {
+      seconds--;
+      counterEl.textContent = seconds >= 0 ? seconds : 0;
+      if(seconds <= 0){
+        clearInterval(countdownTimer);
+        countOverlay.style.display = 'none';
+        if(iframeBlocked){
+          showBlockedOverlay();
+        } else {
+          showClaimOverlay();
+        }
+      }
+    };
+    const countdownTimer = setInterval(countdownTick, 1000);
+
+    function showClaimOverlay(){
+      claimOverlay.style.display = 'flex';
+      claimOverlay.setAttribute('aria-hidden','false');
+      claimOverlay.classList.add('open');
+      claimBtn.focus();
+      claimOverlay.classList.add('open');
+    }
+    function hideClaimOverlay(){
+      claimOverlay.style.display = 'none';
+      claimOverlay.setAttribute('aria-hidden','true');
+      claimOverlay.classList.remove('open');
+    }
+
+    dismissBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      hideClaimOverlay();
+    });
+
+    // Claim action: call firebase callable function claimReward
+    claimBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      claimBtn.disabled = true;
+      claimBtn.textContent = 'Processing...';
+      claimStatus.textContent = '';
+
+      if(!currentUser){
+        claimBtn.disabled = false;
+        claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+        if(confirm('You need to sign in to claim. Go to login now?')){
+          window.location.href = 'login.html';
+        }
+        return;
+      }
+
+      try {
+        const call = httpsCallable(functions, 'claimReward');
+        const res = await call({ articleUrl: ARTICLE_URL });
+        const msg = res.data?.message || 'Claim successful';
+        const newBal = res.data?.newBalance;
+        toast(msg);
+        claimStatus.textContent = msg + (newBal !== undefined ? ` — New balance: ₦${Number(newBal).toFixed(2)}` : '');
+        try {
+          const uDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if(uDoc.exists()){
+            const d = uDoc.data();
+            console.log('Refreshed balance:', d.balance);
+          }
+        } catch(e){ console.warn('Could not refresh balance', e); }
+        setTimeout(()=> { hideClaimOverlay(); }, 1200);
+      } catch (err) {
+        console.error('Claim failed', err);
+        const msg = err && err.message ? err.message : 'Claim failed. Try again later.';
+        claimStatus.textContent = msg;
+        toast(msg);
+      } finally {
+        claimBtn.disabled = false;
+        claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+      }
+    });
+
+    // Accessibility: close overlays on ESC
+    window.addEventListener('keydown', (ev) => {
+      if(ev.key === 'Escape'){
+        if(blockedOverlay.style.display === 'flex'){ hideBlockedOverlay(); }
+        if(claimOverlay.style.display === 'flex'){ hideClaimOverlay(); }
+      }
+    });
+
+  </script>
+</body>
+</html>
