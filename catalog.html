@@ -29,6 +29,7 @@
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
     .plan{background:var(--card);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 18px 40px rgba(0,0,0,0.5)}
     .plan h3{margin:0 0 6px;color:var(--accent2)}
+    .plan .category{font-size:12px;color:var(--muted);margin-bottom:8px}
     .plan .price{font-weight:800;font-size:20px;margin-top:6px}
     .plan .earn{color:var(--muted);margin-top:6px}
     .plan .buy{margin-top:12px;display:flex;gap:8px;align-items:center}
@@ -60,6 +61,7 @@
     @media(max-width:520px){body{padding:16px}.nav-btn{width:50px}.nav-center .center-btn{width:60px;height:60px;transform:translateY(-14px)}}
 
     ul.points{margin:10px 0 0 16px;padding:0;color:var(--muted)}
+    .section-head{grid-column:1/-1;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.02);color:var(--muted);font-weight:700}
   </style>
 </head>
 <body>
@@ -110,7 +112,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Plan definitions (only Bronze & Silver per request)
+    // Plan definitions (Bronze & Silver; publisher plans added separately)
     const PLANS = [
       {
         id: 'Bronze',
@@ -119,7 +121,8 @@
           'No withdrawal charge',
           'Priority activation',
           'Earn 60% of task payments',
-          'Referral earnings: ₦500 - ₦1,000 per referral'
+          'Referral earnings: ₦500 - ₦1,000 per referral',
+          'Withdrawal processed within 24–72 hrs'
         ]
       },
       {
@@ -129,8 +132,35 @@
           'No withdrawal charge',
           'Higher priority activation',
           'Earn 80% of task payments',
-          'Referral earnings: ₦700 - ₦1,400 per referral'
+          'Referral earnings: ₦700 - ₦1,400 per referral',
+          'Withdrawal processed within 24–72 hrs'
         ]
+      }
+    ];
+
+    // Publisher plans (separate category)
+    const PUBLISHER_PLANS = [
+      {
+        id: 'Gold',
+        price: 15000,
+        points: [
+          'Can publish up to 5 blogs per day',
+          'Earn up to ₦5,000 per week',
+          'Withdrawal processed within 24 hrs',
+          'Priority customer service'
+        ],
+        category: 'Publisher'
+      },
+      {
+        id: 'Platinum',
+        price: 30000,
+        points: [
+          'Can publish up to 10 blogs per day',
+          'Earn up to ₦10,000 per week',
+          'Withdrawal processed within 24 hrs',
+          'Priority customer service'
+        ],
+        category: 'Publisher'
       }
     ];
 
@@ -146,6 +176,8 @@
 
     function renderPlans() {
       plansGrid.innerHTML = '';
+
+      // render regular plans
       PLANS.forEach(p => {
         const div = document.createElement('div');
         div.className = 'plan';
@@ -162,11 +194,38 @@
         plansGrid.appendChild(div);
       });
 
+      // add a visual divider for publisher plans if present
+      if(PUBLISHER_PLANS && PUBLISHER_PLANS.length){
+        const head = document.createElement('div');
+        head.className = 'section-head';
+        head.textContent = 'Publisher Plans — for content creators';
+        plansGrid.appendChild(head);
+
+        PUBLISHER_PLANS.forEach(p => {
+          const div = document.createElement('div');
+          div.className = 'plan';
+          div.innerHTML = `
+            <h3>${p.id}</h3>
+            <div class="category">${p.category || 'Publisher'}</div>
+            <div class="price">Price: <strong>${formatN(p.price)}</strong></div>
+            <div class="earn">Validity: <strong>365 days</strong></div>
+            <ul class="points">${p.points.map(pt=>`<li>${pt}</li>`).join('')}</ul>
+            <div class="buy">
+              <button class="btn primary" data-plan="${p.id}" data-price="${p.price}">Buy ${p.id}</button>
+              <button class="btn ghost" data-plan-info="${p.id}">Details</button>
+            </div>
+          `;
+          plansGrid.appendChild(div);
+        });
+      }
+
+      // attach handlers to all buy/details buttons
       document.querySelectorAll('.plan .buy .primary').forEach(b => b.addEventListener('click', onBuyClick));
       document.querySelectorAll('.plan .buy .ghost').forEach(b => {
         b.addEventListener('click', (e) => {
           const plan = e.currentTarget.getAttribute('data-plan-info');
-          const p = PLANS.find(x=>x.id===plan);
+          const p = PLANS.concat(PUBLISHER_PLANS).find(x=>x.id===plan);
+          if(!p) return alert('Plan not found');
           alert(`${p.id}\nPrice: ${formatN(p.price)}\nValidity: 365 days\n\nFeatures:\n- ${p.points.join('\n- ')}`);
         });
       });
@@ -285,8 +344,7 @@
     refreshUserUI();
 
     // expose debug helpers
-    window._bwPlans = { PLANS, refreshUserUI };
+    window._bwPlans = { PLANS, PUBLISHER_PLANS, refreshUserUI };
   </script>
 </body>
-  </html>
-  
+</html>
