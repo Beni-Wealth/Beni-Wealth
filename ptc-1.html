@@ -41,9 +41,24 @@
     .brand { font-weight:800; font-size:16px; margin:0; }
     .subtitle { font-size:13px; color:var(--muted); margin-top:2px; font-weight:600; }
 
+    .top-right { display:flex; align-items:center; gap:10px; }
+
     .user-badge{
       font-size:13px; color:var(--muted); background:rgba(255,255,255,0.02);
       padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.03);
+    }
+
+    /* top-timer pill */
+    .top-timer {
+      font-weight:800;
+      font-size:13px;
+      padding:8px 12px;
+      border-radius:999px;
+      background: linear-gradient(90deg,var(--accent1),var(--accent2));
+      color:#041219;
+      border:1px solid rgba(255,255,255,0.03);
+      min-width:86px;
+      text-align:center;
     }
 
     /* main content fills remaining viewport */
@@ -69,7 +84,7 @@
       display:block;
     }
 
-    /* overlays */
+    /* claim overlay */
     .overlay {
       position:absolute;
       inset:0;
@@ -100,9 +115,6 @@
     }
     .secondary{ background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); padding:9px 12px; border-radius:9px; cursor:pointer; font-weight:700; }
 
-    /* blocked overlay */
-    .blocked-grid{ display:flex; gap:12px; flex-direction:column; align-items:center; justify-content:center; }
-
     /* small status text */
     .status-line { margin-top:10px; font-size:13px; color:var(--muted); }
 
@@ -121,7 +133,11 @@
       <div class="brand">Beni-Wealth</div>
       <div class="subtitle">Read • Earn • Claim</div>
     </div>
-    <div id="userBadge" class="user-badge">Not signed in</div>
+
+    <div class="top-right">
+      <div id="topTimer" class="top-timer" aria-live="polite">Wait: 10s</div>
+      <div id="userBadge" class="user-badge">Not signed in</div>
+    </div>
   </header>
 
   <main class="main" role="main" aria-live="polite">
@@ -131,15 +147,6 @@
               title="Article"
               sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
               loading="lazy"></iframe>
-
-      <!-- countdown overlay (visible during countdown) -->
-      <div id="countOverlay" class="overlay" aria-hidden="false" role="status" aria-live="polite">
-        <div class="panel" role="note">
-          <div class="muted">Please wait while we load the article</div>
-          <div class="big-num" id="counter">5</div>
-          <div class="muted">You'll be able to claim ₦0.20 when the countdown finishes</div>
-        </div>
-      </div>
 
       <!-- claim overlay (hidden until countdown ends) -->
       <div id="claimOverlay" class="overlay" aria-hidden="true" style="display:none;">
@@ -153,18 +160,6 @@
           </div>
 
           <div id="claimStatus" class="status-line" aria-live="polite"></div>
-        </div>
-      </div>
-
-      <!-- blocked overlay -->
-      <div id="blockedOverlay" class="overlay" aria-hidden="true" style="display:none;">
-        <div class="panel blocked-grid" role="alertdialog" aria-modal="true" aria-label="Embedding blocked">
-          <div style="font-weight:900;font-size:18px">Can't embed the article</div>
-          <div class="muted">Some sites prevent embedding. Open in a new tab or continue.</div>
-          <div style="display:flex;gap:10px;margin-top:12px">
-            <a id="openTabBtn" class="claim-btn" href="#" target="_blank" rel="noopener">Open article</a>
-            <button id="continueClaimBtn" class="secondary">Continue anyway</button>
-          </div>
         </div>
       </div>
 
@@ -193,8 +188,9 @@
     // Article / claim settings
     const ARTICLE_URL = "https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters";
     const CLAIM_AMOUNT = 0.2;
-    const INITIAL_COUNT = 5;
-    const INTERNAL_RETRY_COUNT = 7; // used when internal error appears
+    const COUNTDOWN_SECONDS = 10;    // user requested 10s countdown
+    const INTERNAL_RETRY_COUNT = 7;  // retry cooldown on internal error
+    const FALLBACK_REGION = 'us-central1'; // change if you deployed to another region
 
     // init firebase
     const app = initializeApp(FIREBASE_CONFIG);
@@ -203,20 +199,14 @@
     const db = getFirestore(app);
 
     // DOM
+    const topTimer = document.getElementById('topTimer');
     const userBadge = document.getElementById('userBadge');
     const articleFrame = document.getElementById('articleFrame');
-    const countOverlay = document.getElementById('countOverlay');
-    const counterEl = document.getElementById('counter');
     const claimOverlay = document.getElementById('claimOverlay');
     const claimBtn = document.getElementById('claimBtn');
     const dismissBtn = document.getElementById('dismissBtn');
     const claimStatus = document.getElementById('claimStatus');
-    const blockedOverlay = document.getElementById('blockedOverlay');
-    const openTabBtn = document.getElementById('openTabBtn');
-    const continueClaimBtn = document.getElementById('continueClaimBtn');
     const toastRoot = document.getElementById('toastRoot');
-
-    openTabBtn.href = ARTICLE_URL;
 
     function toast(msg, ms=3500){
       const t = document.createElement('div');
@@ -226,6 +216,7 @@
       setTimeout(()=> t.remove(), ms);
     }
 
+    // user / auth state
     let currentUser = null;
     onAuthStateChanged(auth, (u) => {
       currentUser = u;
@@ -236,88 +227,107 @@
       }
     });
 
-    // detect iframe embed blocked (best-effort)
-    let iframeBlocked = false;
-    articleFrame.addEventListener('load', () => {
-      try {
-        const doc = articleFrame.contentDocument || articleFrame.contentWindow.document;
-        if(!doc || !doc.body || doc.body.innerHTML.length < 20){
-          // might be empty - leave detection to timeout
-        } else {
-          iframeBlocked = false;
-        }
-      } catch(e) {
-        iframeBlocked = true;
-        // show blocked overlay after a short delay to avoid flicker
-        setTimeout(()=> { if(!claimOverlay.classList.contains('open')) showBlockedOverlay(); }, 600);
-      }
-    });
-
-    function showBlockedOverlay(){
-      blockedOverlay.style.display = 'flex';
-      blockedOverlay.setAttribute('aria-hidden','false');
-    }
-    function hideBlockedOverlay(){
-      blockedOverlay.style.display = 'none';
-      blockedOverlay.setAttribute('aria-hidden','true');
-    }
-
-    continueClaimBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      hideBlockedOverlay();
-      startClaimOverlayImmediately();
-    });
-
-    // countdown logic (reusable)
+    // Countdown at top (non-blocking)
     let countdownTimer = null;
-    let seconds = INITIAL_COUNT;
+    let secondsLeft = COUNTDOWN_SECONDS;
 
-    function startCountdown(n = INITIAL_COUNT){
+    function startTopCountdown(n = COUNTDOWN_SECONDS){
       clearInterval(countdownTimer);
-      seconds = n;
-      counterEl.textContent = seconds;
-      countOverlay.style.display = 'flex';
-      countOverlay.setAttribute('aria-hidden','false');
-      // hide claim/blocked overlays while counting
-      hideClaimOverlay();
-      hideBlockedOverlay();
-
+      secondsLeft = n;
+      updateTopTimer();
       countdownTimer = setInterval(() => {
-        seconds--;
-        counterEl.textContent = seconds >= 0 ? seconds : 0;
-        if(seconds <= 0){
+        secondsLeft--;
+        updateTopTimer();
+        if(secondsLeft <= 0){
           clearInterval(countdownTimer);
-          countOverlay.style.display = 'none';
-          // choose overlay based on embed status
-          if(iframeBlocked) showBlockedOverlay();
-          else showClaimOverlay();
+          // show claim overlay once timer finishes
+          showClaimOverlay();
         }
       }, 1000);
+    }
+
+    function updateTopTimer(){
+      topTimer.textContent = (secondsLeft > 0) ? `Wait: ${secondsLeft}s` : 'Claim ready';
     }
 
     function showClaimOverlay(){
       claimOverlay.style.display = 'flex';
       claimOverlay.setAttribute('aria-hidden','false');
-      claimOverlay.classList.add('open');
       claimBtn.focus();
       claimStatus.textContent = '';
     }
+
     function hideClaimOverlay(){
       claimOverlay.style.display = 'none';
       claimOverlay.setAttribute('aria-hidden','true');
-      claimOverlay.classList.remove('open');
-    }
-    function startClaimOverlayImmediately(){
-      countOverlay.style.display = 'none';
-      showClaimOverlay();
     }
 
-    // init first countdown
-    startCountdown(INITIAL_COUNT);
+    // start first countdown
+    startTopCountdown(COUNTDOWN_SECONDS);
 
     dismissBtn.addEventListener('click', (e) => { e.preventDefault(); hideClaimOverlay(); });
 
-    // Claim handler with "internal" error handling -> restart 7s cooldown
+    // Helper: direct-call fallback using REST to functions endpoint
+    async function callFunctionDirectREST(articleUrl) {
+      // builds URL like https://us-central1-your-project.cloudfunctions.net/claimReward
+      const projectId = FIREBASE_CONFIG.projectId;
+      const url = `https://${FALLBACK_REGION}-${projectId}.cloudfunctions.net/claimReward`;
+
+      // get id token for authorization
+      const idToken = await currentUser.getIdToken();
+
+      const body = JSON.stringify({ data: { articleUrl } });
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + idToken
+        },
+        body
+      });
+
+      let json = null;
+      try { json = await res.json(); } catch(e) { throw new Error(`Function returned non-JSON (${res.status})`); }
+
+      // callable functions usually return { result: { ... } }
+      const payload = json.result ?? json; // accept either shape
+      return payload;
+    }
+
+    // Main claim flow: try httpsCallable first, fallback to REST endpoint if that fails.
+    async function performClaim(articleUrl) {
+      // 1) Primary: httpsCallable (recommended)
+      try {
+        const call = httpsCallable(functions, 'claimReward');
+        const r = await call({ articleUrl });
+        // typically r.data = { success, message, newBalance }
+        return r.data ?? r;
+      } catch (errPrimary) {
+        // if httpsCallable fails, try REST fallback
+        console.warn('httpsCallable failed, attempting direct REST fallback', errPrimary);
+        // rethrow internal errors to let caller handle them if they specifically are internal
+        const errMsg = (errPrimary && errPrimary.message) ? errPrimary.message : String(errPrimary);
+        const errCode = errPrimary && errPrimary.code ? errPrimary.code : null;
+
+        // Try the REST fallback — but still surface internal-like errors
+        try {
+          if(!currentUser) throw new Error('Not authenticated (cannot call function).');
+          const fallbackRes = await callFunctionDirectREST(articleUrl);
+          return fallbackRes;
+        } catch (errFallback) {
+          // If fallback also fails, attach both messages for debugging
+          console.error('Fallback function call failed', errFallback);
+          const combined = `${errMsg} — fallback: ${errFallback && errFallback.message ? errFallback.message : String(errFallback)}`;
+          // mimic an HttpsError-like shape so calling code can test for 'internal'
+          const e = new Error(combined);
+          e.code = errPrimary?.code ?? errFallback?.code ?? null;
+          throw e;
+        }
+      }
+    }
+
+    // Claim button handler
     claimBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       claimBtn.disabled = true;
@@ -332,52 +342,51 @@
       }
 
       try {
-        const call = httpsCallable(functions, 'claimReward');
-        const res = await call({ articleUrl: ARTICLE_URL });
-        const msg = res.data?.message || 'Claim successful';
-        const newBal = res.data?.newBalance;
+        const res = await performClaim(ARTICLE_URL);
+        // server expected to return something like { success:true, message:'Claimed ₦0.20', newBalance: X }
+        const msg = (res && (res.message || res.success && 'Claim successful')) || 'Claim succeeded';
+        const newBal = res && (res.newBalance ?? res.new_balance ?? res.new_balance_in_currency);
         toast(msg);
         claimStatus.textContent = msg + (newBal !== undefined ? ` — New balance: ₦${Number(newBal).toFixed(2)}` : '');
+        // update top timer text to show claimed
+        topTimer.textContent = 'Claimed';
         // optionally refresh user's balance doc once
         try {
           const uDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if(uDoc.exists()) console.log('Refreshed balance:', uDoc.data().balance);
         } catch(e){ console.warn('refresh failed', e); }
-        // close overlay shortly
+        // disable claim button permanently (prevent double-click attempts)
+        claimBtn.disabled = true;
+        claimBtn.textContent = 'Claimed';
         setTimeout(()=> hideClaimOverlay(), 1200);
       } catch (err) {
-        console.error('Claim error', err);
-        // Determine if this is an "internal" error
-        const code = err?.code || (err?.details && err.details.code) || null;
-        const msgText = err?.message || JSON.stringify(err);
+        console.error('Claim failed', err);
+        const msgText = err?.message || String(err);
         claimStatus.textContent = msgText;
         toast(msgText);
 
-        // If the error is internal, restart countdown at 7 seconds
-        if(code === 'internal' || /internal/i.test(msgText)) {
-          toast('Server error — retrying in 7 seconds');
-          // close claim overlay and restart countdown at INTERNAL_RETRY_COUNT
+        // If this looks like an "internal" server error, restart a 7s cooldown
+        if(/internal/i.test(msgText) || (err && err.code === 'internal')) {
+          toast('Server reported internal error — retrying in 7 seconds');
           hideClaimOverlay();
-          startCountdown(INTERNAL_RETRY_COUNT);
+          startTopCountdown(INTERNAL_RETRY_COUNT);
         }
       } finally {
-        claimBtn.disabled = false;
-        claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+        // Only reset the claim button if still not successfully claimed
+        if(claimBtn.textContent !== 'Claimed'){
+          claimBtn.disabled = false;
+          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+        }
       }
     });
 
-    // accessibility: close overlays on ESC
+    // accessibility: close overlay on escape
     window.addEventListener('keydown', (ev) => {
-      if(ev.key === 'Escape'){
-        if(blockedOverlay.style.display === 'flex') hideBlockedOverlay();
-        if(claimOverlay.style.display === 'flex') hideClaimOverlay();
-      }
+      if(ev.key === 'Escape') hideClaimOverlay();
     });
 
-    // ensure overlays are hidden on orientation/resize if needed
-    window.addEventListener('resize', () => {
-      // keep overlay full-screen; nothing special to do but keep UX stable
-    });
+    // Safety note visible in console for admins
+    console.log('Read & Claim page loaded. COUNTDOWN_SECONDS=', COUNTDOWN_SECONDS, 'FALLBACK_REGION=', FALLBACK_REGION);
 
   </script>
 </body>
