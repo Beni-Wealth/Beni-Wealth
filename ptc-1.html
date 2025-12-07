@@ -7,124 +7,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <meta name="theme-color" content="#2fe0b8" />
   <style>
-    :root{
-      --bg:#0b0613; --panel:#0f0820; --muted:rgba(255,255,255,0.68);
-      --accent1:#7a5fff; --accent2:#35d6b1; --text:#eaf2ff;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0}
-    body{
-      font-family:Poppins,system-ui,Arial;
-      background: linear-gradient(180deg,var(--bg),var(--panel));
-      color:var(--text);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      padding:0;
-      margin:0;
-      display:flex;
-      flex-direction:column;
-      min-height:100vh;
-    }
-
-    /* top bar */
-    .topbar{
-      height:64px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:10px 16px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006));
-      border-bottom: 1px solid rgba(255,255,255,0.02);
-      z-index:40;
-    }
-    .brand { font-weight:800; font-size:16px; margin:0; }
-    .subtitle { font-size:13px; color:var(--muted); margin-top:2px; font-weight:600; }
-
-    .top-right { display:flex; align-items:center; gap:10px; }
-
-    .user-badge{
-      font-size:13px; color:var(--muted); background:rgba(255,255,255,0.02);
-      padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.03);
-    }
-
-    /* top-timer pill */
-    .top-timer {
-      font-weight:800;
-      font-size:13px;
-      padding:8px 12px;
-      border-radius:999px;
-      background: linear-gradient(90deg,var(--accent1),var(--accent2));
-      color:#041219;
-      border:1px solid rgba(255,255,255,0.03);
-      min-width:86px;
-      text-align:center;
-    }
-
-    /* main content fills remaining viewport */
-    .main {
-      position:relative;
-      flex:1 1 auto;
-      min-height:0; /* allow children to stretch in flexbox */
-    }
-
-    .iframe-wrap {
-      position:absolute;
-      inset:0;
-      background:#041018;
-      display:flex;
-      align-items:stretch;
-      justify-content:stretch;
-    }
-
-    iframe{
-      width:100%;
-      height:100%;
-      border:0;
-      display:block;
-    }
-
-    /* claim overlay */
-    .overlay {
-      position:absolute;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:linear-gradient(90deg, rgba(2,6,23,0.56), rgba(2,6,23,0.45));
-      z-index:60;
-      padding:20px;
-    }
-    .panel {
-      width:min(520px, 94%);
-      border-radius:12px;
-      padding:18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border:1px solid rgba(255,255,255,0.03);
-      box-shadow:0 30px 80px rgba(0,0,0,0.6);
-      text-align:center;
-      color:var(--text);
-    }
-    .big-num{ font-size:40px; font-weight:900; margin:6px 0; }
-    .muted{ color:var(--muted); font-size:13px; }
-
-    .claim-btn{
-      padding:10px 16px; border-radius:10px; border:0; cursor:pointer; font-weight:800;
-      background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#041219; font-size:15px;
-      box-shadow:0 10px 30px rgba(61,46,111,0.18);
-    }
-    .secondary{ background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); padding:9px 12px; border-radius:9px; cursor:pointer; font-weight:700; }
-
-    /* small status text */
-    .status-line { margin-top:10px; font-size:13px; color:var(--muted); }
-
-    /* toast */
-    .toast{ position:fixed; right:20px; bottom:20px; background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#041219; padding:10px 14px; border-radius:10px; font-weight:700; box-shadow:0 12px 40px rgba(0,0,0,0.6); z-index:9999 }
-
-    @media (max-width:520px){
-      .topbar{ padding:8px 12px; height:56px; }
-      .big-num{ font-size:30px; }
-    }
+    /* ... keep your existing CSS (omitted here for brevity) ... */
+    body { font-family: Poppins, system-ui, Arial; background: #041018; color: #eaf2ff; margin:0 }
+    /* Add the rest of your styles from the previous page */
   </style>
 </head>
 <body>
@@ -133,7 +18,6 @@
       <div class="brand">Beni-Wealth</div>
       <div class="subtitle">Read • Earn • Claim</div>
     </div>
-
     <div class="top-right">
       <div id="topTimer" class="top-timer" aria-live="polite">Wait: 10s</div>
       <div id="userBadge" class="user-badge">Not signed in</div>
@@ -142,27 +26,19 @@
 
   <main class="main" role="main" aria-live="polite">
     <div class="iframe-wrap" id="iframeWrap">
-      <iframe id="articleFrame"
-              src="https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters"
-              title="Article"
-              sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
-              loading="lazy"></iframe>
+      <iframe id="articleFrame" src="https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters" title="Article" sandbox="allow-scripts allow-forms allow-same-origin allow-popups" loading="lazy"></iframe>
 
-      <!-- claim overlay (hidden until countdown ends) -->
       <div id="claimOverlay" class="overlay" aria-hidden="true" style="display:none;">
         <div class="panel" role="dialog" aria-modal="true" aria-label="Claim reward">
           <div style="font-weight:900;font-size:18px">Claim ₦0.20</div>
           <div class="muted" style="margin-top:8px">Thanks for reading — tap below to add ₦0.20 to your account.</div>
-
           <div style="display:flex;gap:12px;justify-content:center;margin-top:14px">
             <button id="claimBtn" class="claim-btn">Claim ₦0.20</button>
             <button id="dismissBtn" class="secondary">Maybe later</button>
           </div>
-
           <div id="claimStatus" class="status-line" aria-live="polite"></div>
         </div>
       </div>
-
     </div>
   </main>
 
@@ -172,16 +48,9 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-functions.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      setDoc,
-      updateDoc,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // === your firebase config (already provided) ===
+    // Your firebase config
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -192,26 +61,18 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    // Article / claim settings
     const ARTICLE_URL = "https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters";
     const CLAIM_AMOUNT = 0.2;
-    const COUNTDOWN_SECONDS = 10;    // user requested 10s countdown
-    const INTERNAL_RETRY_COUNT = 7;  // retry cooldown on internal error
-    const FALLBACK_REGION = 'us-central1'; // change if you deployed to another region
-    const CLAIM_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
+    const COUNTDOWN_SECONDS = 10;
+    const FUNCTIONS_REGION = 'us-central1'; // must match functions region used during deploy
 
-    // init firebase
     const app = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
-
-    // ensure functions uses the same region your cloud function is deployed.
-    const functions = getFunctions(app, FALLBACK_REGION);
+    const functions = getFunctions(app, FUNCTIONS_REGION);
     const db = getFirestore(app);
 
-    // DOM
     const topTimer = document.getElementById('topTimer');
     const userBadge = document.getElementById('userBadge');
-    const articleFrame = document.getElementById('articleFrame');
     const claimOverlay = document.getElementById('claimOverlay');
     const claimBtn = document.getElementById('claimBtn');
     const dismissBtn = document.getElementById('dismissBtn');
@@ -226,7 +87,6 @@
       setTimeout(()=> t.remove(), ms);
     }
 
-    // user / auth state
     let currentUser = null;
     onAuthStateChanged(auth, (u) => {
       currentUser = u;
@@ -237,152 +97,35 @@
       }
     });
 
-    // Countdown at top (non-blocking)
-    let countdownTimer = null;
+    // countdown
     let secondsLeft = COUNTDOWN_SECONDS;
-
-    function startTopCountdown(n = COUNTDOWN_SECONDS){
+    let countdownTimer = null;
+    function startCountdown(n=COUNTDOWN_SECONDS){
       clearInterval(countdownTimer);
       secondsLeft = n;
-      updateTopTimer();
-      countdownTimer = setInterval(() => {
+      topTimer.textContent = `Wait: ${secondsLeft}s`;
+      countdownTimer = setInterval(()=>{
         secondsLeft--;
-        updateTopTimer();
-        if(secondsLeft <= 0){
+        topTimer.textContent = (secondsLeft>0)? `Wait: ${secondsLeft}s` : 'Claim ready';
+        if(secondsLeft<=0){
           clearInterval(countdownTimer);
-          // show claim overlay once timer finishes
           showClaimOverlay();
-          // auto-trigger claim immediately (this mirrors how other pages behave)
-          claimAndHandle();
+          attemptClaim(); // automatically attempt server-side claim immediately
         }
       }, 1000);
     }
+    startCountdown(COUNTDOWN_SECONDS);
 
-    function updateTopTimer(){
-      topTimer.textContent = (secondsLeft > 0) ? `Wait: ${secondsLeft}s` : 'Claim ready';
-    }
+    function showClaimOverlay(){ claimOverlay.style.display='flex'; claimOverlay.setAttribute('aria-hidden','false'); claimBtn.focus(); claimStatus.textContent=''; }
+    function hideClaimOverlay(){ claimOverlay.style.display='none'; claimOverlay.setAttribute('aria-hidden','true'); }
 
-    function showClaimOverlay(){
-      claimOverlay.style.display = 'flex';
-      claimOverlay.setAttribute('aria-hidden','false');
-      claimBtn.focus();
-      claimStatus.textContent = '';
-    }
+    dismissBtn.addEventListener('click', (e)=>{ e.preventDefault(); hideClaimOverlay(); });
 
-    function hideClaimOverlay(){
-      claimOverlay.style.display = 'none';
-      claimOverlay.setAttribute('aria-hidden','true');
-    }
-
-    // start first countdown
-    startTopCountdown(COUNTDOWN_SECONDS);
-
-    dismissBtn.addEventListener('click', (e) => { e.preventDefault(); hideClaimOverlay(); });
-
-    // Helper: direct-call fallback using REST to functions endpoint
-    async function callFunctionDirectREST(articleUrl) {
-      // builds URL like https://us-central1-your-project.cloudfunctions.net/claimReward
-      const projectId = FIREBASE_CONFIG.projectId;
-      const url = `https://${FALLBACK_REGION}-${projectId}.cloudfunctions.net/claimReward`;
-
-      // get id token for authorization
-      if(!currentUser) throw new Error('Not authenticated (cannot call function).');
-      const idToken = await currentUser.getIdToken();
-
-      const body = JSON.stringify({ data: { articleUrl } });
-
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + idToken
-        },
-        body
-      });
-
-      let json = null;
-      try { json = await res.json(); } catch(e) { throw new Error(`Function returned non-JSON (${res.status})`); }
-
-      // callable functions usually return { result: { ... } }
-      const payload = json.result ?? json; // accept either shape
-      return payload;
-    }
-
-    // Main claim flow: try httpsCallable first, fallback to REST endpoint if that fails.
-    async function performClaim(articleUrl) {
-      // 1) Primary: httpsCallable (recommended)
-      try {
-        const call = httpsCallable(functions, 'claimReward');
-        const r = await call({ articleUrl });
-        // typically r.data = { success, message, newBalance }
-        return r.data ?? r;
-      } catch (errPrimary) {
-        console.warn('httpsCallable failed, attempting direct REST fallback', errPrimary);
-        const errMsg = (errPrimary && errPrimary.message) ? errPrimary.message : String(errPrimary);
-
-        // Try the REST fallback — but still surface internal-like errors
-        try {
-          if(!currentUser) throw new Error('Not authenticated (cannot call function).');
-          const fallbackRes = await callFunctionDirectREST(articleUrl);
-          return fallbackRes;
-        } catch (errFallback) {
-          console.error('Fallback function call failed', errFallback);
-          const combined = `${errMsg} — fallback: ${errFallback && errFallback.message ? errFallback.message : String(errFallback)}`;
-          const e = new Error(combined);
-          e.code = errPrimary?.code ?? errFallback?.code ?? null;
-          throw e;
-        }
-      }
-    }
-
-    // --- Claim cooldown helpers (client-side check using Firestore) ---
-    async function getLastReadClaimMillis(uid){
-      try {
-        const uDocRef = doc(db, 'users', uid);
-        const uSnap = await getDoc(uDocRef);
-        if(!uSnap.exists()) return null;
-        const d = uSnap.data();
-        const ts = d?.last_read_claim;
-        if(!ts) return null;
-        // Firestore Timestamp has toMillis()
-        if (typeof ts.toMillis === 'function') return ts.toMillis();
-        // if stored as number
-        if (typeof ts === 'number') return ts;
-        // fallback try parse
-        const parsed = Date.parse(String(ts));
-        return isNaN(parsed) ? null : parsed;
-      } catch (err) {
-        console.warn('getLastReadClaimMillis failed', err);
-        return null;
-      }
-    }
-
-    async function writeLastReadClaimNow(uid){
-      try {
-        const uDocRef = doc(db, 'users', uid);
-        // If user doc exists update otherwise create (merge)
-        await setDoc(uDocRef, { last_read_claim: serverTimestamp() }, { merge: true });
-      } catch (err) {
-        console.warn('writeLastReadClaimNow failed', err);
-      }
-    }
-
-    // Returns { allowed: boolean, remainingMs: number }
-    async function checkClaimAllowed(uid) {
-      const lastMillis = await getLastReadClaimMillis(uid);
-      if(!lastMillis) return { allowed: true, remainingMs: 0 };
-      const now = Date.now();
-      const diff = now - lastMillis;
-      if (diff >= CLAIM_COOLDOWN_MS) return { allowed: true, remainingMs: 0 };
-      return { allowed: false, remainingMs: CLAIM_COOLDOWN_MS - diff };
-    }
-    // --- end cooldown helpers ---
-
-    // unified claim handler used by both automatic flow and button click
-    let claimInProgress = false;
-    async function claimAndHandle() {
-      if (claimInProgress) return;
-      claimInProgress = true;
+    // main claim attempt using httpsCallable only
+    let claiming = false;
+    async function attemptClaim(){
+      if (claiming) return;
+      claiming = true;
       claimBtn.disabled = true;
       claimBtn.textContent = 'Processing...';
       claimStatus.textContent = '';
@@ -390,85 +133,55 @@
       if(!currentUser){
         claimBtn.disabled = false;
         claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
-        claimInProgress = false;
-        if(confirm('You need to sign in to claim. Go to login now?')) window.location.href = 'login.html';
+        claiming = false;
+        if(confirm('You must sign in to claim. Go to login page?')) window.location.href = 'login.html';
         return;
       }
 
       try {
-        // client-side cooldown check
-        const allowedRes = await checkClaimAllowed(currentUser.uid);
-        if(!allowedRes.allowed){
-          const sec = Math.ceil(allowedRes.remainingMs / 1000);
-          const mins = Math.floor(sec / 60);
-          const remSec = sec % 60;
-          const msg = `You already claimed recently. Try again in ${mins}m ${remSec}s`;
-          claimStatus.textContent = msg;
-          toast(msg);
-          // restart top countdown to show remaining time visually (keeps UX consistent)
-          hideClaimOverlay();
-          startTopCountdown(Math.min(Math.ceil(allowedRes.remainingMs / 1000), INTERNAL_RETRY_COUNT)); // short visual retry OR you can set to full remaining
-          claimInProgress = false;
-          claimBtn.disabled = false;
-          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
-          return;
-        }
+        const call = httpsCallable(functions, 'claimReward');
+        const res = await call({ articleUrl: ARTICLE_URL });
 
-        // proceed to server call
-        const res = await performClaim(ARTICLE_URL);
-        const msg = (res && (res.message || res.success && 'Claim successful')) || 'Claim succeeded';
-        const newBal = res && (res.newBalance ?? res.new_balance ?? res.new_balance_in_currency);
-        toast(msg);
-        claimStatus.textContent = msg + (newBal !== undefined ? ` — New balance: ₦${Number(newBal).toFixed(2)}` : '');
+        // res.data should be { success: true, message: "...", newBalance: ... }
+        const data = res.data ?? res;
+        const message = data?.message ?? 'Claim successful';
+        const newBalance = data?.newBalance ?? data?.new_balance;
+        toast(message);
+        claimStatus.textContent = message + (newBalance !== undefined ? ` — New balance: ₦${Number(newBalance).toFixed(2)}` : '');
         topTimer.textContent = 'Claimed';
-
-        // Write last_read_claim to Firestore (client-side). Prefer server-side enforcement inside cloud function too.
-        await writeLastReadClaimNow(currentUser.uid);
-
-        // optionally refresh user's balance doc once
-        try {
-          const uDoc = await getDoc(doc(db, 'users', currentUser.uid));
-          if(uDoc.exists()) console.log('Refreshed balance:', uDoc.data().balance);
-        } catch(e){ console.warn('refresh failed', e); }
-
-        // final UI state
-        claimBtn.disabled = true;
         claimBtn.textContent = 'Claimed';
+        claimBtn.disabled = true;
         setTimeout(()=> hideClaimOverlay(), 1200);
       } catch (err) {
-        console.error('Claim failed', err);
-        const msgText = err?.message || String(err);
-        claimStatus.textContent = msgText;
-        toast(msgText);
+        // better error messages (handle HttpsError from server)
+        console.error('claim error', err);
+        // if firebase HttpsError it should be under err.code and err.message
+        const message = err?.message ?? String(err);
+        claimStatus.textContent = message;
+        toast(message);
 
-        // If this looks like an "internal" server error, restart a retry cooldown
-        if(/internal/i.test(msgText) || (err && err.code === 'internal')) {
-          toast('Server reported internal error — retrying in 7 seconds');
+        // if it's a cooldown error, firebase on the server threw resource-exhausted
+        if (err?.code === 'resource-exhausted' || /cooldown/i.test(message)) {
+          // Show friendly info and restart a short countdown for UX (you can use actual remaining time from server if you return it)
           hideClaimOverlay();
-          startTopCountdown(INTERNAL_RETRY_COUNT);
+          // short fallback: 7 seconds visual retry so UX doesn't look stuck
+          startCountdown(7);
         } else {
-          // allow user to retry manually
+          // allow manual retry
           claimBtn.disabled = false;
           claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
         }
       } finally {
-        claimInProgress = false;
+        claiming = false;
       }
     }
 
-    // Claim button handler (manual)
-    claimBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      await claimAndHandle();
-    });
+    claimBtn.addEventListener('click', (e)=>{ e.preventDefault(); attemptClaim(); });
 
-    // accessibility: close overlay on escape
-    window.addEventListener('keydown', (ev) => {
-      if(ev.key === 'Escape') hideClaimOverlay();
-    });
+    // accessibility escape to close
+    window.addEventListener('keydown', (ev)=>{ if(ev.key === 'Escape') hideClaimOverlay(); });
 
-    // Safety note visible in console for admins
-    console.log('Read & Claim page loaded. COUNTDOWN_SECONDS=', COUNTDOWN_SECONDS, 'FALLBACK_REGION=', FALLBACK_REGION, 'CLIENT_COOLDOWN_MS=', CLAIM_COOLDOWN_MS);
+    console.log('Read & Claim loaded. functions region=', FUNCTIONS_REGION);
   </script>
 </body>
 </html>
