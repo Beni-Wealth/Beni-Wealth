@@ -3,13 +3,45 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Beni-Wealth — Read & Claim</title>
+  <title>Beni-Wealth — Read & Claim (PTC)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <meta name="theme-color" content="#2fe0b8" />
   <style>
-    /* ... keep your existing CSS (omitted here for brevity) ... */
-    body { font-family: Poppins, system-ui, Arial; background: #041018; color: #eaf2ff; margin:0 }
-    /* Add the rest of your styles from the previous page */
+    :root{
+      --bg: #041018;
+      --text: #eaf2ff;
+      --muted: #9fb3c9;
+      --accent: #2fe0b8;
+      --accent-2: #ff8a00;
+      font-family: 'Poppins', system-ui, Arial, sans-serif;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+    header.topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:linear-gradient(90deg,rgba(255,255,255,0.02),rgba(255,255,255,0.00));box-shadow:0 6px 20px rgba(0,0,0,0.25)}
+    .brand{font-weight:800;font-size:18px}
+    .subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+    .top-right{display:flex;gap:12px;align-items:center}
+    .top-timer{background:rgba(255,255,255,0.04);padding:8px 10px;border-radius:10px;font-weight:700}
+    .user-badge{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:10px;font-size:13px;color:var(--muted)}
+    .balance-badge{background:linear-gradient(90deg,var(--accent),#2ea6ff);padding:8px 10px;border-radius:999px;font-weight:800;color:#022;min-width:96px;text-align:center}
+    main.main{height:calc(100vh - 64px);display:flex;flex-direction:column}
+    .iframe-wrap{position:relative;flex:1;display:flex;align-items:stretch}
+    iframe#articleFrame{border:0;width:100%;height:100vh;display:block}
+    /* claim overlay (centered panel) */
+    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(rgba(2,6,23,0.45), rgba(2,6,23,0.45));backdrop-filter: blur(4px);padding:20px;z-index:50}
+    .panel{max-width:420px;width:100%;background:linear-gradient(180deg,#051826,#092433);border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 20px 60px rgba(2,6,23,0.7);text-align:center}
+    .panel .muted{color:var(--muted);font-size:13px}
+    .claim-btn{background:linear-gradient(90deg,var(--accent),#2ea6ff);border:0;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer}
+    .secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+    .status-line{margin-top:10px;color:var(--muted);min-height:20px}
+    .toast{background:#082; color:#e6ffe6; padding:8px 12px;border-radius:8px;margin-top:8px;box-shadow:0 8px 20px rgba(0,0,0,0.5)}
+    #toastRoot{pointer-events:none}
+    /* small responsive tweaks */
+    @media (max-width:640px){
+      .panel{padding:14px}
+      .brand{font-size:16px}
+      .subtitle{display:none}
+      .balance-badge{min-width:72px;font-size:13px}
+    }
   </style>
 </head>
 <body>
@@ -21,12 +53,17 @@
     <div class="top-right">
       <div id="topTimer" class="top-timer" aria-live="polite">Wait: 10s</div>
       <div id="userBadge" class="user-badge">Not signed in</div>
+      <div id="balanceBadge" class="balance-badge">₦0.00</div>
     </div>
   </header>
 
   <main class="main" role="main" aria-live="polite">
     <div class="iframe-wrap" id="iframeWrap">
-      <iframe id="articleFrame" src="https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters" title="Article" sandbox="allow-scripts allow-forms allow-same-origin allow-popups" loading="lazy"></iframe>
+      <iframe id="articleFrame"
+              src="https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters"
+              title="Article"
+              sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+              loading="lazy"></iframe>
 
       <div id="claimOverlay" class="overlay" aria-hidden="true" style="display:none;">
         <div class="panel" role="dialog" aria-modal="true" aria-label="Claim reward">
@@ -42,15 +79,26 @@
     </div>
   </main>
 
-  <div id="toastRoot" aria-live="polite" style="position:fixed;right:20px;bottom:20px;z-index:9999"></div>
+  <div id="toastRoot" aria-live="polite" style="position:fixed;right:20px;bottom:20px;z-index:9999;pointer-events:none"></div>
 
   <script type="module">
+    /**
+     * Internal crediting flow (optimistic client-side + server confirmation)
+     * - Optimistically shows credit immediately on claim for better UX
+     * - Saves pending claims to localStorage and retries them until server confirms
+     * - Uses callable function `claimReward` as authoritative server operation
+     *
+     * Notes:
+     * - The authoritative balance must come from your server/cloud function.
+     * - Client only shows optimistic changes and stores pending claims locally until server confirms.
+     */
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-functions.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Your firebase config
+    // config (your values)
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -64,15 +112,22 @@
     const ARTICLE_URL = "https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters";
     const CLAIM_AMOUNT = 0.2;
     const COUNTDOWN_SECONDS = 10;
-    const FUNCTIONS_REGION = 'us-central1'; // must match functions region used during deploy
+    const FUNCTIONS_REGION = 'us-central1';
+
+    // keys for localStorage
+    const LS_BALANCE_KEY = 'bw_balance_v1';
+    const LS_PENDING_KEY = 'bw_pending_claims_v1';
+    const LS_CLAIMED_PREFIX = 'bw_claimed_';
 
     const app = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
     const functions = getFunctions(app, FUNCTIONS_REGION);
     const db = getFirestore(app);
 
+    // UI elements
     const topTimer = document.getElementById('topTimer');
     const userBadge = document.getElementById('userBadge');
+    const balanceBadge = document.getElementById('balanceBadge');
     const claimOverlay = document.getElementById('claimOverlay');
     const claimBtn = document.getElementById('claimBtn');
     const dismissBtn = document.getElementById('dismissBtn');
@@ -83,46 +138,127 @@
       const t = document.createElement('div');
       t.className = 'toast';
       t.textContent = msg;
+      t.style.pointerEvents = 'auto';
       toastRoot.appendChild(t);
-      setTimeout(()=> t.remove(), ms);
+      setTimeout(()=> { t.remove(); }, ms);
     }
 
-    let currentUser = null;
-    onAuthStateChanged(auth, (u) => {
-      currentUser = u;
-      if(!u) userBadge.textContent = 'Not signed in';
-      else {
-        const name = u.displayName || (u.email ? u.email.split('@')[0] : u.uid.slice(0,6));
-        userBadge.textContent = `Signed in • ${name}`;
-      }
-    });
+    // localStorage helpers
+    function readJSON(key, fallback){
+      try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; }
+    }
+    function writeJSON(key, value){
+      try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+    }
 
-    // countdown
-    let secondsLeft = COUNTDOWN_SECONDS;
-    let countdownTimer = null;
-    function startCountdown(n=COUNTDOWN_SECONDS){
-      clearInterval(countdownTimer);
-      secondsLeft = n;
-      topTimer.textContent = `Wait: ${secondsLeft}s`;
-      countdownTimer = setInterval(()=>{
-        secondsLeft--;
-        topTimer.textContent = (secondsLeft>0)? `Wait: ${secondsLeft}s` : 'Claim ready';
-        if(secondsLeft<=0){
-          clearInterval(countdownTimer);
-          showClaimOverlay();
-          attemptClaim(); // automatically attempt server-side claim immediately
+    function getLocalBalance(){
+      return Number(readJSON(LS_BALANCE_KEY, 0)) || 0;
+    }
+    function setLocalBalance(amount){
+      writeJSON(LS_BALANCE_KEY, Number(amount));
+      updateBalanceUI();
+    }
+    function updateBalanceUI(){
+      const b = getLocalBalance();
+      balanceBadge.textContent = `₦${b.toFixed(2)}`;
+    }
+
+    // pending claims queue (stored locally until server confirms)
+    function getPendingClaims(){
+      return readJSON(LS_PENDING_KEY, []);
+    }
+    function setPendingClaims(list){
+      writeJSON(LS_PENDING_KEY, list);
+    }
+    function pushPendingClaim(item){
+      const p = getPendingClaims();
+      p.push(item);
+      setPendingClaims(p);
+    }
+    function removePendingClaimById(id){
+      const p = getPendingClaims().filter(x => x.id !== id);
+      setPendingClaims(p);
+    }
+
+    // trivial unique id
+    function uid(){
+      return Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+    }
+
+    // simple article key to avoid double-claim
+    function articleKey(url){ return 'bw_article_' + btoa(url).replace(/=/g,''); }
+
+    // attempt server-side claim for a pending item
+    async function flushOnePending(item){
+      try{
+        const call = httpsCallable(functions, 'claimReward');
+        const res = await call({ articleUrl: item.articleUrl, clientRequestId: item.id });
+        // expected: { success: true, message, newBalance }
+        const data = (res && res.data) ? res.data : res;
+        if(data?.success || typeof data?.newBalance !== 'undefined'){
+          // success: remove pending, record claimed, update authoritative balance
+          removePendingClaimById(item.id);
+          writeClaimedFlag(item.articleUrl, true);
+          if(typeof data.newBalance !== 'undefined'){
+            setLocalBalance(Number(data.newBalance));
+          }
+          toast(data.message || 'Claim confirmed');
+          return true;
+        } else {
+          // treat as failure (function returned unexpected)
+          throw new Error(data?.message || 'Unexpected server response');
         }
-      }, 1000);
+      }catch(err){
+        console.error('flushOnePending error', err);
+        // If server says already claimed, mark claimed and remove pending
+        const msg = err?.message || String(err);
+        if(/already claimed|cooldown|resource-exhausted/i.test(msg)){
+          writeClaimedFlag(item.articleUrl, true);
+          removePendingClaimById(item.id);
+          toast(msg);
+          return true;
+        }
+        // otherwise let it remain in the queue for retry
+        return false;
+      }
     }
-    startCountdown(COUNTDOWN_SECONDS);
 
-    function showClaimOverlay(){ claimOverlay.style.display='flex'; claimOverlay.setAttribute('aria-hidden','false'); claimBtn.focus(); claimStatus.textContent=''; }
-    function hideClaimOverlay(){ claimOverlay.style.display='none'; claimOverlay.setAttribute('aria-hidden','true'); }
+    // flush pending queue (sequential to avoid parallel race)
+    async function flushPendingQueue(){
+      const pending = getPendingClaims();
+      if(!pending.length) return;
+      // try each pending item (limit attempts)
+      for(const item of pending.slice()){
+        if(item.attempts >= 6){
+          // too many attempts -> mark failed and revert optimistic credit
+          removePendingClaimById(item.id);
+          // revert if we had optimistically added amount (we stored a flag in item)
+          if(item.optimistic){
+            const bal = getLocalBalance() - Number(item.amount || CLAIM_AMOUNT);
+            setLocalBalance(Math.max(0, bal));
+          }
+          toast('A pending claim failed permanently and was reverted.');
+          continue;
+        }
+        item.attempts = (item.attempts || 0) + 1;
+        setPendingClaims(getPendingClaims().map(p => p.id === item.id ? item : p));
+        const ok = await flushOnePending(item);
+        if(!ok){
+          // will be retried later
+          console.log('Pending claim will be retried (id)', item.id);
+        }
+      }
+    }
 
-    dismissBtn.addEventListener('click', (e)=>{ e.preventDefault(); hideClaimOverlay(); });
+    // helper to write claimed flag in localStorage
+    function writeClaimedFlag(url, val){
+      try{ localStorage.setItem(LS_CLAIMED_PREFIX + btoa(url).replace(/=/g,''), val ? '1' : '0'); }catch(e){}
+    }
+    function readClaimedFlag(url){
+      try{ return localStorage.getItem(LS_CLAIMED_PREFIX + btoa(url).replace(/=/g,'')) === '1'; }catch(e){ return false; }
+    }
 
-    // main claim attempt using httpsCallable only
-    let claiming = false;
+    // optimistic claim flow
     async function attemptClaim(){
       if (claiming) return;
       claiming = true;
@@ -130,6 +266,7 @@
       claimBtn.textContent = 'Processing...';
       claimStatus.textContent = '';
 
+      // ensure user is signed in to allow server-side claim (we still support offline/pending)
       if(!currentUser){
         claimBtn.disabled = false;
         claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
@@ -138,50 +275,141 @@
         return;
       }
 
-      try {
-        const call = httpsCallable(functions, 'claimReward');
-        const res = await call({ articleUrl: ARTICLE_URL });
-
-        // res.data should be { success: true, message: "...", newBalance: ... }
-        const data = res.data ?? res;
-        const message = data?.message ?? 'Claim successful';
-        const newBalance = data?.newBalance ?? data?.new_balance;
-        toast(message);
-        claimStatus.textContent = message + (newBalance !== undefined ? ` — New balance: ₦${Number(newBalance).toFixed(2)}` : '');
-        topTimer.textContent = 'Claimed';
+      // check local claimed flag to avoid duplicate client-side claims
+      if(readClaimedFlag(ARTICLE_URL)){
+        claimStatus.textContent = 'Already claimed for this article (client).';
         claimBtn.textContent = 'Claimed';
         claimBtn.disabled = true;
-        setTimeout(()=> hideClaimOverlay(), 1200);
-      } catch (err) {
-        // better error messages (handle HttpsError from server)
-        console.error('claim error', err);
-        // if firebase HttpsError it should be under err.code and err.message
-        const message = err?.message ?? String(err);
-        claimStatus.textContent = message;
-        toast(message);
+        claiming = false;
+        return;
+      }
 
-        // if it's a cooldown error, firebase on the server threw resource-exhausted
-        if (err?.code === 'resource-exhausted' || /cooldown/i.test(message)) {
-          // Show friendly info and restart a short countdown for UX (you can use actual remaining time from server if you return it)
-          hideClaimOverlay();
-          // short fallback: 7 seconds visual retry so UX doesn't look stuck
-          startCountdown(7);
+      // prepare pending claim object
+      const claimId = uid();
+      const pendingItem = {
+        id: claimId,
+        articleUrl: ARTICLE_URL,
+        amount: CLAIM_AMOUNT,
+        optimistic: true,
+        attempts: 0,
+        createdAt: Date.now()
+      };
+
+      // optimistic UI update: increment local balance and show immediate success visually
+      try{
+        const newBal = getLocalBalance() + Number(CLAIM_AMOUNT);
+        setLocalBalance(newBal);
+        toast(`+₦${CLAIM_AMOUNT.toFixed(2)} (pending confirmation)`);
+      }catch(e){
+        console.warn('optimistic update failed', e);
+      }
+
+      // push to pending queue and store claimed flag (prevents double-click)
+      pushPendingClaim(pendingItem);
+      writeClaimedFlag(ARTICLE_URL, false); // will be set to true when confirmed
+
+      // attempt to flush immediately
+      try{
+        const ok = await flushOnePending(pendingItem);
+        if(ok){
+          claimStatus.textContent = 'Claim confirmed';
+          claimBtn.textContent = 'Claimed';
+          claimBtn.disabled = true;
+          writeClaimedFlag(ARTICLE_URL, true);
         } else {
-          // allow manual retry
-          claimBtn.disabled = false;
-          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+          claimStatus.textContent = 'Claim queued — will retry automatically.';
+          claimBtn.textContent = 'Queued';
+          claimBtn.disabled = true;
         }
-      } finally {
+      }catch(err){
+        console.error('attemptClaim error', err);
+        claimStatus.textContent = err?.message || 'Claim error — queued for retry';
+        claimBtn.textContent = 'Queued';
+        claimBtn.disabled = true;
+      }finally{
         claiming = false;
       }
     }
 
     claimBtn.addEventListener('click', (e)=>{ e.preventDefault(); attemptClaim(); });
+    dismissBtn.addEventListener('click', (e)=>{ e.preventDefault(); hideClaimOverlay(); });
+
+    // show/hide overlay helpers
+    function showClaimOverlay(){ claimOverlay.style.display = 'flex'; claimOverlay.setAttribute('aria-hidden','false'); claimBtn.focus(); claimStatus.textContent=''; }
+    function hideClaimOverlay(){ claimOverlay.style.display = 'none'; claimOverlay.setAttribute('aria-hidden','true'); }
+
+    // countdown logic
+    let secondsLeft = COUNTDOWN_SECONDS;
+    let countdownTimer = null;
+    function startCountdown(n = COUNTDOWN_SECONDS){
+      clearInterval(countdownTimer);
+      secondsLeft = n;
+      topTimer.textContent = `Wait: ${secondsLeft}s`;
+      countdownTimer = setInterval(()=>{
+        secondsLeft--;
+        topTimer.textContent = (secondsLeft>0)? `Wait: ${secondsLeft}s` : 'Claim ready';
+        if(secondsLeft<=0){
+          clearInterval(countdownTimer);
+          // reveal overlay and auto-attempt claim
+          showClaimOverlay();
+          attemptClaim();
+        }
+      }, 1000);
+    }
+    startCountdown(COUNTDOWN_SECONDS);
+
+    // auto-retry pending claims in background
+    setInterval(() => {
+      flushPendingQueue().catch(e => console.error('flushPendingQueue fail', e));
+    }, 15000); // every 15s
+
+    // when online again, flush immediately
+    window.addEventListener('online', () => { flushPendingQueue().catch(()=>{}); });
+
+    // minimal auth & balance loading
+    let currentUser = null;
+    let claiming = false;
+
+    onAuthStateChanged(auth, async (u) => {
+      currentUser = u;
+      if(!u){
+        userBadge.textContent = 'Not signed in';
+        // keep local balance (guest)
+        updateBalanceUI();
+        return;
+      }
+
+      const name = u.displayName || (u.email ? u.email.split('@')[0] : u.uid.slice(0,6));
+      userBadge.textContent = `Signed in • ${name}`;
+
+      // Try to read authoritative balance from Firestore (users/{uid}.balance)
+      try{
+        const userDocRef = doc(db, 'users', u.uid);
+        const snap = await getDoc(userDocRef);
+        if(snap.exists()){
+          const data = snap.data();
+          const srvBalance = Number(data?.balance ?? data?.wallet ?? data?.main_balance ?? getLocalBalance());
+          // authoritative: update local
+          setLocalBalance(srvBalance);
+        } else {
+          // no doc -> keep local value
+          updateBalanceUI();
+        }
+      }catch(err){
+        console.warn('could not fetch user doc (maybe rules block read). falling back to local balance', err);
+        updateBalanceUI();
+      }
+
+      // immediately try to flush any pending claims after sign-in
+      flushPendingQueue().catch(e => console.error(e));
+    });
 
     // accessibility escape to close
     window.addEventListener('keydown', (ev)=>{ if(ev.key === 'Escape') hideClaimOverlay(); });
 
-    console.log('Read & Claim loaded. functions region=', FUNCTIONS_REGION);
+    // small helper to show initial status
+    updateBalanceUI();
+    console.log('Read & Claim (PTC) loaded. functions region=', FUNCTIONS_REGION);
   </script>
 </body>
 </html>
