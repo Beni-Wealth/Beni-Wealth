@@ -83,14 +83,10 @@
 
   <script type="module">
     /**
-     * Internal crediting flow (optimistic client-side + server confirmation)
-     * - Optimistically shows credit immediately on claim for better UX
-     * - Saves pending claims to localStorage and retries them until server confirms
-     * - Uses callable function `claimReward` as authoritative server operation
-     *
-     * Notes:
-     * - The authoritative balance must come from your server/cloud function.
-     * - Client only shows optimistic changes and stores pending claims locally until server confirms.
+     * Client PTC script with server-first crediting:
+     * - Try the callable function (claimReward) first (authoritative).
+     * - If the call fails due to network/transient error, fall back to optimistic local queue.
+     * - Pending queue is retried automatically and flushable via window.flushPendingQueue()
      */
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -250,6 +246,9 @@
       }
     }
 
+    // expose for console debugging
+    window.flushPendingQueue = flushPendingQueue;
+
     // helper to write claimed flag in localStorage
     function writeClaimedFlag(url, val){
       try{ localStorage.setItem(LS_CLAIMED_PREFIX + btoa(url).replace(/=/g,''), val ? '1' : '0'); }catch(e){}
@@ -258,7 +257,7 @@
       try{ return localStorage.getItem(LS_CLAIMED_PREFIX + btoa(url).replace(/=/g,'')) === '1'; }catch(e){ return false; }
     }
 
-    // optimistic claim flow
+    // server-first claim flow with fallback to optimistic queue
     async function attemptClaim(){
       if (claiming) return;
       claiming = true;
@@ -284,50 +283,99 @@
         return;
       }
 
-      // prepare pending claim object
       const claimId = uid();
-      const pendingItem = {
-        id: claimId,
-        articleUrl: ARTICLE_URL,
-        amount: CLAIM_AMOUNT,
-        optimistic: true,
-        attempts: 0,
-        createdAt: Date.now()
-      };
 
-      // optimistic UI update: increment local balance and show immediate success visually
-      try{
-        const newBal = getLocalBalance() + Number(CLAIM_AMOUNT);
-        setLocalBalance(newBal);
-        toast(`+₦${CLAIM_AMOUNT.toFixed(2)} (pending confirmation)`);
-      }catch(e){
-        console.warn('optimistic update failed', e);
-      }
+      // FIRST: try calling the server function directly (authoritative)
+      try {
+        const call = httpsCallable(functions, 'claimReward');
+        const res = await call({ articleUrl: ARTICLE_URL, clientRequestId: claimId });
+        const data = (res && res.data) ? res.data : res;
 
-      // push to pending queue and store claimed flag (prevents double-click)
-      pushPendingClaim(pendingItem);
-      writeClaimedFlag(ARTICLE_URL, false); // will be set to true when confirmed
-
-      // attempt to flush immediately
-      try{
-        const ok = await flushOnePending(pendingItem);
-        if(ok){
-          claimStatus.textContent = 'Claim confirmed';
+        if (data?.success) {
+          // authoritative new balance returned
+          const newBalance = Number(data.newBalance ?? 0);
+          setLocalBalance(newBalance);
+          writeClaimedFlag(ARTICLE_URL, true);
+          claimStatus.textContent = data.message || 'Claim confirmed';
           claimBtn.textContent = 'Claimed';
           claimBtn.disabled = true;
-          writeClaimedFlag(ARTICLE_URL, true);
+          toast(data.message || 'Claim credited');
+          // ensure any duplicate pending items for same article are removed
+          const pending = getPendingClaims().filter(p => p.articleUrl !== ARTICLE_URL);
+          setPendingClaims(pending);
+          claiming = false;
+          return;
         } else {
+          // unexpected server response -> fallback to optimistic queue
+          throw new Error(data?.message || 'Unexpected server response');
+        }
+      } catch (err) {
+        console.warn('Direct server claim failed, falling back to optimistic queue:', err);
+        const code = err?.code || '';
+        const msg = err?.message || String(err);
+
+        // handle deterministic server responses that shouldn't queue
+        if (code === 'resource-exhausted' || /daily/i.test(msg)) {
+          // daily limit or quota
+          claimStatus.textContent = msg;
+          claimBtn.textContent = 'Limit';
+          claimBtn.disabled = true;
+          claiming = false;
+          return;
+        }
+        if (/already claimed/i.test(msg) || code === 'already-exists') {
+          writeClaimedFlag(ARTICLE_URL, true);
+          claimStatus.textContent = 'Already claimed (server).';
+          claimBtn.textContent = 'Claimed';
+          claimBtn.disabled = true;
+          claiming = false;
+          return;
+        }
+
+        // Otherwise: network/transient error -> create optimistic pending claim
+        const pendingItem = {
+          id: claimId,
+          articleUrl: ARTICLE_URL,
+          amount: CLAIM_AMOUNT,
+          optimistic: true,
+          attempts: 0,
+          createdAt: Date.now()
+        };
+
+        // optimistic UI update: increment local balance and show immediate success visually
+        try{
+          const newBal = getLocalBalance() + Number(CLAIM_AMOUNT);
+          setLocalBalance(newBal);
+          toast(`+₦${CLAIM_AMOUNT.toFixed(2)} (pending confirmation)`);
+        }catch(e){
+          console.warn('optimistic update failed', e);
+        }
+
+        // push to pending queue and store claimed flag (prevents double-click)
+        pushPendingClaim(pendingItem);
+        writeClaimedFlag(ARTICLE_URL, false); // will be set to true when confirmed
+
+        // attempt to flush immediately (will likely fail if offline)
+        try{
+          const ok = await flushOnePending(pendingItem);
+          if(ok){
+            claimStatus.textContent = 'Claim confirmed';
+            claimBtn.textContent = 'Claimed';
+            claimBtn.disabled = true;
+            writeClaimedFlag(ARTICLE_URL, true);
+          } else {
+            claimStatus.textContent = 'Claim queued — will retry automatically.';
+            claimBtn.textContent = 'Queued';
+            claimBtn.disabled = true;
+          }
+        }catch(innerErr){
+          console.error('attemptClaim (optimistic) error', innerErr);
           claimStatus.textContent = 'Claim queued — will retry automatically.';
           claimBtn.textContent = 'Queued';
           claimBtn.disabled = true;
+        } finally {
+          claiming = false;
         }
-      }catch(err){
-        console.error('attemptClaim error', err);
-        claimStatus.textContent = err?.message || 'Claim error — queued for retry';
-        claimBtn.textContent = 'Queued';
-        claimBtn.disabled = true;
-      }finally{
-        claiming = false;
       }
     }
 
