@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Beni-Wealth — Read & Claim (PTC)</title>
+  <title>Beni-Wealth — Read & Claim (PTC) — Server-only credit</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <meta name="theme-color" content="#2fe0b8" />
   <style>
@@ -35,7 +35,6 @@
     .status-line{margin-top:10px;color:var(--muted);min-height:20px}
     .toast{background:#082; color:#e6ffe6; padding:8px 12px;border-radius:8px;margin-top:8px;box-shadow:0 8px 20px rgba(0,0,0,0.5)}
     #toastRoot{pointer-events:none}
-    /* small responsive tweaks */
     @media (max-width:640px){
       .panel{padding:14px}
       .brand{font-size:16px}
@@ -83,10 +82,10 @@
 
   <script type="module">
     /**
-     * Client PTC script with server-first crediting:
-     * - Try the callable function (claimReward) first (authoritative).
-     * - If the call fails due to network/transient error, fall back to optimistic local queue.
-     * - Pending queue is retried automatically and flushable via window.flushPendingQueue()
+     * Server-only credit flow (no queuing)
+     * - Calls callable 'claimReward' which must atomically credit users/{uid}.balance
+     * - On success: update UI with returned newBalance
+     * - On failure: show error, do NOT queue; user must retry when online / resolved
      */
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -109,11 +108,6 @@
     const CLAIM_AMOUNT = 0.2;
     const COUNTDOWN_SECONDS = 10;
     const FUNCTIONS_REGION = 'us-central1';
-
-    // keys for localStorage
-    const LS_BALANCE_KEY = 'bw_balance_v1';
-    const LS_PENDING_KEY = 'bw_pending_claims_v1';
-    const LS_CLAIMED_PREFIX = 'bw_claimed_';
 
     const app = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
@@ -139,254 +133,107 @@
       setTimeout(()=> { t.remove(); }, ms);
     }
 
-    // localStorage helpers
-    function readJSON(key, fallback){
-      try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; }
+    // in-memory balance (authoritative only from server)
+    let currentBalance = 0;
+    function setBalance(amount){
+      currentBalance = Number(amount) || 0;
+      balanceBadge.textContent = `₦${currentBalance.toFixed(2)}`;
     }
-    function writeJSON(key, value){
-      try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
-    }
-
-    function getLocalBalance(){
-      return Number(readJSON(LS_BALANCE_KEY, 0)) || 0;
-    }
-    function setLocalBalance(amount){
-      writeJSON(LS_BALANCE_KEY, Number(amount));
-      updateBalanceUI();
-    }
-    function updateBalanceUI(){
-      const b = getLocalBalance();
-      balanceBadge.textContent = `₦${b.toFixed(2)}`;
+    function showOfflineMessage(){
+      claimStatus.textContent = 'You are offline — connect to the internet and retry to claim.';
     }
 
-    // pending claims queue (stored locally until server confirms)
-    function getPendingClaims(){
-      return readJSON(LS_PENDING_KEY, []);
-    }
-    function setPendingClaims(list){
-      writeJSON(LS_PENDING_KEY, list);
-    }
-    function pushPendingClaim(item){
-      const p = getPendingClaims();
-      p.push(item);
-      setPendingClaims(p);
-    }
-    function removePendingClaimById(id){
-      const p = getPendingClaims().filter(x => x.id !== id);
-      setPendingClaims(p);
-    }
-
-    // trivial unique id
-    function uid(){
-      return Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
-    }
-
-    // simple article key to avoid double-claim
-    function articleKey(url){ return 'bw_article_' + btoa(url).replace(/=/g,''); }
-
-    // attempt server-side claim for a pending item
-    async function flushOnePending(item){
-      try{
-        const call = httpsCallable(functions, 'claimReward');
-        const res = await call({ articleUrl: item.articleUrl, clientRequestId: item.id });
-        // expected: { success: true, message, newBalance }
-        const data = (res && res.data) ? res.data : res;
-        if(data?.success || typeof data?.newBalance !== 'undefined'){
-          // success: remove pending, record claimed, update authoritative balance
-          removePendingClaimById(item.id);
-          writeClaimedFlag(item.articleUrl, true);
-          if(typeof data.newBalance !== 'undefined'){
-            setLocalBalance(Number(data.newBalance));
-          }
-          toast(data.message || 'Claim confirmed');
-          return true;
-        } else {
-          // treat as failure (function returned unexpected)
-          throw new Error(data?.message || 'Unexpected server response');
-        }
-      }catch(err){
-        console.error('flushOnePending error', err);
-        // If server says already claimed, mark claimed and remove pending
-        const msg = err?.message || String(err);
-        if(/already claimed|cooldown|resource-exhausted/i.test(msg)){
-          writeClaimedFlag(item.articleUrl, true);
-          removePendingClaimById(item.id);
-          toast(msg);
-          return true;
-        }
-        // otherwise let it remain in the queue for retry
-        return false;
-      }
-    }
-
-    // flush pending queue (sequential to avoid parallel race)
-    async function flushPendingQueue(){
-      const pending = getPendingClaims();
-      if(!pending.length) return;
-      // try each pending item (limit attempts)
-      for(const item of pending.slice()){
-        if(item.attempts >= 6){
-          // too many attempts -> mark failed and revert optimistic credit
-          removePendingClaimById(item.id);
-          // revert if we had optimistically added amount (we stored a flag in item)
-          if(item.optimistic){
-            const bal = getLocalBalance() - Number(item.amount || CLAIM_AMOUNT);
-            setLocalBalance(Math.max(0, bal));
-          }
-          toast('A pending claim failed permanently and was reverted.');
-          continue;
-        }
-        item.attempts = (item.attempts || 0) + 1;
-        setPendingClaims(getPendingClaims().map(p => p.id === item.id ? item : p));
-        const ok = await flushOnePending(item);
-        if(!ok){
-          // will be retried later
-          console.log('Pending claim will be retried (id)', item.id);
-        }
-      }
-    }
-
-    // expose for console debugging
-    window.flushPendingQueue = flushPendingQueue;
-
-    // helper to write claimed flag in localStorage
-    function writeClaimedFlag(url, val){
-      try{ localStorage.setItem(LS_CLAIMED_PREFIX + btoa(url).replace(/=/g,''), val ? '1' : '0'); }catch(e){}
-    }
-    function readClaimedFlag(url){
-      try{ return localStorage.getItem(LS_CLAIMED_PREFIX + btoa(url).replace(/=/g,'')) === '1'; }catch(e){ return false; }
-    }
-
-    // server-first claim flow with fallback to optimistic queue
-    async function attemptClaim(){
+    // attempt server-only claim (no queue)
+    let claiming = false;
+    async function attemptClaimServerOnly(){
       if (claiming) return;
       claiming = true;
       claimBtn.disabled = true;
       claimBtn.textContent = 'Processing...';
       claimStatus.textContent = '';
 
-      // ensure user is signed in to allow server-side claim (we still support offline/pending)
-      if(!currentUser){
+      if (!navigator.onLine) {
+        showOfflineMessage();
         claimBtn.disabled = false;
         claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
         claiming = false;
-        if(confirm('You must sign in to claim. Go to login page?')) window.location.href = 'login.html';
         return;
       }
 
-      // check local claimed flag to avoid duplicate client-side claims
-      if(readClaimedFlag(ARTICLE_URL)){
-        claimStatus.textContent = 'Already claimed for this article (client).';
-        claimBtn.textContent = 'Claimed';
-        claimBtn.disabled = true;
+      if (!currentUser) {
+        claimStatus.textContent = 'You must sign in to claim.';
+        claimBtn.disabled = false;
+        claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
         claiming = false;
+        if (confirm('You must sign in to claim. Go to login page?')) window.location.href = 'login.html';
         return;
       }
 
-      const claimId = uid();
-
-      // FIRST: try calling the server function directly (authoritative)
       try {
+        const clientRequestId = 'c_' + Math.random().toString(36).slice(2,9);
         const call = httpsCallable(functions, 'claimReward');
-        const res = await call({ articleUrl: ARTICLE_URL, clientRequestId: claimId });
+        const res = await call({ articleUrl: ARTICLE_URL, clientRequestId });
         const data = (res && res.data) ? res.data : res;
 
         if (data?.success) {
-          // authoritative new balance returned
-          const newBalance = Number(data.newBalance ?? 0);
-          setLocalBalance(newBalance);
-          writeClaimedFlag(ARTICLE_URL, true);
-          claimStatus.textContent = data.message || 'Claim confirmed';
+          // authoritative server balance
+          setBalance(Number(data.newBalance ?? currentBalance));
+          claimStatus.textContent = data.message || 'Claim successful';
           claimBtn.textContent = 'Claimed';
           claimBtn.disabled = true;
           toast(data.message || 'Claim credited');
-          // ensure any duplicate pending items for same article are removed
-          const pending = getPendingClaims().filter(p => p.articleUrl !== ARTICLE_URL);
-          setPendingClaims(pending);
           claiming = false;
           return;
         } else {
-          // unexpected server response -> fallback to optimistic queue
-          throw new Error(data?.message || 'Unexpected server response');
+          // unexpected response
+          claimStatus.textContent = data?.message || 'Claim failed';
+          claimBtn.disabled = false;
+          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+          claiming = false;
+          return;
         }
       } catch (err) {
-        console.warn('Direct server claim failed, falling back to optimistic queue:', err);
+        console.error('claimReward error', err);
+        // HttpsError codes are available under err.code (string) and err.message
         const code = err?.code || '';
-        const msg = err?.message || String(err);
+        const message = err?.message || String(err);
 
-        // handle deterministic server responses that shouldn't queue
-        if (code === 'resource-exhausted' || /daily/i.test(msg)) {
-          // daily limit or quota
-          claimStatus.textContent = msg;
+        if (code === 'resource-exhausted' || /daily/i.test(message)) {
+          claimStatus.textContent = message;
           claimBtn.textContent = 'Limit';
           claimBtn.disabled = true;
-          claiming = false;
-          return;
-        }
-        if (/already claimed/i.test(msg) || code === 'already-exists') {
-          writeClaimedFlag(ARTICLE_URL, true);
-          claimStatus.textContent = 'Already claimed (server).';
+        } else if (/already claimed/i.test(message) || code === 'already-exists') {
+          claimStatus.textContent = 'Already claimed for this article.';
           claimBtn.textContent = 'Claimed';
           claimBtn.disabled = true;
-          claiming = false;
-          return;
+        } else if (!navigator.onLine || /network/i.test(message)) {
+          showOfflineMessage();
+          claimBtn.disabled = false;
+          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+        } else if (code === 'unauthenticated' || /auth/i.test(message)) {
+          claimStatus.textContent = 'You must sign in to claim.';
+          claimBtn.disabled = false;
+          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+          if (confirm('You must sign in to claim. Go to login page?')) window.location.href = 'login.html';
+        } else {
+          // generic failure; do not queue
+          claimStatus.textContent = message || 'Claim failed — try again later';
+          claimBtn.disabled = false;
+          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
         }
-
-        // Otherwise: network/transient error -> create optimistic pending claim
-        const pendingItem = {
-          id: claimId,
-          articleUrl: ARTICLE_URL,
-          amount: CLAIM_AMOUNT,
-          optimistic: true,
-          attempts: 0,
-          createdAt: Date.now()
-        };
-
-        // optimistic UI update: increment local balance and show immediate success visually
-        try{
-          const newBal = getLocalBalance() + Number(CLAIM_AMOUNT);
-          setLocalBalance(newBal);
-          toast(`+₦${CLAIM_AMOUNT.toFixed(2)} (pending confirmation)`);
-        }catch(e){
-          console.warn('optimistic update failed', e);
-        }
-
-        // push to pending queue and store claimed flag (prevents double-click)
-        pushPendingClaim(pendingItem);
-        writeClaimedFlag(ARTICLE_URL, false); // will be set to true when confirmed
-
-        // attempt to flush immediately (will likely fail if offline)
-        try{
-          const ok = await flushOnePending(pendingItem);
-          if(ok){
-            claimStatus.textContent = 'Claim confirmed';
-            claimBtn.textContent = 'Claimed';
-            claimBtn.disabled = true;
-            writeClaimedFlag(ARTICLE_URL, true);
-          } else {
-            claimStatus.textContent = 'Claim queued — will retry automatically.';
-            claimBtn.textContent = 'Queued';
-            claimBtn.disabled = true;
-          }
-        }catch(innerErr){
-          console.error('attemptClaim (optimistic) error', innerErr);
-          claimStatus.textContent = 'Claim queued — will retry automatically.';
-          claimBtn.textContent = 'Queued';
-          claimBtn.disabled = true;
-        } finally {
-          claiming = false;
-        }
+        toast(message || 'Claim failed');
+        claiming = false;
       }
     }
 
-    claimBtn.addEventListener('click', (e)=>{ e.preventDefault(); attemptClaim(); });
+    // UI handlers
+    claimBtn.addEventListener('click', (e)=>{ e.preventDefault(); attemptClaimServerOnly(); });
     dismissBtn.addEventListener('click', (e)=>{ e.preventDefault(); hideClaimOverlay(); });
 
-    // show/hide overlay helpers
     function showClaimOverlay(){ claimOverlay.style.display = 'flex'; claimOverlay.setAttribute('aria-hidden','false'); claimBtn.focus(); claimStatus.textContent=''; }
     function hideClaimOverlay(){ claimOverlay.style.display = 'none'; claimOverlay.setAttribute('aria-hidden','true'); }
 
-    // countdown logic
+    // countdown logic (auto show overlay + try server claim when countdown finishes)
     let secondsLeft = COUNTDOWN_SECONDS;
     let countdownTimer = null;
     function startCountdown(n = COUNTDOWN_SECONDS){
@@ -396,68 +243,52 @@
       countdownTimer = setInterval(()=>{
         secondsLeft--;
         topTimer.textContent = (secondsLeft>0)? `Wait: ${secondsLeft}s` : 'Claim ready';
-        if(secondsLeft<=0){
+        if (secondsLeft<=0){
           clearInterval(countdownTimer);
-          // reveal overlay and auto-attempt claim
           showClaimOverlay();
-          attemptClaim();
+          // attempt server-only claim immediately
+          attemptClaimServerOnly();
         }
       }, 1000);
     }
     startCountdown(COUNTDOWN_SECONDS);
 
-    // auto-retry pending claims in background
-    setInterval(() => {
-      flushPendingQueue().catch(e => console.error('flushPendingQueue fail', e));
-    }, 15000); // every 15s
-
-    // when online again, flush immediately
-    window.addEventListener('online', () => { flushPendingQueue().catch(()=>{}); });
-
-    // minimal auth & balance loading
+    // auth + balance load
     let currentUser = null;
-    let claiming = false;
-
     onAuthStateChanged(auth, async (u) => {
       currentUser = u;
-      if(!u){
+      if (!u) {
         userBadge.textContent = 'Not signed in';
-        // keep local balance (guest)
-        updateBalanceUI();
+        // Keep balance at 0 until user signs in
+        setBalance(0);
         return;
       }
-
       const name = u.displayName || (u.email ? u.email.split('@')[0] : u.uid.slice(0,6));
       userBadge.textContent = `Signed in • ${name}`;
 
-      // Try to read authoritative balance from Firestore (users/{uid}.balance)
-      try{
+      // load authoritative balance from users/{uid}.balance (if rules allow)
+      try {
         const userDocRef = doc(db, 'users', u.uid);
         const snap = await getDoc(userDocRef);
-        if(snap.exists()){
-          const data = snap.data();
-          const srvBalance = Number(data?.balance ?? data?.wallet ?? data?.main_balance ?? getLocalBalance());
-          // authoritative: update local
-          setLocalBalance(srvBalance);
+        if (snap.exists()) {
+          const srv = snap.data();
+          const srvBalance = Number(srv?.balance ?? 0);
+          setBalance(srvBalance);
         } else {
-          // no doc -> keep local value
-          updateBalanceUI();
+          setBalance(0);
         }
-      }catch(err){
-        console.warn('could not fetch user doc (maybe rules block read). falling back to local balance', err);
-        updateBalanceUI();
+      } catch (err) {
+        console.warn('could not fetch user balance (rules/network). defaulting to 0', err);
+        // keep currentBalance as-is (or 0)
       }
-
-      // immediately try to flush any pending claims after sign-in
-      flushPendingQueue().catch(e => console.error(e));
     });
 
-    // accessibility escape to close
+    // accessibility: close overlay with Escape
     window.addEventListener('keydown', (ev)=>{ if(ev.key === 'Escape') hideClaimOverlay(); });
 
     // small helper to show initial status
-    updateBalanceUI();
-    console.log('Read & Claim (PTC) loaded. functions region=', FUNCTIONS_REGION);
+    setBalance(0);
+    console.log('Read & Claim (server-only) loaded. functions region=', FUNCTIONS_REGION);
   </script>
 </body>
 </html>
