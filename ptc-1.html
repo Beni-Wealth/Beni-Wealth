@@ -20,7 +20,7 @@
     .brand{font-weight:800;font-size:18px}
     .subtitle{font-size:12px;color:var(--muted);margin-top:2px}
     .top-right{display:flex;gap:12px;align-items:center}
-    .top-timer{background:rgba(255,255,255,0.04);padding:8px 10px;border-radius:10px;font-weight:700}
+    .top-timer{background:rgba(255,255,255,0.04);padding:8px 10px;border-radius:10px;font-weight:700;min-width:88px;text-align:center}
     .user-badge{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:10px;font-size:13px;color:var(--muted)}
     .balance-badge{background:linear-gradient(90deg,var(--accent),#2ea6ff);padding:8px 10px;border-radius:999px;font-weight:800;color:#022;min-width:96px;text-align:center}
     main.main{height:calc(100vh - 64px);display:flex;flex-direction:column}
@@ -33,6 +33,7 @@
     .claim-btn{background:linear-gradient(90deg,var(--accent),#2ea6ff);border:0;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer}
     .secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
     .status-line{margin-top:10px;color:var(--muted);min-height:20px}
+    .tx-line{margin-top:8px;color:#bfeedc;font-size:13px}
     .toast{background:#082; color:#e6ffe6; padding:8px 12px;border-radius:8px;margin-top:8px;box-shadow:0 8px 20px rgba(0,0,0,0.5)}
     #toastRoot{pointer-events:none}
     @media (max-width:640px){
@@ -40,6 +41,7 @@
       .brand{font-size:16px}
       .subtitle{display:none}
       .balance-badge{min-width:72px;font-size:13px}
+      .top-timer{min-width:64px}
     }
   </style>
 </head>
@@ -49,8 +51,8 @@
       <div class="brand">Beni-Wealth</div>
       <div class="subtitle">Read • Earn • Claim</div>
     </div>
-    <div class="top-right">
-      <div id="topTimer" class="top-timer" aria-live="polite">Wait: 10s</div>
+    <div class="top-right" aria-live="polite">
+      <div id="topTimer" class="top-timer">Wait: 10s</div>
       <div id="userBadge" class="user-badge">Not signed in</div>
       <div id="balanceBadge" class="balance-badge">₦0.00</div>
     </div>
@@ -73,6 +75,7 @@
             <button id="dismissBtn" class="secondary">Maybe later</button>
           </div>
           <div id="claimStatus" class="status-line" aria-live="polite"></div>
+          <div id="txLine" class="tx-line" aria-live="polite" style="display:none"></div>
         </div>
       </div>
     </div>
@@ -81,19 +84,12 @@
   <div id="toastRoot" aria-live="polite" style="position:fixed;right:20px;bottom:20px;z-index:9999;pointer-events:none"></div>
 
   <script type="module">
-    /**
-     * Server-only credit flow (no queuing)
-     * - Calls callable 'claimReward' which must atomically credit users/{uid}.balance
-     * - On success: update UI with returned newBalance
-     * - On failure: show error, do NOT queue; user must retry when online / resolved
-     */
-
+    /* ======= CONFIG ======= */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-functions.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // config (your values)
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -106,15 +102,17 @@
 
     const ARTICLE_URL = "https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters";
     const CLAIM_AMOUNT = 0.2;
-    const COUNTDOWN_SECONDS = 10;
+    const COUNTDOWN_SECONDS = 10; // initial read timer before showing overlay
     const FUNCTIONS_REGION = 'us-central1';
+    const COOLDOWN_MINUTES = 60; // must match server-side cooldown
 
+    /* ======= APP INIT ======= */
     const app = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
     const functions = getFunctions(app, FUNCTIONS_REGION);
     const db = getFirestore(app);
 
-    // UI elements
+    /* ======= UI ======= */
     const topTimer = document.getElementById('topTimer');
     const userBadge = document.getElementById('userBadge');
     const balanceBadge = document.getElementById('balanceBadge');
@@ -122,6 +120,7 @@
     const claimBtn = document.getElementById('claimBtn');
     const dismissBtn = document.getElementById('dismissBtn');
     const claimStatus = document.getElementById('claimStatus');
+    const txLine = document.getElementById('txLine');
     const toastRoot = document.getElementById('toastRoot');
 
     function toast(msg, ms=3500){
@@ -133,18 +132,52 @@
       setTimeout(()=> { t.remove(); }, ms);
     }
 
-    // in-memory balance (authoritative only from server)
+    /* ======= Balance Helpers ======= */
     let currentBalance = 0;
     function setBalance(amount){
       currentBalance = Number(amount) || 0;
       balanceBadge.textContent = `₦${currentBalance.toFixed(2)}`;
     }
-    function showOfflineMessage(){
-      claimStatus.textContent = 'You are offline — connect to the internet and retry to claim.';
+
+    /* ======= Overlay Helpers ======= */
+    function showClaimOverlay(){ claimOverlay.style.display = 'flex'; claimOverlay.setAttribute('aria-hidden','false'); claimBtn.focus(); claimStatus.textContent=''; txLine.style.display='none'; txLine.textContent=''; }
+    function hideClaimOverlay(){ claimOverlay.style.display = 'none'; claimOverlay.setAttribute('aria-hidden','true'); }
+
+    /* ======= Cooldown UI (live countdown) ======= */
+    let liveCooldownTimer = null;
+    function startCooldown(seconds){
+      clearInterval(liveCooldownTimer);
+      let s = Math.max(0, Math.floor(seconds));
+      updateCooldownUI(s);
+      liveCooldownTimer = setInterval(()=>{
+        s--;
+        if (s <= 0){
+          clearInterval(liveCooldownTimer);
+          updateCooldownUI(0);
+          // Re-enable claim button if overlay visible
+          claimBtn.disabled = false;
+          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+          claimStatus.textContent = 'You can claim now.';
+        } else {
+          updateCooldownUI(s);
+        }
+      }, 1000);
+    }
+    function updateCooldownUI(sec){
+      if (sec <= 0){
+        topTimer.textContent = 'Claim ready';
+        return;
+      }
+      const m = Math.floor(sec/60);
+      const s = sec % 60;
+      topTimer.textContent = `Wait: ${m}m ${s}s`;
+      // if overlay open, show message there too
+      claimStatus.textContent = `Please wait ${m}m ${s}s before claiming again.`;
     }
 
-    // attempt server-only claim (no queue)
+    /* ======= Claim function (server-only) ======= */
     let claiming = false;
+
     async function attemptClaimServerOnly(){
       if (claiming) return;
       claiming = true;
@@ -153,7 +186,7 @@
       claimStatus.textContent = '';
 
       if (!navigator.onLine) {
-        showOfflineMessage();
+        claimStatus.textContent = 'You are offline — connect to the internet and retry to claim.';
         claimBtn.disabled = false;
         claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
         claiming = false;
@@ -176,16 +209,20 @@
         const data = (res && res.data) ? res.data : res;
 
         if (data?.success) {
-          // authoritative server balance
           setBalance(Number(data.newBalance ?? currentBalance));
           claimStatus.textContent = data.message || 'Claim successful';
           claimBtn.textContent = 'Claimed';
           claimBtn.disabled = true;
+          // show tx id if available
+          if (data.txId) {
+            txLine.style.display = '';
+            txLine.textContent = `Transaction: ${data.txId}`;
+          }
           toast(data.message || 'Claim credited');
           claiming = false;
           return;
         } else {
-          // unexpected response
+          // Unexpected but handle gracefully
           claimStatus.textContent = data?.message || 'Claim failed';
           claimBtn.disabled = false;
           claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
@@ -194,99 +231,149 @@
         }
       } catch (err) {
         console.error('claimReward error', err);
-        // HttpsError codes are available under err.code (string) and err.message
         const code = err?.code || '';
         const message = err?.message || String(err);
 
-        if (code === 'resource-exhausted' || /daily/i.test(message)) {
-          claimStatus.textContent = message;
+        // Resource-exhausted -> parse "Please wait Xm Ys" message and start countdown
+        if (code === 'resource-exhausted' || /Please wait/i.test(message)) {
+          // try to parse "Please wait X m Y s" or "Please wait Zs"
+          const mmss = /Please wait\s*(?:(\d+)\s*m(?:in)?(?:utes?)?)?\s*(?:(\d+)\s*s(?:ec)?)?/i.exec(message);
+          let seconds = null;
+          if (mmss) {
+            const min = Number(mmss[1] || 0);
+            const sec = Number(mmss[2] || 0);
+            seconds = min * 60 + sec;
+          } else {
+            const sOnly = /(\d+)\s*s(?:ec)?/i.exec(message);
+            seconds = sOnly ? Number(sOnly[1]) : null;
+          }
+          // Fallback: use server-side cooldown minutes if parsing failed
+          if (seconds === null) seconds = COOLDOWN_MINUTES * 60;
+
           claimBtn.textContent = 'Limit';
           claimBtn.disabled = true;
-        } else if (/already claimed/i.test(message) || code === 'already-exists') {
+          startCooldown(seconds);
+          toast(message);
+          claiming = false;
+          return;
+        }
+
+        // Already claimed
+        if (/already claimed/i.test(message) || code === 'already-exists') {
           claimStatus.textContent = 'Already claimed for this article.';
           claimBtn.textContent = 'Claimed';
           claimBtn.disabled = true;
-        } else if (!navigator.onLine || /network/i.test(message)) {
-          showOfflineMessage();
-          claimBtn.disabled = false;
-          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
-        } else if (code === 'unauthenticated' || /auth/i.test(message)) {
+          claiming = false;
+          return;
+        }
+
+        // Auth issues
+        if (code === 'unauthenticated' || /auth/i.test(message)) {
           claimStatus.textContent = 'You must sign in to claim.';
           claimBtn.disabled = false;
           claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
           if (confirm('You must sign in to claim. Go to login page?')) window.location.href = 'login.html';
-        } else {
-          // generic failure; do not queue
-          claimStatus.textContent = message || 'Claim failed — try again later';
+          claiming = false;
+          return;
+        }
+
+        // Network / unavailable
+        if (!navigator.onLine || code === 'unavailable' || /network/i.test(message)) {
+          claimStatus.textContent = 'Network/server error — please connect and try again.';
           claimBtn.disabled = false;
           claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+          claiming = false;
+          toast(message || 'Network error');
+          return;
         }
+
+        // Generic failure
+        claimStatus.textContent = message || 'Claim failed — try again later';
+        claimBtn.disabled = false;
+        claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
+        claimBtn.focus();
         toast(message || 'Claim failed');
         claiming = false;
       }
     }
 
-    // UI handlers
-    claimBtn.addEventListener('click', (e)=>{ e.preventDefault(); attemptClaimServerOnly(); });
-    dismissBtn.addEventListener('click', (e)=>{ e.preventDefault(); hideClaimOverlay(); });
-
-    function showClaimOverlay(){ claimOverlay.style.display = 'flex'; claimOverlay.setAttribute('aria-hidden','false'); claimBtn.focus(); claimStatus.textContent=''; }
-    function hideClaimOverlay(){ claimOverlay.style.display = 'none'; claimOverlay.setAttribute('aria-hidden','true'); }
-
-    // countdown logic (auto show overlay + try server claim when countdown finishes)
+    /* ======= Countdown (pre-claim overlay) ======= */
     let secondsLeft = COUNTDOWN_SECONDS;
     let countdownTimer = null;
     function startCountdown(n = COUNTDOWN_SECONDS){
       clearInterval(countdownTimer);
       secondsLeft = n;
-      topTimer.textContent = `Wait: ${secondsLeft}s`;
+      updateTopTimer(secondsLeft);
       countdownTimer = setInterval(()=>{
         secondsLeft--;
-        topTimer.textContent = (secondsLeft>0)? `Wait: ${secondsLeft}s` : 'Claim ready';
-        if (secondsLeft<=0){
+        updateTopTimer(secondsLeft);
+        if (secondsLeft <= 0){
           clearInterval(countdownTimer);
+          updateTopTimer(0);
           showClaimOverlay();
-          // attempt server-only claim immediately
-          attemptClaimServerOnly();
         }
       }, 1000);
     }
+    function updateTopTimer(sec){
+      if (sec <= 0){ topTimer.textContent = 'Claim ready'; return; }
+      topTimer.textContent = `Wait: ${sec}s`;
+    }
     startCountdown(COUNTDOWN_SECONDS);
 
-    // auth + balance load
+    /* ======= Auth & balance load ======= */
     let currentUser = null;
     onAuthStateChanged(auth, async (u) => {
       currentUser = u;
       if (!u) {
         userBadge.textContent = 'Not signed in';
-        // Keep balance at 0 until user signs in
         setBalance(0);
         return;
       }
       const name = u.displayName || (u.email ? u.email.split('@')[0] : u.uid.slice(0,6));
       userBadge.textContent = `Signed in • ${name}`;
 
-      // load authoritative balance from users/{uid}.balance (if rules allow)
+      // Load authoritative balance & lastClaimAt to possibly show remaining cooldown
       try {
         const userDocRef = doc(db, 'users', u.uid);
         const snap = await getDoc(userDocRef);
         if (snap.exists()) {
-          const srv = snap.data();
-          const srvBalance = Number(srv?.balance ?? 0);
+          const data = snap.data();
+          const srvBalance = Number(data?.balance ?? 0);
           setBalance(srvBalance);
+
+          // if lastClaimAt exists, compute remaining cooldown
+          const ts = data?.lastClaimAt;
+          if (ts) {
+            // Timestamp object from Firestore
+            const last = (typeof ts.toDate === 'function') ? ts.toDate() : (ts instanceof Object && ts.seconds ? new Date(ts.seconds*1000) : null);
+            if (last) {
+              const diff = Date.now() - last.getTime();
+              const cooldownMs = COOLDOWN_MINUTES * 60 * 1000;
+              if (diff < cooldownMs) {
+                const remSec = Math.ceil((cooldownMs - diff) / 1000);
+                // start live cooldown UI
+                claimBtn.disabled = true;
+                claimBtn.textContent = 'Limit';
+                startCooldown(remSec);
+              }
+            }
+          }
         } else {
           setBalance(0);
         }
       } catch (err) {
-        console.warn('could not fetch user balance (rules/network). defaulting to 0', err);
-        // keep currentBalance as-is (or 0)
+        console.warn('could not fetch user doc (rules/network). continuing', err);
       }
     });
 
-    // accessibility: close overlay with Escape
-    window.addEventListener('keydown', (ev)=>{ if(ev.key === 'Escape') hideClaimOverlay(); });
+    /* ======= UI events ======= */
+    claimBtn.addEventListener('click', (e)=>{ e.preventDefault(); attemptClaimServerOnly(); });
+    dismissBtn.addEventListener('click', (e)=>{ e.preventDefault(); hideClaimOverlay(); });
 
-    // small helper to show initial status
+    // Close overlay on Escape
+    window.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape') hideClaimOverlay(); });
+
+    // initial UI
     setBalance(0);
     console.log('Read & Claim (server-only) loaded. functions region=', FUNCTIONS_REGION);
   </script>
