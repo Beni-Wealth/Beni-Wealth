@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Write a Blog — Beni-Wealth</title>
+  <style>
+    body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding:24px; max-width:900px; margin:0 auto}
+    .card{border:1px solid #e6e6e6;border-radius:12px;padding:20px;margin-top:18px;box-shadow:0 6px 18px rgba(18,18,18,0.03)}
+    label{display:block;margin:10px 0 6px}
+    input[type=text], textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd}
+    button{padding:10px 14px;border-radius:8px;border:0;background:#0b74ff;color:white;cursor:pointer}
+    .muted{color:#666}
+  </style>
+</head>
+<body>
+  <h1>Write a Blog</h1>
+  <p class="muted">Only users on <strong>gold</strong> or <strong>platinum</strong> plan can publish blogs. Submissions are saved as <em>pending</em> and require admin approval.</p>
+
+  <div id="status" class="card">
+    Checking authentication & plan...
+  </div>
+
+  <div id="editor" class="card" style="display:none">
+    <label for="title">Title</label>
+    <input id="title" type="text" placeholder="Post title" />
+
+    <label for="content">Content</label>
+    <textarea id="content" rows="12" placeholder="Write your blog here..."></textarea>
+
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+      <button id="publish">Publish (send for admin approval)</button>
+      <div id="busy" style="display:none">Publishing...</div>
+    </div>
+
+    <div id="message" style="margin-top:12px"></div>
+  </div>
+
+  <script type="module">
+    // --- 1) Firebase imports (modular SDK - via CDN) ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    // --- 2) Paste your firebase config here (I used the example you provided earlier) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.appspot.com", // verify in Firebase console
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI refs
+    const statusEl = document.getElementById('status');
+    const editorEl = document.getElementById('editor');
+    const titleEl = document.getElementById('title');
+    const contentEl = document.getElementById('content');
+    const publishBtn = document.getElementById('publish');
+    const busyEl = document.getElementById('busy');
+    const messageEl = document.getElementById('message');
+
+    // helper
+    function showStatus(html){ statusEl.innerHTML = html; }
+    function showMessage(html, isError=false){ messageEl.textContent = html; messageEl.style.color = isError ? 'crimson' : '#1166ff'; }
+
+    // When auth state changes, check the user's plan
+    onAuthStateChanged(auth, async (user) => {
+      if(!user){
+        showStatus(`You must be signed in to write a blog. <a href=\"/login.html\">Sign in</a>`);
+        editorEl.style.display = 'none';
+        return;
+      }
+
+      showStatus('Loading your account...');
+
+      try{
+        const userDocRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userDocRef);
+        if(!userSnap.exists()){
+          showStatus('No user record found. Please ensure your account document exists in `users/{uid}` with a `plan` field.');
+          editorEl.style.display = 'none';
+          return;
+        }
+
+        const data = userSnap.data();
+        const plan = (data.plan || '').toLowerCase();
+
+        if(plan === 'gold' || plan === 'platinum'){
+          showStatus(`<strong>Signed in as</strong> ${user.email || user.displayName} — <strong>plan:</strong> ${plan}`);
+          editorEl.style.display = 'block';
+        } else {
+          showStatus(`Your current plan is: <strong>${plan || 'none'}</strong>. Only <strong>gold</strong> and <strong>platinum</strong> users can publish blogs. <a href=\"/plans.html\">Upgrade</a>`);
+          editorEl.style.display = 'none';
+        }
+      }catch(err){
+        console.error(err);
+        showStatus('Error loading your account — check console for details.');
+        editorEl.style.display = 'none';
+      }
+    });
+
+    // Publish handler
+    publishBtn.addEventListener('click', async () => {
+      const title = titleEl.value.trim();
+      const content = contentEl.value.trim();
+
+      if(!title || !content){ showMessage('Please provide both a title and content.', true); return; }
+
+      publishBtn.disabled = true; busyEl.style.display = 'inline-block'; showMessage('');
+
+      const user = auth.currentUser;
+      if(!user){ showMessage('Authentication lost. Please sign in again.', true); publishBtn.disabled = false; busyEl.style.display = 'none'; return; }
+
+      try{
+        // Add the blog document with status pending
+        await addDoc(collection(db, 'blogs'), {
+          title,
+          content,
+          authorId: user.uid,
+          authorName: user.displayName || user.email || null,
+          status: 'pending',
+          plan: null, // we'll try to attach user's plan from their profile below
+          createdAt: serverTimestamp()
+        });
+
+        // Optionally update that new doc with plan if you want — but we left it null above because addDoc returns an id only.
+        // Simpler: store plan inside the blog in the client before addDoc. If you prefer that, modify above accordingly.
+
+        titleEl.value = '';
+        contentEl.value = '';
+        showMessage('Submitted! Your blog is pending admin approval.');
+      }catch(err){
+        console.error(err);
+        showMessage('Failed to submit blog — check console for details.', true);
+      } finally{
+        publishBtn.disabled = false; busyEl.style.display = 'none';
+      }
+    });
+
+  </script>
+
+  <!--
+    Recommended Firestore security rules (copy to Firebase console -> Firestore -> Rules).
+
+    These rules enforce:
+      - Only authenticated users whose users/{uid}.plan is 'gold' or 'platinum' can create blog documents.
+      - Created documents must have status == 'pending' on creation (users cannot set 'approved' themselves).
+      - Only admins (users/{uid}.role == 'admin') can change the status to 'approved' or 'rejected'.
+
+    Note: adapt field names (plan, role) to your users document structure.
+  -->
+
+  <!-- Firestore rules (paste into console) -->
+  <!--
+  service cloud.firestore {
+    match /databases/{database}/documents {
+
+      match /users/{userId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // handle user updates via server/secure admin functions
+      }
+
+      match /blogs/{blogId} {
+        allow create: if request.auth != null
+                      && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.plan in ["gold","platinum"]) 
+                      && request.resource.data.authorId == request.auth.uid
+                      && request.resource.data.status == "pending";
+
+        // allow the author to read their own blog and anyone to read approved blogs
+        allow read: if resource.data.status == "approved" || (request.auth != null && request.auth.uid == resource.data.authorId);
+
+        // allow updates only by admins (for status change) or disallow updates from authors
+        allow update: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin");
+
+        // delete only by admin
+        allow delete: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin");
+      }
+
+    }
+  }
+  -->
+</body>
+</html>
