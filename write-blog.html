@@ -3,54 +3,79 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Write a Blog — Gold & Platinum Only</title>
+  <title>Beni-Wealth — Write a Blog (Gold & Platinum)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Favicons & theme colors copied from your register page -->
+  <meta name="theme-color" content="#2fe0b8">
   <style>
     :root{
-      --primary:#0b74ff;
-      --muted:#6b7280;
-      --card-bg:#ffffff;
-      --page-bg:#f6f8fb;
-      --accent:#0b74ff;
-      --danger:#ef4444;
-      --success:#10b981;
-      --radius:12px;
-      --container:920px;
-      font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      --bg-1:#0b0613;
+      --bg-2:#0f0820;
+      --muted:rgba(233,240,255,0.62);
+      --card: rgba(255,255,255,0.02);
+      --accent-start:#2fe0b8;
+      --accent-end:#7a5fff;
+      --glass: rgba(255,255,255,0.03);
+      --text: #e9f0ff;
+      --danger: #ff6b6b;
+      --radius:14px;
     }
-    html,body{height:100%;background:var(--page-bg);margin:0}
-    .wrap{max-width:var(--container);margin:28px auto;padding:22px}
-    header{display:flex;align-items:center;gap:16px}
-    .brand{display:flex;flex-direction:column}
-    .brand h1{margin:0;font-size:20px;color:var(--primary)}
-    .brand p{margin:0;color:var(--muted);font-size:13px}
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:'Poppins',system-ui,Segoe UI,Arial, sans-serif;
+      background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color: var(--text);
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:36px;
+    }
 
-    .card{background:var(--card-bg);border-radius:var(--radius);padding:18px;box-shadow:0 8px 20px rgba(11,15,30,0.04);border:1px solid rgba(12,20,40,0.03);margin-top:18px}
-    label{display:block;margin:10px 0 6px;color:#111827;font-weight:600;font-size:14px}
-    input[type=text], textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #e6e9ef;font-size:14px}
-    textarea{resize:vertical}
-    .muted{color:var(--muted);font-size:13px}
+    .container{width:100%;max-width:980px}
+    .topbar{display:flex;align-items:center;gap:18px;margin-bottom:18px}
+    .logoBox{width:72px;height:72px;border-radius:16px;overflow:hidden;box-shadow:0 10px 40px rgba(122,95,255,0.08)}
+    .logoBox img{width:100%;height:100%;object-fit:cover}
+    h1{margin:0;font-size:20px}
+    p.lead{margin:0;color:var(--muted)}
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:var(--radius);
+      padding:20px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.02);
+      margin-bottom:16px;
+    }
+
+    label{display:block;margin:10px 0 6px;color:var(--muted);font-size:13px}
+    input[type=text], textarea{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);font-size:14px}
+    textarea{min-height:220px;resize:vertical}
 
     .row{display:flex;gap:12px;align-items:center}
-    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--primary);color:white;cursor:pointer}
-    .btn.secondary{background:transparent;border:1px solid #e6e9ef;color:#111827}
-    .thumb-preview{width:160px;height:100px;border-radius:8px;object-fit:cover;border:1px dashed #dbe3f5;background:#f8fbff}
+    .btn{
+      padding:10px 14px;border-radius:12px;border:0;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700;cursor:pointer
+    }
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
+
+    .thumb-preview{width:180px;height:116px;border-radius:8px;object-fit:cover;border:1px dashed rgba(255,255,255,0.04);background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.02))}
+    .muted{color:var(--muted);font-size:13px}
     .small{font-size:13px}
 
-    .notice{padding:10px;border-radius:8px;background:#fff7ed;color:#92400e;border:1px solid rgba(245,158,11,0.06);}
-
-    @media (max-width:680px){.row{flex-direction:column;align-items:stretch}}
+    @media (max-width:820px){.row{flex-direction:column;align-items:stretch}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--primary),#3da2ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px">BW</div>
-      <div class="brand">
+  <div class="container">
+    <div class="topbar">
+      <div class="logoBox"><img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth"></div>
+      <div>
         <h1>Beni-Wealth — Write a Blog</h1>
-        <p class="muted">Only Gold & Platinum members can submit posts. Submissions are pending until admin approves.</p>
+        <p class="lead">Only Gold & Platinum members can submit posts. Posts remain pending until admin approval.</p>
       </div>
-    </header>
+    </div>
 
     <div id="status" class="card">Checking authentication & plan...</div>
 
@@ -62,14 +87,14 @@
       <input id="excerpt" type="text" placeholder="Short summary shown on listings" />
 
       <label for="content">Content</label>
-      <textarea id="content" rows="12" placeholder="Write your blog here..."></textarea>
+      <textarea id="content" placeholder="Write your blog here..."></textarea>
 
       <div style="margin-top:12px">
         <label>Thumbnail (optional)</label>
         <div class="row" style="align-items:flex-start">
           <div style="flex:1">
             <input id="thumbFile" type="file" accept="image/*" />
-            <div class="small muted" style="margin-top:6px">Thumbnail will be uploaded to Imgur and stored with the post. Max 5MB recommended.</div>
+            <div class="small muted" style="margin-top:6px">Thumbnail will be uploaded to Imgur and saved with the post. Max 5MB recommended.</div>
           </div>
 
           <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
@@ -82,33 +107,32 @@
       <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
         <button id="publish" class="btn">Publish (send for admin approval)</button>
         <button id="clearThumb" class="btn secondary">Remove Thumbnail</button>
-        <div id="busy" style="display:none">Publishing...</div>
+        <div id="busy" style="display:none" class="small muted">Publishing...</div>
       </div>
 
       <div id="message" style="margin-top:12px"></div>
     </div>
 
-    <div style="margin-top:18px" class="muted small">Note: Imgur Client ID is used client-side in this demo. For production, we recommend uploading images via your server to keep keys secret.</div>
+    <div class="muted small" style="margin-top:10px">Note: This demo uses your Firebase config and Imgur Client ID provided earlier. For production, upload images via your server to keep keys private.</div>
   </div>
 
   <script type="module">
-    // Firebase modular SDK (CDN)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
-    // ------------------ CONFIG ------------------
+    // --- exact firebase config you provided in your register page ---
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
       projectId: "beni-wealths",
-      storageBucket: "beni-wealths.appspot.com",
+      storageBucket: "beni-wealths.firebasestorage.app",
       messagingSenderId: "807950483822",
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    // Imgur client id provided by user (note: exposing client id in client code is public)
+    // Imgur client id you gave earlier
     const IMGUR_CLIENT_ID = 'fb533db21a59486';
     const IMGUR_UPLOAD_URL = 'https://api.imgur.com/3/image';
 
@@ -135,9 +159,8 @@
     let uploadedThumbUrl = null;
 
     function showStatus(html){ statusEl.innerHTML = html; }
-    function showMessage(html, isError=false){ messageEl.textContent = html; messageEl.style.color = isError ? 'crimson' : 'var(--primary)'; }
+    function showMessage(html, isError=false){ messageEl.textContent = html; messageEl.style.color = isError ? 'var(--danger)' : 'var(--accent-start)'; }
 
-    // Auth state + plan check
     onAuthStateChanged(auth, async (user) => {
       if(!user){
         showStatus(`You must be signed in to write a blog. <a href=\"/login.html\">Sign in</a>`);
@@ -204,7 +227,6 @@
 
     async function uploadImageToImgur(file){
       if(!file) return null;
-      // Convert to base64 for Imgur
       const reader = new FileReader();
       const base64 = await new Promise((res, rej) => {
         reader.onload = () => res(reader.result.split(',')[1]);
@@ -234,7 +256,6 @@
       }
     }
 
-    // Publish handler
     publishBtn.addEventListener('click', async () => {
       const title = titleEl.value.trim();
       const excerpt = excerptEl.value.trim();
@@ -248,7 +269,7 @@
       if(!user){ showMessage('Authentication lost. Please sign in again.', true); publishBtn.disabled = false; busyEl.style.display = 'none'; return; }
 
       try{
-        // get latest user's plan (again) and name
+        // get latest user's plan and name
         const userDocRef = doc(db, 'users', user.uid);
         const userSnap = await getDoc(userDocRef);
         const userData = userSnap.exists() ? userSnap.data() : {};
@@ -260,7 +281,7 @@
           return;
         }
 
-        // if a thumbnail file is selected, upload to Imgur first
+        // upload thumbnail if selected
         if(selectedThumbFile){
           uploadedThumbUrl = await uploadImageToImgur(selectedThumbFile);
           if(!uploadedThumbUrl){
@@ -270,8 +291,8 @@
           }
         }
 
-        // Create blog doc
-        const newDoc = await addDoc(collection(db, 'blogs'), {
+        // create blog document
+        await addDoc(collection(db, 'blogs'), {
           title,
           excerpt: excerpt || null,
           content,
@@ -299,40 +320,28 @@
   </script>
 
   <!--
-    Recommended Firestore security rules (paste to Firebase console -> Firestore -> Rules)
-
-    These rules enforce:
-      - Only authenticated users whose users/{uid}.plan is 'gold' or 'platinum' can create blog documents.
-      - Created documents must have status == 'pending' on creation (users cannot set 'approved' themselves).
-      - Only admins (users/{uid}.role == 'admin') can change the status to 'approved' or 'rejected'.
-      - thumbnailUrl must be a string or null.
-
-    Adjust field names (plan, role) to match your users document structure.
+    Firestore rules suggestion (paste into Firebase console -> Firestore -> Rules)
+    - Uses your users/{uid}.plan field to restrict creation to gold/platinum
+    - Requires status == 'pending' on create
+    - Admins (users/{uid}.role == 'admin') can update status
   -->
-
   <!--
   service cloud.firestore {
     match /databases/{database}/documents {
-
       match /users/{userId} {
         allow read: if request.auth != null && request.auth.uid == userId;
         allow write: if false;
       }
-
       match /blogs/{blogId} {
         allow create: if request.auth != null
                       && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.plan in ["gold","platinum"]) 
                       && request.resource.data.authorId == request.auth.uid
                       && request.resource.data.status == "pending"
                       && (request.resource.data.thumbnailUrl == null || request.resource.data.thumbnailUrl is string);
-
         allow read: if resource.data.status == "approved" || (request.auth != null && request.auth.uid == resource.data.authorId);
-
         allow update: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin");
-
         allow delete: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin");
       }
-
     }
   }
   -->
