@@ -96,7 +96,7 @@
           showStatus(`<strong>Signed in as</strong> ${user.email || user.displayName} — <strong>plan:</strong> ${plan}`);
           editorEl.style.display = 'block';
         } else {
-          showStatus(`Your current plan is: <strong>${plan || 'none'}</strong>. Only <strong>gold</strong> and <strong>platinum</strong> users can publish blogs. <a href=\"/plans.html\">Upgrade</a>`);
+          showStatus(`Your current plan is: <strong>${plan || 'none'}</strong>. Only <strong>gold</strong> and <strong>platinum</strong> users can publish blogs. <a href=\"/catalog.html\">Upgrade</a>`);
           editorEl.style.display = 'none';
         }
       }catch(err){
