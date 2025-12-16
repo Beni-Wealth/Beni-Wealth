@@ -3,204 +3,280 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Write a Blog — Beni-Wealth</title>
+  <title>Beni-Wealth — Write a blog</title>
 
-      <!-- Poppins -->
+  <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
-  <!-- Favicons & Social preview -->
+  <!-- favicon / logo (from provided page) -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete ptcs and blogs, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
-  
+
   <style>
-    body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding:24px; max-width:900px; margin:0 auto}
-    .card{border:1px solid #e6e6e6;border-radius:12px;padding:20px;margin-top:18px;box-shadow:0 6px 18px rgba(18,18,18,0.03)}
-    label{display:block;margin:10px 0 6px}
-    input[type=text], textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd}
-    button{padding:10px 14px;border-radius:8px;border:0;background:#0b74ff;color:white;cursor:pointer}
-    .muted{color:#666}
+    :root{
+      --bg-1: #0b0613; --bg-2: #0f0820; --text: #eaf2ff; --muted: rgba(255,255,255,0.62);
+      --accent-a: #8446ff; --accent-b: #6ce2c8; --accent-grad: linear-gradient(135deg, var(--accent-a), #5b3bff 45%, var(--accent-b) 100%);
+      font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+    }
+    *{box-sizing:border-box}
+    body{ margin:0; min-height:100vh; background: radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent), radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.06), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text); padding:28px; display:flex; justify-content:center; }
+    .card{ width:100%; max-width:980px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:18px; padding:20px; box-shadow:0 20px 60px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.03); }
+    h1{ margin:0 0 6px; font-size:20px }
+    p.lead{ margin:0 0 14px; color:var(--muted); font-size:13px }
+
+    .meta{ display:flex; gap:12px; align-items:center; margin-bottom:12px }
+    .plan-badge{ padding:8px 12px; border-radius:999px; font-weight:700; background:linear-gradient(90deg,#7a5fff,#35d6b1); color:#041219 }
+    .plan-info{ color:var(--muted); font-size:13px }
+
+    label{ display:block; font-size:13px; margin-bottom:6px; color:var(--muted) }
+    input[type="text"], input[type="search"], select{ width:100%; padding:12px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--text); font-size:14px }
+
+    .title{ margin-bottom:12px }
+    .editor{ min-height:240px; border-radius:12px; padding:12px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--text); font-size:15px; resize:vertical }
+
+    .row{ display:grid; grid-template-columns:1fr 200px; gap:12px; align-items:start }
+    .controls{ display:flex; gap:8px; align-items:center }
+
+    .btn{ padding:10px 14px; border-radius:999px; border:none; cursor:pointer; font-weight:700 }
+    .btn.primary{ background: linear-gradient(90deg,#7a5fff,#35d6b1); color:#041219 }
+    .btn.ghost{ background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted) }
+
+    .note{ font-size:12px; color:var(--muted); margin-top:8px }
+    .message{ margin-top:12px; padding:10px 12px; border-radius:8px; font-size:13px }
+    .message.success{ background: rgba(63,249,178,0.06); color:#b8ffd8; border:1px solid rgba(63,249,178,0.12) }
+    .message.error{ background: rgba(255,99,99,0.04); color:#ffd6d6; border:1px solid rgba(255,99,99,0.07) }
+
+    @media(max-width:880px){ .row{ grid-template-columns:1fr } }
   </style>
 </head>
 <body>
-  <h1>Write a Blog</h1>
-  <p class="muted">Only users on <strong>gold</strong> or <strong>platinum</strong> plan can publish blogs. Submissions are saved as <em>pending</em> and require admin approval.</p>
+  <div class="card" role="main">
+    <header>
+      <h1>Write a blog post</h1>
+      <p class="lead">Only <strong>Gold</strong> and <strong>Platinum</strong> plan members can publish posts. Attempts by other plans will be penalized (recorded and deducted from balance).</p>
+    </header>
 
-  <div id="status" class="card">
-    Checking authentication & plan...
-  </div>
-
-  <div id="editor" class="card" style="display:none">
-    <label for="title">Title</label>
-    <input id="title" type="text" placeholder="Post title" />
-
-    <label for="content">Content</label>
-    <textarea id="content" rows="12" placeholder="Write your blog here..."></textarea>
-
-    <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
-      <button id="publish">Publish (send for admin approval)</button>
-      <div id="busy" style="display:none">Publishing...</div>
+    <div class="meta">
+      <div id="planBadge" class="plan-badge">Checking…</div>
+      <div class="plan-info">Plan status is checked against <code>users/{uid}.plan</code> in Firestore.</div>
     </div>
 
-    <div id="message" style="margin-top:12px"></div>
+    <form id="blogForm" novalidate>
+      <div class="title">
+        <label for="title">Title</label>
+        <input id="title" name="title" type="text" placeholder="An interesting title" required />
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="content">Content</label>
+          <textarea id="content" name="content" class="editor" placeholder="Write your post here..." required></textarea>
+          <div class="note">You can paste images as links — we store whatever you submit. Keep content within community guidelines.</div>
+        </div>
+
+        <aside>
+          <label for="tags">Tags (comma separated)</label>
+          <input id="tags" name="tags" type="text" placeholder="finance, tips" />
+
+          <label for="visibility" style="margin-top:12px">Visibility</label>
+          <select id="visibility" name="visibility">
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+            <option value="unlisted">Unlisted</option>
+          </select>
+
+          <div style="margin-top:14px; display:flex; gap:8px;">
+            <button id="publishBtn" class="btn primary" type="submit">Publish post</button>
+            <button id="saveDraft" type="button" class="btn ghost">Save draft</button>
+          </div>
+
+          <div class="note" style="margin-top:12px">Penalty for unauthorized publish: <strong id="penaltyAmt">₦30</strong> (configurable)</div>
+        </aside>
+      </div>
+
+      <div id="statusArea" aria-live="polite"></div>
+    </form>
   </div>
 
   <script type="module">
-    // --- 1) Firebase imports (modular SDK - via CDN) ---
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // --- 2) Paste your firebase config here (I used the example you provided earlier) ---
+    // FIREBASE config copied from your dashboard page
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
       projectId: "beni-wealths",
-      storageBucket: "beni-wealths.appspot.com", // verify in Firebase console
+      storageBucket: "beni-wealths.firebasestorage.app",
       messagingSenderId: "807950483822",
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    if(!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
 
-    // UI refs
-    const statusEl = document.getElementById('status');
-    const editorEl = document.getElementById('editor');
-    const titleEl = document.getElementById('title');
-    const contentEl = document.getElementById('content');
-    const publishBtn = document.getElementById('publish');
-    const busyEl = document.getElementById('busy');
-    const messageEl = document.getElementById('message');
+    // DOM
+    const planBadge = document.getElementById('planBadge');
+    const penaltyAmtEl = document.getElementById('penaltyAmt');
+    const form = document.getElementById('blogForm');
+    const statusArea = document.getElementById('statusArea');
+    const publishBtn = document.getElementById('publishBtn');
+    const saveDraftBtn = document.getElementById('saveDraft');
 
-    // helper
-    function showStatus(html){ statusEl.innerHTML = html; }
-    function showMessage(html, isError=false){ messageEl.textContent = html; messageEl.style.color = isError ? 'crimson' : '#1166ff'; }
+    // configuration: penalty in NGN
+    const PENALTY_AMOUNT = 30; // change as needed
+    penaltyAmtEl.textContent = `₦${PENALTY_AMOUNT}`;
 
-    // When auth state changes, check the user's plan
+    function showMessage(text, type='success'){
+      statusArea.innerHTML = `<div class="message ${type}">${text}</div>`;
+    }
+    function clearMessage(){ statusArea.innerHTML = ''; }
+
+    let currentUser = null;
+    let currentPlan = null; // string like 'free', 'silver', 'gold', 'platinum'
+
     onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
       if(!user){
-        showStatus(`You must be signed in to write a blog. <a href=\"/login.html\">Sign in</a>`);
-        editorEl.style.display = 'none';
+        planBadge.textContent = 'Signed out — sign in to write';
+        planBadge.style.background = 'linear-gradient(90deg,#444,#666)';
         return;
       }
 
-      showStatus('Loading your account...');
-
+      // read users/{uid} to get plan
       try{
-        const userDocRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userDocRef);
-        if(!userSnap.exists()){
-          showStatus('No user record found. Please ensure your account document exists in `users/{uid}` with a `plan` field.');
-          editorEl.style.display = 'none';
+        const uRef = doc(db, 'users', user.uid);
+        const snap = await getDoc(uRef);
+        if(!snap.exists()){
+          currentPlan = null;
+          planBadge.textContent = 'No plan (not found)';
+          planBadge.style.background = 'linear-gradient(90deg,#ff6b6b,#ff9a9a)';
           return;
         }
-
-        const data = userSnap.data();
-        const plan = (data.plan || '').toLowerCase();
-
-        if(plan === 'gold' || plan === 'platinum'){
-          showStatus(`<strong>Signed in as</strong> ${user.email || user.displayName} — <strong>plan:</strong> ${plan}`);
-          editorEl.style.display = 'block';
+        const data = snap.data() || {};
+        currentPlan = (data.plan || '').toString().toLowerCase();
+        planBadge.textContent = (currentPlan || 'no plan').toUpperCase();
+        if(currentPlan === 'gold' || currentPlan === 'platinum'){
+          planBadge.style.background = 'linear-gradient(90deg,#7a5fff,#35d6b1)';
         } else {
-          showStatus(`Your current plan is: <strong>${plan || 'none'}</strong>. Only <strong>gold</strong> and <strong>platinum</strong> users can publish blogs. <a href=\"/catalog.html\">Upgrade</a>`);
-          editorEl.style.display = 'none';
+          planBadge.style.background = 'linear-gradient(90deg,#ffb86b,#ff6b6b)';
         }
       }catch(err){
-        console.error(err);
-        showStatus('Error loading your account — check console for details.');
-        editorEl.style.display = 'none';
+        console.error('failed to read user doc', err);
+        planBadge.textContent = 'Error reading plan';
+        planBadge.style.background = 'linear-gradient(90deg,#444,#666)';
       }
     });
 
-    // Publish handler
-    publishBtn.addEventListener('click', async () => {
-      const title = titleEl.value.trim();
-      const content = contentEl.value.trim();
+    // helper: apply penalty for unauthorized attempt
+    async function applyPenalty(reason){
+      if(!currentUser) return;
+      const userRef = doc(db, 'users', currentUser.uid);
+      const txCol = collection(db, 'transactions');
+      const penaltiesCol = collection(db, 'penalties');
 
-      if(!title || !content){ showMessage('Please provide both a title and content.', true); return; }
+      const txPayload = {
+        userId: currentUser.uid,
+        type: 'penalty',
+        source: 'unauthorized_blog_attempt',
+        amount: -Math.abs(PENALTY_AMOUNT),
+        note: reason || 'Unauthorized blog publish attempt',
+        createdAt: serverTimestamp()
+      };
+      const penPayload = {
+        userId: currentUser.uid,
+        reason: reason || 'unauthorized_blog_attempt',
+        amount: PENALTY_AMOUNT,
+        createdAt: serverTimestamp()
+      };
 
-      publishBtn.disabled = true; busyEl.style.display = 'inline-block'; showMessage('');
+      // write records; try to decrement user's balance (may fail if security rules disallow client writes)
+      try{
+        await Promise.all([
+          addDoc(txCol, txPayload),
+          addDoc(penaltiesCol, penPayload),
+          updateDoc(userRef, { balance: increment(-Math.abs(PENALTY_AMOUNT)) })
+        ]);
+      }catch(err){
+        // it's still important to log the penalty attempt even if balance update failed
+        try{ await addDoc(txCol, txPayload); await addDoc(penaltiesCol, penPayload); }
+        catch(e){ console.warn('recording penalty failed', e); }
+        console.warn('applyPenalty: balance update may have failed due to security rules or missing field', err);
+      }
+    }
 
-      const user = auth.currentUser;
-      if(!user){ showMessage('Authentication lost. Please sign in again.', true); publishBtn.disabled = false; busyEl.style.display = 'none'; return; }
+    // publish flow
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      clearMessage();
+      if(!currentUser){ showMessage('You must be signed in to publish.', 'error'); return; }
+
+      const title = document.getElementById('title').value.trim();
+      const content = document.getElementById('content').value.trim();
+      const tags = document.getElementById('tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+      const visibility = document.getElementById('visibility').value;
+
+      if(!title) return showMessage('Please enter a title', 'error');
+      if(!content) return showMessage('Please enter the content', 'error');
+
+      publishBtn.disabled = true; publishBtn.textContent = 'Checking plan…';
 
       try{
-        // Add the blog document with status pending
-        await addDoc(collection(db, 'blogs'), {
-          title,
-          content,
-          authorId: user.uid,
-          authorName: user.displayName || user.email || null,
-          status: 'pending',
-          plan: null, // we'll try to attach user's plan from their profile below
-          createdAt: serverTimestamp()
-        });
+        // re-check user's plan fresh from Firestore in case it changed
+        const uRef = doc(db, 'users', currentUser.uid);
+        const snap = await getDoc(uRef);
+        const plan = (snap.exists() && (snap.data().plan || '') ) ? snap.data().plan.toString().toLowerCase() : null;
 
-        // Optionally update that new doc with plan if you want — but we left it null above because addDoc returns an id only.
-        // Simpler: store plan inside the blog in the client before addDoc. If you prefer that, modify above accordingly.
-
-        titleEl.value = '';
-        contentEl.value = '';
-        showMessage('Submitted! Your blog is pending admin approval.');
+        if(plan === 'gold' || plan === 'platinum'){
+          // allowed — create blog doc
+          const blogsCol = collection(db, 'blogs');
+          const payload = {
+            userId: currentUser.uid,
+            author: snap.exists() ? (snap.data().username || currentUser.displayName || currentUser.email) : (currentUser.displayName || currentUser.email),
+            title,
+            content,
+            tags,
+            visibility,
+            status: 'published',
+            createdAt: serverTimestamp()
+          };
+          const docRef = await addDoc(blogsCol, payload);
+          showMessage('Post published successfully. Post ID: ' + docRef.id, 'success');
+          form.reset();
+        } else {
+          // NOT allowed — apply penalty
+          await applyPenalty('Attempted publish by non-Gold/Platinum user');
+          showMessage(`You are not allowed to publish (plan: ${plan || 'none'}). A penalty of ₦${PENALTY_AMOUNT} has been applied. Contact support if you think this is a mistake.`, 'error');
+        }
       }catch(err){
-        console.error(err);
-        showMessage('Failed to submit blog — check console for details.', true);
-      } finally{
-        publishBtn.disabled = false; busyEl.style.display = 'none';
+        console.error('publish failed', err);
+        showMessage('Failed to publish. Try again later.', 'error');
+      }finally{
+        publishBtn.disabled = false; publishBtn.textContent = 'Publish post';
       }
     });
 
+    // Save draft locally (simple): store in localStorage
+    saveDraftBtn.addEventListener('click', ()=>{
+      const title = document.getElementById('title').value.trim();
+      const content = document.getElementById('content').value.trim();
+      const tags = document.getElementById('tags').value.trim();
+      localStorage.setItem('bw_blog_draft', JSON.stringify({ title, content, tags, savedAt: new Date().toISOString() }));
+      showMessage('Draft saved locally.', 'success');
+    });
+
+    // restore draft on load
+    window.addEventListener('load', ()=>{
+      try{
+        const d = localStorage.getItem('bw_blog_draft');
+        if(d){ const obj = JSON.parse(d); if(obj.title) document.getElementById('title').value = obj.title; if(obj.content) document.getElementById('content').value = obj.content; if(obj.tags) document.getElementById('tags').value = obj.tags; }
+      }catch(e){}
+    });
   </script>
-
-  <!--
-    Recommended Firestore security rules (copy to Firebase console -> Firestore -> Rules).
-
-    These rules enforce:
-      - Only authenticated users whose users/{uid}.plan is 'gold' or 'platinum' can create blog documents.
-      - Created documents must have status == 'pending' on creation (users cannot set 'approved' themselves).
-      - Only admins (users/{uid}.role == 'admin') can change the status to 'approved' or 'rejected'.
-
-    Note: adapt field names (plan, role) to your users document structure.
-  -->
-
-  <!-- Firestore rules (paste into console) -->
-  <!--
-  service cloud.firestore {
-    match /databases/{database}/documents {
-
-      match /users/{userId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if false; // handle user updates via server/secure admin functions
-      }
-
-      match /blogs/{blogId} {
-        allow create: if request.auth != null
-                      && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.plan in ["gold","platinum"]) 
-                      && request.resource.data.authorId == request.auth.uid
-                      && request.resource.data.status == "pending";
-
-        // allow the author to read their own blog and anyone to read approved blogs
-        allow read: if resource.data.status == "approved" || (request.auth != null && request.auth.uid == resource.data.authorId);
-
-        // allow updates only by admins (for status change) or disallow updates from authors
-        allow update: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin");
-
-        // delete only by admin
-        allow delete: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin");
-      }
-
-    }
-  }
-  -->
 </body>
 </html>
