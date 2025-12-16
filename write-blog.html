@@ -55,30 +55,30 @@
   <div class="card" role="main">
     <header>
       <h1>Write a blog post</h1>
-      <p class="lead">Only <strong>Gold</strong> and <strong>Platinum</strong> plan members can submit posts. Submissions by other plans will be penalized. All submissions are created with <strong>pending</strong> status and must be approved by an admin before going live.</p>
-    </header>
+      <p class="lead">Only <strong>Gold</strong> and <strong>Platinum</strong> plan users can submit posts. Submissions by other plans will be penalized.</p>
+    </head>
 
     <div class="meta">
       <div id="planBadge" class="plan-badge">Checking…</div>
-      <div class="plan-info">Plan status is checked against <code>users/{uid}.plan</code> in Firestore.</div>
+      <div class="plan
     </div>
 
     <form id="blogForm" novalidate>
       <div class="title">
         <label for="title">Title</label>
-        <input id="title" name="title" type="text" placeholder="An interesting title" required />
+        <input id="title" name="title" type="text" placeholder="A title" required />
       </div>
 
       <div class="row">
         <div>
           <label for="content">Content</label>
           <textarea id="content" name="content" class="editor" placeholder="Write your post here..." required></textarea>
-          <div class="note">You can paste image links in the content, but use the thumbnail below for the post cover image (will be uploaded to Imgur).</div>
+          <div class="note">You can paste image links in the content, but use the thumbnail below for the post cover image.</div>
         </div>
 
         <aside>
           <label for="tags">Tags (comma separated)</label>
-          <input id="tags" name="tags" type="text" placeholder="finance, tips" />
+          <input id="tags" name="tags" type="text" placeholder="finance, comedy, tips" />
 
           <label for="thumbnail" style="margin-top:12px">Upload thumbnail</label>
           <input id="thumbnail" name="thumbnail" type="file" accept="image/*" />
