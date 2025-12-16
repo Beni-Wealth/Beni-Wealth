@@ -29,12 +29,12 @@
     .plan-info{ color:var(--muted); font-size:13px }
 
     label{ display:block; font-size:13px; margin-bottom:6px; color:var(--muted) }
-    input[type="text"], input[type="search"], select{ width:100%; padding:12px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--text); font-size:14px }
+    input[type="text"], input[type="search"], select, input[type="file"]{ width:100%; padding:12px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--text); font-size:14px }
 
     .title{ margin-bottom:12px }
     .editor{ min-height:240px; border-radius:12px; padding:12px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--text); font-size:15px; resize:vertical }
 
-    .row{ display:grid; grid-template-columns:1fr 200px; gap:12px; align-items:start }
+    .row{ display:grid; grid-template-columns:1fr 260px; gap:12px; align-items:start }
     .controls{ display:flex; gap:8px; align-items:center }
 
     .btn{ padding:10px 14px; border-radius:999px; border:none; cursor:pointer; font-weight:700 }
@@ -46,6 +46,8 @@
     .message.success{ background: rgba(63,249,178,0.06); color:#b8ffd8; border:1px solid rgba(63,249,178,0.12) }
     .message.error{ background: rgba(255,99,99,0.04); color:#ffd6d6; border:1px solid rgba(255,99,99,0.07) }
 
+    .thumb-preview{ width:100%; height:140px; object-fit:cover; border-radius:8px; border:1px dashed rgba(255,255,255,0.04); margin-top:8px }
+
     @media(max-width:880px){ .row{ grid-template-columns:1fr } }
   </style>
 </head>
@@ -53,7 +55,7 @@
   <div class="card" role="main">
     <header>
       <h1>Write a blog post</h1>
-      <p class="lead">Only <strong>Gold</strong> and <strong>Platinum</strong> plan members can publish posts. Attempts by other plans will be penalized (recorded and deducted from balance).</p>
+      <p class="lead">Only <strong>Gold</strong> and <strong>Platinum</strong> plan members can submit posts. Submissions by other plans will be penalized. All submissions are created with <strong>pending</strong> status and must be approved by an admin before going live.</p>
     </header>
 
     <div class="meta">
@@ -71,26 +73,23 @@
         <div>
           <label for="content">Content</label>
           <textarea id="content" name="content" class="editor" placeholder="Write your post here..." required></textarea>
-          <div class="note">You can paste images as links — we store whatever you submit. Keep content within community guidelines.</div>
+          <div class="note">You can paste image links in the content, but use the thumbnail below for the post cover image (will be uploaded to Imgur).</div>
         </div>
 
         <aside>
           <label for="tags">Tags (comma separated)</label>
           <input id="tags" name="tags" type="text" placeholder="finance, tips" />
 
-          <label for="visibility" style="margin-top:12px">Visibility</label>
-          <select id="visibility" name="visibility">
-            <option value="public">Public</option>
-            <option value="private">Private</option>
-            <option value="unlisted">Unlisted</option>
-          </select>
+          <label for="thumbnail" style="margin-top:12px">Upload thumbnail</label>
+          <input id="thumbnail" name="thumbnail" type="file" accept="image/*" />
+          <img id="thumbPreview" class="thumb-preview" alt="Thumbnail preview" style="display:none" />
 
           <div style="margin-top:14px; display:flex; gap:8px;">
-            <button id="publishBtn" class="btn primary" type="submit">Publish post</button>
+            <button id="publishBtn" class="btn primary" type="submit">Submit for review</button>
             <button id="saveDraft" type="button" class="btn ghost">Save draft</button>
           </div>
 
-          <div class="note" style="margin-top:12px">Penalty for unauthorized publish: <strong id="penaltyAmt">₦30</strong> (configurable)</div>
+          <div class="note" style="margin-top:12px">Penalty for unauthorized submit: <strong id="penaltyAmt">₦30</strong> (configurable). Admin will review posts and approve or reject.</div>
         </aside>
       </div>
 
@@ -120,6 +119,9 @@
     const auth = getAuth();
     const db = getFirestore();
 
+    // Imgur client ID provided
+    const IMGUR_CLIENT_ID = 'fb533db21a59486';
+
     // DOM
     const planBadge = document.getElementById('planBadge');
     const penaltyAmtEl = document.getElementById('penaltyAmt');
@@ -127,6 +129,8 @@
     const statusArea = document.getElementById('statusArea');
     const publishBtn = document.getElementById('publishBtn');
     const saveDraftBtn = document.getElementById('saveDraft');
+    const thumbInput = document.getElementById('thumbnail');
+    const thumbPreview = document.getElementById('thumbPreview');
 
     // configuration: penalty in NGN
     const PENALTY_AMOUNT = 30; // change as needed
@@ -143,7 +147,7 @@
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       if(!user){
-        planBadge.textContent = 'Signed out — sign in to write';
+        planBadge.textContent = 'Signed out — sign in to submit';
         planBadge.style.background = 'linear-gradient(90deg,#444,#666)';
         return;
       }
@@ -173,6 +177,33 @@
       }
     });
 
+    // thumbnail preview
+    thumbInput.addEventListener('change', ()=>{
+      const f = thumbInput.files && thumbInput.files[0];
+      if(!f){ thumbPreview.style.display='none'; thumbPreview.src=''; return; }
+      const url = URL.createObjectURL(f);
+      thumbPreview.src = url; thumbPreview.style.display = 'block';
+    });
+
+    // helper: upload image to Imgur and return link
+    async function uploadThumbnailToImgur(file){
+      if(!file) return null;
+      try{
+        const fd = new FormData();
+        fd.append('image', file);
+        // anonymous upload with Client-ID header
+        const res = await fetch('https://api.imgur.com/3/image', {
+          method: 'POST',
+          headers: { Authorization: `Client-ID ${IMGUR_CLIENT_ID}` },
+          body: fd
+        });
+        const j = await res.json();
+        if(j && j.success && j.data && j.data.link) return j.data.link;
+        console.warn('Imgur upload response', j);
+        return null;
+      }catch(err){ console.error('imgur upload failed', err); return null; }
+    }
+
     // helper: apply penalty for unauthorized attempt
     async function applyPenalty(reason){
       if(!currentUser) return;
@@ -185,7 +216,7 @@
         type: 'penalty',
         source: 'unauthorized_blog_attempt',
         amount: -Math.abs(PENALTY_AMOUNT),
-        note: reason || 'Unauthorized blog publish attempt',
+        note: reason || 'Unauthorized blog submit attempt',
         createdAt: serverTimestamp()
       };
       const penPayload = {
@@ -195,7 +226,6 @@
         createdAt: serverTimestamp()
       };
 
-      // write records; try to decrement user's balance (may fail if security rules disallow client writes)
       try{
         await Promise.all([
           addDoc(txCol, txPayload),
@@ -203,23 +233,22 @@
           updateDoc(userRef, { balance: increment(-Math.abs(PENALTY_AMOUNT)) })
         ]);
       }catch(err){
-        // it's still important to log the penalty attempt even if balance update failed
         try{ await addDoc(txCol, txPayload); await addDoc(penaltiesCol, penPayload); }
         catch(e){ console.warn('recording penalty failed', e); }
         console.warn('applyPenalty: balance update may have failed due to security rules or missing field', err);
       }
     }
 
-    // publish flow
+    // publish flow: submissions are saved with status 'pending'
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       clearMessage();
-      if(!currentUser){ showMessage('You must be signed in to publish.', 'error'); return; }
+      if(!currentUser){ showMessage('You must be signed in to submit.', 'error'); return; }
 
       const title = document.getElementById('title').value.trim();
       const content = document.getElementById('content').value.trim();
       const tags = document.getElementById('tags').value.split(',').map(t=>t.trim()).filter(Boolean);
-      const visibility = document.getElementById('visibility').value;
+      const thumbFile = thumbInput.files && thumbInput.files[0];
 
       if(!title) return showMessage('Please enter a title', 'error');
       if(!content) return showMessage('Please enter the content', 'error');
@@ -233,7 +262,12 @@
         const plan = (snap.exists() && (snap.data().plan || '') ) ? snap.data().plan.toString().toLowerCase() : null;
 
         if(plan === 'gold' || plan === 'platinum'){
-          // allowed — create blog doc
+          // allowed — upload thumbnail (if provided) then create blog doc with status 'pending'
+          publishBtn.textContent = 'Uploading thumbnail…';
+          let thumbUrl = null;
+          if(thumbFile){ thumbUrl = await uploadThumbnailToImgur(thumbFile); if(!thumbUrl) console.warn('thumbnail upload failed — continuing without thumbnail'); }
+
+          publishBtn.textContent = 'Submitting…';
           const blogsCol = collection(db, 'blogs');
           const payload = {
             userId: currentUser.uid,
@@ -241,23 +275,23 @@
             title,
             content,
             tags,
-            visibility,
-            status: 'published',
+            thumbnail: thumbUrl || null,
+            status: 'pending',
             createdAt: serverTimestamp()
           };
           const docRef = await addDoc(blogsCol, payload);
-          showMessage('Post published successfully. Post ID: ' + docRef.id, 'success');
-          form.reset();
+          showMessage('Post submitted for review. Post ID: ' + docRef.id + '. An admin will review and approve it shortly.', 'success');
+          form.reset(); thumbPreview.style.display='none'; thumbPreview.src='';
         } else {
           // NOT allowed — apply penalty
-          await applyPenalty('Attempted publish by non-Gold/Platinum user');
-          showMessage(`You are not allowed to publish (plan: ${plan || 'none'}). A penalty of ₦${PENALTY_AMOUNT} has been applied. Contact support if you think this is a mistake.`, 'error');
+          await applyPenalty('Attempted submit by non-Gold/Platinum user');
+          showMessage(`You are not allowed to submit (plan: ${plan || 'none'}). A penalty of ₦${PENALTY_AMOUNT} has been applied. Contact support if you think this is a mistake.`, 'error');
         }
       }catch(err){
-        console.error('publish failed', err);
-        showMessage('Failed to publish. Try again later.', 'error');
+        console.error('submit failed', err);
+        showMessage('Failed to submit. Try again later.', 'error');
       }finally{
-        publishBtn.disabled = false; publishBtn.textContent = 'Publish post';
+        publishBtn.disabled = false; publishBtn.textContent = 'Submit for review';
       }
     });
 
