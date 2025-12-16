@@ -23,6 +23,7 @@
     .btn{padding:8px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700;cursor:pointer}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
     .empty{padding:20px;border-radius:10px;background:rgba(255,255,255,0.01);color:var(--muted);text-align:center}
+    .debug{font-size:13px;color:var(--muted);margin-top:10px}
     @media(max-width:820px){.post{flex-direction:column}.thumb{width:100%;height:180px}}
   </style>
 </head>
@@ -47,16 +48,19 @@
 
       <div id="list" class="list"></div>
       <div id="empty" class="empty" style="display:none">No pending posts.</div>
+      <div class="debug">Tip: open DevTools and run <code>__bw_checkAuth()</code> to inspect auth state.</div>
     </div>
   </div>
 
   <script type="module">
+    // robust admin page auth + Firestore
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
     import {
       getFirestore, collection, query, where, orderBy, getDocs, doc, updateDoc, serverTimestamp, getDoc
     } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
+    // exact Firebase config used by your site
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -67,10 +71,19 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
+    // init app once
     const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // prefer local persistence so auth survives reloads & tabs
+    setPersistence(auth, browserLocalPersistence).then(()=> {
+      console.log('[ADMIN] auth persistence set: browserLocalPersistence');
+    }).catch(err => {
+      console.warn('[ADMIN] setPersistence failed', err);
+    });
+
+    // UI refs
     const statusEl = document.getElementById('status');
     const controlsEl = document.getElementById('controls');
     const listEl = document.getElementById('list');
@@ -78,37 +91,52 @@
     const refreshBtn = document.getElementById('refreshBtn');
     const adminEmailSpan = document.getElementById('adminEmail');
 
-    function setStatus(html){ statusEl.innerHTML = html; console.log('[ADMIN]', html); }
-    function showControls(show){ controlsEl.style.display = show ? 'block' : 'none'; }
+    function setStatus(html){ if(statusEl) statusEl.innerHTML = html; console.log('[ADMIN]', html); }
+    function showControls(show){ if(controlsEl) controlsEl.style.display = show ? 'block' : 'none'; }
 
-    onAuthStateChanged(auth, async (user) => {
-      console.log('[ADMIN] onAuthStateChanged', user);
-      if(!user){ setStatus(`Not signed in. Please <a href="Beni-Wealth/login.html">sign in</a> as admin.`); showControls(false); return; }
-      setStatus('Checking admin rights...');
-      try{
-        const userDocRef = doc(db,'users',user.uid);
-        const snap = await getDoc(userDocRef);
-        if(!snap.exists()){ setStatus('Admin record not found in users/{uid}.'); showControls(false); return; }
-        const data = snap.data();
-        const role = (data.role || '').toLowerCase();
-        if(role !== 'admin'){ setStatus('Access denied — you are not an admin.'); showControls(false); return; }
+    // main check: verify user's role in users/{uid}.role === 'admin'
+    async function verifyAdminAndLoad(user){
+      try {
+        setStatus('Verifying admin rights...');
+        const udocRef = doc(db,'users', user.uid);
+        const udocSnap = await getDoc(udocRef);
+        if(!udocSnap.exists()){
+          setStatus(`Admin record not found in users/{uid}. Please ensure a user document exists for uid: ${user.uid}`);
+          showControls(false);
+          return false;
+        }
+        const udata = udocSnap.data();
+        const role = (udata.role || '').toLowerCase();
+        if(role !== 'admin'){
+          setStatus('Access denied — you are not an admin.');
+          showControls(false);
+          return false;
+        }
         adminEmailSpan.textContent = user.email || user.displayName || user.uid;
         setStatus('Loading pending posts...');
         showControls(true);
         await loadPending();
-      }catch(e){ console.error('[ADMIN] verify error', e); setStatus('Error verifying admin rights — check console.'); showControls(false); }
-    });
+        return true;
+      } catch (err) {
+        console.error('[ADMIN] verifyAdmin error', err);
+        setStatus('Error verifying admin rights — check console for details.');
+        showControls(false);
+        return false;
+      }
+    }
 
+    // load pending posts
     async function loadPending(){
       listEl.innerHTML = '';
       emptyEl.style.display = 'none';
       try{
         const blogsCol = collection(db,'blogs');
-        // We use a composite query: where status == pending, ordered by createdAt desc
+        // composite query: where status == pending and order by createdAt desc
         const q = query(blogsCol, where('status','==','pending'), orderBy('createdAt','desc'));
         const snap = await getDocs(q);
         if(snap.empty){ emptyEl.style.display = 'block'; return; }
-        snap.forEach(async docSnap => {
+
+        snap.forEach(docSnap => {
           const data = docSnap.data();
           const id = docSnap.id;
           const title = data.title || '(no title)';
@@ -119,6 +147,7 @@
 
           const el = document.createElement('div');
           el.className = 'post';
+
           const img = document.createElement('img');
           img.className = 'thumb';
           img.src = thumb || 'https://via.placeholder.com/320x180?text=No+thumbnail';
@@ -131,27 +160,37 @@
 
           const actions = document.createElement('div');
           actions.className = 'actions';
+
           const approveBtn = document.createElement('button');
           approveBtn.className = 'btn';
           approveBtn.textContent = 'Approve';
-          approveBtn.onclick = () => handleApprove(id);
+          approveBtn.addEventListener('click', () => handleApprove(id));
+
           const rejectBtn = document.createElement('button');
           rejectBtn.className = 'btn ghost';
           rejectBtn.textContent = 'Reject';
-          rejectBtn.onclick = () => handleReject(id);
+          rejectBtn.addEventListener('click', () => handleReject(id));
+
           const previewBtn = document.createElement('button');
           previewBtn.className = 'btn ghost';
           previewBtn.textContent = 'Preview';
-          previewBtn.onclick = () => openPreview(data);
+          previewBtn.addEventListener('click', () => openPreview(data));
 
-          actions.appendChild(approveBtn); actions.appendChild(rejectBtn); actions.appendChild(previewBtn);
+          actions.appendChild(approveBtn);
+          actions.appendChild(rejectBtn);
+          actions.appendChild(previewBtn);
+
           meta.appendChild(actions);
           el.appendChild(meta);
           listEl.appendChild(el);
         });
-      }catch(e){ console.error('[ADMIN] loadPending error', e); setStatus('Failed to load pending posts — check console.'); }
+      }catch(err){
+        console.error('[ADMIN] loadPending error', err);
+        setStatus('Failed to load pending posts — check console for details.');
+      }
     }
 
+    // approve a post
     async function handleApprove(docId){
       if(!confirm('Approve this post and make it public?')) return;
       try{
@@ -159,9 +198,10 @@
         await updateDoc(ref, { status:'approved', approvedBy: auth.currentUser.uid, approvedAt: serverTimestamp() });
         alert('Post approved');
         await loadPending();
-      }catch(e){ console.error('[ADMIN] approve error', e); alert('Failed to approve — check console.'); }
+      }catch(err){ console.error('[ADMIN] approve error', err); alert('Failed to approve — check console.'); }
     }
 
+    // reject a post
     async function handleReject(docId){
       const reason = prompt('Reason for rejection (optional):');
       if(reason === null) return;
@@ -170,17 +210,64 @@
         await updateDoc(ref, { status:'rejected', rejectedBy: auth.currentUser.uid, rejectedAt: serverTimestamp(), rejectionReason: reason || null });
         alert('Post rejected');
         await loadPending();
-      }catch(e){ console.error('[ADMIN] reject error', e); alert('Failed to reject — check console.'); }
+      }catch(err){ console.error('[ADMIN] reject error', err); alert('Failed to reject — check console.'); }
     }
 
+    // preview in a new window
     function openPreview(data){
       const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(data.title||'Preview')}</title></head><body style="font-family:Arial,Helvetica,sans-serif;padding:20px"><h1>${escapeHtml(data.title||'')}</h1><p><em>By ${escapeHtml(data.authorName||data.authorId||'')}</em></p>${data.thumbnailUrl?'<img src="'+escapeHtml(data.thumbnailUrl)+'" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:16px">':''}<div>${(data.content||'').replace(/\n/g,'<br>')}</div></body></html>`;
-      const w = window.open(); w.document.write(html); w.document.close();
+      const w = window.open();
+      w.document.write(html);
+      w.document.close();
     }
 
+    // escape helper
     function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"'`]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[ch])); }
 
-    refreshBtn.addEventListener('click', loadPending);
+    // onAuthStateChanged with extra fallback and idToken refresh
+    onAuthStateChanged(auth, async (user) => {
+      console.log('[ADMIN] onAuthStateChanged', user);
+      if(user){
+        // try to refresh id token (helps if stale)
+        try { await user.getIdToken(true); console.log('[ADMIN] idToken refreshed'); } catch(e){ console.warn('[ADMIN] idToken refresh failed', e); }
+        // verify role and load posts
+        await verifyAdminAndLoad(user);
+        return;
+      }
+
+      // fallback: check auth.currentUser anyway
+      if(auth.currentUser){
+        console.log('[ADMIN] fallback auth.currentUser present', auth.currentUser);
+        try { await auth.currentUser.getIdToken(true); } catch(e){ console.warn('[ADMIN] fallback token refresh failed', e); }
+        await verifyAdminAndLoad(auth.currentUser);
+        return;
+      }
+
+      // no user: show sign-in link
+      setStatus(`Not signed in. Please <a href="Beni-Wealth/login.html">sign in</a> as admin.`);
+      showControls(false);
+    });
+
+    // debug helper: run __bw_checkAuth() in console
+    window.__bw_checkAuth = async () => {
+      console.log('auth.currentUser:', auth.currentUser);
+      if(auth.currentUser){
+        try {
+          const token = await auth.currentUser.getIdToken();
+          console.log('idToken (trim):', token && token.slice(0,60) + '...');
+          console.log('uid:', auth.currentUser.uid, 'email:', auth.currentUser.email);
+        } catch(e){ console.error('getIdToken failed', e); }
+      } else {
+        console.log('No signed-in user (auth.currentUser == null)');
+      }
+    };
+
+    // refresh button
+    refreshBtn.addEventListener('click', () => {
+      if(auth.currentUser) verifyAdminAndLoad(auth.currentUser);
+      else setStatus(`Not signed in. Please <a href="Beni-Wealth/login.html">sign in</a> as admin.`);
+    });
+
   </script>
 </body>
 </html>
