@@ -53,14 +53,14 @@
   </div>
 
   <script type="module">
-    // robust admin page auth + Firestore
+    // Admin page with email whitelist and robust auth handling (no /Beni-Wealth/ prefix)
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
     import {
       getFirestore, collection, query, where, orderBy, getDocs, doc, updateDoc, serverTimestamp, getDoc
     } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
-    // exact Firebase config used by your site
+    // === Firebase config (your project) ===
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -71,7 +71,13 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    // init app once
+    // Emails explicitly allowed to access admin UI (lowercase)
+    const ALLOWED_ADMIN_EMAILS = [
+      'beniwealth70@gmail.com',
+      'owanaomubo76@gmail.com'
+    ];
+
+    // init firebase app once
     const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
@@ -94,44 +100,52 @@
     function setStatus(html){ if(statusEl) statusEl.innerHTML = html; console.log('[ADMIN]', html); }
     function showControls(show){ if(controlsEl) controlsEl.style.display = show ? 'block' : 'none'; }
 
-    // main check: verify user's role in users/{uid}.role === 'admin'
-    async function verifyAdminAndLoad(user){
+    // Verify admin by email whitelist, then load pending posts
+    async function verifyAdminByEmail(user){
       try {
-        setStatus('Verifying admin rights...');
-        const udocRef = doc(db,'users', user.uid);
+        if(!user || !user.email){
+          setStatus('Signed in user has no email on record — access denied.');
+          showControls(false);
+          return false;
+        }
+        const email = String(user.email).toLowerCase();
+        if(ALLOWED_ADMIN_EMAILS.includes(email)){
+          adminEmailSpan.textContent = user.email;
+          setStatus('Email allowed — loading pending posts...');
+          showControls(true);
+          await loadPending();
+          return true;
+        }
+        // optional fallback: check users/{uid}.role (commented out)
+        /*
+        const udocRef = doc(db,'users',user.uid);
         const udocSnap = await getDoc(udocRef);
-        if(!udocSnap.exists()){
-          setStatus(`Admin record not found in users/{uid}. Please ensure a user document exists for uid: ${user.uid}`);
-          showControls(false);
-          return false;
+        if(udocSnap.exists() && (udocSnap.data().role || '').toLowerCase() === 'admin'){
+          adminEmailSpan.textContent = user.email;
+          setStatus('Role-based admin allowed — loading pending posts...');
+          showControls(true);
+          await loadPending();
+          return true;
         }
-        const udata = udocSnap.data();
-        const role = (udata.role || '').toLowerCase();
-        if(role !== 'admin'){
-          setStatus('Access denied — you are not an admin.');
-          showControls(false);
-          return false;
-        }
-        adminEmailSpan.textContent = user.email || user.displayName || user.uid;
-        setStatus('Loading pending posts...');
-        showControls(true);
-        await loadPending();
-        return true;
+        */
+        setStatus('Access denied — your email is not authorized to access this page.');
+        showControls(false);
+        return false;
       } catch (err) {
-        console.error('[ADMIN] verifyAdmin error', err);
-        setStatus('Error verifying admin rights — check console for details.');
+        console.error('[ADMIN] verify error', err);
+        setStatus('Error verifying admin rights — check console.');
         showControls(false);
         return false;
       }
     }
 
-    // load pending posts
+    // load pending blog posts
     async function loadPending(){
       listEl.innerHTML = '';
       emptyEl.style.display = 'none';
       try{
         const blogsCol = collection(db,'blogs');
-        // composite query: where status == pending and order by createdAt desc
+        // query: status == pending ordered by createdAt desc
         const q = query(blogsCol, where('status','==','pending'), orderBy('createdAt','desc'));
         const snap = await getDocs(q);
         if(snap.empty){ emptyEl.style.display = 'block'; return; }
@@ -190,7 +204,7 @@
       }
     }
 
-    // approve a post
+    // approve and update doc
     async function handleApprove(docId){
       if(!confirm('Approve this post and make it public?')) return;
       try{
@@ -201,7 +215,7 @@
       }catch(err){ console.error('[ADMIN] approve error', err); alert('Failed to approve — check console.'); }
     }
 
-    // reject a post
+    // reject with optional reason
     async function handleReject(docId){
       const reason = prompt('Reason for rejection (optional):');
       if(reason === null) return;
@@ -213,38 +227,32 @@
       }catch(err){ console.error('[ADMIN] reject error', err); alert('Failed to reject — check console.'); }
     }
 
-    // preview in a new window
+    // preview post in a new window
     function openPreview(data){
       const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(data.title||'Preview')}</title></head><body style="font-family:Arial,Helvetica,sans-serif;padding:20px"><h1>${escapeHtml(data.title||'')}</h1><p><em>By ${escapeHtml(data.authorName||data.authorId||'')}</em></p>${data.thumbnailUrl?'<img src="'+escapeHtml(data.thumbnailUrl)+'" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:16px">':''}<div>${(data.content||'').replace(/\n/g,'<br>')}</div></body></html>`;
-      const w = window.open();
-      w.document.write(html);
-      w.document.close();
+      const w = window.open(); w.document.write(html); w.document.close();
     }
 
-    // escape helper
     function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"'`]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[ch])); }
 
-    // onAuthStateChanged with extra fallback and idToken refresh
+    // onAuthStateChanged with token refresh and fallback
     onAuthStateChanged(auth, async (user) => {
       console.log('[ADMIN] onAuthStateChanged', user);
       if(user){
-        // try to refresh id token (helps if stale)
         try { await user.getIdToken(true); console.log('[ADMIN] idToken refreshed'); } catch(e){ console.warn('[ADMIN] idToken refresh failed', e); }
-        // verify role and load posts
-        await verifyAdminAndLoad(user);
+        // verify email whitelist & load pending posts
+        await verifyAdminByEmail(user);
         return;
       }
-
-      // fallback: check auth.currentUser anyway
+      // fallback to auth.currentUser
       if(auth.currentUser){
         console.log('[ADMIN] fallback auth.currentUser present', auth.currentUser);
         try { await auth.currentUser.getIdToken(true); } catch(e){ console.warn('[ADMIN] fallback token refresh failed', e); }
-        await verifyAdminAndLoad(auth.currentUser);
+        await verifyAdminByEmail(auth.currentUser);
         return;
       }
-
-      // no user: show sign-in link
-      setStatus(`Not signed in. Please <a href="Beni-Wealth/login.html">sign in</a> as admin.`);
+      // not signed in: link to relative login page (no /Beni-Wealth/ prefix)
+      setStatus(`Not signed in. Please <a href="login.html">sign in</a> as admin.`);
       showControls(false);
     });
 
@@ -264,8 +272,8 @@
 
     // refresh button
     refreshBtn.addEventListener('click', () => {
-      if(auth.currentUser) verifyAdminAndLoad(auth.currentUser);
-      else setStatus(`Not signed in. Please <a href="Beni-Wealth/login.html">sign in</a> as admin.`);
+      if(auth.currentUser) verifyAdminByEmail(auth.currentUser);
+      else setStatus(`Not signed in. Please <a href="login.html">sign in</a> as admin.`);
     });
 
   </script>
