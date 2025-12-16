@@ -3,107 +3,79 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin — Approve Blogs — Beni-Wealth</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600,700&display=swap" rel="stylesheet">
-  <meta name="theme-color" content="#2fe0b8">
+  <title>Beni-Wealth — Admin Moderation</title>
 
-    <!-- Poppins -->
+  <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
-  <!-- Favicons & Social preview -->
+  <!-- favicon / logo -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete ptcs and blogs, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
-  
+
   <style>
-    :root{--bg:#0b0613;--bg2:#0f0820;--muted:rgba(233,240,255,0.62);--accent-start:#2fe0b8;--accent-end:#7a5fff;--text:#e9f0ff}
-    *{box-sizing:border-box}body{margin:0;font-family:'Poppins',system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);padding:18px}
-    .container{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:18px}
-    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,0.02)}
-    h1{margin:0 0 6px}
-    .muted{color:var(--muted);font-size:13px}
-    .list{display:grid;gap:12px;margin-top:12px}
-    .post{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.015));border:1px solid rgba(255,255,255,0.02)}
-    .thumb{width:160px;height:100px;border-radius:8px;object-fit:cover;background:rgba(255,255,255,0.02)}
-    .actions{display:flex;gap:8px;margin-top:10px}
-    .btn{padding:8px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700;cursor:pointer}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
-    pre{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;overflow:auto;max-height:320px}
-    .warn{color:#ffcc00}
-    .ok{color:#10b981}
-    @media(max-width:980px){ .container{grid-template-columns:1fr} }
+    :root{ --bg-1:#0b0613; --bg-2:#0f0820; --text:#eaf2ff; --muted:rgba(255,255,255,0.62); --accent-a:#8446ff; --accent-b:#6ce2c8; }
+    *{box-sizing:border-box}
+    body{ margin:0; min-height:100vh; background: radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent), radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.06), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text); font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial; padding:28px; }
+    .wrap{ max-width:1100px; margin:0 auto; }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px }
+    h1{ margin:0; font-size:20px }
+    .controls{ display:flex; gap:8px; align-items:center }
+    .btn{ padding:8px 12px; border-radius:999px; border:none; cursor:pointer; font-weight:700 }
+    .btn.primary{ background:linear-gradient(90deg,#7a5fff,#35d6b1); color:#041219 }
+    .btn.ghost{ background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted) }
+    .note{ color:var(--muted); font-size:13px }
+
+    .list{ display:grid; grid-template-columns:1fr; gap:12px; margin-top:12px }
+    .card{ display:flex; gap:12px; padding:12px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.03); }
+    .thumb{ width:160px; height:110px; border-radius:8px; object-fit:cover; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.03) }
+    .meta{ flex:1 }
+    .meta h3{ margin:0 0 6px; font-size:16px }
+    .meta p{ margin:0 0 8px; color:var(--muted); font-size:13px }
+    .meta .tags{ font-size:12px; color:var(--muted); margin-top:6px }
+    .actions{ display:flex; gap:8px; align-items:center; margin-top:8px }
+    .small{ font-size:12px; color:var(--muted) }
+    .status-pill{ padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px }
+    .status-pending{ background:linear-gradient(90deg,#ffb86b,#ff6b6b); color:#041219 }
+
+    #statusArea{ margin-top:12px }
+
+    @media(max-width:760px){ .card{ flex-direction:column } .thumb{ width:100%; height:200px } }
   </style>
 </head>
 <body>
-  <div style="max-width:1100px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-      <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" style="width:64px;height:64px;border-radius:10px">
-      <div>
-        <h1>Admin — Pending Blog Approvals (Debug)</h1>
-        <div class="muted">This page restricts access to: <strong>beniwealth70@gmail.com</strong> and <strong>owanaomubo76@gmail.com</strong>.</div>
+  <div class="wrap">
+    <header>
+      <h1>Admin — Blog moderation</h1>
+      <div class="controls">
+        <div class="note">Only admins can moderate. Pending posts are listed below.</div>
+        <button id="refreshBtn" class="btn ghost">Refresh</button>
       </div>
-    </div>
-  </div>
+    </header>
 
-  <div class="container">
-    <!-- left: admin controls & list -->
-    <div class="panel">
-      <div id="status" style="margin-bottom:10px" class="muted">Checking admin authentication...</div>
-      <div id="controls" style="display:none">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-          <button id="refreshBtn" class="btn ghost">Refresh list & auth</button>
-          <button id="forceLogout" class="btn ghost">Sign out</button>
-          <div style="margin-left:auto" class="muted small">Signed in as <span id="adminEmail">—</span></div>
-        </div>
-
-        <div id="list" class="list"></div>
-        <div id="empty" style="display:none;padding:12px;border-radius:8px;background:rgba(255,255,255,0.01);color:var(--muted);text-align:center">No pending posts.</div>
-      </div>
+    <div id="controlsRow" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <div class="note">Approve reward (₦):</div>
+      <input id="rewardInput" type="number" value="50" style="width:100px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)" />
+      <label class="small" style="margin-left:6px">Reject penalty (₦):</label>
+      <input id="penaltyInput" type="number" value="0" style="width:80px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)" />
     </div>
 
-    <!-- right: debug -->
-    <div class="panel">
-      <h3>Debug</h3>
-      <div class="muted" style="margin-bottom:8px">Visible diagnostics — copy & paste this block if the page still shows "not signed in".</div>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <button id="recheckBtn" class="btn">Re-check auth</button>
-        <button id="showStorageBtn" class="btn ghost">Show storage keys</button>
-      </div>
+    <div id="statusArea" aria-live="polite"></div>
 
-      <div style="margin-bottom:8px">
-        <strong>Origin:</strong> <span id="originSpan"></span><br>
-        <strong>Domain:</strong> <span id="domainSpan"></span><br>
-        <strong>Allowed admin emails:</strong>
-        <ul id="allowedList" class="muted"></ul>
-      </div>
-
-      <div><strong>Auth state & token</strong></div>
-      <pre id="debugPre">...</pre>
-      <div style="margin-top:8px">
-        <strong>LocalStorage keys (filtered)</strong>
-        <pre id="storagePre">...</pre>
-      </div>
-      <div style="margin-top:8px" class="muted">If you still see "Not signed in", copy the whole Debug text (Auth state + storage keys + origin) and paste it here.</div>
+    <div id="list" class="list" role="region" aria-label="Pending posts list">
+      <!-- items populated here -->
     </div>
   </div>
 
   <script type="module">
-    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, collection, query, where, orderBy, getDocs, doc, updateDoc, serverTimestamp, getDoc, addDoc
-    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+      getFirestore, collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, increment, getDoc
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // FIREBASE CONFIG (same as your site)
+    // firebase config (from your dashboard)
     const firebaseConfig = {
-      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
       projectId: "beni-wealths",
       storageBucket: "beni-wealths.firebasestorage.app",
@@ -112,218 +84,156 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    // allowed admin emails (lowercase)
-    const ALLOWED = ['beniwealth70@gmail.com','owanaomubo76@gmail.com'];
+    if(!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
 
-    // init
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // UI refs
-    const statusEl = document.getElementById('status');
-    const controlsEl = document.getElementById('controls');
     const listEl = document.getElementById('list');
-    const emptyEl = document.getElementById('empty');
+    const statusArea = document.getElementById('statusArea');
     const refreshBtn = document.getElementById('refreshBtn');
-    const adminEmailSpan = document.getElementById('adminEmail');
-    const debugPre = document.getElementById('debugPre');
-    const storagePre = document.getElementById('storagePre');
-    const originSpan = document.getElementById('originSpan');
-    const domainSpan = document.getElementById('domainSpan');
-    const allowedList = document.getElementById('allowedList');
-    const recheckBtn = document.getElementById('recheckBtn');
-    const showStorageBtn = document.getElementById('showStorageBtn');
-    const forceLogout = document.getElementById('forceLogout');
+    const rewardInput = document.getElementById('rewardInput');
+    const penaltyInput = document.getElementById('penaltyInput');
 
-    // fill small UI
-    originSpan.textContent = window.location.origin;
-    domainSpan.textContent = document.domain;
-    ALLOWED.forEach(e => {
-      const li = document.createElement('li'); li.textContent = e; allowedList.appendChild(li);
-    });
+    let currentUser = null;
+    let isAdmin = false;
+    let unsubscribe = null;
 
-    function setStatus(txt){ statusEl.textContent = txt; console.log('[ADMIN]', txt); }
-    function showControls(b){ controlsEl.style.display = b ? 'block' : 'none'; }
-    function setDebug(obj){ debugPre.textContent = JSON.stringify(obj, null, 2); }
-
-    // show storage keys (filtered)
-    function showStorageKeys(){
-      try{
-        const keys = Object.keys(localStorage).sort();
-        storagePre.textContent = JSON.stringify(keys, null, 2);
-      }catch(e){
-        storagePre.textContent = 'Error reading localStorage: ' + String(e);
-      }
+    function showMessage(text, type='success'){
+      statusArea.innerHTML = `<div class="message ${type}">${text}</div>`;
+      setTimeout(()=> { if(statusArea && statusArea.innerHTML) statusArea.innerHTML = ''; }, 6000);
     }
 
-    // set persistence first
-    setPersistence(auth, browserLocalPersistence).then(()=> {
-      console.log('[ADMIN] persistence set to local');
-    }).catch(e => {
-      console.warn('[ADMIN] setPersistence failed', e);
-    });
+    function formatDate(ts){ try{ if(!ts) return '-'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString(); }catch(e){ return '-'; } }
 
-    // central verification: refresh token, check auth.currentUser and email whitelist, then load pending
-    async function verifyAndLoad(user){
-      if(!user){
-        setStatus('No signed-in user.');
-        setDebug({ note: 'no_user' });
-        showControls(false);
-        return;
-      }
-
-      try {
-        setStatus('Refreshing token and verifying user...');
-        // try refresh token
-        let tokenResult=null;
-        try{
-          tokenResult = await user.getIdTokenResult(true);
-        }catch(e){
-          console.warn('token refresh failed', e);
-          try{ tokenResult = await user.getIdTokenResult(); } catch(e2){ console.warn('getIdTokenResult fallback failed', e2); }
-        }
-
-        const info = {
-          currentUser: {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName || null,
-            emailVerified: user.emailVerified || false,
-            metadata: user.metadata || null
-          },
-          token: tokenResult ? {
-            issuedAtTime: tokenResult.issuedAtTime,
-            expirationTime: tokenResult.expirationTime,
-            authTime: tokenResult.authTime,
-            claims: tokenResult.claims
-          } : null,
-          origin: window.location.origin,
-          domain: document.domain,
-          localStorageKeysPreview: (() => { try{ return Object.keys(localStorage).slice(0,40); }catch(e){ return 'error: ' + String(e);} })()
-        };
-
-        setDebug(info);
-
-        // is email present?
-        if(!user.email){
-          setStatus('Signed-in user has no email (cannot verify).');
-          showControls(false);
-          return;
-        }
-
-        // whitelist check (case-insensitive)
-        const emailLower = String(user.email).toLowerCase();
-        if(ALLOWED.includes(emailLower)){
-          adminEmailSpan.textContent = user.email;
-          setStatus('Access granted (email whitelist). Loading pending posts...');
-          showControls(true);
-          await loadPending();
-          return;
-        }
-
-        // fallback: check users/{uid}.role === 'admin'
-        try{
-          const ud = await getDoc(doc(db,'users',user.uid));
-          if(ud.exists() && (ud.data().role || '').toLowerCase() === 'admin'){
-            adminEmailSpan.textContent = user.email;
-            setStatus('Access granted (role-based). Loading pending posts...');
-            showControls(true);
-            await loadPending();
-            return;
-          }
-        }catch(e){ console.warn('users/{uid} check failed', e); }
-
-        // not allowed
-        setStatus('Access denied — your email is not authorized to access this page.');
-        showControls(false);
-      } catch (err){
-        console.error('verifyAndLoad error', err);
-        setStatus('Error during verification — check console and debug data.');
-        showControls(false);
-      }
-    }
-
-    // load pending posts
-    async function loadPending(){
+    function renderList(docs){
       listEl.innerHTML = '';
-      emptyEl.style.display = 'none';
-      try{
-        const blogsCol = collection(db,'blogs');
-        const q = query(blogsCol, where('status','==','pending'), orderBy('createdAt','desc'));
-        const snap = await getDocs(q);
-        if(snap.empty){ emptyEl.style.display = 'block'; return; }
-        snap.forEach(docSnap => {
-          const data = docSnap.data(); const id = docSnap.id;
-          const el = document.createElement('div'); el.className='post';
-          const img = document.createElement('img'); img.className='thumb'; img.src = data.thumbnailUrl || 'https://via.placeholder.com/320x180?text=No+thumbnail';
-          el.appendChild(img);
-          const meta = document.createElement('div');
-          meta.innerHTML = `<h3 style="margin:0 0 6px">${escapeHtml(data.title || '(no title)')}</h3>
-                            <p class="muted" style="margin:0">${escapeHtml((data.excerpt||data.content||'').slice(0,240))}</p>
-                            <div class="muted" style="margin-top:8px">By <strong>${escapeHtml(data.authorName||data.authorId||'unknown')}</strong> • ID: ${id}</div>`;
-          const actions = document.createElement('div'); actions.className='actions';
-          const aBtn = document.createElement('button'); aBtn.className='btn'; aBtn.textContent='Approve'; aBtn.onclick = ()=> handleApprove(id);
-          const rBtn = document.createElement('button'); rBtn.className='btn ghost'; rBtn.textContent='Reject'; rBtn.onclick = ()=> handleReject(id);
-          const pBtn = document.createElement('button'); pBtn.className='btn ghost'; pBtn.textContent='Preview'; pBtn.onclick = ()=> openPreview(data);
-          actions.appendChild(aBtn); actions.appendChild(rBtn); actions.appendChild(pBtn);
-          meta.appendChild(actions); el.appendChild(meta); listEl.appendChild(el);
+      if(!docs.length){ listEl.innerHTML = '<div class="note">No pending posts right now.</div>'; return; }
+      docs.forEach(docSnap => {
+        const id = docSnap.id;
+        const data = docSnap.data();
+        const title = data.title || 'Untitled';
+        const author = data.author || data.userId || 'Unknown';
+        const tags = (data.tags || []).join(', ');
+        const createdAt = data.createdAt;
+        const thumbnail = data.thumbnail || '';
+
+        const card = document.createElement('div'); card.className = 'card';
+        const img = document.createElement('img'); img.className = 'thumb'; img.alt = title + ' thumbnail'; img.src = thumbnail || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="100%" height="100%" fill="%230b0613"/><text x="50%" y="50%" fill="%23aaaaaa" font-size="16" dominant-baseline="middle" text-anchor="middle">No thumbnail</text></svg>';
+        const meta = document.createElement('div'); meta.className = 'meta';
+        const h = document.createElement('h3'); h.textContent = title;
+        const p = document.createElement('p'); p.textContent = (data.content || '').slice(0, 220) + ( (data.content && data.content.length>220) ? '…' : '' );
+        const small = document.createElement('div'); small.className = 'small'; small.innerHTML = `by <strong>${author}</strong> • ${formatDate(createdAt)} <span style="margin-left:8px" class="status-pill status-pending">PENDING</span>`;
+        const tagsEl = document.createElement('div'); tagsEl.className = 'tags'; tagsEl.textContent = tags;
+
+        const actions = document.createElement('div'); actions.className = 'actions';
+        const approveBtn = document.createElement('button'); approveBtn.className = 'btn primary'; approveBtn.textContent = 'Approve';
+        const rejectBtn = document.createElement('button'); rejectBtn.className = 'btn ghost'; rejectBtn.textContent = 'Reject';
+        const viewBtn = document.createElement('button'); viewBtn.className = 'btn ghost'; viewBtn.textContent = 'Open';
+
+        actions.appendChild(approveBtn); actions.appendChild(rejectBtn); actions.appendChild(viewBtn);
+
+        meta.appendChild(h); meta.appendChild(small); meta.appendChild(p); meta.appendChild(tagsEl); meta.appendChild(actions);
+        card.appendChild(img); card.appendChild(meta);
+        listEl.appendChild(card);
+
+        // button handlers
+        viewBtn.addEventListener('click', ()=>{
+          window.open(`https://your-site.example.com/blog.html?id=${id}`, '_blank');
         });
-      }catch(e){ console.error('loadPending error', e); setStatus('Failed to load pending posts — see console.'); }
+
+        approveBtn.addEventListener('click', async ()=>{
+          if(!isAdmin){ alert('Only admins can approve posts'); return; }
+          const confirmApprove = confirm('Approve this post and publish it?'); if(!confirmApprove) return;
+          const reward = Number(rewardInput.value) || 0;
+          try{
+            // set blog status to published
+            const blogRef = doc(db, 'blogs', id);
+            await updateDoc(blogRef, { status: 'published', publishedAt: serverTimestamp(), reviewedBy: currentUser.uid });
+
+            // notify author
+            const notifications = collection(db, 'notifications');
+            await addDoc(notifications, { userId: data.userId, type: 'blog_published', message: `Your post "${title}" was approved and published.`, blogId: id, createdAt: serverTimestamp() });
+
+            // reward author (if reward > 0)
+            if(reward > 0){
+              const txs = collection(db, 'transactions');
+              await addDoc(txs, { userId: data.userId, type: 'reward', source: 'blog_approval', amount: Number(reward), note: `Reward for published post ${id}`, createdAt: serverTimestamp() });
+              // try update user balance
+              const userRef = doc(db, 'users', data.userId);
+              try{ await updateDoc(userRef, { balance: increment(Number(reward)) }); }catch(e){ console.warn('balance increment may be blocked by security rules', e); }
+            }
+
+            showMessage('Post approved and published');
+          }catch(err){ console.error('approve failed', err); showMessage('Failed to approve. See console.', 'error'); }
+        });
+
+        rejectBtn.addEventListener('click', async ()=>{
+          if(!isAdmin){ alert('Only admins can reject posts'); return; }
+          const reason = prompt('Enter rejection reason (optional):', 'Does not meet guidelines');
+          if(reason === null) return; // cancelled
+          const applyPenalty = Number(penaltyInput.value) || 0;
+          const doConfirm = confirm(`Reject this post?${applyPenalty>0 ? '\nA penalty of ₦' + applyPenalty + ' will be applied to the author.' : ''}`);
+          if(!doConfirm) return;
+          try{
+            const blogRef = doc(db, 'blogs', id);
+            await updateDoc(blogRef, { status: 'rejected', rejectedAt: serverTimestamp(), reviewedBy: currentUser.uid, rejectionReason: reason || null });
+
+            // notify author
+            const notifications = collection(db, 'notifications');
+            await addDoc(notifications, { userId: data.userId, type: 'blog_rejected', message: `Your post "${title}" was rejected. Reason: ${reason || 'Not specified'}`, blogId: id, createdAt: serverTimestamp() });
+
+            // apply penalty if configured
+            if(applyPenalty > 0){
+              const txs = collection(db, 'transactions');
+              await addDoc(txs, { userId: data.userId, type: 'penalty', source: 'blog_rejection', amount: -Math.abs(Number(applyPenalty)), note: `Penalty for rejected post ${id}`, createdAt: serverTimestamp() });
+              const userRef = doc(db, 'users', data.userId);
+              try{ await updateDoc(userRef, { balance: increment(-Math.abs(Number(applyPenalty))) }); }catch(e){ console.warn('balance decrement may be blocked by security rules', e); }
+            }
+
+            showMessage('Post rejected');
+          }catch(err){ console.error('reject failed', err); showMessage('Failed to reject. See console.', 'error'); }
+        });
+      });
     }
 
-    async function handleApprove(docId){
-      if(!confirm('Approve this post and make it public?')) return;
-      try{ await updateDoc(doc(db,'blogs',docId), { status:'approved', approvedBy: auth.currentUser.uid, approvedAt: serverTimestamp() }); alert('Approved'); await loadPending(); }
-      catch(e){ console.error('approve failed', e); alert('Approve failed'); }
-    }
-    async function handleReject(docId){
-      const reason = prompt('Reason (optional)'); if(reason===null) return;
-      try{ await updateDoc(doc(db,'blogs',docId), { status:'rejected', rejectedBy: auth.currentUser.uid, rejectedAt: serverTimestamp(), rejectionReason: reason || null }); alert('Rejected'); await loadPending(); }
-      catch(e){ console.error('reject failed', e); alert('Reject failed'); }
-    }
-    function openPreview(data){
-      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(data.title||'Preview')}</title></head><body style="font-family:Arial,Helvetica,sans-serif;padding:20px"><h1>${escapeHtml(data.title||'')}</h1><p><em>By ${escapeHtml(data.authorName||data.authorId||'')}</em></p>${data.thumbnailUrl?'<img src="'+escapeHtml(data.thumbnailUrl)+'" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:16px">':''}<div>${(data.content||'').replace(/\n/g,'<br>')}</div></body></html>`;
-      const w = window.open(); w.document.write(html); w.document.close();
+    // subscribe to pending blogs
+    function subscribePending(){
+      const col = collection(db, 'blogs');
+      const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
+      if(unsubscribe) unsubscribe();
+      unsubscribe = onSnapshot(q, (snap) => {
+        renderList(snap.docs);
+      }, (err)=>{ console.error('pending query failed', err); showMessage('Failed to load pending posts', 'error'); });
     }
 
-    // escape
-    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"'`]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[ch])); }
-
-    // onAuthStateChanged
-    onAuthStateChanged(auth, async (user) => {
-      console.log('onAuthStateChanged', user);
-      if(user){
-        // try refresh token
-        try{ await user.getIdToken(true); console.log('token refreshed'); } catch(e){ console.warn('refresh failed', e); }
-        await verifyAndLoad(user);
+    // auth & admin check
+    onAuthStateChanged(auth, async (user)=>{
+      currentUser = user;
+      if(!user){
+        showMessage('Sign in as an admin to moderate', 'error');
+        listEl.innerHTML = '<div class="note">Please sign in as admin.</div>';
         return;
       }
-      // fallback to currentUser
-      if(auth.currentUser){
-        console.log('fallback currentUser present', auth.currentUser);
-        try{ await auth.currentUser.getIdToken(true); } catch(e){ console.warn('fallback token refresh failed', e); }
-        await verifyAndLoad(auth.currentUser);
-        return;
-      }
-      // no user
-      setStatus('Not signed in. Please sign in from the same origin. (See Debug block)');
-      setDebug({ note: 'no_user', origin: window.location.origin, domain: document.domain, storageKeys: (()=>{ try{return Object.keys(localStorage)}catch(e){return 'error '+String(e)} })() });
-      showControls(false);
+      try{
+        const uRef = doc(db, 'users', user.uid);
+        const snap = await getDoc(uRef);
+        const d = snap.exists() ? snap.data() : {};
+        isAdmin = !!(d.role === 'admin' || d.isAdmin === true || d.roles && d.roles.includes && d.roles.includes('admin'));
+        if(!isAdmin){
+          listEl.innerHTML = '<div class="note">Access denied. Your account is not an admin.</div>';
+          showMessage('Access denied: not an admin', 'error');
+          return;
+        }
+        showMessage('Admin authenticated — loading pending posts');
+        subscribePending();
+      }catch(err){ console.error('admin check failed', err); showMessage('Failed checking admin status', 'error'); }
     });
 
-    // UI actions
-    refreshBtn.addEventListener('click', async () => {
-      if(auth.currentUser) await verifyAndLoad(auth.currentUser);
-      else { setStatus('No signed-in user.'); showControls(false); }
-    });
-    recheckBtn.addEventListener('click', async () => { if(auth.currentUser) await verifyAndLoad(auth.currentUser); else { setStatus('No signed-in user'); } });
-    showStorageBtn.addEventListener('click', showStorageKeys);
-    forceLogout.addEventListener('click', async ()=> { try{ await signOut(auth); alert('Signed out'); location.reload(); }catch(e){ alert('Sign out failed: '+String(e)); } });
+    refreshBtn.addEventListener('click', ()=>{ subscribePending(); showMessage('Refreshed'); });
 
-    // initial display
-    showStorageKeys();
-    setDebug({ note:'initializing', origin: window.location.origin, domain: document.domain });
+    // cleanup
+    window.addEventListener('beforeunload', ()=>{ if(unsubscribe) unsubscribe(); });
+
   </script>
 </body>
 </html>
