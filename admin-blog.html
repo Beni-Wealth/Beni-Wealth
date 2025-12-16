@@ -3,20 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Admin Moderation</title>
+  <title>Beni-Wealth — Admin Moderation (Diagnostics)</title>
 
   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
-  <!-- favicon / logo -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
-    :root{ --bg-1:#0b0613; --bg-2:#0f0820; --text:#eaf2ff; --muted:rgba(255,255,255,0.62); --accent-a:#8446ff; --accent-b:#6ce2c8; }
+    :root{ --bg-1:#0b0613; --bg-2:#0f0820; --text:#eaf2ff; --muted:rgba(255,255,255,0.62); }
     *{box-sizing:border-box}
     body{ margin:0; min-height:100vh; background: radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent), radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.06), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text); font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial; padding:28px; }
-    .wrap{ max-width:1100px; margin:0 auto; }
+    .wrap{ max-width:1100px; margin:0 auto }
     header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px }
     h1{ margin:0; font-size:20px }
     .controls{ display:flex; gap:8px; align-items:center }
@@ -37,7 +36,8 @@
     .status-pill{ padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px }
     .status-pending{ background:linear-gradient(90deg,#ffb86b,#ff6b6b); color:#041219 }
 
-    #statusArea{ margin-top:12px }
+    #debug{ margin-top:18px; padding:12px; border-radius:10px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); font-size:13px; color:var(--muted) }
+    pre{ white-space:pre-wrap; word-break:break-word; max-height:320px; overflow:auto }
 
     @media(max-width:760px){ .card{ flex-direction:column } .thumb{ width:100%; height:200px } }
   </style>
@@ -45,10 +45,11 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>Admin — Blog moderation</h1>
+      <h1>Admin — Blog moderation (Diagnostic)</h1>
       <div class="controls">
-        <div class="note">Only admins can moderate. Pending posts are listed below.</div>
-        <button id="refreshBtn" class="btn ghost">Refresh</button>
+        <div class="note">This page includes diagnostics to help find why no pending posts appear.</div>
+        <button id="runDiag" class="btn ghost">Run diagnostics</button>
+        <button id="refreshBtn" class="btn ghost">Refresh list</button>
       </div>
     </header>
 
@@ -61,8 +62,12 @@
 
     <div id="statusArea" aria-live="polite"></div>
 
-    <div id="list" class="list" role="region" aria-label="Pending posts list">
-      <!-- items populated here -->
+    <div id="list" class="list" role="region" aria-label="Pending posts list"></div>
+
+    <div id="debug">
+      <strong>Diagnostics</strong>
+      <div id="diagSummary" style="margin-top:8px">Not run yet.</div>
+      <details style="margin-top:8px"><summary>Raw debug output</summary><pre id="diagOutput">—</pre></details>
     </div>
   </div>
 
@@ -70,7 +75,7 @@
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, increment, getDoc
+      getFirestore, collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, increment, getDocs, getDoc
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // firebase config (from your dashboard)
@@ -91,11 +96,16 @@
     const listEl = document.getElementById('list');
     const statusArea = document.getElementById('statusArea');
     const refreshBtn = document.getElementById('refreshBtn');
+    const runDiagBtn = document.getElementById('runDiag');
     const rewardInput = document.getElementById('rewardInput');
     const penaltyInput = document.getElementById('penaltyInput');
+    const diagSummary = document.getElementById('diagSummary');
+    const diagOutput = document.getElementById('diagOutput');
 
     let currentUser = null;
-    let isAdmin = false;
+    let // Grant access if the signed-in user's email matches one of the admin emails (case-insensitive)
+        const adminEmails = ['owanaomubo76@gmail.com', 'beniwealth70@gmail.com'].map(e => e.toLowerCase());
+        isAdmin = adminEmails.includes((user.email || '').toLowerCase()) || !!(d.role === 'admin' || d.isAdmin === true || (Array.isArray(d.roles) && d.roles.includes('admin')));
     let unsubscribe = null;
 
     function showMessage(text, type='success'){
@@ -136,33 +146,24 @@
         card.appendChild(img); card.appendChild(meta);
         listEl.appendChild(card);
 
-        // button handlers
-        viewBtn.addEventListener('click', ()=>{
-          window.open(`https://your-site.example.com/blog.html?id=${id}`, '_blank');
-        });
+        // button handlers (same as before)
+        viewBtn.addEventListener('click', ()=>{ window.open(`https://your-site.example.com/blog.html?id=${id}`, '_blank'); });
 
         approveBtn.addEventListener('click', async ()=>{
           if(!isAdmin){ alert('Only admins can approve posts'); return; }
           const confirmApprove = confirm('Approve this post and publish it?'); if(!confirmApprove) return;
           const reward = Number(rewardInput.value) || 0;
           try{
-            // set blog status to published
             const blogRef = doc(db, 'blogs', id);
             await updateDoc(blogRef, { status: 'published', publishedAt: serverTimestamp(), reviewedBy: currentUser.uid });
-
-            // notify author
             const notifications = collection(db, 'notifications');
             await addDoc(notifications, { userId: data.userId, type: 'blog_published', message: `Your post "${title}" was approved and published.`, blogId: id, createdAt: serverTimestamp() });
-
-            // reward author (if reward > 0)
             if(reward > 0){
               const txs = collection(db, 'transactions');
               await addDoc(txs, { userId: data.userId, type: 'reward', source: 'blog_approval', amount: Number(reward), note: `Reward for published post ${id}`, createdAt: serverTimestamp() });
-              // try update user balance
               const userRef = doc(db, 'users', data.userId);
               try{ await updateDoc(userRef, { balance: increment(Number(reward)) }); }catch(e){ console.warn('balance increment may be blocked by security rules', e); }
             }
-
             showMessage('Post approved and published');
           }catch(err){ console.error('approve failed', err); showMessage('Failed to approve. See console.', 'error'); }
         });
@@ -170,70 +171,86 @@
         rejectBtn.addEventListener('click', async ()=>{
           if(!isAdmin){ alert('Only admins can reject posts'); return; }
           const reason = prompt('Enter rejection reason (optional):', 'Does not meet guidelines');
-          if(reason === null) return; // cancelled
+          if(reason === null) return;
           const applyPenalty = Number(penaltyInput.value) || 0;
-          const doConfirm = confirm(`Reject this post?${applyPenalty>0 ? '\nA penalty of ₦' + applyPenalty + ' will be applied to the author.' : ''}`);
+          const doConfirm = confirm(`Reject this post?${applyPenalty>0 ? '
+A penalty of ₦' + applyPenalty + ' will be applied to the author.' : ''}`);
           if(!doConfirm) return;
           try{
             const blogRef = doc(db, 'blogs', id);
             await updateDoc(blogRef, { status: 'rejected', rejectedAt: serverTimestamp(), reviewedBy: currentUser.uid, rejectionReason: reason || null });
-
-            // notify author
             const notifications = collection(db, 'notifications');
             await addDoc(notifications, { userId: data.userId, type: 'blog_rejected', message: `Your post "${title}" was rejected. Reason: ${reason || 'Not specified'}`, blogId: id, createdAt: serverTimestamp() });
-
-            // apply penalty if configured
             if(applyPenalty > 0){
               const txs = collection(db, 'transactions');
               await addDoc(txs, { userId: data.userId, type: 'penalty', source: 'blog_rejection', amount: -Math.abs(Number(applyPenalty)), note: `Penalty for rejected post ${id}`, createdAt: serverTimestamp() });
               const userRef = doc(db, 'users', data.userId);
               try{ await updateDoc(userRef, { balance: increment(-Math.abs(Number(applyPenalty))) }); }catch(e){ console.warn('balance decrement may be blocked by security rules', e); }
             }
-
             showMessage('Post rejected');
           }catch(err){ console.error('reject failed', err); showMessage('Failed to reject. See console.', 'error'); }
         });
       });
     }
 
-    // subscribe to pending blogs
+    // subscribe to pending blogs (live)
     function subscribePending(){
       const col = collection(db, 'blogs');
       const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
       if(unsubscribe) unsubscribe();
-      unsubscribe = onSnapshot(q, (snap) => {
+      unsubscribe = onSnapshot(q, (snap) => { renderList(snap.docs); diagSummary.textContent = `Live query returned ${snap.size} docs.`; diagOutput.textContent = JSON.stringify(snap.docs.map(d=>({id:d.id,data:d.data()})), null, 2); }, (err)=>{ console.error('pending query failed', err); renderList([]); diagSummary.textContent = 'Live query error: ' + (err && err.code) ; diagOutput.textContent = (err && err.message) || String(err); showMessage('Failed to load pending posts', 'error'); });
+    }
+
+    // one-time fetch (diagnostics)
+    async function fetchPendingOnce(){
+      diagSummary.textContent = 'Running one-time fetch...';
+      try{
+        const col = collection(db, 'blogs');
+        const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
+        const snap = await getDocs(q);
+        diagSummary.textContent = `One-time fetch returned ${snap.size} docs.`;
+        const out = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+        diagOutput.textContent = JSON.stringify(out, null, 2);
         renderList(snap.docs);
-      }, (err)=>{ console.error('pending query failed', err); showMessage('Failed to load pending posts', 'error'); });
+      }catch(err){ console.error('one-time fetch failed', err); diagSummary.textContent = 'Fetch error: ' + (err && err.code); diagOutput.textContent = (err && err.message) || String(err); showMessage('One-time fetch failed — check debug output', 'error'); }
+    }
+
+    // check admin & user info for debugging
+    async function runDiagnostics(){
+      if(!currentUser){ diagSummary.textContent = 'Not signed in'; diagOutput.textContent = 'No current user.'; return; }
+      diagSummary.textContent = 'Checking user doc and permissions...';
+      try{
+        const uRef = doc(db, 'users', currentUser.uid);
+        const snap = await getDoc(uRef);
+        const d = snap.exists() ? snap.data() : null;
+        const roleInfo = { uid: currentUser.uid, email: currentUser.email, userDocExists: !!snap.exists(), userDoc: d };
+        diagOutput.textContent = JSON.stringify(roleInfo, null, 2);
+        diagSummary.textContent = 'User doc loaded — now performing one-time blog fetch';
+        await fetchPendingOnce();
+      }catch(err){ console.error('diagnostics failed', err); diagSummary.textContent = 'Diagnostics error: ' + (err && err.code); diagOutput.textContent = (err && err.message) || String(err); }
     }
 
     // auth & admin check
     onAuthStateChanged(auth, async (user)=>{
       currentUser = user;
-      if(!user){
-        showMessage('Sign in as an admin to moderate', 'error');
-        listEl.innerHTML = '<div class="note">Please sign in as admin.</div>';
-        return;
-      }
+      if(!user){ showMessage('Sign in as an admin to moderate', 'error'); listEl.innerHTML = '<div class="note">Please sign in as admin.</div>'; return; }
       try{
         const uRef = doc(db, 'users', user.uid);
         const snap = await getDoc(uRef);
         const d = snap.exists() ? snap.data() : {};
-        isAdmin = !!(d.role === 'admin' || d.isAdmin === true || d.roles && d.roles.includes && d.roles.includes('admin'));
-        if(!isAdmin){
-          listEl.innerHTML = '<div class="note">Access denied. Your account is not an admin.</div>';
-          showMessage('Access denied: not an admin', 'error');
-          return;
-        }
+        isAdmin = !!(d.role === 'admin' || d.isAdmin === true || (d.roles && Array.isArray(d.roles) && d.roles.includes('admin')));
+        diagSummary.textContent = `Signed in as ${user.uid} — isAdmin: ${isAdmin}`;
+        if(!isAdmin){ listEl.innerHTML = '<div class="note">Access denied. Your account is not an admin.</div>'; showMessage('Access denied: not an admin', 'error'); return; }
         showMessage('Admin authenticated — loading pending posts');
         subscribePending();
       }catch(err){ console.error('admin check failed', err); showMessage('Failed checking admin status', 'error'); }
     });
 
+    runDiagBtn.addEventListener('click', ()=>{ runDiagnostics(); });
     refreshBtn.addEventListener('click', ()=>{ subscribePending(); showMessage('Refreshed'); });
 
     // cleanup
     window.addEventListener('beforeunload', ()=>{ if(unsubscribe) unsubscribe(); });
-
   </script>
 </body>
 </html>
