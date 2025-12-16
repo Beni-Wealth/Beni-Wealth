@@ -8,7 +8,6 @@
   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
-  <!-- favicon / logo -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
 
@@ -31,13 +30,13 @@
     .meta{ flex:1 }
     .meta h3{ margin:0 0 6px; font-size:16px }
     .meta p{ margin:0 0 8px; color:var(--muted); font-size:13px }
-    .meta .tags{ font-size:12px; color:var(--muted); margin-top:6px }
     .actions{ display:flex; gap:8px; align-items:center; margin-top:8px }
     .small{ font-size:12px; color:var(--muted) }
     .status-pill{ padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px }
     .status-pending{ background:linear-gradient(90deg,#ffb86b,#ff6b6b); color:#041219 }
 
     #statusArea{ margin-top:12px }
+    #errorBox{ margin-top:12px; padding:10px; background:rgba(255,0,0,0.06); border:1px solid rgba(255,0,0,0.12); color:#ffd6d6; border-radius:8px; display:none; white-space:pre-wrap; font-size:13px }
 
     @media(max-width:760px){ .card{ flex-direction:column } .thumb{ width:100%; height:200px } }
   </style>
@@ -47,7 +46,7 @@
     <header>
       <h1>Admin — Blog moderation</h1>
       <div class="controls">
-        <div class="note">Only admins can moderate. Pending posts appear below.</div>
+        <div class="note">Admins review user-submitted posts. Approve publishes; Reject applies optional penalty.</div>
         <button id="refreshBtn" class="btn ghost">Refresh</button>
       </div>
     </header>
@@ -60,20 +59,19 @@
     </div>
 
     <div id="statusArea" aria-live="polite"></div>
+    <div id="errorBox" role="alert" aria-live="assertive"></div>
 
-    <div id="list" class="list" role="region" aria-label="Pending posts list">
-      <!-- items populated here -->
-    </div>
+    <div id="list" class="list" role="region" aria-label="Pending posts list"></div>
   </div>
 
   <script type="module">
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, increment, getDoc
+      getFirestore, collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, increment, getDoc, getDocs
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // firebase config (from your dashboard)
+    // FIREBASE CONFIG (yours)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -90,6 +88,7 @@
 
     const listEl = document.getElementById('list');
     const statusArea = document.getElementById('statusArea');
+    const errorBox = document.getElementById('errorBox');
     const refreshBtn = document.getElementById('refreshBtn');
     const rewardInput = document.getElementById('rewardInput');
     const penaltyInput = document.getElementById('penaltyInput');
@@ -102,12 +101,18 @@
       statusArea.innerHTML = `<div class="message ${type}">${text}</div>`;
       setTimeout(()=> { if(statusArea && statusArea.innerHTML) statusArea.innerHTML = ''; }, 6000);
     }
+    function showError(text){
+      errorBox.style.display = 'block';
+      errorBox.textContent = text;
+      console.error('Admin moderation error:', text);
+    }
+    function clearError(){ errorBox.style.display = 'none'; errorBox.textContent = ''; }
 
     function formatDate(ts){ try{ if(!ts) return '-'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString(); }catch(e){ return '-'; } }
 
     function renderList(docs){
       listEl.innerHTML = '';
-      if(!docs.length){ listEl.innerHTML = '<div class="note">No pending posts right now.</div>'; return; }
+      if(!docs || docs.length === 0){ listEl.innerHTML = '<div class="note">No pending posts right now.</div>'; return; }
       docs.forEach(docSnap => {
         const id = docSnap.id;
         const data = docSnap.data();
@@ -118,7 +123,8 @@
         const thumbnail = data.thumbnail || '';
 
         const card = document.createElement('div'); card.className = 'card';
-        const img = document.createElement('img'); img.className = 'thumb'; img.alt = title + ' thumbnail'; img.src = thumbnail || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="100%" height="100%" fill="%230b0613"/><text x="50%" y="50%" fill="%23aaaaaa" font-size="16" dominant-baseline="middle" text-anchor="middle">No thumbnail</text></svg>';
+        const img = document.createElement('img'); img.className = 'thumb'; img.alt = title + ' thumbnail';
+        img.src = thumbnail || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="100%" height="100%" fill="%230b0613"/><text x="50%" y="50%" fill="%23aaaaaa" font-size="16" dominant-baseline="middle" text-anchor="middle">No thumbnail</text></svg>';
         const meta = document.createElement('div'); meta.className = 'meta';
         const h = document.createElement('h3'); h.textContent = title;
         const p = document.createElement('p'); p.textContent = (data.content || '').slice(0, 220) + ( (data.content && data.content.length>220) ? '…' : '' );
@@ -136,74 +142,92 @@
         card.appendChild(img); card.appendChild(meta);
         listEl.appendChild(card);
 
-        // button handlers
-        viewBtn.addEventListener('click', ()=>{
-          window.open(`https://your-site.example.com/blog.html?id=${id}`, '_blank');
-        });
+        viewBtn.addEventListener('click', ()=>{ window.open(`blog.html?id=${id}`, '_blank'); });
 
         approveBtn.addEventListener('click', async ()=>{
           if(!isAdmin){ alert('Only admins can approve posts'); return; }
-          const confirmApprove = confirm('Approve this post and publish it?'); if(!confirmApprove) return;
+          if(!confirm('Approve this post and publish it?')) return;
           const reward = Number(rewardInput.value) || 0;
           try{
-            // set blog status to published
             const blogRef = doc(db, 'blogs', id);
             await updateDoc(blogRef, { status: 'published', publishedAt: serverTimestamp(), reviewedBy: currentUser.uid });
 
             // notify author
             const notifications = collection(db, 'notifications');
-            await addDoc(notifications, { userId: data.userId, type: 'blog_published', message: `Your post "${title}" was approved and published.`, blogId: id, createdAt: serverTimestamp() });
+            await addDoc(notifications, { userId: data.userId, type: 'blog_published', message: `Your post \"${title}\" was approved and published.`, blogId: id, createdAt: serverTimestamp() });
 
-            // reward author (if reward > 0)
+            // reward
             if(reward > 0){
               const txs = collection(db, 'transactions');
               await addDoc(txs, { userId: data.userId, type: 'reward', source: 'blog_approval', amount: Number(reward), note: `Reward for published post ${id}`, createdAt: serverTimestamp() });
-              // try update user balance
               const userRef = doc(db, 'users', data.userId);
-              try{ await updateDoc(userRef, { balance: increment(Number(reward)) }); }catch(e){ console.warn('balance increment may be blocked by security rules', e); }
+              try{ await updateDoc(userRef, { balance: increment(Number(reward)) }); }catch(e){ console.warn('balance increment blocked by rules', e); }
             }
 
             showMessage('Post approved and published');
-          }catch(err){ console.error('approve failed', err); showMessage('Failed to approve. See console.', 'error'); }
+          }catch(err){ showError('Approve error: ' + (err && err.message ? err.message : String(err))); }
         });
 
         rejectBtn.addEventListener('click', async ()=>{
           if(!isAdmin){ alert('Only admins can reject posts'); return; }
-          const reason = prompt('Enter rejection reason (optional):', 'Does not meet guidelines');
-          if(reason === null) return; // cancelled
+          const reason = prompt('Enter rejection reason (optional):', 'Does not meet guidelines'); if(reason === null) return;
           const applyPenalty = Number(penaltyInput.value) || 0;
-          const doConfirm = confirm(`Reject this post?${applyPenalty>0 ? '\nA penalty of ₦' + applyPenalty + ' will be applied to the author.' : ''}`);
-          if(!doConfirm) return;
+          if(!confirm(`Reject this post?${applyPenalty>0 ? '\nA penalty of ₦' + applyPenalty + ' will be applied to the author.' : ''}`)) return;
           try{
             const blogRef = doc(db, 'blogs', id);
             await updateDoc(blogRef, { status: 'rejected', rejectedAt: serverTimestamp(), reviewedBy: currentUser.uid, rejectionReason: reason || null });
 
-            // notify author
             const notifications = collection(db, 'notifications');
-            await addDoc(notifications, { userId: data.userId, type: 'blog_rejected', message: `Your post "${title}" was rejected. Reason: ${reason || 'Not specified'}`, blogId: id, createdAt: serverTimestamp() });
+            await addDoc(notifications, { userId: data.userId, type: 'blog_rejected', message: `Your post \"${title}\" was rejected. Reason: ${reason || 'Not specified'}`, blogId: id, createdAt: serverTimestamp() });
 
-            // apply penalty if configured
             if(applyPenalty > 0){
               const txs = collection(db, 'transactions');
               await addDoc(txs, { userId: data.userId, type: 'penalty', source: 'blog_rejection', amount: -Math.abs(Number(applyPenalty)), note: `Penalty for rejected post ${id}`, createdAt: serverTimestamp() });
               const userRef = doc(db, 'users', data.userId);
-              try{ await updateDoc(userRef, { balance: increment(-Math.abs(Number(applyPenalty))) }); }catch(e){ console.warn('balance decrement may be blocked by security rules', e); }
+              try{ await updateDoc(userRef, { balance: increment(-Math.abs(Number(applyPenalty))) }); }catch(e){ console.warn('balance decrement blocked by rules', e); }
             }
 
             showMessage('Post rejected');
-          }catch(err){ console.error('reject failed', err); showMessage('Failed to reject. See console.', 'error'); }
+          }catch(err){ showError('Reject error: ' + (err && err.message ? err.message : String(err))); }
         });
+
       });
     }
 
-    // subscribe to pending blogs
-    function subscribePending(){
-      const col = collection(db, 'blogs');
-      const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
-      if(unsubscribe) unsubscribe();
-      unsubscribe = onSnapshot(q, (snap) => {
+    // try live subscription, but surface errors and then attempt a one-time fetch
+    async function subscribePending(){
+      clearError();
+      try{
+        const col = collection(db, 'blogs');
+        const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
+        if(unsubscribe) unsubscribe();
+        unsubscribe = onSnapshot(q, (snap) => {
+          renderList(snap.docs);
+        }, async (err) => {
+          // show error and do a diagnostic one-time fetch
+          showError('Live subscription error: ' + (err && err.message ? err.message : String(err)));
+          console.warn('onSnapshot error', err);
+          // fallback
+          await fetchPendingOnce();
+        });
+      }catch(e){
+        showError('subscribePending failed: ' + (e && e.message ? e.message : String(e)));
+        await fetchPendingOnce();
+      }
+    }
+
+    // one-time fetch fallback (shows errors)
+    async function fetchPendingOnce(){
+      clearError();
+      try{
+        const col = collection(db, 'blogs');
+        const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
+        const snap = await getDocs(q);
         renderList(snap.docs);
-      }, (err)=>{ console.error('pending query failed', err); showMessage('Failed to load pending posts', 'error'); });
+        if(snap.size === 0) showMessage('One-time fetch returned 0 pending posts');
+      }catch(err){
+        showError('One-time fetch error: ' + (err && err.message ? err.message : String(err)));
+      }
     }
 
     // auth & admin check (email whitelist + user doc fallback)
@@ -218,7 +242,6 @@
         const uRef = doc(db, 'users', user.uid);
         const snap = await getDoc(uRef);
         const d = snap.exists() ? snap.data() : {};
-        // grant access if email matches one of the admin emails
         const adminEmails = ['owanaomubo76@gmail.com', 'beniwealth70@gmail.com'].map(e => e.toLowerCase());
         isAdmin = adminEmails.includes((user.email || '').toLowerCase()) || !!(d.role === 'admin' || d.isAdmin === true || (Array.isArray(d.roles) && d.roles.includes('admin')));
         if(!isAdmin){
@@ -228,12 +251,13 @@
         }
         showMessage('Admin authenticated — loading pending posts');
         subscribePending();
-      }catch(err){ console.error('admin check failed', err); showMessage('Failed checking admin status', 'error'); }
+      }catch(err){
+        showError('Admin check failed: ' + (err && err.message ? err.message : String(err)));
+      }
     });
 
     refreshBtn.addEventListener('click', ()=>{ subscribePending(); showMessage('Refreshed'); });
 
-    // cleanup
     window.addEventListener('beforeunload', ()=>{ if(unsubscribe) unsubscribe(); });
 
   </script>
