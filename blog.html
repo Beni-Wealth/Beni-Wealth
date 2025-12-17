@@ -10,39 +10,47 @@
       --bg-1:#041021;
       --card:#071826;
       --muted:rgba(255,255,255,0.66);
-      --accent:linear-gradient(90deg,#7a5fff,#35d6b1);
+      --accent-gradient: linear-gradient(90deg,#7a5fff,#35d6b1);
       --glass: rgba(255,255,255,0.02);
       --pill-bg: rgba(255,255,255,0.04);
+      --max-width:1100px;
     }
     *{box-sizing:border-box}
-    body{ margin:0; min-height:100vh; background: radial-gradient(800px 500px at 10% 10%, rgba(122,95,255,0.06), transparent), linear-gradient(180deg,var(--bg-1),#071126); color:#eaf2ff; font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial; padding:28px; }
-    .wrap{ max-width:1100px; margin:0 auto; }
+    html,body{ height:100%; }
+    body{ margin:0; min-height:100vh; background: radial-gradient(800px 500px at 10% 10%, rgba(122,95,255,0.06), transparent), linear-gradient(180deg,var(--bg-1),#071126); color:#eaf2ff; font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial; }
+    .wrap{ max-width:var(--max-width); margin:0 auto; padding:28px; }
     header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px }
     h1{ margin:0; font-size:20px }
     .note{ color:var(--muted); font-size:13px }
     .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-    .card{ background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.01)); border-radius:12px; padding:14px; border:1px solid rgba(255,255,255,0.03); cursor:pointer; display:flex; flex-direction:column; gap:10px }
+    .card{ background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.01)); border-radius:12px; padding:14px; border:1px solid rgba(255,255,255,0.03); cursor:pointer; display:flex; flex-direction:column; gap:10px; min-height:220px }
     .thumb{ width:100%; height:140px; object-fit:cover; border-radius:8px; background:var(--glass); border:1px dashed rgba(255,255,255,0.03) }
     .title{ font-weight:700; font-size:15px; margin:0 }
     .meta{ color:var(--muted); font-size:13px; display:flex; justify-content:space-between; align-items:center }
     .tags{ font-size:12px; color:var(--muted) }
     .small-btn{ padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.04); background:var(--pill-bg); font-size:12px; cursor:pointer }
-    .overlay{ position:fixed; inset:0; background:linear-gradient(180deg, rgba(2,6,10,0.86), rgba(2,6,10,0.96)); display:none; align-items:center; justify-content:center; z-index:9999; padding:28px; }
-    .overlay.show{ display:flex; }
-    .sheet{ width:100%; max-width:900px; max-height:96vh; overflow:auto; background:linear-gradient(180deg,#071428,#071826); border-radius:12px; padding:20px; border:1px solid rgba(255,255,255,0.04); box-shadow:0 8px 40px rgba(0,0,0,0.6); position:relative; }
-    .sheet h2{ margin:0 0 8px; font-size:20px }
-    .sheet .by{ color:var(--muted); font-size:13px; margin-bottom:12px }
-    .sheet .content{ color:#e6f6ff; line-height:1.6; font-size:15px }
-    .close-btn{ position:absolute; right:14px; top:14px; background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); padding:6px 9px; border-radius:8px; cursor:pointer }
-    .overlay-footer{ display:flex; gap:12px; align-items:center; margin-top:14px; justify-content:space-between; }
-    .timer-pill{ padding:8px 12px; border-radius:999px; font-weight:700; background:var(--pill-bg); color:var(--muted); font-size:14px }
     .status{ font-size:13px; color:var(--muted) }
-    @media(max-width:980px){ .grid{ grid-template-columns:repeat(2,1fr); } }
-    @media(max-width:600px){ .grid{ grid-template-columns:1fr; } .sheet{ padding:14px } }
+
+    /* Full-page viewer (replaces overlay) */
+    .viewer-page{ position:fixed; inset:0; background: linear-gradient(180deg, rgba(2,6,10,0.98), rgba(2,6,10,0.99)); z-index:9999; display:none; overflow:auto; }
+    .viewer-page.show{ display:block; }
+    .viewer-inner{ max-width:var(--max-width); margin:0 auto; padding:28px; min-height:100vh; box-sizing:border-box; }
+    .viewer-header{ display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .viewer-title{ font-size:20px; margin:0; }
+    .viewer-by{ color:var(--muted); font-size:13px; margin-top:6px }
+    .viewer-content{ background:linear-gradient(180deg,#071428,#071826); border-radius:12px; padding:20px; border:1px solid rgba(255,255,255,0.04); color:#e6f6ff; line-height:1.6; font-size:15px; }
+    .viewer-controls{ display:flex; gap:12px; align-items:center; justify-content:space-between; margin-top:14px; }
+    .timer-pill{ padding:8px 12px; border-radius:999px; font-weight:700; background:var(--pill-bg); color:var(--muted); font-size:14px }
+    .viewer-close{ background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); padding:8px 12px; border-radius:8px; cursor:pointer }
+    .viewer-footer-note{ color:var(--muted); font-size:13px }
+
+    /* Responsive */
+    @media(max-width:980px){ .grid{ grid-template-columns:repeat(2,1fr); } .wrap{ padding:18px; } .viewer-inner{ padding:18px; } }
+    @media(max-width:720px){ .grid{ grid-template-columns:1fr; gap:12px; } .card{ min-height:unset } .viewer-inner{ padding:14px; } .viewer-content{ padding:14px; } .viewer-header{ flex-direction:column; align-items:flex-start; gap:8px } }
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="wrap" id="mainPage">
     <header>
       <h1>Published Blogs</h1>
       <div style="display:flex;gap:12px;align-items:center">
@@ -55,22 +63,25 @@
     <div id="grid" class="grid" role="list" aria-label="Published blogs"></div>
   </div>
 
-  <!-- overlay -->
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="sheet" role="document">
-      <button id="closeOverlay" class="close-btn">Close</button>
-      <div id="blogHeader">
-        <h2 id="overlayTitle"></h2>
-        <div class="by" id="overlayMeta"></div>
-      </div>
-      <div id="overlayBody" class="content" style="white-space:pre-wrap;margin-top:10px"></div>
-
-      <div class="overlay-footer">
-        <div class="status" id="overlayStatus">Blog ID: <span id="overlayId"></span></div>
-        <div style="display:flex; gap:8px; align-items:center">
-          <div class="timer-pill" id="timerPill">10s</div>
-          <div id="awardMsg" class="status"></div>
+  <!-- Full page viewer -->
+  <div id="viewerPage" class="viewer-page" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="viewer-inner">
+      <div class="viewer-header">
+        <div>
+          <h2 id="viewTitle" class="viewer-title">Title</h2>
+          <div id="viewMeta" class="viewer-by">By — • Published: —</div>
         </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="timer-pill" id="timerPill">10s</div>
+          <button id="closeViewer" class="viewer-close">Back</button>
+        </div>
+      </div>
+
+      <div id="viewContent" class="viewer-content" style="white-space:pre-wrap">Blog content</div>
+
+      <div class="viewer-controls">
+        <div id="viewStatus" class="viewer-footer-note">Blog ID: <span id="viewId"></span></div>
+        <div id="awardMsg" class="viewer-footer-note" aria-live="polite"></div>
       </div>
     </div>
   </div>
@@ -79,11 +90,11 @@
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, collection, query, where, onSnapshot, getDocs, doc, getDoc,
+      getFirestore, collection, query, where, onSnapshot, doc, getDoc,
       addDoc, updateDoc, serverTimestamp, increment, setDoc
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // --- YOUR FIREBASE CONFIG ---
+    // FIREBASE CONFIG - replace if needed
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -102,29 +113,27 @@
     const grid = document.getElementById('grid');
     const statusArea = document.getElementById('statusArea');
     const signinBtn = document.getElementById('signinBtn');
-    const overlay = document.getElementById('overlay');
-    const overlayTitle = document.getElementById('overlayTitle');
-    const overlayMeta = document.getElementById('overlayMeta');
-    const overlayBody = document.getElementById('overlayBody');
-    const overlayId = document.getElementById('overlayId');
+
+    const viewerPage = document.getElementById('viewerPage');
+    const viewTitle = document.getElementById('viewTitle');
+    const viewMeta = document.getElementById('viewMeta');
+    const viewContent = document.getElementById('viewContent');
+    const viewId = document.getElementById('viewId');
     const timerPill = document.getElementById('timerPill');
     const awardMsg = document.getElementById('awardMsg');
-    const closeOverlay = document.getElementById('closeOverlay');
+    const closeViewer = document.getElementById('closeViewer');
 
     let currentUser = null;
     let currentTimer = null;
     let remaining = 10;
-    let activeBlog = null; // { id, data }
-    // cooldown in ms
+    let activeBlog = null;
     const COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 hours
 
     function showStatus(text){ statusArea.textContent = text; }
     function clearStatus(){ statusArea.textContent = ''; }
-    function makeThumb(src, title){
-      if(src) return src;
-      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="100%" height="100%" fill="%23071a28"/><text x="50%" y="50%" fill="%23aaaaaa" font-size="16" dominant-baseline="middle" text-anchor="middle">No thumbnail</text></svg>';
-    }
+    function makeThumb(src){ if(src) return src; return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width=\"320\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"#071a28\"/><text x=\"50%\" y=\"50%\" fill=\"#aaaaaa\" font-size=\"16\" dominant-baseline=\"middle\" text-anchor=\"middle\">No thumbnail</text></svg>'; }
 
+    // Subscribe published blogs (live). Client-side sort by publishedAt desc.
     function subscribePublished(){
       showStatus('Loading published blogs…');
       const col = collection(db, 'blogs');
@@ -155,53 +164,114 @@
         card.className = 'card';
         card.tabIndex = 0;
         card.innerHTML = `
-          <img class="thumb" src="${makeThumb(data.thumbnail)}" alt="${(data.title||'Untitled')}">
+          <img class="thumb" src="${makeThumb(escapeAttr(data.thumbnail))}" alt="${escapeAttr(data.title||'Untitled')}">
           <div>
             <h3 class="title">${escapeHtml(data.title||'Untitled')}</h3>
             <div class="meta"><div class="tags">${escapeHtml((data.tags||[]).join(', '))}</div><div class="small-btn">Read</div></div>
             <div class="note" style="margin-top:8px">${escapeHtml((data.content||'').slice(0,140))}${(data.content && data.content.length>140)?'…':''}</div>
           </div>
         `;
-        card.addEventListener('click', ()=> openOverlay(id, data));
-        card.addEventListener('keypress', (e)=> { if(e.key === 'Enter') openOverlay(id,data); });
+        card.addEventListener('click', ()=> openFullPage(id, data));
+        card.addEventListener('keypress', (e)=> { if(e.key === 'Enter') openFullPage(id,data); });
         grid.appendChild(card);
       });
     }
 
+    // helper escaping
     function escapeHtml(str){ if(!str) return ''; return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+    function escapeAttr(str){ if(!str) return ''; return String(str).replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
 
-    async function openOverlay(id, data){
-      activeBlog = { id, data };
-      overlayTitle.textContent = data.title || 'Untitled';
-      overlayMeta.textContent = `By ${data.author || data.userId || 'Unknown'} • Published: ${formatDate(data.publishedAt)}`;
-      overlayBody.textContent = data.content || '';
-      overlayId.textContent = id;
-      awardMsg.textContent = '';
-      remaining = 10;
-      timerPill.textContent = `${remaining}s`;
-      overlay.classList.add('show');
-      overlay.setAttribute('aria-hidden','false');
+    // Open as a full-page view. If data is missing (deep link), fetch doc.
+    async function openFullPage(id, data){
+      try{
+        showStatus('Loading blog…');
+        let docData = data;
+        if(!docData){
+          const snap = await getDoc(doc(db,'blogs',id));
+          if(!snap.exists()){
+            showStatus('Blog not found');
+            return;
+          }
+          docData = snap.data();
+        }
+        activeBlog = { id, data: docData };
 
-      if(currentTimer){ clearInterval(currentTimer); currentTimer = null; }
+        // update UI
+        viewTitle.textContent = docData.title || 'Untitled';
+        viewMeta.textContent = `By ${docData.author || docData.userId || 'Unknown'} • Published: ${formatDate(docData.publishedAt)}`;
+        viewContent.textContent = docData.content || '';
+        viewId.textContent = id;
+        awardMsg.textContent = '';
+        remaining = 10;
+        timerPill.textContent = `${remaining}s`;
 
-      if(!currentUser){
-        awardMsg.textContent = 'Sign in to reward the author and earn ₦1 when you watch 10s.';
-        return;
+        // show viewer page (full-screen)
+        viewerPage.classList.add('show');
+        viewerPage.setAttribute('aria-hidden','false');
+
+        // update URL
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('id', id);
+        history.pushState({ viewer: true, id }, '', newUrl.toString());
+
+        // timer logic only for signed-in users and not author
+        if(currentTimer){ clearInterval(currentTimer); currentTimer = null; }
+        if(!currentUser){
+          awardMsg.textContent = 'Sign in to reward the author and earn ₦1 when you watch 10s.';
+          clearStatus();
+          return;
+        }
+        const viewerUid = currentUser.uid;
+        const authorId = docData.userId || docData.authorId;
+        if(viewerUid === authorId){
+          awardMsg.textContent = 'You are the author — viewing does not award.';
+          clearStatus();
+          return;
+        }
+
+        // check cooldown then start timer
+        await checkCooldownAndStart(id, viewerUid);
+        clearStatus();
+      }catch(err){
+        console.error('openFullPage error', err);
+        showStatus('Error opening blog: ' + (err && err.message ? err.message : String(err)));
       }
-
-      const viewerUid = currentUser.uid;
-      const authorId = data.userId || data.authorId;
-
-      if(viewerUid === authorId){
-        awardMsg.textContent = 'You are the author — viewing does not award.';
-        return;
-      }
-
-      // check cooldown then start timer if allowed
-      await checkCooldownAndStart(id, viewerUid);
     }
 
-    // returns { allowed: bool, remainingMs: number (if disallowed) }
+    // Popstate (back button) handling — hide viewer when navigating back
+    window.addEventListener('popstate', (ev) => {
+      const state = ev.state || {};
+      if(!state.viewer){
+        // hide viewer page
+        hideViewer();
+      } else if(state.viewer && state.id){
+        // open viewer for id (deep navigation)
+        openFullPage(state.id, null);
+      }
+    });
+
+    // hide viewer and clear url param
+    function hideViewer(){
+      viewerPage.classList.remove('show');
+      viewerPage.setAttribute('aria-hidden','true');
+      if(currentTimer){ clearInterval(currentTimer); currentTimer = null; }
+      activeBlog = null;
+      awardMsg.textContent = '';
+      // remove id param from URL (go back to list)
+      const u = new URL(window.location.href);
+      if(u.searchParams.has('id')) {
+        u.searchParams.delete('id');
+        history.replaceState({}, '', u.toString());
+      }
+    }
+
+    closeViewer.addEventListener('click', ()=> {
+      // use history.back if we added an entry, else hide
+      if(history.state && history.state.viewer) history.back();
+      else hideViewer();
+    });
+
+    // cooldown logic (per blogId + viewerUid using blogViews/<blogId>_<viewerUid>)
     async function checkCooldown(blogId, viewerUid){
       try{
         const viewDocRef = doc(db, 'blogViews', `${blogId}_${viewerUid}`);
@@ -217,7 +287,7 @@
         return { allowed: false, remainingMs: COOLDOWN_MS - diff };
       }catch(err){
         console.error('checkCooldown error', err);
-        return { allowed: true }; // fail-open (so user can still view) — but log error
+        return { allowed: true };
       }
     }
 
@@ -237,11 +307,12 @@
           clearInterval(currentTimer);
           currentTimer = null;
           timerPill.textContent = '0s';
-          awardView(activeBlog.id, currentUser.uid);
+          awardView(blogId, viewerUid);
         }
       }, 1000);
     }
 
+    // award both author and viewer, and record lastViewedAt
     async function awardView(blogId, viewerUid){
       if(!activeBlog) return;
       const authorId = activeBlog.data.userId || activeBlog.data.authorId;
@@ -253,21 +324,13 @@
       try{
         const viewDocRef = doc(db, 'blogViews', `${blogId}_${viewerUid}`);
 
-        // attempt atomic-ish update: if doc exists, update lastViewedAt & increment count;
-        // if not, create it.
+        // optimistic attempt: update, else set
         try{
           await updateDoc(viewDocRef, { lastViewedAt: serverTimestamp(), count: increment(1) });
         }catch(err){
-          // likely doc doesn't exist -> create
-          try{
-            await setDoc(viewDocRef, { blogId, viewerUid, lastViewedAt: serverTimestamp(), count: 1 });
-          }catch(inner){
-            console.warn('setDoc blogViews failed', inner);
-            // continue — not fatal
-          }
+          try{ await setDoc(viewDocRef, { blogId, viewerUid, lastViewedAt: serverTimestamp(), count: 1 }); }catch(inner){ console.warn('setDoc blogViews failed', inner); }
         }
 
-        // add transactions & update balances
         const txsCol = collection(db, 'transactions');
 
         // Author transaction + increment blogBalance
@@ -296,7 +359,7 @@
         const viewerRef = doc(db, 'users', viewerUid);
         try{ await updateDoc(viewerRef, { balance: increment(1) }); }catch(e){ console.warn('viewer balance update failed', e); }
 
-        // Notifications (optional)
+        // Notifications
         const notCol = collection(db, 'notifications');
         await addDoc(notCol, { userId: authorId, type: 'blog_reward', message: `Your blog "${activeBlog.data.title || 'Untitled'}" earned ₦1 from a viewer.`, blogId, createdAt: serverTimestamp() });
         await addDoc(notCol, { userId: viewerUid, type: 'view_credited', message: `You earned ₦1 for watching "${activeBlog.data.title || 'Untitled'}".`, blogId, createdAt: serverTimestamp() });
@@ -308,42 +371,39 @@
       }
     }
 
-    function formatDate(ts){
-      if(!ts) return '-';
-      try{ if(typeof ts.toDate === 'function') return ts.toDate().toLocaleString(); return new Date(ts).toLocaleString(); }catch(e){ return '-'; }
-    }
+    function formatDate(ts){ if(!ts) return '-'; try{ if(typeof ts.toDate === 'function') return ts.toDate().toLocaleString(); return new Date(ts).toLocaleString(); }catch(e){ return '-'; } }
 
-    closeOverlay.addEventListener('click', ()=> {
-      overlay.classList.remove('show');
-      overlay.setAttribute('aria-hidden','true');
-      if(currentTimer){ clearInterval(currentTimer); currentTimer = null; }
-      activeBlog = null;
-    });
-
-    // auth
+    // Auth
     const provider = new GoogleAuthProvider();
     signinBtn.addEventListener('click', async ()=>{
-      try{
-        await signInWithPopup(auth, provider);
-      }catch(err){
-        console.error('signIn error', err);
-        showStatus('Sign-in failed: ' + (err && err.message ? err.message : String(err)));
-      }
+      try{ await signInWithPopup(auth, provider); }catch(err){ console.error('signIn error', err); showStatus('Sign-in failed: ' + (err && err.message ? err.message : String(err))); }
     });
-
     onAuthStateChanged(auth, user=>{
       currentUser = user;
-      if(user){
-        signinBtn.textContent = 'Signed in';
-        signinBtn.disabled = true;
-      }else{
-        signinBtn.textContent = 'Sign in';
-        signinBtn.disabled = false;
+      if(user){ signinBtn.textContent = 'Signed in'; signinBtn.disabled = true; } else { signinBtn.textContent = 'Sign in'; signinBtn.disabled = false; }
+    });
+
+    // On load: if URL has ?id=... open that blog as full page
+    window.addEventListener('load', async ()=>{
+      subscribePublished();
+      const u = new URL(window.location.href);
+      const id = u.searchParams.get('id');
+      if(id){
+        // fetch document and open
+        try{
+          const snap = await getDoc(doc(db,'blogs',id));
+          if(snap.exists()) openFullPage(id, snap.data());
+          else showStatus('Blog not found (deep link).');
+        }catch(err){ console.error('deep open error', err); showStatus('Error loading blog: ' + (err && err.message ? err.message : String(err))); }
       }
     });
 
-    // start
-    subscribePublished();
+    // helper: open by id from other pages (if you want)
+    window.openBlog = (id) => { openFullPage(id, null); };
+
+    // small accessibility: close viewer on ESC
+    window.addEventListener('keydown', (e)=> { if(e.key === 'Escape' && viewerPage.classList.contains('show')) { if(history.state && history.state.viewer) history.back(); else hideViewer(); } });
+
   </script>
 </body>
 </html>
