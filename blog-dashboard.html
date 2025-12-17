@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Publisher Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg-1:#041021;
+      --card:#071826;
+      --muted:rgba(255,255,255,0.66);
+      --accent:linear-gradient(90deg,#7a5fff,#35d6b1);
+      --glass: rgba(255,255,255,0.02);
+      --pill-bg: rgba(255,255,255,0.04);
+      --max-width:1100px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{ margin:0; min-height:100vh; background: radial-gradient(800px 500px at 10% 10%, rgba(122,95,255,0.06), transparent), linear-gradient(180deg,var(--bg-1),#071126); color:#eaf2ff; font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial; }
+    .wrap{ max-width:var(--max-width); margin:0 auto; padding:28px; }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px }
+    h1{ margin:0; font-size:20px }
+    .note{ color:var(--muted); font-size:13px }
+
+    .toolbar{ display:flex; gap:10px; align-items:center; }
+    .btn{ padding:8px 12px; border-radius:999px; border:none; cursor:pointer; font-weight:700 }
+    .btn.primary{ background:linear-gradient(90deg,#7a5fff,#35d6b1); color:#041219 }
+    .btn.ghost{ background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted) }
+
+    .cards{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:20px }
+    .card{ background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.01)); border-radius:12px; padding:18px; border:1px solid rgba(255,255,255,0.03); }
+    .card h3{ margin:0 0 6px; font-size:14px }
+    .amount{ font-size:28px; font-weight:800; margin-top:6px }
+    .muted{ color:var(--muted); font-size:13px }
+
+    .actions{ margin-top:18px; display:flex; gap:8px; align-items:center }
+    .note-quiet{ color:var(--muted); font-size:13px }
+
+    #errorBox{ margin-top:12px; padding:10px; background:rgba(255,0,0,0.06); border:1px solid rgba(255,0,0,0.12); color:#ffd6d6; border-radius:8px; display:none; white-space:pre-wrap; font-size:13px }
+    #statusArea{ margin-top:12px }
+
+    @media(max-width:980px){ .cards{ grid-template-columns:1fr; } .toolbar{ flex-direction:column; align-items:flex-start; gap:8px } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Publisher Dashboard</h1>
+        <div class="note">Manage your published blogs, earnings and withdrawals.</div>
+      </div>
+      <div class="toolbar">
+        <button id="backBtn" class="btn ghost">Back to dashboard</button>
+        <a id="writeLink" class="btn primary" href="write-blog.html">Write blog</a>
+        <button id="signinBtn" class="btn ghost">Sign in</button>
+      </div>
+    </header>
+
+    <div id="statusArea" class="note"></div>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Total published</h3>
+        <div id="publishedCount" class="amount">—</div>
+        <div class="muted">Number of blogs you've published</div>
+      </div>
+
+      <div class="card">
+        <h3>Blog balance (₦)</h3>
+        <div id="blogBalance" class="amount">₦ —</div>
+        <div class="muted">Earnings from published blogs</div>
+        <div class="actions">
+          <button id="withdrawBtn" class="btn primary">Withdraw to main balance</button>
+          <div id="withdrawNote" class="note-quiet">Minimum ₦100 to withdraw</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="errorBox" role="alert" aria-live="assertive"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, runTransaction, serverTimestamp, increment, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // FIREBASE CONFIG — replace if needed
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.appspot.com",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    if(!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // UI refs
+    const publishedCountEl = document.getElementById('publishedCount');
+    const blogBalanceEl = document.getElementById('blogBalance');
+    const withdrawBtn = document.getElementById('withdrawBtn');
+    const withdrawNote = document.getElementById('withdrawNote');
+    const backBtn = document.getElementById('backBtn');
+    const signinBtn = document.getElementById('signinBtn');
+    const statusArea = document.getElementById('statusArea');
+    const errorBox = document.getElementById('errorBox');
+
+    let currentUser = null;
+    let publishedUnsub = null;
+    let userUnsub = null;
+
+    function showStatus(txt){ statusArea.textContent = txt; setTimeout(()=>{ if(statusArea) statusArea.textContent=''; }, 5000); }
+    function showError(txt){ errorBox.style.display='block'; errorBox.textContent = txt; console.error(txt); }
+    function clearError(){ errorBox.style.display='none'; errorBox.textContent=''; }
+
+    // Sign-in (Google)
+    const provider = new GoogleAuthProvider();
+    signinBtn.addEventListener('click', async ()=>{
+      try{ await signInWithPopup(auth, provider); }catch(e){ showError('Sign-in failed: ' + (e && e.message? e.message: String(e))); }
+    });
+
+    backBtn.addEventListener('click', ()=>{ // go back to previous page or index
+      if(window.opener) window.close(); else window.location.href = 'index.html';
+    });
+
+    // Subscribe to published count for current user
+    async function subscribeCounts(uid){
+      // unsubscribe previous
+      if(publishedUnsub) publishedUnsub();
+
+      const col = collection(db, 'blogs');
+      const q = query(col, where('userId','==',uid));
+      publishedUnsub = onSnapshot(q, (snap)=>{
+        const docs = snap.docs || [];
+        const published = docs.filter(d=> (d.data().status === 'published' || d.data().status === 'approved')).length;
+        publishedCountEl.textContent = published;
+      }, (err)=>{ console.error('published count error', err); showError('Error loading your blogs: ' + (err && err.message? err.message: String(err))); });
+
+      // also subscribe to user doc for blogBalance
+      const uRef = doc(db, 'users', uid);
+      // use onSnapshot via getDoc? modular doesn't have onSnapshot imported — we'll use getDoc polling via onSnapshot of doc
+      if(userUnsub) userUnsub();
+      userUnsub = onSnapshot(uRef, (snap)=>{
+        const data = snap.exists() ? snap.data() : {};
+        const b = Number(data.blogBalance || 0);
+        blogBalanceEl.textContent = `₦ ${b.toFixed(2)}`;
+        withdrawBtn.disabled = b < 100;
+        withdrawNote.textContent = b < 100 ? 'Minimum ₦100 to withdraw' : 'You can withdraw your blog earnings to main balance';
+      }, (err)=>{ console.error('user doc error', err); showError('Error loading account info: ' + (err && err.message? err.message: String(err))); });
+    }
+
+    // Withdraw: move entire blogBalance to main balance (only if >=100). Use runTransaction for atomicity and create a transaction doc.
+    withdrawBtn.addEventListener('click', async ()=>{
+      clearError();
+      if(!currentUser){ showError('You must sign in to withdraw'); return; }
+      const uid = currentUser.uid;
+      const userRef = doc(db, 'users', uid);
+
+      try{
+        showStatus('Processing withdrawal…');
+        await runTransaction(db, async (t)=>{
+          const snap = await t.get(userRef);
+          if(!snap.exists()) throw new Error('User profile not found');
+          const data = snap.data();
+          const blogBal = Number(data.blogBalance || 0);
+          const mainBal = Number(data.balance || 0);
+          if(blogBal < 100) throw new Error('Insufficient blog balance. Minimum ₦100 required.');
+
+          // amount to transfer: whole blogBal
+          const amount = Math.floor(blogBal); // integer naira
+          if(amount <= 0) throw new Error('Nothing to withdraw');
+
+          // new balances
+          const newBlogBal = blogBal - amount;
+          const newMainBal = mainBal + amount;
+
+          // update user doc
+          t.update(userRef, { blogBalance: newBlogBal, balance: newMainBal });
+
+          // create transaction record (use deterministic doc ref)
+          const txRef = doc(collection(db,'transactions'));
+          t.set(txRef, {
+            userId: uid,
+            type: 'withdraw_blog_to_main',
+            source: 'blog_withdrawal',
+            amount: amount,
+            note: `Withdraw ₦${amount} from blog balance to main balance`,
+            createdAt: serverTimestamp()
+          });
+
+          // admin action log (optional)
+          const logRef = doc(collection(db,'adminActions'));
+          t.set(logRef, {
+            action: 'withdraw_blog_to_main', userId: uid, amount, createdAt: serverTimestamp()
+          });
+        });
+
+        showStatus('Withdrawal complete — funds moved to main balance');
+      }catch(err){
+        console.error('withdraw error', err);
+        showError('Withdrawal failed: ' + (err && err.message? err.message: String(err)));
+      }
+    });
+
+    // onAuth
+    onAuthStateChanged(auth, async (user)=>{
+      currentUser = user;
+      clearError();
+      if(user){
+        signinBtn.textContent = 'Signed in'; signinBtn.disabled = true;
+        try{ await subscribeCounts(user.uid); }catch(e){ console.error(e); }
+      }else{
+        signinBtn.textContent = 'Sign in'; signinBtn.disabled = false;
+        publishedCountEl.textContent = '—';
+        blogBalanceEl.textContent = '₦ —';
+        withdrawBtn.disabled = true;
+        if(publishedUnsub) publishedUnsub();
+        if(userUnsub) userUnsub();
+      }
+    });
+
+  </script>
+</body>
+</html>
