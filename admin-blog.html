@@ -38,6 +38,8 @@
     #statusArea{ margin-top:12px }
     #errorBox{ margin-top:12px; padding:10px; background:rgba(255,0,0,0.06); border:1px solid rgba(255,0,0,0.12); color:#ffd6d6; border-radius:8px; display:none; white-space:pre-wrap; font-size:13px }
 
+    .loading{ color:var(--muted); font-size:13px; padding:14px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid rgba(255,255,255,0.02) }
+
     @media(max-width:760px){ .card{ flex-direction:column } .thumb{ width:100%; height:200px } }
   </style>
 </head>
@@ -65,27 +67,40 @@
   </div>
 
   <script type="module">
+    // ---- FIREBASE SDK (modular v9) ----
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, increment, getDoc, getDocs
+      getFirestore, collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc,
+      serverTimestamp, increment, getDoc, getDocs
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // FIREBASE CONFIG (yours)
+    // ---------- CONFIG (check these values are correct for your project) ----------
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
       projectId: "beni-wealths",
-      storageBucket: "beni-wealths.firebasestorage.app",
+      // storageBucket corrected to the normal format: <projectId>.appspot.com
+      storageBucket: "beni-wealths.appspot.com",
       messagingSenderId: "807950483822",
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    if(!getApps().length) initializeApp(firebaseConfig);
+    try{
+      if(!getApps().length) initializeApp(firebaseConfig);
+    }catch(e){
+      // fatal init error — show to the admin
+      document.getElementById('errorBox').style.display = 'block';
+      document.getElementById('errorBox').textContent = 'Firebase initialization failed: ' + (e && e.message ? e.message : String(e));
+      console.error('Firebase init error', e);
+      throw e;
+    }
+
     const auth = getAuth();
     const db = getFirestore();
 
+    // UI refs
     const listEl = document.getElementById('list');
     const statusArea = document.getElementById('statusArea');
     const errorBox = document.getElementById('errorBox');
@@ -97,8 +112,10 @@
     let isAdmin = false;
     let unsubscribe = null;
 
+    const ADMIN_EMAILS = ['owanaomubo76@gmail.com', 'beniwealth70@gmail.com'];
+
     function showMessage(text, type='success'){
-      statusArea.innerHTML = `<div class="message ${type}">${text}</div>`;
+      statusArea.innerHTML = `<div class="${type==='error' ? 'loading' : 'note'}">${text}</div>`;
       setTimeout(()=> { if(statusArea && statusArea.innerHTML) statusArea.innerHTML = ''; }, 6000);
     }
     function showError(text){
@@ -108,27 +125,44 @@
     }
     function clearError(){ errorBox.style.display = 'none'; errorBox.textContent = ''; }
 
-    function formatDate(ts){ try{ if(!ts) return '-'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString(); }catch(e){ return '-'; } }
+    function safeFormatDate(ts){
+      if(!ts) return '-';
+      try{
+        // Firestore Timestamp has toDate()
+        if(typeof ts.toDate === 'function') return ts.toDate().toLocaleString();
+        // fallback if it's a millis number or ISO string
+        const d = new Date(ts);
+        if(isNaN(d)) return '-';
+        return d.toLocaleString();
+      }catch(e){ return '-'; }
+    }
+
+    function makeThumbnailSrc(thumbnail, title){
+      if(thumbnail) return thumbnail;
+      // inline svg placeholder (encoded)
+      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="100%" height="100%" fill="%230b0613"/><text x="50%" y="50%" fill="%23aaaaaa" font-size="16" dominant-baseline="middle" text-anchor="middle">No thumbnail</text></svg>';
+    }
 
     function renderList(docs){
       listEl.innerHTML = '';
       if(!docs || docs.length === 0){ listEl.innerHTML = '<div class="note">No pending posts right now.</div>'; return; }
+
       docs.forEach(docSnap => {
         const id = docSnap.id;
-        const data = docSnap.data();
+        const data = docSnap.data ? docSnap.data() : docSnap;
         const title = data.title || 'Untitled';
         const author = data.author || data.userId || 'Unknown';
         const tags = (data.tags || []).join(', ');
-        const createdAt = data.createdAt;
+        const createdAt = data.createdAt || data.createdAtMillis || null;
         const thumbnail = data.thumbnail || '';
 
         const card = document.createElement('div'); card.className = 'card';
         const img = document.createElement('img'); img.className = 'thumb'; img.alt = title + ' thumbnail';
-        img.src = thumbnail || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="100%" height="100%" fill="%230b0613"/><text x="50%" y="50%" fill="%23aaaaaa" font-size="16" dominant-baseline="middle" text-anchor="middle">No thumbnail</text></svg>';
+        img.src = makeThumbnailSrc(thumbnail, title);
         const meta = document.createElement('div'); meta.className = 'meta';
         const h = document.createElement('h3'); h.textContent = title;
         const p = document.createElement('p'); p.textContent = (data.content || '').slice(0, 220) + ( (data.content && data.content.length>220) ? '…' : '' );
-        const small = document.createElement('div'); small.className = 'small'; small.innerHTML = `by <strong>${author}</strong> • ${formatDate(createdAt)} <span style="margin-left:8px" class="status-pill status-pending">PENDING</span>`;
+        const small = document.createElement('div'); small.className = 'small'; small.innerHTML = `by <strong>${author}</strong> • ${safeFormatDate(createdAt)} <span style="margin-left:8px" class="status-pill status-pending">PENDING</span>`;
         const tagsEl = document.createElement('div'); tagsEl.className = 'tags'; tagsEl.textContent = tags;
 
         const actions = document.createElement('div'); actions.className = 'actions';
@@ -152,12 +186,14 @@
             const blogRef = doc(db, 'blogs', id);
             await updateDoc(blogRef, { status: 'published', publishedAt: serverTimestamp(), reviewedBy: currentUser.uid });
 
-            // notify author
-            const notifications = collection(db, 'notifications');
-            await addDoc(notifications, { userId: data.userId, type: 'blog_published', message: `Your post \"${title}\" was approved and published.`, blogId: id, createdAt: serverTimestamp() });
+            // notify author (only if userId present)
+            if(data.userId){
+              const notifications = collection(db, 'notifications');
+              await addDoc(notifications, { userId: data.userId, type: 'blog_published', message: `Your post \"${title}\" was approved and published.`, blogId: id, createdAt: serverTimestamp() });
+            }
 
             // reward
-            if(reward > 0){
+            if(reward > 0 && data.userId){
               const txs = collection(db, 'transactions');
               await addDoc(txs, { userId: data.userId, type: 'reward', source: 'blog_approval', amount: Number(reward), note: `Reward for published post ${id}`, createdAt: serverTimestamp() });
               const userRef = doc(db, 'users', data.userId);
@@ -171,16 +207,18 @@
         rejectBtn.addEventListener('click', async ()=>{
           if(!isAdmin){ alert('Only admins can reject posts'); return; }
           const reason = prompt('Enter rejection reason (optional):', 'Does not meet guidelines'); if(reason === null) return;
-          const applyPenalty = Number(penaltyInput.value) || 0;
+          const applyPenalty = Math.abs(Number(penaltyInput.value) || 0);
           if(!confirm(`Reject this post?${applyPenalty>0 ? '\nA penalty of ₦' + applyPenalty + ' will be applied to the author.' : ''}`)) return;
           try{
             const blogRef = doc(db, 'blogs', id);
             await updateDoc(blogRef, { status: 'rejected', rejectedAt: serverTimestamp(), reviewedBy: currentUser.uid, rejectionReason: reason || null });
 
-            const notifications = collection(db, 'notifications');
-            await addDoc(notifications, { userId: data.userId, type: 'blog_rejected', message: `Your post \"${title}\" was rejected. Reason: ${reason || 'Not specified'}`, blogId: id, createdAt: serverTimestamp() });
+            if(data.userId){
+              const notifications = collection(db, 'notifications');
+              await addDoc(notifications, { userId: data.userId, type: 'blog_rejected', message: `Your post \"${title}\" was rejected. Reason: ${reason || 'Not specified'}`, blogId: id, createdAt: serverTimestamp() });
+            }
 
-            if(applyPenalty > 0){
+            if(applyPenalty > 0 && data.userId){
               const txs = collection(db, 'transactions');
               await addDoc(txs, { userId: data.userId, type: 'penalty', source: 'blog_rejection', amount: -Math.abs(Number(applyPenalty)), note: `Penalty for rejected post ${id}`, createdAt: serverTimestamp() });
               const userRef = doc(db, 'users', data.userId);
@@ -199,9 +237,11 @@
       clearError();
       try{
         const col = collection(db, 'blogs');
+        // orderBy createdAt; if you have many writes, ensure an index exists in Firestore console
         const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
         if(unsubscribe) unsubscribe();
         unsubscribe = onSnapshot(q, (snap) => {
+          console.debug('onSnapshot returned', snap.size, 'docs');
           renderList(snap.docs);
         }, async (err) => {
           // show error and do a diagnostic one-time fetch
@@ -212,6 +252,7 @@
         });
       }catch(e){
         showError('subscribePending failed: ' + (e && e.message ? e.message : String(e)));
+        console.warn('subscribePending exception', e);
         await fetchPendingOnce();
       }
     }
@@ -221,12 +262,23 @@
       clearError();
       try{
         const col = collection(db, 'blogs');
-        const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
-        const snap = await getDocs(q);
-        renderList(snap.docs);
-        if(snap.size === 0) showMessage('One-time fetch returned 0 pending posts');
+        // Try the same query, but gracefully fallback if it fails (index/permission)
+        try{
+          const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
+          const snap = await getDocs(q);
+          renderList(snap.docs);
+          if(snap.size === 0) showMessage('No pending posts found');
+        }catch(innerErr){
+          console.warn('Ordered query failed, retrying without orderBy:', innerErr);
+          // fallback: fetch documents with where only (no orderBy)
+          const q2 = query(col, where('status','==','pending'));
+          const snap2 = await getDocs(q2);
+          renderList(snap2.docs);
+          if(snap2.size === 0) showMessage('No pending posts found (fallback)');
+        }
       }catch(err){
         showError('One-time fetch error: ' + (err && err.message ? err.message : String(err)));
+        console.error('fetchPendingOnce error', err);
       }
     }
 
@@ -239,18 +291,18 @@
         return;
       }
       try{
+        // get user doc to check roles (safe fallback)
         const uRef = doc(db, 'users', user.uid);
         const snap = await getDoc(uRef);
-        const d = snap.exists() ? snap.data() : {};
-        const adminEmails = ['owanaomubo76@gmail.com', 'beniwealth70@gmail.com'].map(e => e.toLowerCase());
-        isAdmin = adminEmails.includes((user.email || '').toLowerCase()) || !!(d.role === 'admin' || d.isAdmin === true || (Array.isArray(d.roles) && d.roles.includes('admin')));
+        const d = snap && snap.exists ? snap.data() : {};
+        isAdmin = ADMIN_EMAILS.includes((user.email || '').toLowerCase()) || !!(d && (d.role === 'admin' || d.isAdmin === true || (Array.isArray(d.roles) && d.roles.includes('admin'))));
         if(!isAdmin){
           listEl.innerHTML = '<div class="note">Access denied. Your account is not an admin.</div>';
           showMessage('Access denied: not an admin', 'error');
           return;
         }
         showMessage('Admin authenticated — loading pending posts');
-        subscribePending();
+        await subscribePending();
       }catch(err){
         showError('Admin check failed: ' + (err && err.message ? err.message : String(err)));
       }
@@ -258,8 +310,7 @@
 
     refreshBtn.addEventListener('click', ()=>{ subscribePending(); showMessage('Refreshed'); });
 
-    window.addEventListener('beforeunload', ()=>{ if(unsubscribe) unsubscribe(); });
-
+    window.addEventListener('beforeunload', ()=>{ if(typeof unsubscribe === 'function') unsubscribe(); });
   </script>
 </body>
 </html>
