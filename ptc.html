@@ -30,7 +30,6 @@
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
       padding:18px;
-      -webkit-font-smoothing:antialiased;
     }
 
     .wrap{
@@ -59,6 +58,9 @@
     .filter{
       padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
       background:transparent;color:var(--muted);font-size:14px;
+    }
+    .signinBtn{
+      padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;
     }
 
     /* Grid */
@@ -115,6 +117,23 @@
       .hint{font-size:12px}
       .btn{font-size:15px;padding:12px;border-radius:12px}
     }
+
+    /* small toast */
+    .toast {
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:20px;
+      background:rgba(0,0,0,0.7);
+      color:#fff;
+      padding:10px 14px;
+      border-radius:8px;
+      z-index:99999;
+      font-size:14px;
+      display:none;
+    }
+    .toast.show { display:block; animation:fade .3s ease; }
+    @keyframes fade { from{opacity:0; transform:translateX(-50%) translateY(6px)} to{opacity:1; transform:translateX(-50%) translateY(0)} }
   </style>
 </head>
 <body>
@@ -132,6 +151,7 @@
           <option value="fresh">Unvisited</option>
           <option value="visited">Visited</option>
         </select>
+        <button id="signinBtn" class="signinBtn">Sign in</button>
       </div>
     </header>
 
@@ -142,28 +162,174 @@
     <footer>20 PTC links • Each opens the corresponding <code>ptc-X.html</code> page in a new tab.</footer>
   </div>
 
-  <script>
-    // generate 20 PTC cards, linking to ptc-1.html ... ptc-20.html
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module">
+    // Firebase imports (modular)
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, serverTimestamp, increment
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // CONFIG - replace with your project values if different
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.appspot.com",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    if(!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // UI
     const GRID = document.getElementById('grid');
     const searchInput = document.getElementById('searchInput');
     const filterSelect = document.getElementById('filterSelect');
+    const signinBtn = document.getElementById('signinBtn');
+    const toast = document.getElementById('toast');
 
-    // Fixed reward for all PTCs: ₦0.20
+    // Reward and cooldown
+    const REWARD = 0.40; // ₦0.40 per click
+    const COOLDOWN_MS = 1 * 60 * 60 * 1000; // 1 hour
+
+    // Data: 20 PTCs
     function makePTC(i){
       return {
         id: i,
         title: `PTC #${i}`,
         description: `Visit the page and complete a small task to earn.`,
-        reward: '0.20' // fixed reward
+        reward: REWARD.toFixed(2)
       };
     }
-
     const PTCs = Array.from({length:20}, (_,k)=> makePTC(k+1));
 
+    // local storage helpers for quick UI visited flag
     function storageKey(id){ return `ptc_visited_${id}`; }
-    function isVisited(id){ try { return localStorage.getItem(storageKey(id)) === '1'; } catch(e){ return false; } }
-    function markVisited(id){ try{ localStorage.setItem(storageKey(id), '1'); }catch(e){} }
+    function isVisitedLocal(id){ try { return localStorage.getItem(storageKey(id)) === '1'; } catch(e){ return false; } }
+    function markVisitedLocal(id){ try{ localStorage.setItem(storageKey(id), '1'); }catch(e){} }
 
+    // Auth state
+    let currentUser = null;
+    const provider = new GoogleAuthProvider();
+
+    signinBtn.addEventListener('click', async ()=>{
+      try{
+        await signInWithPopup(auth, provider);
+      }catch(err){
+        showToast('Sign-in failed: ' + (err && err.message ? err.message : String(err)), 4000);
+        console.error('signIn error', err);
+      }
+    });
+
+    onAuthStateChanged(auth, user=>{
+      currentUser = user;
+      if(user){
+        signinBtn.textContent = 'Signed in';
+        signinBtn.disabled = true;
+      }else{
+        signinBtn.textContent = 'Sign in';
+        signinBtn.disabled = false;
+      }
+    });
+
+    // show small toast
+    function showToast(msg, ms = 3000){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(()=> { toast.classList.remove('show'); }, ms);
+    }
+
+    // Server-side check & crediting logic
+    // doc path: ptcClicks/<ptcId>_<uid> with fields { ptcId, viewerUid, lastClickedAt, count }
+    async function handlePTCClick(ptc){
+      // If user not signed in, prompt sign-in
+      if(!currentUser){
+        showToast('Sign in to earn. Opening sign-in...', 2500);
+        try{
+          await signInWithPopup(auth, provider);
+        }catch(err){
+          showToast('Sign-in failed. Cannot credit.', 3000);
+          return;
+        }
+      }
+      // double-check
+      if(!currentUser){
+        showToast('Sign in required to earn.', 2500); return;
+      }
+
+      const uid = currentUser.uid;
+      const clickDocId = `${ptc.id}_${uid}`;
+      const clickRef = doc(db, 'ptcClicks', clickDocId);
+
+      try{
+        const snap = await getDoc(clickRef);
+        if(snap.exists()){
+          const data = snap.data();
+          const last = data && data.lastClickedAt;
+          if(last){
+            const lastMs = typeof last.toDate === 'function' ? last.toDate().getTime() : (new Date(last)).getTime();
+            const diff = Date.now() - lastMs;
+            if(diff < COOLDOWN_MS){
+              const mins = Math.ceil((COOLDOWN_MS - diff) / 60000);
+              showToast(`You already claimed this PTC. Try again in ${mins} minute(s).`, 4500);
+              return; // prevent opening / double-claim
+            }
+          }
+        }
+
+        // Allowed: record click and credit
+        // Create/update click record
+        try{
+          if(snap.exists()){
+            await updateDoc(clickRef, { lastClickedAt: serverTimestamp(), count: increment(1) });
+          }else{
+            await setDoc(clickRef, { ptcId: ptc.id, viewerUid: uid, lastClickedAt: serverTimestamp(), count: 1 });
+          }
+        }catch(e){ console.warn('ptcClicks write failed', e); /* continue — still try to credit */ }
+
+        // Credit user: add transaction and increment balance
+        try{
+          const txsCol = collection(db, 'transactions');
+          await addDoc(txsCol, {
+            userId: uid,
+            type: 'ptc_click',
+            source: `ptc_${ptc.id}`,
+            amount: REWARD,
+            note: `PTC click reward for ptc-${ptc.id}`,
+            createdAt: serverTimestamp()
+          });
+        }catch(e){ console.warn('transaction doc creation failed', e); }
+
+        try{
+          const userRef = doc(db, 'users', uid);
+          await updateDoc(userRef, { balance: increment(REWARD) });
+        }catch(e){ console.warn('update user balance failed', e); showToast('Credited but balance update blocked by rules.', 4000); }
+
+        // mark local visited & update card UI
+        markVisitedLocal(ptc.id);
+        // re-render filtered view to reflect visited state
+        filterAndRender();
+
+        showToast(`Credited ₦${REWARD.toFixed(2)} to your balance. Opening PTC...`, 2000);
+
+        // finally open the ptc page in a new tab
+        const url = `ptc-${ptc.id}.html`;
+        window.open(url, '_blank', 'noopener');
+
+      }catch(err){
+        console.error('handlePTCClick error', err);
+        showToast('Error processing PTC click: ' + (err && err.message ? err.message : String(err)), 4000);
+      }
+    }
+
+    // Build card DOM
     function makeCard(ptc){
       const item = document.createElement('div');
       item.className = 'card';
@@ -180,18 +346,14 @@
       const btnOpen = document.createElement('button'); btnOpen.className='btn primary'; btnOpen.textContent='Open';
       const btnDetails = document.createElement('button'); btnDetails.className='btn ghost'; btnDetails.textContent='Details';
 
-      // open in new tab on click
-      btnOpen.addEventListener('click', () => {
-        const url = `ptc-${ptc.id}.html`;
-        window.open(url, '_blank', 'noopener');
-        // mark visited locally right away
-        markVisited(ptc.id);
-        applyVisitedStyle(item, visitedBadge, ptc.id);
+      // open (crediting + open)
+      btnOpen.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handlePTCClick(ptc);
       });
 
       // allow tapping the card itself to open (mobile-friendly)
       item.addEventListener('click', (e) => {
-        // avoid double-trigger when clicking a button
         if(e.target.closest('button')) return;
         btnOpen.click();
       });
@@ -216,7 +378,6 @@
       item.appendChild(meta);
       item.appendChild(reward);
 
-      // row with badge + actions (keeps actions at bottom on tall cards)
       const bottomRow = document.createElement('div');
       bottomRow.style.display = 'flex';
       bottomRow.style.alignItems = 'center';
@@ -234,7 +395,7 @@
     }
 
     function applyVisitedStyle(item, badge, id){
-      if(isVisited(id)){
+      if(isVisitedLocal(id)){
         item.classList.add('visited');
         badge.style.display = 'inline-block';
       } else {
@@ -258,18 +419,22 @@
       const filtered = PTCs.filter(p => {
         const text = (p.title + ' ' + p.description + ' ' + p.reward).toLowerCase();
         if(q && !text.includes(q)) return false;
-        if(f === 'fresh' && isVisited(p.id)) return false;
-        if(f === 'visited' && !isVisited(p.id)) return false;
+        if(f === 'fresh' && isVisitedLocal(p.id)) return false;
+        if(f === 'visited' && !isVisitedLocal(p.id)) return false;
         return true;
       });
       render(filtered);
     }
 
-    searchInput.addEventListener('input', filterAndRender);
+    searchInput.addEventListener('input', debounce(filterAndRender, 180));
     filterSelect.addEventListener('change', filterAndRender);
 
+    // debounce
+    function debounce(fn, ms=200){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=> fn(...a), ms); }; }
+
     // expose for debugging
-    window._ptc = { PTCs, isVisited, markVisited };
+    window._ptc = { PTCs, isVisitedLocal, markVisitedLocal };
+
   </script>
 </body>
 </html>
