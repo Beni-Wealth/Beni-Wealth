@@ -15,7 +15,7 @@
     :root{ --bg-1:#0b0613; --bg-2:#0f0820; --text:#eaf2ff; --muted:rgba(255,255,255,0.62); --accent-a:#8446ff; --accent-b:#6ce2c8; }
     *{box-sizing:border-box}
     body{ margin:0; min-height:100vh; background: radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent), radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.06), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text); font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial; padding:28px; }
-    .wrap{ max-width:1100px; margin:0 auto; }
+    .wrap{ max-width:1200px; margin:0 auto; }
     header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px }
     h1{ margin:0; font-size:20px }
     .controls{ display:flex; gap:8px; align-items:center }
@@ -24,20 +24,25 @@
     .btn.ghost{ background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted) }
     .note{ color:var(--muted); font-size:13px }
 
+    .toolbar{ display:flex; gap:10px; align-items:center; margin-bottom:12px }
+    select, input[type="text"]{ padding:8px 10px; border-radius:8px; background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--text) }
+
     .list{ display:grid; grid-template-columns:1fr; gap:12px; margin-top:12px }
-    .card{ display:flex; gap:12px; padding:12px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.03); }
+    .card{ display:flex; gap:12px; padding:12px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.03); align-items:flex-start; }
     .thumb{ width:160px; height:110px; border-radius:8px; object-fit:cover; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.03) }
     .meta{ flex:1 }
-    .meta h3{ margin:0 0 6px; font-size:16px }
-    .meta p{ margin:0 0 8px; color:var(--muted); font-size:13px }
+    .meta h3{ margin:0 0 6px; font-size:16px; word-break:break-word }
+    .meta p{ margin:0 0 8px; color:var(--muted); font-size:13px; max-width:80ch }
     .actions{ display:flex; gap:8px; align-items:center; margin-top:8px }
     .small{ font-size:12px; color:var(--muted) }
     .status-pill{ padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px }
     .status-pending{ background:linear-gradient(90deg,#ffb86b,#ff6b6b); color:#041219 }
+    .status-published{ background:linear-gradient(90deg,#6ce2c8,#35d6b1); color:#031617 }
+    .status-rejected{ background:linear-gradient(90deg,#9aa0ff,#c77aff); color:#041219 }
+    .status-taken{ background:linear-gradient(90deg,#888888,#4b5563); color:#fff }
 
     #statusArea{ margin-top:12px }
     #errorBox{ margin-top:12px; padding:10px; background:rgba(255,0,0,0.06); border:1px solid rgba(255,0,0,0.12); color:#ffd6d6; border-radius:8px; display:none; white-space:pre-wrap; font-size:13px }
-
     .loading{ color:var(--muted); font-size:13px; padding:14px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid rgba(255,255,255,0.02) }
 
     @media(max-width:760px){ .card{ flex-direction:column } .thumb{ width:100%; height:200px } }
@@ -48,55 +53,57 @@
     <header>
       <h1>Admin — Blog moderation</h1>
       <div class="controls">
-        <div class="note">Admins review user-submitted posts. Approve publishes; Reject applies optional penalty.</div>
+        <div class="note">Review all user posts. Use the filter to view different statuses.</div>
         <button id="refreshBtn" class="btn ghost">Refresh</button>
       </div>
     </header>
 
-    <div id="controlsRow" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+    <div class="toolbar">
+      <label class="small">Filter:</label>
+      <select id="statusFilter">
+        <option value="all">All</option>
+        <option value="pending">Pending</option>
+        <option value="published">Published</option>
+        <option value="rejected">Rejected</option>
+        <option value="taken_down">Taken down</option>
+      </select>
+
+      <label class="small">Search title or author:</label>
+      <input id="searchBox" type="text" placeholder="search..." />
+
+      <div style="flex:1"></div>
+
       <div class="note">Approve reward (₦):</div>
-      <input id="rewardInput" type="number" value="50" style="width:100px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)" />
+      <input id="rewardInput" type="number" value="50" style="width:100px" />
       <label class="small" style="margin-left:6px">Reject penalty (₦):</label>
-      <input id="penaltyInput" type="number" value="0" style="width:80px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)" />
+      <input id="penaltyInput" type="number" value="0" style="width:80px" />
     </div>
 
     <div id="statusArea" aria-live="polite"></div>
     <div id="errorBox" role="alert" aria-live="assertive"></div>
 
-    <div id="list" class="list" role="region" aria-label="Pending posts list"></div>
+    <div id="list" class="list" role="region" aria-label="Blogs list"></div>
   </div>
 
   <script type="module">
-    // ---- FIREBASE SDK (modular v9) ----
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc,
-      serverTimestamp, increment, getDoc, getDocs
+      getFirestore, collection, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, increment, getDoc
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // ---------- CONFIG (check these values are correct for your project) ----------
+    // FIREBASE CONFIG - replace if different
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
       projectId: "beni-wealths",
-      // storageBucket corrected to the normal format: <projectId>.appspot.com
       storageBucket: "beni-wealths.appspot.com",
       messagingSenderId: "807950483822",
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    try{
-      if(!getApps().length) initializeApp(firebaseConfig);
-    }catch(e){
-      // fatal init error — show to the admin
-      document.getElementById('errorBox').style.display = 'block';
-      document.getElementById('errorBox').textContent = 'Firebase initialization failed: ' + (e && e.message ? e.message : String(e));
-      console.error('Firebase init error', e);
-      throw e;
-    }
-
+    if(!getApps().length) initializeApp(firebaseConfig);
     const auth = getAuth();
     const db = getFirestore();
 
@@ -105,16 +112,17 @@
     const statusArea = document.getElementById('statusArea');
     const errorBox = document.getElementById('errorBox');
     const refreshBtn = document.getElementById('refreshBtn');
+    const statusFilter = document.getElementById('statusFilter');
+    const searchBox = document.getElementById('searchBox');
     const rewardInput = document.getElementById('rewardInput');
     const penaltyInput = document.getElementById('penaltyInput');
 
+    let unsubscribe = null;
     let currentUser = null;
     let isAdmin = false;
-    let unsubscribe = null;
-
     const ADMIN_EMAILS = ['owanaomubo76@gmail.com', 'beniwealth70@gmail.com'];
 
-    function showMessage(text, type='success'){
+    function showMessage(text, type='info'){
       statusArea.innerHTML = `<div class="${type==='error' ? 'loading' : 'note'}">${text}</div>`;
       setTimeout(()=> { if(statusArea && statusArea.innerHTML) statusArea.innerHTML = ''; }, 6000);
     }
@@ -125,59 +133,69 @@
     }
     function clearError(){ errorBox.style.display = 'none'; errorBox.textContent = ''; }
 
-    function safeFormatDate(ts){
-      if(!ts) return '-';
-      try{
-        // Firestore Timestamp has toDate()
-        if(typeof ts.toDate === 'function') return ts.toDate().toLocaleString();
-        // fallback if it's a millis number or ISO string
-        const d = new Date(ts);
-        if(isNaN(d)) return '-';
-        return d.toLocaleString();
-      }catch(e){ return '-'; }
-    }
-
-    function makeThumbnailSrc(thumbnail, title){
+    function makeThumbnailSrc(thumbnail){
       if(thumbnail) return thumbnail;
-      // inline svg placeholder (encoded)
       return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="100%" height="100%" fill="%230b0613"/><text x="50%" y="50%" fill="%23aaaaaa" font-size="16" dominant-baseline="middle" text-anchor="middle">No thumbnail</text></svg>';
     }
 
-    function renderList(docs){
-      listEl.innerHTML = '';
-      if(!docs || docs.length === 0){ listEl.innerHTML = '<div class="note">No pending posts right now.</div>'; return; }
+    function safeFormatDate(ts){
+      if(!ts) return '-';
+      try{ if(typeof ts.toDate === 'function') return ts.toDate().toLocaleString(); return new Date(ts).toLocaleString(); }catch(e){ return '-'; }
+    }
 
-      docs.forEach(docSnap => {
+    // render list
+    function renderList(docs){
+      const filter = statusFilter.value;
+      const q = (searchBox.value || '').trim().toLowerCase();
+      listEl.innerHTML = '';
+      let filtered = docs;
+      if(filter !== 'all') filtered = filtered.filter(d => (d.data().status || '') === filter);
+      if(q) filtered = filtered.filter(d => {
+        const data = d.data();
+        const title = (data.title||'').toLowerCase();
+        const author = ((data.author||data.userId)||'').toLowerCase();
+        return title.includes(q) || author.includes(q);
+      });
+
+      if(filtered.length === 0){
+        listEl.innerHTML = '<div class="note">No blogs match the selected filter/search.</div>';
+        return;
+      }
+
+      filtered.forEach(docSnap => {
         const id = docSnap.id;
-        const data = docSnap.data ? docSnap.data() : docSnap;
+        const data = docSnap.data();
         const title = data.title || 'Untitled';
         const author = data.author || data.userId || 'Unknown';
-        const tags = (data.tags || []).join(', ');
-        const createdAt = data.createdAt || data.createdAtMillis || null;
+        const createdAt = data.createdAt || data.publishedAt || null;
         const thumbnail = data.thumbnail || '';
+        const status = data.status || 'pending';
 
         const card = document.createElement('div'); card.className = 'card';
         const img = document.createElement('img'); img.className = 'thumb'; img.alt = title + ' thumbnail';
-        img.src = makeThumbnailSrc(thumbnail, title);
+        img.src = makeThumbnailSrc(thumbnail);
         const meta = document.createElement('div'); meta.className = 'meta';
         const h = document.createElement('h3'); h.textContent = title;
-        const p = document.createElement('p'); p.textContent = (data.content || '').slice(0, 220) + ( (data.content && data.content.length>220) ? '…' : '' );
-        const small = document.createElement('div'); small.className = 'small'; small.innerHTML = `by <strong>${author}</strong> • ${safeFormatDate(createdAt)} <span style="margin-left:8px" class="status-pill status-pending">PENDING</span>`;
-        const tagsEl = document.createElement('div'); tagsEl.className = 'tags'; tagsEl.textContent = tags;
+        const p = document.createElement('p'); p.textContent = (data.content || '').slice(0, 260) + ( (data.content && data.content.length>260) ? '…' : '' );
+        const small = document.createElement('div'); small.className = 'small'; small.innerHTML = `by <strong>${author}</strong> • ${safeFormatDate(createdAt)} `;
+
+        const pill = document.createElement('span'); pill.className = 'status-pill';
+        if(status === 'pending') { pill.classList.add('status-pending'); pill.textContent = 'PENDING'; }
+        else if(status === 'published' || status === 'approved') { pill.classList.add('status-published'); pill.textContent = 'PUBLISHED'; }
+        else if(status === 'rejected') { pill.classList.add('status-rejected'); pill.textContent = 'REJECTED'; }
+        else if(status === 'taken_down') { pill.classList.add('status-taken'); pill.textContent = 'TAKEN DOWN'; }
+        else { pill.classList.add('status-taken'); pill.textContent = status.toUpperCase(); }
+
+        small.appendChild(pill);
+
+        const tagsEl = document.createElement('div'); tagsEl.className = 'tags'; tagsEl.textContent = (data.tags || []).join(', ');
 
         const actions = document.createElement('div'); actions.className = 'actions';
-        const approveBtn = document.createElement('button'); approveBtn.className = 'btn primary'; approveBtn.textContent = 'Approve';
-        const rejectBtn = document.createElement('button'); rejectBtn.className = 'btn ghost'; rejectBtn.textContent = 'Reject';
         const viewBtn = document.createElement('button'); viewBtn.className = 'btn ghost'; viewBtn.textContent = 'Open';
+        viewBtn.addEventListener('click', ()=> window.open(`blog.html?id=${id}`,'_blank'));
 
-        actions.appendChild(approveBtn); actions.appendChild(rejectBtn); actions.appendChild(viewBtn);
-
-        meta.appendChild(h); meta.appendChild(small); meta.appendChild(p); meta.appendChild(tagsEl); meta.appendChild(actions);
-        card.appendChild(img); card.appendChild(meta);
-        listEl.appendChild(card);
-
-        viewBtn.addEventListener('click', ()=>{ window.open(`blog.html?id=${id}`, '_blank'); });
-
+        // Approve (for pending)
+        const approveBtn = document.createElement('button'); approveBtn.className = 'btn primary'; approveBtn.textContent = 'Approve';
         approveBtn.addEventListener('click', async ()=>{
           if(!isAdmin){ alert('Only admins can approve posts'); return; }
           if(!confirm('Approve this post and publish it?')) return;
@@ -186,13 +204,11 @@
             const blogRef = doc(db, 'blogs', id);
             await updateDoc(blogRef, { status: 'published', publishedAt: serverTimestamp(), reviewedBy: currentUser.uid });
 
-            // notify author (only if userId present)
             if(data.userId){
               const notifications = collection(db, 'notifications');
               await addDoc(notifications, { userId: data.userId, type: 'blog_published', message: `Your post \"${title}\" was approved and published.`, blogId: id, createdAt: serverTimestamp() });
             }
 
-            // reward
             if(reward > 0 && data.userId){
               const txs = collection(db, 'transactions');
               await addDoc(txs, { userId: data.userId, type: 'reward', source: 'blog_approval', amount: Number(reward), note: `Reward for published post ${id}`, createdAt: serverTimestamp() });
@@ -204,6 +220,8 @@
           }catch(err){ showError('Approve error: ' + (err && err.message ? err.message : String(err))); }
         });
 
+        // Reject (for pending)
+        const rejectBtn = document.createElement('button'); rejectBtn.className = 'btn ghost'; rejectBtn.textContent = 'Reject';
         rejectBtn.addEventListener('click', async ()=>{
           if(!isAdmin){ alert('Only admins can reject posts'); return; }
           const reason = prompt('Enter rejection reason (optional):', 'Does not meet guidelines'); if(reason === null) return;
@@ -229,61 +247,104 @@
           }catch(err){ showError('Reject error: ' + (err && err.message ? err.message : String(err))); }
         });
 
+        // Take down (for published/pending/rejected)
+        const takeDownBtn = document.createElement('button'); takeDownBtn.className = 'btn ghost'; takeDownBtn.textContent = 'Take down';
+        takeDownBtn.addEventListener('click', async ()=>{
+          if(!isAdmin){ alert('Only admins can take down posts'); return; }
+          const reason = prompt('Reason for taking down (optional):', 'Violates terms'); if(reason === null) return;
+          if(!confirm('Take down this post?')) return;
+          try{
+            const blogRef = doc(db, 'blogs', id);
+            await updateDoc(blogRef, {
+              previousStatus: data.status || null,
+              status: 'taken_down',
+              takenDownAt: serverTimestamp(),
+              takenDownBy: currentUser.uid,
+              takeDownReason: reason || null
+            });
+
+            if(data.userId){
+              const notifications = collection(db, 'notifications');
+              await addDoc(notifications, { userId: data.userId, type: 'blog_taken_down', message: `Your post "${title}" was taken down. Reason: ${reason || 'Not specified'}`, blogId: id, createdAt: serverTimestamp() });
+            }
+
+            showMessage('Post taken down');
+          }catch(err){ showError('Take down failed: ' + (err && err.message ? err.message : String(err))); }
+        });
+
+        // Restore (for taken_down)
+        const restoreBtn = document.createElement('button'); restoreBtn.className = 'btn primary'; restoreBtn.textContent = 'Restore';
+        restoreBtn.addEventListener('click', async ()=>{
+          if(!isAdmin){ alert('Only admins can restore posts'); return; }
+          if(!confirm('Restore this post to its previous status?')) return;
+          try{
+            const blogRef = doc(db, 'blogs', id);
+            const newStatus = data.previousStatus || 'published';
+            await updateDoc(blogRef, {
+              status: newStatus,
+              restoredAt: serverTimestamp(),
+              restoredBy: currentUser.uid,
+              previousStatus: null,
+              takenDownBy: null,
+              takenDownAt: null,
+              takeDownReason: null
+            });
+
+            if(data.userId){
+              const notifications = collection(db, 'notifications');
+              await addDoc(notifications, { userId: data.userId, type: 'blog_restored', message: `Your post "${title}" was restored (status: ${newStatus}).`, blogId: id, createdAt: serverTimestamp() });
+            }
+
+            showMessage('Post restored');
+          }catch(err){ showError('Restore failed: ' + (err && err.message ? err.message : String(err))); }
+        });
+
+        // assemble actions per status
+        actions.appendChild(viewBtn);
+        if(status === 'pending'){
+          actions.appendChild(approveBtn);
+          actions.appendChild(rejectBtn);
+          actions.appendChild(takeDownBtn);
+        }else if(status === 'published' || status === 'approved'){
+          actions.appendChild(takeDownBtn);
+        }else if(status === 'rejected'){
+          actions.appendChild(takeDownBtn);
+        }else if(status === 'taken_down'){
+          actions.appendChild(restoreBtn);
+        }else {
+          // generic: allow take down
+          actions.appendChild(takeDownBtn);
+        }
+
+        meta.appendChild(h); meta.appendChild(small); meta.appendChild(p); meta.appendChild(tagsEl); meta.appendChild(actions);
+        card.appendChild(img); card.appendChild(meta);
+        listEl.appendChild(card);
       });
     }
 
-    // try live subscription, but surface errors and then attempt a one-time fetch
-    async function subscribePending(){
+    // subscribe to entire blogs collection and client-side filter+sort
+    function subscribeAllBlogs(){
       clearError();
-      try{
-        const col = collection(db, 'blogs');
-        // orderBy createdAt; if you have many writes, ensure an index exists in Firestore console
-        const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
-        if(unsubscribe) unsubscribe();
-        unsubscribe = onSnapshot(q, (snap) => {
-          console.debug('onSnapshot returned', snap.size, 'docs');
-          renderList(snap.docs);
-        }, async (err) => {
-          // show error and do a diagnostic one-time fetch
-          showError('Live subscription error: ' + (err && err.message ? err.message : String(err)));
-          console.warn('onSnapshot error', err);
-          // fallback
-          await fetchPendingOnce();
+      const col = collection(db, 'blogs');
+      if(typeof unsubscribe === 'function') unsubscribe();
+      unsubscribe = onSnapshot(col, (snap) => {
+        // sort by createdAt or publishedAt desc
+        const docs = snap.docs.slice().sort((a,b)=>{
+          const ad = a.data().createdAt || a.data().publishedAt;
+          const bd = b.data().createdAt || b.data().publishedAt;
+          const at = ad && typeof ad.toDate === 'function' ? ad.toDate().getTime() : (ad ? new Date(ad).getTime() : 0);
+          const bt = bd && typeof bd.toDate === 'function' ? bd.toDate().toLocaleString ? bd.toDate().getTime() : (bd ? new Date(bd).getTime() : 0) : 0;
+          return bt - at;
         });
-      }catch(e){
-        showError('subscribePending failed: ' + (e && e.message ? e.message : String(e)));
-        console.warn('subscribePending exception', e);
-        await fetchPendingOnce();
-      }
+        renderList(docs);
+      }, (err) => {
+        showError('Live subscription error: ' + (err && err.message ? err.message : String(err)));
+        console.error('onSnapshot error', err);
+      });
     }
 
-    // one-time fetch fallback (shows errors)
-    async function fetchPendingOnce(){
-      clearError();
-      try{
-        const col = collection(db, 'blogs');
-        // Try the same query, but gracefully fallback if it fails (index/permission)
-        try{
-          const q = query(col, where('status','==','pending'), orderBy('createdAt','desc'));
-          const snap = await getDocs(q);
-          renderList(snap.docs);
-          if(snap.size === 0) showMessage('No pending posts found');
-        }catch(innerErr){
-          console.warn('Ordered query failed, retrying without orderBy:', innerErr);
-          // fallback: fetch documents with where only (no orderBy)
-          const q2 = query(col, where('status','==','pending'));
-          const snap2 = await getDocs(q2);
-          renderList(snap2.docs);
-          if(snap2.size === 0) showMessage('No pending posts found (fallback)');
-        }
-      }catch(err){
-        showError('One-time fetch error: ' + (err && err.message ? err.message : String(err)));
-        console.error('fetchPendingOnce error', err);
-      }
-    }
-
-    // auth & admin check (email whitelist + user doc fallback)
-    onAuthStateChanged(auth, async (user)=>{
+    // auth & admin check
+    onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       if(!user){
         showMessage('Sign in as an admin to moderate', 'error');
@@ -291,7 +352,7 @@
         return;
       }
       try{
-        // get user doc to check roles (safe fallback)
+        // check user doc as fallback
         const uRef = doc(db, 'users', user.uid);
         const snap = await getDoc(uRef);
         const d = snap && snap.exists ? snap.data() : {};
@@ -301,16 +362,33 @@
           showMessage('Access denied: not an admin', 'error');
           return;
         }
-        showMessage('Admin authenticated — loading pending posts');
-        await subscribePending();
+        showMessage('Admin authenticated — loading posts');
+        subscribeAllBlogs();
       }catch(err){
         showError('Admin check failed: ' + (err && err.message ? err.message : String(err)));
       }
     });
 
-    refreshBtn.addEventListener('click', ()=>{ subscribePending(); showMessage('Refreshed'); });
+    // filter/search events
+    statusFilter.addEventListener('change', ()=> {
+      // re-render will happen via onSnapshot data -> renderList filters
+      showMessage('Filter updated');
+    });
+    searchBox.addEventListener('input', debounce(()=> {
+      showMessage('Search updated');
+    }, 300));
 
-    window.addEventListener('beforeunload', ()=>{ if(typeof unsubscribe === 'function') unsubscribe(); });
+    refreshBtn.addEventListener('click', ()=> { subscribeAllBlogs(); showMessage('Refreshed'); });
+
+    // simple debounce
+    function debounce(fn, ms=250){
+      let t;
+      return (...args)=>{ clearTimeout(t); t = setTimeout(()=> fn.apply(this,args), ms); };
+    }
+
+    // cleanup
+    window.addEventListener('beforeunload', ()=> { if(typeof unsubscribe === 'function') unsubscribe(); });
+
   </script>
 </body>
 </html>
