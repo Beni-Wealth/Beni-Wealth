@@ -4,93 +4,112 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Referrals — Beni-Wealth</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,500,700&display=swap" rel="stylesheet">
+
+  <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- Favicons & Social preview -->
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
+  <meta property="og:description" content="Complete simple micro-tasks, complete ptcs and blogs, complete shortlinks and earn instantly.">
+  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#2fe0b8">
+
+  <style>
+    body{margin:0;font-family:Poppins,system-ui;background:#0b0613;color:#e9f0ff}
+    header{padding:16px;font-weight:700}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+    button{cursor:pointer}
+  </style>
 </head>
 <body>
 
+<header>Beni-Wealth — My Referrals</header>
+
+<main style="padding:16px">
+  <table>
+    <thead>
+      <tr>
+        <th>Referred UID</th>
+        <th>Referral Bonus</th>
+      </tr>
+    </thead>
+    <tbody id="activatedBody">
+      <tr><td colspan="2">Loading…</td></tr>
+    </tbody>
+  </table>
+</main>
+
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import {
-  getFirestore, collection, query, where, getDocs, doc, getDoc,
-  runTransaction, serverTimestamp, onSnapshot
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import {
+    getFirestore, collection, query, where, doc, runTransaction,
+    serverTimestamp, onSnapshot
+  } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-/* ================= CONFIG ================= */
-const firebaseConfig = { /* YOUR CONFIG HERE */ };
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+  /* 🔴 REQUIRED CONFIG (WAS MISSING) */
+  const firebaseConfig = {
+    apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
+    authDomain: "beni-wealths.firebaseapp.com",
+    projectId: "beni-wealths",
+    storageBucket: "beni-wealths.firebasestorage.app",
+    messagingSenderId: "807950483822",
+    appId: "1:807950483822:web:e10fa87307e041c4d8417f"
+  };
 
-const BONUS_MAP = {
-  bronze: { bronze: 500, silver: 700 },
-  silver: { bronze: 700, silver: 1200 }
-};
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
 
-/* ================= AUTH FIX ================= */
-let authChecked = false;
-let currentUser = null;
+  let authChecked = false;
+  let currentUser = null;
 
-onAuthStateChanged(auth, (user) => {
-  if (!authChecked) authChecked = true;
-  if (!user) return setTimeout(() => location.href = 'login.html', 50);
-  currentUser = user;
-  init();
-});
-
-/* ================= INIT ================= */
-function init(){
-  subscribeReferralBonuses();
-}
-
-/* ================= SUBSCRIBE ================= */
-function subscribeReferralBonuses(){
-  const q = query(collection(db,'referralBonuses'), where('referrerUid','==',currentUser.uid));
-  onSnapshot(q, snap => {
-    const rows = [];
-    snap.forEach(d => rows.push({ id:d.id, ...d.data() }));
-    render(rows);
+  onAuthStateChanged(auth, user => {
+    if(!authChecked) authChecked = true;
+    if(!user) return setTimeout(()=>location.href='login.html',50);
+    currentUser = user;
+    listen();
   });
-}
 
-/* ================= RENDER ================= */
-function render(list){
-  const body = document.getElementById('activatedBody');
-  if(!list.length){
-    body.innerHTML = '<tr><td colspan="6">No activated referrals</td></tr>';
-    return;
-  }
-  body.innerHTML = list.map(r => `
-    <tr>
-      <td>${r.referredUid}</td>
-      <td>—</td>
-      <td>Paid</td>
-      <td>—</td>
-      <td>—</td>
-      <td>
-        ₦${Number(r.amount).toLocaleString()} 
-        ${r.claimed ? '✓' : `<button onclick="claimBonus('${r.id}')">Claim</button>`}
-      </td>
-    </tr>`).join('');
-}
-
-/* ================= CLAIM ================= */
-window.claimBonus = async function(id){
-  try{
-    await runTransaction(db, async tx => {
-      const bonusRef = doc(db,'referralBonuses',id);
-      const userRef = doc(db,'users',currentUser.uid);
-      const b = await tx.get(bonusRef);
-      if(!b.exists()) throw 'Bonus missing';
-      if(b.data().claimed) throw 'Already claimed';
-      const u = await tx.get(userRef);
-      const cur = Number(u.data().referralBalance||0);
-      tx.update(userRef,{ referralBalance: cur + b.data().amount });
-      tx.update(bonusRef,{ claimed:true, claimedAt:serverTimestamp() });
+  function listen(){
+    const q = query(collection(db,'referralBonuses'), where('referrerUid','==',currentUser.uid));
+    onSnapshot(q, snap => {
+      const body = document.getElementById('activatedBody');
+      if(snap.empty){ body.innerHTML='<tr><td colspan="2">No bonuses yet</td></tr>'; return; }
+      body.innerHTML = '';
+      snap.forEach(d => {
+        const r = d.data();
+        body.innerHTML += `
+          <tr>
+            <td>${r.referredUid}</td>
+            <td>
+              ₦${Number(r.amount).toLocaleString()}
+              ${r.claimed ? '✓' : `<button onclick="claim('${d.id}')">Claim</button>`}
+            </td>
+          </tr>`;
+      });
     });
-    alert('Bonus claimed');
-  }catch(e){ alert(e); }
-}
+  }
+
+  window.claim = async function(id){
+    await runTransaction(db, async tx => {
+      const bRef = doc(db,'referralBonuses',id);
+      const uRef = doc(db,'users',currentUser.uid);
+      const b = await tx.get(bRef);
+      if(b.data().claimed) throw 'Already claimed';
+      const u = await tx.get(uRef);
+      tx.update(uRef,{ referralBalance:(u.data().referralBalance||0)+b.data().amount });
+      tx.update(bRef,{ claimed:true, claimedAt:serverTimestamp() });
+    });
+    alert('Claimed');
+  }
 </script>
 </body>
 </html>
