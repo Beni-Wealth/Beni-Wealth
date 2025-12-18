@@ -32,55 +32,22 @@
       padding:18px;
     }
 
-    .wrap{
-      max-width:1100px;
-      margin:0 auto;
-    }
+    .wrap{ max-width:1100px; margin:0 auto; }
 
-    header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      margin-bottom:18px;
-    }
+    header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; }
     .brand { display:flex; flex-direction:column; gap:4px; }
     h1{margin:0;font-size:20px}
     .hint{color:var(--muted);font-size:13px;margin-top:2px}
 
     .controls{display:flex;gap:12px;align-items:center}
-    .search{
-      padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);
-      background:transparent;color:var(--text);min-width:200px;font-size:14px;
-      outline:none;
-    }
+    .search{ padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--text);min-width:200px;font-size:14px; outline:none; }
     .search::placeholder{color:rgba(255,255,255,0.32)}
-    .filter{
-      padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
-      background:transparent;color:var(--muted);font-size:14px;
-    }
-    .signinBtn{
-      padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;
-    }
+    .filter{ padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--muted);font-size:14px; }
+    .signinBtn{ padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219; }
 
-    /* Grid */
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-      gap:var(--gap);
-    }
+    .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:var(--gap); }
 
-    .card{
-      background:var(--card);
-      padding:14px;
-      border-radius:var(--radius);
-      border:1px solid rgba(255,255,255,0.03);
-      box-shadow:0 14px 40px rgba(0,0,0,0.55);
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      transition:transform .14s ease, box-shadow .14s ease;
-    }
+    .card{ background:var(--card); padding:14px; border-radius:var(--radius); border:1px solid rgba(255,255,255,0.03); box-shadow:0 14px 40px rgba(0,0,0,0.55); display:flex; flex-direction:column; gap:10px; transition:transform .14s ease, box-shadow .14s ease; }
     .card:active, .card:focus-within { transform: translateY(2px); }
     .card h3{margin:0;font-size:16px;color:var(--accent1);font-weight:700}
     .meta{color:var(--muted);font-size:13px;margin-top:4px}
@@ -97,18 +64,9 @@
     footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
 
     /* Spinner */
-    .spinner {
-      width:16px;
-      height:16px;
-      border-radius:50%;
-      border:2px solid rgba(255,255,255,0.22);
-      border-top-color: #ffffff;
-      animation:spin 0.9s linear infinite;
-      display:none;
-    }
+    .spinner { width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.22); border-top-color: #ffffff; animation:spin 0.9s linear infinite; display:none; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Mobile friendliness */
     @media (max-width:720px) {
       body{padding:12px}
       header{flex-direction:column;align-items:flex-start;gap:8px}
@@ -130,20 +88,7 @@
       .btn{font-size:15px;padding:12px;border-radius:12px}
     }
 
-    /* small toast */
-    .toast {
-      position:fixed;
-      left:50%;
-      transform:translateX(-50%);
-      bottom:20px;
-      background:rgba(0,0,0,0.7);
-      color:#fff;
-      padding:10px 14px;
-      border-radius:8px;
-      z-index:99999;
-      font-size:14px;
-      display:none;
-    }
+    .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:rgba(0,0,0,0.7); color:#fff; padding:10px 14px; border-radius:8px; z-index:99999; font-size:14px; display:none; }
     .toast.show { display:block; animation:fade .3s ease; }
     @keyframes fade { from{opacity:0; transform:translateX(-50%) translateY(6px)} to{opacity:1; transform:translateX(-50%) translateY(0)} }
   </style>
@@ -209,6 +154,7 @@
     // Reward and cooldown
     const REWARD = 0.40; // ₦0.40 per click
     const COOLDOWN_MS = 1 * 60 * 60 * 1000; // 1 hour
+    const VISITED_EXPIRE_MS = COOLDOWN_MS; // visited badge expires after 1 hour
 
     // Data: 20 PTCs
     function makePTC(i){
@@ -221,33 +167,48 @@
     }
     const PTCs = Array.from({length:20}, (_,k)=> makePTC(k+1));
 
-    // local storage helpers for quick UI visited flag
+    // local storage helpers for quick UI visited flag (store timestamp)
     function storageKey(id){ return `ptc_visited_${id}`; }
-    function isVisitedLocal(id){ try { return localStorage.getItem(storageKey(id)) === '1'; } catch(e){ return false; } }
-    function markVisitedLocal(id){ try{ localStorage.setItem(storageKey(id), '1'); }catch(e){} }
+    function getVisitedTs(id){
+      try{
+        const v = localStorage.getItem(storageKey(id));
+        if(!v) return null;
+        const n = Number(v);
+        if(!isFinite(n)) return null;
+        return n;
+      }catch(e){ return null; }
+    }
+    function isVisitedLocal(id){
+      try {
+        const ts = getVisitedTs(id);
+        if(!ts) return false;
+        const age = Date.now() - ts;
+        if(age >= VISITED_EXPIRE_MS){
+          // expired -> remove
+          try { localStorage.removeItem(storageKey(id)); } catch(e){}
+          return false;
+        }
+        return true;
+      } catch(e) { return false; }
+    }
+    function markVisitedLocal(id){
+      try{ localStorage.setItem(storageKey(id), String(Date.now())); }catch(e){}
+    }
+    function clearVisitedLocal(id){
+      try{ localStorage.removeItem(storageKey(id)); }catch(e){}
+    }
 
     // Auth state
     let currentUser = null;
     const provider = new GoogleAuthProvider();
 
     signinBtn.addEventListener('click', async ()=>{
-      try{
-        await signInWithPopup(auth, provider);
-      }catch(err){
-        showToast('Sign-in failed: ' + (err && err.message ? err.message : String(err)), 4000);
-        console.error('signIn error', err);
-      }
+      try{ await signInWithPopup(auth, provider); }catch(err){ showToast('Sign-in failed: ' + (err && err.message ? err.message : String(err)), 4000); console.error('signIn error', err); }
     });
 
     onAuthStateChanged(auth, user=>{
       currentUser = user;
-      if(user){
-        signinBtn.textContent = 'Signed in';
-        signinBtn.disabled = true;
-      }else{
-        signinBtn.textContent = 'Sign in';
-        signinBtn.disabled = false;
-      }
+      if(user){ signinBtn.textContent = 'Signed in'; signinBtn.disabled = true; } else { signinBtn.textContent = 'Sign in'; signinBtn.disabled = false; }
     });
 
     // show small toast
@@ -272,17 +233,9 @@
       // If user not signed in, prompt sign-in
       if(!currentUser){
         showToast('Sign in to earn. Opening sign-in...', 2500);
-        try{
-          await signInWithPopup(auth, provider);
-        }catch(err){
-          showToast('Sign-in failed. Cannot credit.', 3000);
-          return;
-        }
+        try{ await signInWithPopup(auth, provider); }catch(err){ showToast('Sign-in failed. Cannot credit.', 3000); return; }
       }
-      if(!currentUser){
-        showToast('Sign in required to earn.', 2500);
-        return;
-      }
+      if(!currentUser){ showToast('Sign in required to earn.', 2500); return; }
 
       const uid = currentUser.uid;
       const clickDocId = `${ptc.id}_${uid}`;
@@ -295,10 +248,7 @@
       pending.add(clickDocId);
 
       // show spinner + disable button
-      if(btnOpen){
-        try { btnOpen.disabled = true; } catch(e){}
-        if(spinner) spinner.style.display = 'inline-block';
-      }
+      if(btnOpen){ try { btnOpen.disabled = true; } catch(e){} if(spinner) spinner.style.display = 'inline-block'; }
 
       try{
         const clickRef = doc(db, 'ptcClicks', clickDocId);
@@ -318,14 +268,14 @@
           }
         }
 
-        // Allowed: record click and credit
+        // Allowed: record click and credit (server records)
         try{
           if(snap.exists()){
             await updateDoc(clickRef, { lastClickedAt: serverTimestamp(), count: increment(1) });
           }else{
             await setDoc(clickRef, { ptcId: ptc.id, viewerUid: uid, lastClickedAt: serverTimestamp(), count: 1 });
           }
-        }catch(e){ console.warn('ptcClicks write failed', e); /* continue — still try to credit */ }
+        }catch(e){ console.warn('ptcClicks write failed', e); }
 
         // Credit user: add transaction and increment balance
         try{
@@ -345,7 +295,7 @@
           await updateDoc(userRef, { balance: increment(REWARD) });
         }catch(e){ console.warn('update user balance failed', e); showToast('Credited but balance update blocked by rules.', 4000); }
 
-        // mark local visited & update card UI
+        // mark local visited timestamp & update card UI
         markVisitedLocal(ptc.id);
         if(itemEl){
           const visitedBadge = itemEl.querySelector('.visited-badge');
@@ -363,12 +313,9 @@
         console.error('handlePTCClick error', err);
         showToast('Error processing PTC click: ' + (err && err.message ? err.message : String(err)), 4000);
       }finally{
-        // cleanup: hide spinner and enable button, remove pending guard
+        // cleanup
         pending.delete(clickDocId);
-        if(btnOpen){
-          try { btnOpen.disabled = false; } catch(e){}
-          if(spinner) spinner.style.display = 'none';
-        }
+        if(btnOpen){ try { btnOpen.disabled = false; } catch(e){} if(spinner) spinner.style.display = 'none'; }
       }
     }
 
@@ -386,37 +333,22 @@
       const visitedBadge = document.createElement('div'); visitedBadge.className='visited-badge'; visitedBadge.style.display='none'; visitedBadge.textContent='Visited';
 
       const actions = document.createElement('div'); actions.className='actions';
-      const btnOpen = document.createElement('button'); btnOpen.className='btn primary'; 
-      // include text + spinner inside button
+      const btnOpen = document.createElement('button'); btnOpen.className='btn primary';
       btnOpen.innerHTML = `<span class="btn-text">Open</span><span class="spinner" aria-hidden="true"></span>`;
       const spinnerEl = btnOpen.querySelector('.spinner');
 
       const btnDetails = document.createElement('button'); btnDetails.className='btn ghost'; btnDetails.textContent='Details';
 
       // open (crediting + open)
-      btnOpen.addEventListener('click', (e) => {
-        e.stopPropagation();
-        handlePTCClick(ptc, { btnOpen, spinnerEl, itemEl: item });
-      });
+      btnOpen.addEventListener('click', (e) => { e.stopPropagation(); handlePTCClick(ptc, { btnOpen, spinnerEl, itemEl: item }); });
 
       // allow tapping the card itself to open (mobile-friendly)
-      item.addEventListener('click', (e) => {
-        if(e.target.closest('button')) return;
-        btnOpen.click();
-      });
+      item.addEventListener('click', (e) => { if(e.target.closest('button')) return; btnOpen.click(); });
 
       // keyboard support: Enter opens
-      item.addEventListener('keydown', (e) => {
-        if(e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          btnOpen.click();
-        }
-      });
+      item.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btnOpen.click(); } });
 
-      btnDetails.addEventListener('click', (e) => {
-        e.stopPropagation();
-        alert(`${ptc.title}\nReward: ₦${ptc.reward}\n\n${ptc.description}`);
-      });
+      btnDetails.addEventListener('click', (e) => { e.stopPropagation(); alert(`${ptc.title}\nReward: ₦${ptc.reward}\n\n${ptc.description}`); });
 
       actions.appendChild(btnOpen);
       actions.appendChild(btnDetails);
@@ -435,7 +367,7 @@
 
       item.appendChild(bottomRow);
 
-      // initial visited state
+      // initial visited state (will remove if expired)
       applyVisitedStyle(item, visitedBadge, ptc.id);
 
       return item;
@@ -479,8 +411,25 @@
     // debounce
     function debounce(fn, ms=200){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=> fn(...a), ms); }; }
 
+    // Periodically clean expired local visited markers and update UI (keeps badges accurate as time passes)
+    setInterval(()=> {
+      // iterate keys and remove expired ones; then re-render current view so badges refresh
+      let changed = false;
+      try{
+        for(let i=1;i<=20;i++){
+          const k = storageKey(i);
+          const v = localStorage.getItem(k);
+          if(!v) continue;
+          const ts = Number(v);
+          if(!isFinite(ts)) { localStorage.removeItem(k); changed = true; continue; }
+          if(Date.now() - ts >= VISITED_EXPIRE_MS){ localStorage.removeItem(k); changed = true; }
+        }
+      }catch(e){ /* ignore storage errors */ }
+      if(changed) filterAndRender();
+    }, 30 * 1000); // check every 30s
+
     // expose for debugging
-    window._ptc = { PTCs, isVisitedLocal, markVisitedLocal };
+    window._ptc = { PTCs, isVisitedLocal, markVisitedLocal, clearVisitedLocal };
 
   </script>
 </body>
