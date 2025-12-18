@@ -22,39 +22,55 @@
 
   <style>
     body{margin:0;font-family:Poppins,system-ui;background:#0b0613;color:#e9f0ff}
-    header{padding:16px;font-weight:700}
+    header{padding:16px;font-weight:700;font-size:18px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;padding:16px}
+    .card{background:#120a1f;border-radius:14px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+    .label{opacity:.75;font-size:13px}
+    .value{font-size:24px;font-weight:700;margin-top:6px}
     table{width:100%;border-collapse:collapse}
-    th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,.08)}
-    button{cursor:pointer}
+    th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}
+    button{background:#2fe0b8;border:0;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer}
+    .muted{opacity:.6}
   </style>
 </head>
 <body>
 
-<header>Beni-Wealth — My Referrals</header>
+<header>My Referrals</header>
+
+<section class="cards">
+  <div class="card">
+    <div class="label">Total Referral Earnings</div>
+    <div class="value" id="totalReferral">₦0</div>
+  </div>
+  <div class="card">
+    <div class="label">Referral Balance</div>
+    <div class="value" id="referralBalance">₦0</div>
+  </div>
+</section>
 
 <main style="padding:16px">
   <table>
     <thead>
       <tr>
-        <th>Referred UID</th>
-        <th>Referral Bonus</th>
+        <th>Referred User</th>
+        <th>Bonus</th>
+        <th>Status</th>
       </tr>
     </thead>
     <tbody id="activatedBody">
-      <tr><td colspan="2">Loading…</td></tr>
+      <tr><td colspan="3">Loading…</td></tr>
     </tbody>
   </table>
 </main>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
   import {
     getFirestore, collection, query, where, doc, runTransaction,
-    serverTimestamp, onSnapshot
+    onSnapshot, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-  /* 🔴 REQUIRED CONFIG (WAS MISSING) */
   const firebaseConfig = {
     apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
     authDomain: "beni-wealths.firebaseapp.com",
@@ -65,50 +81,58 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
   const auth = getAuth(app);
+  const db = getFirestore(app);
 
-  let authChecked = false;
-  let currentUser = null;
+  let user = null;
 
-  onAuthStateChanged(auth, user => {
-    if(!authChecked) authChecked = true;
-    if(!user) return setTimeout(()=>location.href='login.html',50);
-    currentUser = user;
-    listen();
+  onAuthStateChanged(auth, u => {
+    if(!u) return location.href='login.html';
+    user = u;
+    listenUser();
+    listenBonuses();
   });
 
-  function listen(){
-    const q = query(collection(db,'referralBonuses'), where('referrerUid','==',currentUser.uid));
+  function listenUser(){
+    onSnapshot(doc(db,'users',user.uid), snap => {
+      const d = snap.data()||{};
+      document.getElementById('referralBalance').textContent = '₦' + Number(d.referralBalance||0).toLocaleString();
+    });
+  }
+
+  function listenBonuses(){
+    const q = query(collection(db,'referralBonuses'), where('referrerUid','==',user.uid));
     onSnapshot(q, snap => {
       const body = document.getElementById('activatedBody');
-      if(snap.empty){ body.innerHTML='<tr><td colspan="2">No bonuses yet</td></tr>'; return; }
-      body.innerHTML = '';
-      snap.forEach(d => {
-        const r = d.data();
-        body.innerHTML += `
-          <tr>
-            <td>${r.referredUid}</td>
-            <td>
-              ₦${Number(r.amount).toLocaleString()}
-              ${r.claimed ? '✓' : `<button onclick="claim('${d.id}')">Claim</button>`}
-            </td>
-          </tr>`;
-      });
+      let total = 0;
+      if(snap.empty){ body.innerHTML='<tr><td colspan="3" class="muted">No referrals yet</td></tr>'; }
+      else{
+        body.innerHTML='';
+        snap.forEach(docu => {
+          const r = docu.data();
+          total += Number(r.amount||0);
+          body.innerHTML += `
+            <tr>
+              <td>${r.referredUid}</td>
+              <td>₦${Number(r.amount).toLocaleString()}</td>
+              <td>${r.claimed ? 'Claimed' : `<button onclick="claim('${docu.id}')">Claim</button>`}</td>
+            </tr>`;
+        });
+      }
+      document.getElementById('totalReferral').textContent = '₦' + total.toLocaleString();
     });
   }
 
   window.claim = async function(id){
     await runTransaction(db, async tx => {
       const bRef = doc(db,'referralBonuses',id);
-      const uRef = doc(db,'users',currentUser.uid);
+      const uRef = doc(db,'users',user.uid);
       const b = await tx.get(bRef);
       if(b.data().claimed) throw 'Already claimed';
       const u = await tx.get(uRef);
       tx.update(uRef,{ referralBalance:(u.data().referralBalance||0)+b.data().amount });
       tx.update(bRef,{ claimed:true, claimedAt:serverTimestamp() });
     });
-    alert('Claimed');
   }
 </script>
 </body>
