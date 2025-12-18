@@ -307,6 +307,8 @@
     .overlay-option.primary{ background: linear-gradient(90deg, #7a5fff, #35d6b1); color:#041219; }
     .overlay-option.ghost{ background: transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); }
 
+    /* blog-overlay id styles will reuse overlay classes above */
+
     /* Responsive adjustments */
     @media(max-width:980px){
       :root{ --container-w: 420px; } /* fallback on narrow screens */
@@ -436,8 +438,23 @@
         <h3 id="overlayTitle">More options</h3>
         <div class="overlay-options">
           <a href="ptc.html" class="overlay-option primary" id="optPtc">PTC</a>
+          <!-- note: optBlog will be intercepted by JS to open the blog overlay -->
           <a href="blog.html" class="overlay-option primary" id="optBlog">Blog</a>
           <a href="mini-games.html" class="overlay-option primary" id="optGames">Games</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW: Overlay for Blog options (view/create/earnings) -->
+    <div id="blogOverlay" class="overlay" aria-hidden="true">
+      <div class="overlay-backdrop" id="blogBackdrop"></div>
+      <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="blogOverlayTitle">
+        <button id="blogOverlayClose" class="overlay-close" aria-label="Close">✕</button>
+        <h3 id="blogOverlayTitle">Blog options</h3>
+        <div class="overlay-options">
+          <a href="blog.html" class="overlay-option primary" id="optViewBlogs">View blogs</a>
+          <a href="write-blog.html" class="overlay-option primary" id="optCreateBlog">Create blog</a>
+          <a href="blog-dashboard.html" class="overlay-option primary" id="optEarnings">Earnings</a>
         </div>
       </div>
     </div>
@@ -487,6 +504,12 @@
     const overlayBackdrop = document.getElementById('overlayBackdrop');
     const overlayClose = document.getElementById('overlayClose');
     const logoutBtn = document.getElementById('logoutBtn');
+
+    // blog overlay refs
+    const blogOverlay = document.getElementById('blogOverlay');
+    const blogBackdrop = document.getElementById('blogBackdrop');
+    const blogOverlayClose = document.getElementById('blogOverlayClose');
+    const optBlog = document.getElementById('optBlog'); // original link inside moreOverlay
 
     // bottom nav
     const navHome = document.getElementById('navHome');
@@ -557,7 +580,7 @@
       setTimeout(()=> { container.style.transform = ''; window.location.href = 'referrals.html'; }, 240);
     });
 
-    // MORE item: show overlay with options (ptc, blog, games)
+    // MORE item: show overlay with top-level options (PTC, Blog, Games)
     function openMoreOverlay(){
       moreOverlay.classList.add('open');
       moreOverlay.setAttribute('aria-hidden','false');
@@ -581,12 +604,52 @@
     // close on ESC
     window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && moreOverlay.classList.contains('open')) closeMoreOverlay(); });
 
+    // ---- NEW: Blog overlay behavior ----
+    function openBlogOverlay(){
+      // ensure more overlay is closed (we're opening nested)
+      closeMoreOverlay();
+      blogOverlay.classList.add('open');
+      blogOverlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+      // focus first blog option
+      const first = blogOverlay.querySelector('.overlay-option');
+      if(first) first.focus();
+    }
+    function closeBlogOverlay(){
+      blogOverlay.classList.remove('open');
+      blogOverlay.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+      // return focus to More item so keyboard users continue where they left off
+      moreItem.focus();
+    }
+
+    // intercept click on the Blog link inside More overlay and open nested overlay instead
+    if(optBlog){
+      optBlog.addEventListener('click', (e) => {
+        e.preventDefault(); // prevent immediate navigation
+        openBlogOverlay();
+      });
+      optBlog.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBlogOverlay(); }
+      });
+    }
+
+    // blog overlay close handlers
+    blogOverlayClose.addEventListener('click', (e)=>{ e.preventDefault(); closeBlogOverlay(); });
+    blogBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); closeBlogOverlay(); });
+
+    // close blog overlay on ESC too
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && blogOverlay.classList.contains('open')) closeBlogOverlay(); });
+
+    // ensure nested navigation: if a user navigates to blog option, close overlays first
+    document.getElementById('optViewBlogs').addEventListener('click', ()=> { closeBlogOverlay(); });
+    document.getElementById('optCreateBlog').addEventListener('click', ()=> { closeBlogOverlay(); });
+    document.getElementById('optEarnings').addEventListener('click', ()=> { closeBlogOverlay(); });
+
     // LOGOUT: ensure signOut is called and user is redirected
     logoutBtn.addEventListener('click', async () => {
       try {
         await signOut(auth);
-        // clear any UI-sensitive localStorage flags if desired
-        // example: localStorage.removeItem(`bw_balance_hidden_${auth?.currentUser?.uid}`);
         window.location.href = 'index.html';
       } catch (err) {
         console.error('logout failed', err);
