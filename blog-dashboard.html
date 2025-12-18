@@ -124,8 +124,8 @@
       try{ await signInWithPopup(auth, provider); }catch(e){ showError('Sign-in failed: ' + (e && e.message? e.message: String(e))); }
     });
 
-    backBtn.addEventListener('click', ()=>{ // go back to previous page or index
-      if(window.opener) window.close(); else window.location.href = 'index.html';
+    backBtn.addEventListener('click', ()=>{ // go back to dashboard
+      if(window.opener) window.close(); else window.location.href = 'dashboard.html';
     });
 
     // Subscribe to published count for current user
