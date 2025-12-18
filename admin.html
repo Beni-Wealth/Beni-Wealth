@@ -236,21 +236,23 @@
     const recentPlaceholder = document.getElementById('recentPlaceholder');
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // Quick actions
+    // Quick actions (added Manage Blogs)
     const QUICK_ACTIONS = [
       { label: "Adverts", icon: "📢", path: "advert.html" },
       { label: "View Users", icon: "👥", path: "users.html" },
       { label: "Submissions", icon: "📝", path: "admin-task.html" },
       { label: "Withdrawals", icon: "💸", path: "admin-withdrawals.html" },
-      { label: "Deposits", icon: "💳", path: "admin-deposit.html" }
+      { label: "Deposits", icon: "💳", path: "admin-deposit.html" },
+      { label: "Manage Blogs", icon: "✍️", path: "admin-blog.html" }
     ];
 
-    // Metrics (big cards)
+    // Metrics (big cards) — adverts now reads from advert_submissions
     const METRICS = [
       { key: "users", title: "Users", collection: "users", path: "users.html" },
       { key: "deposits", title: "Deposits", collection: "deposits", path: "admin-deposit.html" },
       { key: "withdrawals", title: "Withdrawals", collection: "withdrawals", path: "admin-withdrawals.html" },
-      { key: "adverts", title: "Adverts", collection: "adverts", path: "advert.html" }
+      // Advert totals are now pulled from the advert_submissions collection
+      { key: "adverts", title: "Adverts", collection: "advert_submissions", path: "advert.html" }
     ];
 
     // ---------------------------
@@ -324,7 +326,7 @@
             }
           }
 
-          // Default: read the specified collection
+          // Default: read the specified collection (advert_submissions included)
           try {
             const snap = await getDocs(collection(db, m.collection));
             return { k: m.collection, n: snap.size };
@@ -405,12 +407,7 @@
       }
 
       // Authorized admin — load UI
-      // Re-render page (in case we replaced it above) then re-bind UI references and load dashboard
-      // We'll simply reload the page so original DOM elements are present and then load the dashboard.
-      // This approach avoids complicated partial DOM repairs; it is safe because the user is authorized.
       try {
-        // If the current DOM is the 'wrap' original content (most likely), just load dashboard
-        // Otherwise reload to get the original UI, then load.
         const wrapEl = document.getElementById('wrap');
         if (!wrapEl) {
           location.reload();
