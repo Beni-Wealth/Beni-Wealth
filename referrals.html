@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,500,700&display=swap" rel="stylesheet">
   <meta name="theme-color" content="#2fe0b8">
   <style>
+    /* (same CSS as your original file) */
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(233,240,255,0.6);
       --card: rgba(255,255,255,0.02); --accent-start:#2fe0b8; --accent-end:#7a5fff;
@@ -37,14 +38,13 @@
     .table-card{background:var(--card);border-radius:12px;padding:8px;box-shadow:0 10px 30px rgba(2,6,23,0.6);overflow:auto;border:1px solid rgba(255,255,255,0.03)}
     table{width:100%;border-collapse:collapse;min-width:900px;color:var(--text)}
     thead th{position:sticky;top:0;background:linear-gradient(90deg, rgba(47,224,184,0.12), rgba(122,95,255,0.08));color:var(--text);padding:12px;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.03)}
-    tbody td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.02)}
+    tbody td{Padding:12px;border-bottom:1px solid rgba(255,255,255,0.02)}
     tbody tr:hover td{background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005))}
     .no-data{padding:26px;text-align:center;color:var(--muted)}
     .small{font-size:13px;color:var(--muted)}
     footer{margin-top:auto;padding:14px;text-align:center;background:transparent;color:var(--muted)}
     .transfer-row{display:flex;gap:8px;align-items:center}
     @media (max-width:860px){ .top-row{flex-direction:column} table{min-width:600px} .ref-box{flex-direction:column;align-items:flex-end} }
-    /* tiny toast */
     .toast { position:fixed; right:18px; bottom:18px; background:#0b1220; padding:12px 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); box-shadow:0 10px 30px rgba(0,0,0,0.6); z-index:9999; color:var(--text); }
   </style>
 </head>
@@ -345,6 +345,70 @@
       }, 900);
     }
 
+    // NEW: one-time scan across referral fields that queries server directly and credits missing bonuses.
+    // This is run after we initialised realtime listeners and ensures immediate crediting for activations that might otherwise be missed.
+    async function oneTimeScanAndCredit(myCode){
+      if(!myCode || !currentUser) return;
+      try{
+        console.debug('oneTimeScanAndCredit: scanning referral fields for', myCode);
+        const found = new Map();
+        for(const f of REFERRAL_FIELDS){
+          try{
+            const q = query(collection(db,'users'), where(f,'==', myCode));
+            const snap = await getDocs(q);
+            snap.forEach(s => {
+              if(!found.has(s.id)) found.set(s.id, s.data());
+            });
+          }catch(e){
+            console.warn('oneTimeScan query failed for field', f, e);
+          }
+        }
+
+        // as backup, do a lowercase-insensitive fallback scan on a limited set
+        if(found.size === 0){
+          try{
+            const snap = await getDocs(query(collection(db,'users'), limit(2000)));
+            snap.forEach(s => {
+              const d = s.data() || {};
+              for(const f of REFERRAL_FIELDS){
+                if(!d[f]) continue;
+                if(String(d[f]).toLowerCase() === String(myCode).toLowerCase()){
+                  if(!found.has(s.id)) found.set(s.id, d);
+                }
+              }
+            });
+          }catch(e){
+            console.warn('oneTimeScan fallback full-scan failed', e);
+          }
+        }
+
+        if(found.size === 0) {
+          console.debug('oneTimeScanAndCredit: no referred users found for', myCode);
+          return;
+        }
+
+        // build docs array compatible with creditMissingBonuses
+        const docs = [];
+        for(const [id, data] of found.entries()){
+          const planRaw = (data.plan || data.accountPlan || 'basic').toString();
+          const plan = planRaw.toLowerCase();
+          const isActivated = plan && plan !== 'basic';
+          const bonus = computeReferralBonus(signerPlan, plan, isActivated);
+          docs.push({ referredUid: id, data, bonus, isActivated });
+        }
+
+        // update UI immediately (so user sees new activated items right away)
+        // merge these snapshots into snapshotsByField '__scan' for rendering purposes
+        snapshotsByField['__scan'] = { forEach: (cb) => { found.forEach((v,k)=>cb({ id:k, data:v })); }, size: found.size };
+        recomputeFromSnapshots().catch(e=>console.warn('recompute after scan failed', e));
+
+        // attempt idempotent credit for missing bonuses
+        await creditMissingBonuses(docs);
+      }catch(e){
+        console.warn('oneTimeScanAndCredit failed', e);
+      }
+    }
+
     // Idempotent credit: for each activated referred user with a >0 bonus, if there's no referralCredits doc for it, create one and increment referralBalance.
     async function creditMissingBonuses(referredDocs){
       if(!currentUser) return;
@@ -352,7 +416,10 @@
         // build map of candidate bonuses keyed by referredUid
         const candidates = referredDocs.filter(d => d.bonus > 0 && d.isActivated).reduce((acc, it) => { acc[it.referredUid] = it.bonus; return acc; }, {});
         const referredUids = Object.keys(candidates);
-        if(referredUids.length === 0) return;
+        if(referredUids.length === 0) {
+          console.debug('creditMissingBonuses: no eligible candidates');
+          return;
+        }
 
         // fetch existing credits for this referrer
         const creditsQ = query(collection(db,'referralCredits'), where('referrerUid','==', currentUser.uid));
@@ -365,7 +432,10 @@
 
         // Filter missing
         const missing = referredUids.filter(id => !existing.has(id));
-        if(missing.length === 0) return;
+        if(missing.length === 0) {
+          console.debug('creditMissingBonuses: none missing (already credited)');
+          return;
+        }
 
         // compute total to credit
         const total = missing.reduce((sum, id) => sum + Number(candidates[id] || 0), 0);
@@ -394,9 +464,8 @@
           }
         });
 
-        // success — UI will update via user onSnapshot
+        // success — UI will update via user onSnapshot (or we already updated above)
         showToast(`Referral bonuses credited: ₦${total.toLocaleString()}`);
-
       }catch(e){
         console.warn('creditMissingBonuses failed', e);
       }
@@ -420,14 +489,19 @@
         const myCode = String(data.username || data.name || data.referralCode || data.email?.split('@')?.[0] || uid).trim();
         refCodeEl.textContent = myCode || '';
         updateTopCards();
+
         // Ensure referral subscriptions are using current code
         subscribeReferralsRealtime(myCode);
+
+        // NEW: Immediately run a one-time authoritative server scan and credit pass
+        // This ensures any activation that happened just now (or before snapshot) gets credited fast
+        oneTimeScanAndCredit(myCode).catch(e => console.warn('oneTimeScanAndCredit error', e));
       }, err => {
         console.warn('user doc snapshot err', err);
       });
     }
 
-    // Transfer handler
+    // Transfer handler (unchanged)
     transferBtn.addEventListener('click', async () => {
       if(!currentUser) return alert('Sign in first');
       const uid = currentUser.uid;
