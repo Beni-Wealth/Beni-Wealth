@@ -54,7 +54,7 @@
     <header>
       <h1>Published Blogs</h1>
       <div style="display:flex;gap:12px;align-items:center">
-        <div class="note">Click a blog to open. Watch 10s to reward the author ₦1 and you earn ₦1 (once every 2 hours).</div>
+        <div class="note">Click a blog to open. Watch 10s earn ₦1.</div>
         <button id="signinBtn" class="small-btn">Sign in</button>
       </div>
     </header>
@@ -217,7 +217,7 @@
         // timer logic only for signed-in users and not author
         if(currentTimer){ clearInterval(currentTimer); currentTimer = null; }
         if(!currentUser){
-          awardMsg.textContent = 'Sign in to reward the author and earn ₦1 when you watch 10s.';
+          awardMsg.textContent = 'Sign in to earn ₦1 when you watch 10s.';
           clearStatus();
           return;
         }
@@ -320,7 +320,7 @@
         awardMsg.textContent = 'Author info missing; cannot award.';
         return;
       }
-      awardMsg.textContent = 'Awarding ₦1 to author and ₦1 to you…';
+      awardMsg.textContent = 'Awarding ₦1 to you…';
       try{
         const viewDocRef = doc(db, 'blogViews', `${blogId}_${viewerUid}`);
 
@@ -364,7 +364,7 @@
         await addDoc(notCol, { userId: authorId, type: 'blog_reward', message: `Your blog "${activeBlog.data.title || 'Untitled'}" earned ₦1 from a viewer.`, blogId, createdAt: serverTimestamp() });
         await addDoc(notCol, { userId: viewerUid, type: 'view_credited', message: `You earned ₦1 for watching "${activeBlog.data.title || 'Untitled'}".`, blogId, createdAt: serverTimestamp() });
 
-        awardMsg.textContent = 'Success — author and you were paid ₦1.';
+        awardMsg.textContent = 'Success — you were paid ₦1.';
       }catch(err){
         console.error('awardView error', err);
         awardMsg.textContent = 'Error awarding: ' + (err && err.message ? err.message : String(err));
