@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Beni-Wealth — Read & Claim (PTC) — Server-only credit</title>
+  <title>Beni-Wealth — Read & Claim (PTC) — Informational overlay</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <meta name="theme-color" content="#2fe0b8" />
   <style>
@@ -26,11 +26,11 @@
     main.main{height:calc(100vh - 64px);display:flex;flex-direction:column}
     .iframe-wrap{position:relative;flex:1;display:flex;align-items:stretch}
     iframe#articleFrame{border:0;width:100%;height:100vh;display:block}
-    /* claim overlay (centered panel) */
+    /* congrats overlay (centered panel) */
     .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(rgba(2,6,23,0.45), rgba(2,6,23,0.45));backdrop-filter: blur(4px);padding:20px;z-index:50}
     .panel{max-width:420px;width:100%;background:linear-gradient(180deg,#051826,#092433);border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 20px 60px rgba(2,6,23,0.7);text-align:center}
     .panel .muted{color:var(--muted);font-size:13px}
-    .claim-btn{background:linear-gradient(90deg,var(--accent),#2ea6ff);border:0;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer}
+    .ok-btn{background:linear-gradient(90deg,var(--accent),#2ea6ff);border:0;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer}
     .secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
     .status-line{margin-top:10px;color:var(--muted);min-height:20px}
     .tx-line{margin-top:8px;color:#bfeedc;font-size:13px}
@@ -66,18 +66,17 @@
               sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
               loading="lazy"></iframe>
 
-      <div id="claimOverlay" class="overlay" aria-hidden="true" style="display:none;">
-        <div class="panel" role="dialog" aria-modal="true" aria-label="Claim reward">
-          <div style="font-weight:900;font-size:18px">Claim ₦0.20</div>
-          <div class="muted" style="margin-top:8px">Thanks for reading — tap below to add ₦0.20 to your account.</div>
-          <div style="display:flex;gap:12px;justify-content:center;margin-top:14px">
-            <button id="claimBtn" class="claim-btn">Claim ₦0.20</button>
-            <button id="dismissBtn" class="secondary">Maybe later</button>
+      <!-- REUSED overlay: now a simple congratulation message with an OK button -->
+      <div id="congratsOverlay" class="overlay" aria-hidden="true" style="display:none;">
+        <div class="panel" role="dialog" aria-modal="true" aria-label="Congratulations">
+          <div style="font-weight:900;font-size:18px">Congratulations!</div>
+          <div class="muted" style="margin-top:8px">You have successfully received <strong>₦1.00</strong>.</div>
+          <div style="margin-top:16px">
+            <button id="okBtn" class="ok-btn" aria-label="Okay">Okay</button>
           </div>
-          <div id="claimStatus" class="status-line" aria-live="polite"></div>
-          <div id="txLine" class="tx-line" aria-live="polite" style="display:none"></div>
         </div>
       </div>
+
     </div>
   </main>
 
@@ -87,7 +86,6 @@
     /* ======= CONFIG ======= */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-functions.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const FIREBASE_CONFIG = {
@@ -101,26 +99,19 @@
     };
 
     const ARTICLE_URL = "https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters";
-    const CLAIM_AMOUNT = 0.2;
     const COUNTDOWN_SECONDS = 10; // initial read timer before showing overlay
-    const FUNCTIONS_REGION = 'us-central1';
-    const COOLDOWN_MINUTES = 60; // must match server-side cooldown
 
     /* ======= APP INIT ======= */
     const app = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
-    const functions = getFunctions(app, FUNCTIONS_REGION);
     const db = getFirestore(app);
 
     /* ======= UI ======= */
     const topTimer = document.getElementById('topTimer');
     const userBadge = document.getElementById('userBadge');
     const balanceBadge = document.getElementById('balanceBadge');
-    const claimOverlay = document.getElementById('claimOverlay');
-    const claimBtn = document.getElementById('claimBtn');
-    const dismissBtn = document.getElementById('dismissBtn');
-    const claimStatus = document.getElementById('claimStatus');
-    const txLine = document.getElementById('txLine');
+    const congratsOverlay = document.getElementById('congratsOverlay');
+    const okBtn = document.getElementById('okBtn');
     const toastRoot = document.getElementById('toastRoot');
 
     function toast(msg, ms=3500){
@@ -132,172 +123,25 @@
       setTimeout(()=> { t.remove(); }, ms);
     }
 
-    /* ======= Balance Helpers ======= */
+    /* ======= Balance Helpers (display only) ======= */
     let currentBalance = 0;
     function setBalance(amount){
       currentBalance = Number(amount) || 0;
       balanceBadge.textContent = `₦${currentBalance.toFixed(2)}`;
     }
 
-    /* ======= Overlay Helpers ======= */
-    function showClaimOverlay(){ claimOverlay.style.display = 'flex'; claimOverlay.setAttribute('aria-hidden','false'); claimBtn.focus(); claimStatus.textContent=''; txLine.style.display='none'; txLine.textContent=''; }
-    function hideClaimOverlay(){ claimOverlay.style.display = 'none'; claimOverlay.setAttribute('aria-hidden','true'); }
-
-    /* ======= Cooldown UI (live countdown) ======= */
-    let liveCooldownTimer = null;
-    function startCooldown(seconds){
-      clearInterval(liveCooldownTimer);
-      let s = Math.max(0, Math.floor(seconds));
-      updateCooldownUI(s);
-      liveCooldownTimer = setInterval(()=>{
-        s--;
-        if (s <= 0){
-          clearInterval(liveCooldownTimer);
-          updateCooldownUI(0);
-          // Re-enable claim button if overlay visible
-          claimBtn.disabled = false;
-          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
-          claimStatus.textContent = 'You can claim now.';
-        } else {
-          updateCooldownUI(s);
-        }
-      }, 1000);
+    /* ======= Overlay helpers ======= */
+    function showCongratsOverlay(){
+      congratsOverlay.style.display = 'flex';
+      congratsOverlay.setAttribute('aria-hidden','false');
+      okBtn.focus();
     }
-    function updateCooldownUI(sec){
-      if (sec <= 0){
-        topTimer.textContent = 'Claim ready';
-        return;
-      }
-      const m = Math.floor(sec/60);
-      const s = sec % 60;
-      topTimer.textContent = `Wait: ${m}m ${s}s`;
-      // if overlay open, show message there too
-      claimStatus.textContent = `Please wait ${m}m ${s}s before claiming again.`;
+    function hideCongratsOverlay(){
+      congratsOverlay.style.display = 'none';
+      congratsOverlay.setAttribute('aria-hidden','true');
     }
 
-    /* ======= Claim function (server-only) ======= */
-    let claiming = false;
-
-    async function attemptClaimServerOnly(){
-      if (claiming) return;
-      claiming = true;
-      claimBtn.disabled = true;
-      claimBtn.textContent = 'Processing...';
-      claimStatus.textContent = '';
-
-      if (!navigator.onLine) {
-        claimStatus.textContent = 'You are offline — connect to the internet and retry to claim.';
-        claimBtn.disabled = false;
-        claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
-        claiming = false;
-        return;
-      }
-
-      if (!currentUser) {
-        claimStatus.textContent = 'You must sign in to claim.';
-        claimBtn.disabled = false;
-        claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
-        claiming = false;
-        if (confirm('You must sign in to claim. Go to login page?')) window.location.href = 'login.html';
-        return;
-      }
-
-      try {
-        const clientRequestId = 'c_' + Math.random().toString(36).slice(2,9);
-        const call = httpsCallable(functions, 'claimReward');
-        const res = await call({ articleUrl: ARTICLE_URL, clientRequestId });
-        const data = (res && res.data) ? res.data : res;
-
-        if (data?.success) {
-          setBalance(Number(data.newBalance ?? currentBalance));
-          claimStatus.textContent = data.message || 'Claim successful';
-          claimBtn.textContent = 'Claimed';
-          claimBtn.disabled = true;
-          // show tx id if available
-          if (data.txId) {
-            txLine.style.display = '';
-            txLine.textContent = `Transaction: ${data.txId}`;
-          }
-          toast(data.message || 'Claim credited');
-          claiming = false;
-          return;
-        } else {
-          // Unexpected but handle gracefully
-          claimStatus.textContent = data?.message || 'Claim failed';
-          claimBtn.disabled = false;
-          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
-          claiming = false;
-          return;
-        }
-      } catch (err) {
-        console.error('claimReward error', err);
-        const code = err?.code || '';
-        const message = err?.message || String(err);
-
-        // Resource-exhausted -> parse "Please wait Xm Ys" message and start countdown
-        if (code === 'resource-exhausted' || /Please wait/i.test(message)) {
-          // try to parse "Please wait X m Y s" or "Please wait Zs"
-          const mmss = /Please wait\s*(?:(\d+)\s*m(?:in)?(?:utes?)?)?\s*(?:(\d+)\s*s(?:ec)?)?/i.exec(message);
-          let seconds = null;
-          if (mmss) {
-            const min = Number(mmss[1] || 0);
-            const sec = Number(mmss[2] || 0);
-            seconds = min * 60 + sec;
-          } else {
-            const sOnly = /(\d+)\s*s(?:ec)?/i.exec(message);
-            seconds = sOnly ? Number(sOnly[1]) : null;
-          }
-          // Fallback: use server-side cooldown minutes if parsing failed
-          if (seconds === null) seconds = COOLDOWN_MINUTES * 60;
-
-          claimBtn.textContent = 'Limit';
-          claimBtn.disabled = true;
-          startCooldown(seconds);
-          toast(message);
-          claiming = false;
-          return;
-        }
-
-        // Already claimed
-        if (/already claimed/i.test(message) || code === 'already-exists') {
-          claimStatus.textContent = 'Already claimed for this article.';
-          claimBtn.textContent = 'Claimed';
-          claimBtn.disabled = true;
-          claiming = false;
-          return;
-        }
-
-        // Auth issues
-        if (code === 'unauthenticated' || /auth/i.test(message)) {
-          claimStatus.textContent = 'You must sign in to claim.';
-          claimBtn.disabled = false;
-          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
-          if (confirm('You must sign in to claim. Go to login page?')) window.location.href = 'login.html';
-          claiming = false;
-          return;
-        }
-
-        // Network / unavailable
-        if (!navigator.onLine || code === 'unavailable' || /network/i.test(message)) {
-          claimStatus.textContent = 'Network/server error — please connect and try again.';
-          claimBtn.disabled = false;
-          claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
-          claiming = false;
-          toast(message || 'Network error');
-          return;
-        }
-
-        // Generic failure
-        claimStatus.textContent = message || 'Claim failed — try again later';
-        claimBtn.disabled = false;
-        claimBtn.textContent = `Claim ₦${CLAIM_AMOUNT}`;
-        claimBtn.focus();
-        toast(message || 'Claim failed');
-        claiming = false;
-      }
-    }
-
-    /* ======= Countdown (pre-claim overlay) ======= */
+    /* ======= Countdown (pre-overlay) ======= */
     let secondsLeft = COUNTDOWN_SECONDS;
     let countdownTimer = null;
     function startCountdown(n = COUNTDOWN_SECONDS){
@@ -310,20 +154,19 @@
         if (secondsLeft <= 0){
           clearInterval(countdownTimer);
           updateTopTimer(0);
-          showClaimOverlay();
+          // instead of crediting, simply show congratulations overlay
+          showCongratsOverlay();
         }
       }, 1000);
     }
     function updateTopTimer(sec){
-      if (sec <= 0){ topTimer.textContent = 'Claim ready'; return; }
+      if (sec <= 0){ topTimer.textContent = 'Ready'; return; }
       topTimer.textContent = `Wait: ${sec}s`;
     }
     startCountdown(COUNTDOWN_SECONDS);
 
-    /* ======= Auth & balance load ======= */
-    let currentUser = null;
+    /* ======= Auth & balance read (display-only) ======= */
     onAuthStateChanged(auth, async (u) => {
-      currentUser = u;
       if (!u) {
         userBadge.textContent = 'Not signed in';
         setBalance(0);
@@ -332,7 +175,7 @@
       const name = u.displayName || (u.email ? u.email.split('@')[0] : u.uid.slice(0,6));
       userBadge.textContent = `Signed in • ${name}`;
 
-      // Load authoritative balance & lastClaimAt to possibly show remaining cooldown
+      // Load balance to display only (no writes will be performed)
       try {
         const userDocRef = doc(db, 'users', u.uid);
         const snap = await getDoc(userDocRef);
@@ -340,24 +183,6 @@
           const data = snap.data();
           const srvBalance = Number(data?.balance ?? 0);
           setBalance(srvBalance);
-
-          // if lastClaimAt exists, compute remaining cooldown
-          const ts = data?.lastClaimAt;
-          if (ts) {
-            // Timestamp object from Firestore
-            const last = (typeof ts.toDate === 'function') ? ts.toDate() : (ts instanceof Object && ts.seconds ? new Date(ts.seconds*1000) : null);
-            if (last) {
-              const diff = Date.now() - last.getTime();
-              const cooldownMs = COOLDOWN_MINUTES * 60 * 1000;
-              if (diff < cooldownMs) {
-                const remSec = Math.ceil((cooldownMs - diff) / 1000);
-                // start live cooldown UI
-                claimBtn.disabled = true;
-                claimBtn.textContent = 'Limit';
-                startCooldown(remSec);
-              }
-            }
-          }
         } else {
           setBalance(0);
         }
@@ -367,15 +192,18 @@
     });
 
     /* ======= UI events ======= */
-    claimBtn.addEventListener('click', (e)=>{ e.preventDefault(); attemptClaimServerOnly(); });
-    dismissBtn.addEventListener('click', (e)=>{ e.preventDefault(); hideClaimOverlay(); });
+    okBtn.addEventListener('click', ()=> {
+      hideCongratsOverlay();
+      toast('Thanks! Overlay closed.');
+      // do NOT credit or call server — informational only
+    });
 
-    // Close overlay on Escape
-    window.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape') hideClaimOverlay(); });
+    // also allow Escape key to close overlay
+    window.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape') hideCongratsOverlay(); });
 
     // initial UI
     setBalance(0);
-    console.log('Read & Claim (server-only) loaded. functions region=', FUNCTIONS_REGION);
+    console.log('Read & Claim (informational overlay) loaded.');
   </script>
 </body>
 </html>
