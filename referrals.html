@@ -5,527 +5,92 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Referrals — Beni-Wealth</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,500,700&display=swap" rel="stylesheet">
-  <meta name="theme-color" content="#2fe0b8">
-  <style>
-    :root{
-      --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(233,240,255,0.6);
-      --card: rgba(255,255,255,0.02); --accent-start:#2fe0b8; --accent-end:#7a5fff;
-      --text:#e9f0ff; --glass: rgba(255,255,255,0.03);
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{
-      font-family:'Poppins',sans-serif; background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
-      color:var(--text); min-height:100vh; display:flex; flex-direction:column;
-    }
-    header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-bottom:1px solid rgba(255,255,255,0.02);backdrop-filter: blur(6px);}
-    .brand{font-weight:700;font-size:1.15rem;color:var(--text)}
-    .ref-box{display:flex;gap:10px;align-items:center}
-    .ref-code{background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));padding:8px 12px;border-radius:8px;font-weight:600;color:var(--text);border:1px solid rgba(255,255,255,0.03);}
-    .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:600;color:var(--text)}
-    .btn.small{padding:6px 8px;font-size:.9rem}
-    .top-row{display:flex;gap:16px;padding:18px;max-width:1100px;margin:18px auto;width:95%;}
-    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 10px 30px rgba(2,6,23,0.7);flex:1;display:flex;flex-direction:column;gap:8px;border:1px solid rgba(255,255,255,0.03)}
-    .card h3{margin:0;color:var(--accent-end);font-size:0.95rem}
-    .big{font-size:1.4rem;font-weight:700;color:var(--text)}
-    .muted{color:var(--muted);font-size:0.85rem}
-    .controls{display:flex;gap:12px;align-items:center}
-    .tabs{display:flex;gap:12px;justify-content:center;margin:6px auto;max-width:1100px;width:95%}
-    .tab{padding:10px 16px;border-radius:999px;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.02);font-weight:600;color:var(--muted)}
-    .tab.active{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;box-shadow:0 8px 18px rgba(122,95,255,0.08)}
-    .container{max-width:1100px;margin:12px auto;display:flex;flex-direction:column;gap:14px;padding:0 20px 40px;width:95%}
-    .table-card{background:var(--card);border-radius:12px;padding:8px;box-shadow:0 10px 30px rgba(2,6,23,0.6);overflow:auto;border:1px solid rgba(255,255,255,0.03)}
-    table{width:100%;border-collapse:collapse;min-width:900px;color:var(--text)}
-    thead th{position:sticky;top:0;background:linear-gradient(90deg, rgba(47,224,184,0.12), rgba(122,95,255,0.08));color:var(--text);padding:12px;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.03)}
-    tbody td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.02)}
-    tbody tr:hover td{background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005))}
-    .no-data{padding:26px;text-align:center;color:var(--muted)}
-    .small{font-size:13px;color:var(--muted)}
-    footer{margin-top:auto;padding:14px;text-align:center;background:transparent;color:var(--muted)}
-    .transfer-row{display:flex;gap:8px;align-items:center}
-    .hint { font-size:13px;color:var(--muted);margin-top:6px }
-    .notice { background: linear-gradient(180deg, rgba(47,224,184,0.04), rgba(122,95,255,0.02)); padding:10px;border-radius:8px;color:var(--muted); font-size:13px }
-    @media (max-width:860px){ .top-row{flex-direction:column} table{min-width:600px} .ref-box{flex-direction:column;align-items:flex-end} }
-    /* tiny toast */
-    .toast { position:fixed; right:18px; bottom:18px; background:#0b1220; padding:12px 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); box-shadow:0 10px 30px rgba(0,0,0,0.6); z-index:9999; color:var(--text); }
-    .loader { display:inline-block; width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.12); border-top-color:var(--accent-end); animation:spin .7s linear infinite; vertical-align:middle }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
 </head>
 <body>
-  <header>
-    <div class="brand">Beni-Wealth — My Referrals</div>
-    <div class="ref-box" aria-live="polite">
-      <div style="text-align:right">
-        <div style="font-size:.8rem;color:var(--muted)">Your referral code</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
-          <div id="refCode" class="ref-code">Loading...</div>
-          <button id="copyBtn" class="btn small">Copy</button>
-        </div>
-      </div>
-    </div>
-  </header>
 
-  <div class="top-row">
-    <div class="card">
-      <h3>Activated</h3>
-      <div class="big" id="activatedCount">—</div>
-      <div class="muted">Users who upgraded from basic (activated)</div>
-      <div class="hint">Activated users are those on paid plans (bronze/silver). Bonuses are credited automatically (server-side) once per referred user.</div>
-    </div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {
+  getFirestore, collection, query, where, getDocs, doc, getDoc,
+  runTransaction, serverTimestamp, onSnapshot
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    <div class="card">
-      <h3>Referral Balance</h3>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <div class="muted">available for transfer (credited from activations)</div>
-        <div class="big" id="storedReferralBalance">₦0</div>
+/* ================= CONFIG ================= */
+const firebaseConfig = { /* YOUR CONFIG HERE */ };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-        <div style="margin-top:10px" class="transfer-row">
-          <button id="transferBtn" class="btn small" style="background:linear-gradient(90deg,#ffd166,#ff7a7a)">Transfer All</button>
-          <button id="rescanBtn" class="btn small" title="Ask server to rescan and credit any missed referral bonuses">Rescan & credit missing</button>
-          <div id="rescanLoader" style="display:none;margin-left:8px"><span class="loader"></span></div>
-        </div>
-      </div>
-      <div class="muted" style="margin-top:8px;font-size:12px">Referral activation money is credited once per referred user. If something looks off, use "Rescan & credit missing". If you want a full migration, run the migration script (admin).</div>
-    </div>
-  </div>
+const BONUS_MAP = {
+  bronze: { bronze: 500, silver: 700 },
+  silver: { bronze: 700, silver: 1200 }
+};
 
-  <div class="tabs">
-    <div class="tab active" data-tab="activated">Activated</div>
-    <div class="tab" data-tab="all">All Referrals</div>
-  </div>
+/* ================= AUTH FIX ================= */
+let authChecked = false;
+let currentUser = null;
 
-  <div class="container">
-    <div id="activated" class="tab-pane">
-      <div class="table-card">
-        <table aria-describedby="activated">
-          <thead>
-            <tr>
-              <th>Username</th><th>Email</th><th>Plan</th><th>Balance (₦)</th><th>Registered At</th><th>Referral Bonus (₦)</th>
-            </tr>
-          </thead>
-          <tbody id="activatedBody"><tr><td colspan="6" class="no-data">Loading…</td></tr></tbody>
-        </table>
-      </div>
-    </div>
+onAuthStateChanged(auth, (user) => {
+  if (!authChecked) authChecked = true;
+  if (!user) return setTimeout(() => location.href = 'login.html', 50);
+  currentUser = user;
+  init();
+});
 
-    <div id="all" class="tab-pane" style="display:none">
-      <div class="table-card">
-        <table aria-describedby="all">
-          <thead>
-            <tr>
-              <th>Username</th><th>Email</th><th>Plan</th><th>Balance (₦)</th><th>Registered At</th><th>Referral Bonus (₦)</th>
-            </tr>
-          </thead>
-          <tbody id="allBody"><tr><td colspan="6" class="no-data">Loading…</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+/* ================= INIT ================= */
+function init(){
+  subscribeReferralBonuses();
+}
 
-  <div id="toastRoot" aria-live="polite"></div>
-  <footer>© <span id="year"></span> Beni-Wealth</footer>
+/* ================= SUBSCRIBE ================= */
+function subscribeReferralBonuses(){
+  const q = query(collection(db,'referralBonuses'), where('referrerUid','==',currentUser.uid));
+  onSnapshot(q, snap => {
+    const rows = [];
+    snap.forEach(d => rows.push({ id:d.id, ...d.data() }));
+    render(rows);
+  });
+}
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import {
-      getFirestore, collection, query, where, getDocs, doc, getDoc,
-      runTransaction, setDoc, limit, serverTimestamp, onSnapshot
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-functions.js";
+/* ================= RENDER ================= */
+function render(list){
+  const body = document.getElementById('activatedBody');
+  if(!list.length){
+    body.innerHTML = '<tr><td colspan="6">No activated referrals</td></tr>';
+    return;
+  }
+  body.innerHTML = list.map(r => `
+    <tr>
+      <td>${r.referredUid}</td>
+      <td>—</td>
+      <td>Paid</td>
+      <td>—</td>
+      <td>—</td>
+      <td>
+        ₦${Number(r.amount).toLocaleString()} 
+        ${r.claimed ? '✓' : `<button onclick="claimBonus('${r.id}')">Claim</button>`}
+      </td>
+    </tr>`).join('');
+}
 
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
-      authDomain: "beni-wealths.firebaseapp.com",
-      projectId: "beni-wealths",
-      storageBucket: "beni-wealths.firebasestorage.app",
-      messagingSenderId: "807950483822",
-      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-      measurementId: "G-Z2XP3YN6NS"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const functions = getFunctions(app); // default region; change if you deployed elsewhere
-
-    // DOM refs
-    const activatedBody = document.getElementById('activatedBody');
-    const allBody = document.getElementById('allBody');
-    const refCodeEl = document.getElementById('refCode');
-    const activatedCountEl = document.getElementById('activatedCount');
-    const copyBtn = document.getElementById('copyBtn');
-    const storedReferralBalanceEl = document.getElementById('storedReferralBalance');
-    const transferBtn = document.getElementById('transferBtn');
-    const toastRoot = document.getElementById('toastRoot');
-    const rescanBtn = document.getElementById('rescanBtn');
-    const rescanLoader = document.getElementById('rescanLoader');
-
-    // local state
-    let currentUser = null;
-    let storedReferralBalance = 0;
-    let signerPlan = 'basic';
-    let snapshotsByField = {};
-    let subscriptionUnsubs = [];
-    let userUnsub = null;
-
-    // config used both client-side and to explain server-side expectations
-    const REFERRAL_FIELDS = [
-      'referral', 'referralCode', 'ref', 'referrer', 'referredBy', 'referred_by',
-      'sponsor', 'invitedBy', 'referred', 'referred_by_username',
-      'referredByUid','referrerUid','invitedByUid'
-    ];
-
-    // bonus mapping (same as server rules)
-    const BONUS_MAP = {
-      bronze: { bronze: 500, silver: 700 },
-      silver: { bronze: 700, silver: 1200 }
-    };
-
-    // small toast
-    function showToast(msg, ms = 2600){
-      const n = document.createElement('div');
-      n.className = 'toast';
-      n.textContent = msg;
-      toastRoot.appendChild(n);
-      setTimeout(()=>{ n.remove(); }, ms);
-    }
-
-    function fmtDate(ts){
-      try{
-        if(!ts) return '-';
-        if (ts instanceof Date) return ts.toLocaleString();
-        if (ts && typeof ts.toDate === 'function') return ts.toDate().toLocaleString();
-        if (typeof ts === 'object' && typeof ts.seconds === 'number') {
-          const ms = ts.seconds * 1000 + (ts.nanoseconds || 0)/1e6;
-          return new Date(ms).toLocaleString();
-        }
-        return new Date(ts).toLocaleString();
-      } catch(e){ return '-'; }
-    }
-    function escapeHtml(str){ return String(str || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; }); }
-
-    // helpers
-    function planName(raw){ if(!raw) return 'basic'; return String(raw).toLowerCase(); }
-    function buildUserRow(u){
-      const reg = fmtDate(u.registeredAt || u.createdAt || u.registered_at || u.created_at || null);
-      const bal = (typeof u.balance === 'number') ? u.balance.toLocaleString('en-NG') : (u.balance || '0');
-      const planLabel = (u.plan || 'basic').toString();
-      const activatedBadge = u.isActivated ? `<span style="margin-left:8px;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;padding:4px 8px;border-radius:999px;font-size:.7rem;font-weight:700">Activated</span>` : '';
-      const bonus = (typeof u.referralBonus === 'number') ? u.referralBonus.toLocaleString('en-NG') : '0';
-      return `<tr>
-        <td style="font-weight:600">${escapeHtml(u.username || '-')}${activatedBadge}</td>
-        <td>${escapeHtml(u.email || '-')}</td>
-        <td style="text-transform:capitalize">${escapeHtml(planLabel)}</td>
-        <td>₦${bal}</td>
-        <td>${escapeHtml(reg)}</td>
-        <td style="font-weight:700">₦${bonus}</td>
-      </tr>`;
-    }
-
-    // render helpers
-    function renderRows(list, container){
-      if(!list.length){
-        container.innerHTML = '<tr><td colspan="6" class="no-data">No records found</td></tr>';
-        return;
-      }
-      container.innerHTML = list.map(buildUserRow).join('');
-    }
-
-    function updateTopCards(activatedCount){
-      activatedCountEl.textContent = activatedCount ?? 0;
-      storedReferralBalanceEl.textContent = '₦' + (storedReferralBalance || 0).toLocaleString('en-NG');
-    }
-
-    // subscribe to changes for current user's document (keeps referral balance and referral code up-to-date)
-    function subscribeCurrentUser(uid){
-      if(userUnsub){ try{ userUnsub(); }catch(e){} userUnsub = null; }
-      const uRef = doc(db, 'users', uid);
-      userUnsub = onSnapshot(uRef, snap => {
-        if(!snap.exists()){
-          storedReferralBalance = 0;
-          signerPlan = 'basic';
-          refCodeEl.textContent = uid.slice(0,8);
-          updateTopCards(0);
-          return;
-        }
-        const d = snap.data() || {};
-        storedReferralBalance = Number(d.referralBalance ?? d.referral ?? 0) || 0;
-        signerPlan = planName(d.plan || d.accountPlan || 'basic');
-        const myCode = String(d.username || d.name || d.referralCode || (d.email && d.email.split('@')[0]) || uid).trim();
-        refCodeEl.textContent = myCode || uid.slice(0,8);
-        updateTopCards(); // actual activated count will be updated by recomputeFromSnapshots
-        // ensure referral subscriptions use current code
-        subscribeReferralsRealtime(myCode);
-      }, err => {
-        console.warn('user doc snapshot err', err);
-      });
-    }
-
-    // maintain realtime subscription queries for each referral-field equality
-    function clearReferralSubscriptions(){
-      subscriptionUnsubs.forEach(u => { try{ u(); }catch(_){} });
-      subscriptionUnsubs = [];
-      snapshotsByField = {};
-    }
-
-    // build a unified referred list from collected snapshots
-    function buildReferredListFromSnapshots(){
-      const foundDocs = new Map();
-      Object.values(snapshotsByField).forEach(snap => {
-        if(!snap) return;
-        snap.forEach(docSnap => {
-          if(!foundDocs.has(docSnap.id)) foundDocs.set(docSnap.id, { id: docSnap.id, data: docSnap.data() });
-        });
-      });
-      const arr = [];
-      foundDocs.forEach((v, id) => {
-        const data = v.data || {};
-        const planRaw = planName(data.plan || data.accountPlan || 'basic');
-        const isActivated = planRaw && planRaw !== 'basic';
-        const bonus = (BONUS_MAP[signerPlan] && BONUS_MAP[signerPlan][planRaw]) ? BONUS_MAP[signerPlan][planRaw] : 0;
-        arr.push({ referredUid: id, data, bonus, isActivated });
-      });
-      return arr;
-    }
-
-    // recompute lists and update UI; also returns list of candidate missing credits
-    async function recomputeFromSnapshots(){
-      const docs = buildReferredListFromSnapshots();
-      const allRefs = [];
-      const activatedRefs = [];
-
-      docs.forEach(item => {
-        const data = item.data || {};
-        const plan = planName(data.plan || data.accountPlan || 'basic');
-        const isActivated = item.isActivated;
-        const userObj = {
-          username: (data.username || data.name || '').toString(),
-          email: (data.email || '').toString(),
-          balance: Number(data.balance ?? data.wallet ?? 0) || 0,
-          registeredAt: data.createdAt || data.registeredAt || data.created_at || data.registered_at || null,
-          plan: plan,
-          isActivated: isActivated,
-          referralBonus: item.bonus || 0,
-          referredUid: item.referredUid
-        };
-        allRefs.push(userObj);
-        if(userObj.isActivated) activatedRefs.push(userObj);
-      });
-
-      // sort
-      const getTime = t => {
-        try{ if(!t) return 0; if(typeof t.toDate === 'function') return t.toDate().getTime(); const n = Date.parse(t); return isNaN(n)?0:n; }catch(e){return 0;}
-      };
-      allRefs.sort((a,b)=> getTime(b.registeredAt) - getTime(a.registeredAt));
-      activatedRefs.sort((a,b)=> getTime(b.registeredAt) - getTime(a.registeredAt));
-
-      // update UI
-      renderRows(activatedRefs, activatedBody);
-      renderRows(allRefs, allBody);
-      updateTopCards(activatedRefs.length);
-
-      // build list of candidates that *should* be credited but may not have been
-      // We'll fetch existing referralCredits for current user to identify missing ones
-      if(!currentUser) return [];
-      try{
-        const creditsQ = query(collection(db, 'referralCredits'), where('referrerUid', '==', currentUser.uid));
-        const snap = await getDocs(creditsQ);
-        const existing = new Set();
-        snap.forEach(s=> existing.add(String(s.data()?.referredUid || s.data()?.referred || '')));
-
-        // missing = activatedRefs whose referredUid not in existing and whose bonus>0
-        const missing = activatedRefs.filter(r => r.referralBonus>0 && !existing.has(String(r.referredUid)));
-        // show count as a subtle toast if missing found
-        if(missing.length > 0) {
-          showToast(`${missing.length} referral bonus(es) appear uncredited. Tap Rescan to request server credit.`, 4000);
-        }
-        return missing;
-      }catch(e){
-        console.warn('failed to check referralCredits', e);
-        return [];
-      }
-    }
-
-    // set up equality listeners on users collection using current referral code
-    function subscribeReferralsRealtime(myCode){
-      clearReferralSubscriptions();
-      if(!myCode || !currentUser) return;
-      // limit to a reasonable number per query, and avoid too many queries when code is empty
-      REFERRAL_FIELDS.forEach(field => {
-        try{
-          const q = query(collection(db,'users'), where(field, '==', myCode));
-          const unsub = onSnapshot(q, snap => {
-            snapshotsByField[field] = snap;
-            recomputeFromSnapshots().catch(e => console.warn('recompute error', e));
-          }, err => {
-            console.warn('onSnapshot error for field', field, err);
-            snapshotsByField[field] = null;
-          });
-          subscriptionUnsubs.push(unsub);
-        }catch(e){
-          console.warn('subscribe field failed', field, e);
-        }
-      });
-
-      // fallback: if after a short delay nothing matched, do a limited scan (client-only) to find matches
-      setTimeout(async () => {
-        const foundAny = Object.values(snapshotsByField).some(snap => snap && snap.size>0);
-        if(foundAny) return;
-        try{
-          const fallbackQ = query(collection(db,'users'), limit(2000));
-          const snap = await getDocs(fallbackQ);
-          const foundDocs = new Map();
-          snap.forEach(docSnap => {
-            const d = docSnap.data() || {};
-            for(const f of REFERRAL_FIELDS){
-              if(!d[f]) continue;
-              if(String(d[f]).toLowerCase() === String(myCode).toLowerCase()){
-                if(!foundDocs.has(docSnap.id)) foundDocs.set(docSnap.id, { id: docSnap.id, data: d });
-                break;
-              }
-            }
-          });
-          if(foundDocs.size > 0){
-            // emulate a snapshot-like structure for recompute
-            snapshotsByField['__fallback'] = {
-              forEach: (cb) => { foundDocs.forEach((v,k)=> cb({ id:k, data:v.data })); },
-              size: foundDocs.size
-            };
-            recomputeFromSnapshots().catch(e=>console.warn('recompute error', e));
-          }
-        }catch(e){
-          console.warn('Fallback scan failed', e);
-        }
-      }, 900);
-    }
-
-    // Transfer referral balance to main balance (client requests transaction)
-    transferBtn.addEventListener('click', async () => {
-      if(!currentUser) return alert('Sign in first');
-      transferBtn.disabled = true;
-      try{
-        const uRef = doc(db, 'users', currentUser.uid);
-        const snap = await getDoc(uRef);
-        if(!snap.exists()) { alert('User not found'); transferBtn.disabled = false; return; }
-        const data = snap.data() || {};
-        const curReferral = Number(data.referralBalance ?? data.referral ?? 0) || 0;
-        if(curReferral <= 0){ alert('No stored referral balance to transfer.'); transferBtn.disabled = false; return; }
-        if(!confirm(`Confirm transfer of ₦${curReferral.toLocaleString()} from stored referral balance to your main balance?`)){ transferBtn.disabled = false; return; }
-
-        // perform transaction (atomic)
-        await runTransaction(db, async (tx) => {
-          const s = await tx.get(uRef);
-          if(!s.exists()) throw new Error('user-not-found');
-          const ud = s.data() || {};
-          const dbReferral = Number(ud.referralBalance ?? ud.referral ?? 0) || 0;
-          const dbBal = Number(ud.balance ?? ud.wallet ?? 0) || 0;
-          if(dbReferral <= 0) throw new Error('insufficient-referral-balance');
-          const transferAmount = dbReferral;
-          tx.update(uRef, { referralBalance: 0, balance: dbBal + transferAmount });
-
-          const recRef = doc(collection(db,'referralTransfers'));
-          tx.set(recRef, {
-            uid: currentUser.uid,
-            amount: transferAmount,
-            from: 'referralBalance',
-            to: 'balance',
-            ts: serverTimestamp()
-          });
-        });
-
-        showToast('Transfer successful — main balance credited.');
-      }catch(e){
-        console.error('transfer failed', e);
-        if(e && e.message === 'insufficient-referral-balance') alert('Transfer failed — stored referral balance changed. Please refresh and try again.');
-        else alert('Transfer failed: ' + (e.message || e));
-      } finally {
-        transferBtn.disabled = false;
-      }
+/* ================= CLAIM ================= */
+window.claimBonus = async function(id){
+  try{
+    await runTransaction(db, async tx => {
+      const bonusRef = doc(db,'referralBonuses',id);
+      const userRef = doc(db,'users',currentUser.uid);
+      const b = await tx.get(bonusRef);
+      if(!b.exists()) throw 'Bonus missing';
+      if(b.data().claimed) throw 'Already claimed';
+      const u = await tx.get(userRef);
+      const cur = Number(u.data().referralBalance||0);
+      tx.update(userRef,{ referralBalance: cur + b.data().amount });
+      tx.update(bonusRef,{ claimed:true, claimedAt:serverTimestamp() });
     });
-
-    // Copy referral link
-    copyBtn.addEventListener('click', ()=>{
-      const code = (refCodeEl.textContent || '').toString().trim();
-      if(!code){ alert('No referral code available to copy.'); return; }
-      const url = `${location.origin}${location.pathname.replace(/\/[^/]*$/, '/') }register.html?ref=${encodeURIComponent(code)}`;
-      navigator.clipboard.writeText(url).then(()=>{ const prev = copyBtn.textContent; copyBtn.textContent='Copied'; setTimeout(()=>copyBtn.textContent=prev,1400); }).catch(()=>{ alert('Copy failed — please copy the link manually:\n' + url); });
-    });
-
-    // Tabs
-    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', e=>{
-      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-      e.currentTarget.classList.add('active');
-      const tab = e.currentTarget.dataset.tab;
-      document.querySelectorAll('.tab-pane').forEach(p=>p.style.display='none');
-      const el = document.getElementById(tab);
-      if(el) el.style.display = 'block';
-    }));
-
-    // Rescan & credit missing — calls a callable function 'rescanReferralCredits' if present.
-    rescanBtn.addEventListener('click', async ()=>{
-      if(!currentUser){ alert('Sign in first'); return; }
-      if(!confirm('This asks the server to rescan your referred users and credit any missed bonuses (idempotent). Proceed?')) return;
-      // UI feedback
-      rescanBtn.disabled = true; rescanLoader.style.display = ''; rescanBtn.textContent = 'Rescanning...';
-
-      try{
-        // Prepare a client-sided quick check to see how many appear missing locally
-        const missing = await recomputeFromSnapshots();
-        const missingCount = (missing && missing.length) ? missing.length : 0;
-
-        // Attempt to call the server function if it exists
-        let fn;
-        try { fn = httpsCallable(functions, 'rescanReferralCredits'); } catch(e) { fn = null; }
-        if(fn){
-          const resp = await fn({ referrerUid: currentUser.uid });
-          const data = resp && resp.data ? resp.data : resp;
-          // Expect data = { credited: number, skipped: number, message: string }
-          showToast(data && data.message ? data.message : 'Rescan requested — server processed job.');
-          // refresh onSnapshot results will reflect new credits
-        }else{
-          // no function: instruct
-          if(missingCount > 0){
-            alert(`No server function deployed. I found ${missingCount} candidate(s) that look uncredited. Ask an admin to run the migration script, or deploy the provided Cloud Function 'rescanReferralCredits'.`);
-          } else {
-            alert('No missing referral credits detected locally. If you still think you are missing credits, ask admin to run the server migration or check server logs.');
-          }
-        }
-      }catch(err){
-        console.error('rescan failed', err);
-        alert('Rescan failed: ' + (err && err.message ? err.message : String(err)));
-      }finally{
-        rescanBtn.disabled = false; rescanLoader.style.display = 'none'; rescanBtn.textContent = 'Rescan & credit missing';
-      }
-    });
-
-    // auth watcher
-    onAuthStateChanged(auth, async (user) => {
-      if(!user) return location.href = 'login.html';
-      currentUser = user;
-      subscribeCurrentUser(user.uid);
-    });
-
-    // cleanup on unload
-    window.addEventListener('beforeunload', ()=> {
-      clearReferralSubscriptions();
-      if(userUnsub){ try{ userUnsub(); }catch(e){} userUnsub = null; }
-    });
-
-    // small improvement: initial UI values
-    storedReferralBalance = 0;
-    updateTopCards(0);
-
-    // Expose debug helper (optional)
-    window._ref_debug = {
-      recomputeFromSnapshots,
-      subscribeReferralsRealtime,
-      snapshotsByField
-    };
-
-  </script>
+    alert('Bonus claimed');
+  }catch(e){ alert(e); }
+}
+</script>
 </body>
 </html>
