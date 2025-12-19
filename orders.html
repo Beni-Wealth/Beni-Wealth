@@ -1,5 +1,4 @@
 <!doctype html>
-
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -7,98 +6,610 @@
   <title>My Adverts — Beni-Wealth</title>
 
   <!-- Poppins -->
-
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
 
   <!-- Favicons & Social preview -->
-
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
+  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Manage adverts and review submissions">
+  <meta property="og:description" content="Complete simple micro-tasks, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
   <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
-    body{margin:0;font-family:Poppins,system-ui;background:#05040d;color:#eef3ff}
-    .wrap{max-width:1200px;margin:auto;padding:16px}
-    .back{color:#eef3ff;text-decoration:none;margin-bottom:12px;display:inline-block}
-    .title{font-size:1.2rem;font-weight:700}
-    .status{margin:12px 0;color:rgba(255,255,255,.7)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-    .card{background:#0f0b1f;border-radius:14px;padding:14px}
-    .empty{opacity:.7}
+    :root{
+      --bg1:#060511; --bg2:#0f0920;
+      --muted: rgba(255,255,255,0.62);
+      --text: #eaf2ff;
+      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --card: rgba(255,255,255,0.02);
+      --glass: rgba(255,255,255,0.03);
+      --radius:12px;
+      --max-width:1200px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
+    .shell{max-width:var(--max-width);margin:20px auto;padding:20px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{font-weight:700;font-size:1.1rem}
+    .back{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);text-decoration:none;color:var(--text)}
+    .muted{color:var(--muted);font-size:13px}
+    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+    .search{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+    .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 18px 60px rgba(0,0,0,0.55);display:flex;flex-direction:column;gap:12px}
+    .card-head{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .title{font-weight:700}
+    .meta{color:var(--muted);font-size:13px}
+    .thumb{width:96px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+    .pill{padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
+    .pill.pending{background:#fff6d6;color:#6a4f00}
+    .pill.approved{background:#bff0d9;color:#05461f}
+    .pill.completed{background:#dbe9ff;color:#05304a}
+    .card-body{color:var(--muted);font-size:14px;min-height:42px}
+    .actions{display:flex;gap:8px;margin-top:6px}
+    /* details overlay (full panel) */
+    .details-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,#061018,#02040a);z-index:999;padding:22px}
+    .details-panel{width:100%;max-width:980px;background:linear-gradient(180deg,#081024,#02040a);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 140px rgba(0,0,0,0.8);color:var(--text);max-height:92vh;overflow:auto}
+    .details-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .closeX{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
+    .sub-list{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+    .submission{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border:1px solid rgba(255,255,255,0.03)}
+    .sub-left{flex:1}
+    .sub-meta{color:var(--muted);font-size:13px;margin-bottom:8px}
+    .sub-text{color:var(--muted);white-space:pre-wrap}
+    .sub-image{max-width:320px;width:100%;height:auto;border-radius:8px;object-fit:contain;cursor:pointer;border:1px solid rgba(255,255,255,0.04)}
+    .controls{display:flex;gap:8px;margin-top:8px}
+    .disabled{opacity:.6;pointer-events:none}
+    /* view button style */
+    .view-btn{padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);cursor:pointer;font-weight:700}
+    .view-btn:hover{color:var(--text);border-color:rgba(255,255,255,0.12)}
+    /* big image viewer (separate overlay) */
+    .viewer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.9);z-index:1200;padding:18px}
+    .viewer-card{max-width:1100px;width:100%;background:#000;border-radius:10px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:12px}
+    .viewer-card img{max-width:100%;height:auto;border-radius:8px}
+    .viewer-meta{color:var(--muted);font-size:13px;display:flex;justify-content:space-between;width:100%}
+    @media (max-width:640px){ .sub-image{max-width:180px} .viewer-card{padding:8px} }
   </style>
-
 </head>
 <body>
+  <main class="shell">
+    <header>
+      <a class="back" href="dashboard.html">← Back</a>
+      <div style="text-align:right">
+        <div class="brand">My Adverts</div>
+        <div class="muted">All adverts you created — click Details to review submissions</div>
+      </div>
+    </header>
 
-<main class="wrap">
-  <a href="dashboard.html" class="back">← Dashboard</a>
-  <div class="title">My Adverts</div>
-  <div id="status" class="status">Initializing…</div>
-  <section id="grid" class="grid"></section>
-</main>
+    <div class="toolbar">
+      <input id="search" class="search" placeholder="Search by title, platform or status" />
+      <button id="refresh" class="btn ghost">Refresh</button>
+    </div>
 
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-  import { getFirestore, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    <div id="diag" class="muted">Connecting…</div>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-    authDomain: "beni-wealths.firebaseapp.com",
-    projectId: "beni-wealths",
-    storageBucket: "beni-wealths.firebasestorage.app",
-    messagingSenderId: "807950483822",
-    appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-    measurementId: "G-Z2XP3YN6NS"
-  };
+    <div id="grid" class="grid" aria-live="polite">
+      <div class="empty">Loading your adverts…</div>
+    </div>
+  </main>
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+  <!-- Details overlay -->
+  <div id="detailsOverlay" class="details-overlay" aria-hidden="true">
+    <div class="details-panel" role="dialog" aria-modal="true">
+      <div class="details-head">
+        <div>
+          <div id="advTitle" style="font-weight:800;font-size:18px">Advert title</div>
+          <div id="advMeta" class="muted" style="margin-top:6px;font-size:13px">meta</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="closeDetails" class="closeX" aria-label="Close">✕</button>
+        </div>
+      </div>
 
-  const status = document.getElementById('status');
-  const grid = document.getElementById('grid');
+      <div id="advDescription" style="margin-top:12px;color:var(--muted);white-space:pre-wrap"></div>
 
-  function card(data){
-    const d=document.createElement('div');
-    d.className='card';
-    d.innerHTML=`<strong>${data.title||'Untitled advert'}</strong><br><small>${data.platform||''}</small>`;
-    return d;
-  }
+      <div style="margin-top:12px">
+        <div style="font-weight:700;margin-bottom:8px">Submissions</div>
+        <div id="subList" class="sub-list">
+          <div class="muted">Loading submissions…</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  onAuthStateChanged(auth, async user => {
-    if(!user){
-      window.location.href='login.html';
-      return;
+  <!-- Big image viewer -->
+  <div id="bigViewer" class="viewer" aria-hidden="true">
+    <div class="viewer-card" role="dialog" aria-modal="true">
+      <img id="bigImg" src="" alt="proof image" />
+      <div class="viewer-meta">
+        <div id="bigMeta" class="muted small"></div>
+        <div><button id="closeBig" class="btn ghost">Close</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import {
+      getFirestore, collection, query, where, onSnapshot, getDocs, doc,
+      runTransaction, serverTimestamp, updateDoc
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+    // Firebase config (your project)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // DOM
+    const grid = document.getElementById('grid');
+    const diag = document.getElementById('diag');
+    const search = document.getElementById('search');
+    const refreshBtn = document.getElementById('refresh');
+
+    const detailsOverlay = document.getElementById('detailsOverlay');
+    const closeDetails = document.getElementById('closeDetails');
+    const advTitle = document.getElementById('advTitle');
+    const advMeta = document.getElementById('advMeta');
+    const advDescription = document.getElementById('advDescription');
+    const subList = document.getElementById('subList');
+
+    const bigViewer = document.getElementById('bigViewer');
+    const bigImg = document.getElementById('bigImg');
+    const bigMeta = document.getElementById('bigMeta');
+    const closeBig = document.getElementById('closeBig');
+
+    // state
+    let currentUser = null;
+    let advertsMap = new Map(); // advertId -> {id, data}
+    let advertsUnsub = null;    // single broad listener handle
+    let activeAdvertId = null;
+    let submissionsUnsub = null; // listener for active advert's submissions
+
+    // owner-like fields to match on doc client-side
+    const OWNER_FIELDS = ['createdBy','owner','userId','uid','requestedBy','creator','ownerUid','user'];
+
+    // helpers
+    function el(tag, attrs = {}, ...children){
+      const e = document.createElement(tag);
+      for(const k in attrs){
+        if(k === 'class') e.className = attrs[k];
+        else if(k === 'dataset') Object.assign(e.dataset, attrs[k]);
+        else if(k === 'style') e.style.cssText = attrs[k];
+        else e.setAttribute(k, attrs[k]);
+      }
+      children.forEach(c => { if(typeof c === 'string') e.appendChild(document.createTextNode(c)); else if(c) e.appendChild(c); });
+      return e;
+    }
+    function niceDate(ts){
+      try{ if(!ts) return '-'; if(ts.toDate) ts = ts.toDate(); return new Date(ts).toLocaleString(); } catch(e){ return '-'; }
+    }
+    function getUnitPrice(adData){
+      if(!adData) return 0;
+      const candidates = ['unitPrice','unit_price','price','per','unit','amount'];
+      for(const k of candidates){
+        if(typeof adData[k] !== 'undefined' && adData[k] !== null && !isNaN(Number(adData[k]))) return Number(adData[k]);
+      }
+      const total = Number(adData.totalCost ?? adData.total_cost ?? adData.total ?? 0) || 0;
+      const workers = Number(adData.workers ?? adData.worker_count ?? adData.requested_workers ?? 0) || 0;
+      if(workers > 0 && total > 0) return total / workers;
+      return 0;
     }
 
-    status.textContent='Loading adverts…';
+    // UI: build adverts grid
+    function rebuildGrid(){
+      const q = (search.value || '').trim().toLowerCase();
+      grid.innerHTML = '';
+      let any = false;
+      for(const [id, item] of advertsMap.entries()){
+        const data = item.data || {};
+        if(q){
+          const hay = ((data.title||'') + ' ' + (data.platform||'') + ' ' + (data.subcategory||'') + ' ' + (data.status||'')).toLowerCase();
+          if(!hay.includes(q)) continue;
+        }
+        const card = buildCard(id, data);
+        grid.appendChild(card);
+        any = true;
+      }
+      if(!any) grid.innerHTML = '<div class="empty">You have no adverts yet.</div>';
+    }
 
-    try{
-      const q = query(collection(db,'advertise_tasks'), where('createdBy','==',user.uid));
-      const snap = await getDocs(q);
+    function buildCard(id, data){
+      const head = el('div',{class:'card-head'});
+      const left = el('div',{style:'display:flex;gap:12px;align-items:center'});
+      const thumbSrc = data.thumbnail || data.thumb || data.image || '';
+      const thumb = el('img',{class:'thumb', src: thumbSrc, alt: data.title || ''});
+      if(!thumbSrc) thumb.style.display = 'none';
+      else thumb.addEventListener('click', ()=> { openDetails(id); });
 
-      if(snap.empty){
-        status.textContent='No adverts found';
-        grid.innerHTML='<div class="empty">You have not created any adverts yet.</div>';
+      const txt = el('div', {},
+        el('div',{class:'title'}, data.title || '(untitled)'),
+        el('div',{class:'meta'}, `${data.platform || data.subcategory || ''} • ${Number(data.workers||data.worker_count||data.requested_workers||0)} workers`)
+      );
+      left.appendChild(thumb);
+      left.appendChild(txt);
+
+      const right = el('div', {});
+      const pill = el('div',{class: `pill ${ (''+ (data.status||'pending')).toLowerCase() }`}, (data.status||'PENDING').toString().toUpperCase());
+      right.appendChild(pill);
+
+      head.appendChild(left);
+      head.appendChild(right);
+
+      const body = el('div',{class:'card-body'}, data.description ? (data.description.slice(0,220) + (data.description.length>220? '…':'')) : el('span',{},'No description'));
+
+      const actions = el('div',{class:'actions'});
+      const detailsBtn = el('button',{class:'btn ghost'}, 'Details');
+      detailsBtn.addEventListener('click', ()=> openDetails(id));
+      actions.appendChild(detailsBtn);
+
+      const card = el('article',{class:'card', dataset:{id}}, head, body, actions);
+      return card;
+    }
+
+    // Open details overlay for advertId
+    function openDetails(advertId){
+      activeAdvertId = advertId;
+      const advert = advertsMap.get(advertId);
+      if(!advert){ alert('Advert not found locally'); return; }
+      const d = advert.data || {};
+      advTitle.textContent = d.title || '(untitled)';
+      advMeta.textContent = `${d.platform || d.subcategory || ''} — ${Number(d.workers||d.worker_count||d.requested_workers||0)} workers • status: ${(d.status||'pending').toUpperCase()}`;
+      advDescription.textContent = d.description || '';
+      // attach submissions listener for this advert
+      attachSubmissionsListener(advertId);
+      detailsOverlay.style.display = 'flex';
+      detailsOverlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDetailsOverlay(){
+      detailsOverlay.style.display = 'none';
+      detailsOverlay.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+      // detach submissions listener
+      detachSubmissionsListener();
+      activeAdvertId = null;
+      subList.innerHTML = '<div class="muted">Loading submissions…</div>';
+    }
+
+    closeDetails.addEventListener('click', closeDetailsOverlay);
+    detailsOverlay.addEventListener('click', (e) => { if(e.target === detailsOverlay) closeDetailsOverlay(); });
+
+    // Big image viewer
+    function openBigViewer(src, metaText = '') {
+      bigImg.src = src;
+      bigMeta.textContent = metaText;
+      bigViewer.style.display = 'flex';
+      bigViewer.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeBigViewer(){
+      bigViewer.style.display = 'none';
+      bigViewer.setAttribute('aria-hidden','true');
+      bigImg.src = '';
+      document.body.style.overflow = '';
+    }
+    closeBig.addEventListener('click', closeBigViewer);
+    bigViewer.addEventListener('click', (e) => { if(e.target === bigViewer) closeBigViewer(); });
+
+    // Submissions listener (attached only when details open)
+    function attachSubmissionsListener(advertId){
+      // detach previous if any
+      if(submissionsUnsub){ try { submissionsUnsub(); } catch(e){}; submissionsUnsub = null; }
+      subList.innerHTML = '<div class="muted">Loading submissions…</div>';
+
+      const subCol = 'advert_submissions';
+      const q = query(collection(db, subCol), where('advertId', '==', advertId));
+      submissionsUnsub = onSnapshot(q, snap => {
+        const list = [];
+        snap.forEach(s => {
+          const d = s.data() || {};
+          list.push({
+            id: s.id,
+            userId: d.userId || d.user || d.requestedBy || d.workerId || '',
+            textProof: d.textProof || d.text_proof || d.proofText || '',
+            imageUrl: d.imageUrl || d.image_url || d.image || '',
+            status: (d.status || 'pending').toLowerCase(),
+            createdAt: d.createdAt || d.created_at || null
+          });
+        });
+        // newest first
+        list.sort((a,b) => {
+          const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?Date.parse(a.createdAt):0);
+          const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?Date.parse(b.createdAt):0);
+          return tb - ta;
+        });
+        renderSubmissionsList(advertId, list);
+      }, err => {
+        console.error('submissions listen error', err);
+        subList.innerHTML = `<div class="empty">Failed to load submissions: ${err.message || err}</div>`;
+      });
+    }
+
+    function detachSubmissionsListener(){
+      if(submissionsUnsub){ try { submissionsUnsub(); } catch(e){}; submissionsUnsub = null; }
+    }
+
+    // Render submissions into overlay
+    function renderSubmissionsList(advertId, list){
+      subList.innerHTML = '';
+      if(!list || list.length === 0){
+        subList.innerHTML = '<div class="empty">No submissions yet.</div>';
         return;
       }
+      const advert = advertsMap.get(advertId);
+      const unitPrice = getUnitPrice(advert?.data || {});
+      const payAmount = Math.round(unitPrice * 0.7);
 
-      status.textContent=`${snap.size} adverts found`;
-      snap.forEach(doc => grid.appendChild(card(doc.data())));
+      list.forEach(s => {
+        const sub = el('div',{class:'submission'});
+        const left = el('div',{class:'sub-left'},
+          el('div',{class:'sub-meta'}, `Submitted: ${niceDate(s.createdAt)} • ID: ${s.id} • By: ${s.userId || '-'}`),
+          el('div',{class:'sub-text'}, s.textProof || el('em',{}, '(no text proof)'))
+        );
 
-    }catch(err){
-      console.error(err);
-      status.textContent='Failed to load adverts (check console)';
+        const right = el('div',{style:'min-width:220px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px'});
+        if(s.imageUrl){
+          // show a lightweight "View" button that opens the image in the big viewer overlay
+          const viewBtn = el('button',{class:'view-btn', type:'button'}, 'View');
+          viewBtn.addEventListener('click', ()=> openBigViewer(s.imageUrl, `Submission ID: ${s.id}`));
+          right.appendChild(viewBtn);
+        }
+
+        const badge = el('div', {class:`pill ${ s.status === 'approved' ? 'approved' : s.status === 'completed' ? 'completed' : 'pending' }`}, (s.status || 'PENDING').toUpperCase());
+        right.appendChild(badge);
+
+        // Only the advert owner can approve/reject; check client-side owner id
+        const advertData = advert?.data || {};
+        const advertOwnerId = advertData.createdBy || advertData.owner || advertData.userId || advertData.uid || advertData.requestedBy || advertData.creator || advertData.ownerUid || advertData.user || null;
+
+        if(currentUser && advertOwnerId && currentUser.uid === advertOwnerId){
+          // create approve/reject controls, but they should be disabled if status !== pending
+          const controls = el('div',{class:'controls'});
+          const approveBtn = el('button',{class:'btn'}, `Approve (₦${payAmount.toLocaleString()})`);
+          const rejectBtn = el('button',{class:'btn ghost'}, 'Reject');
+
+          const isPending = (s.status === 'pending');
+          if(!isPending){
+            // disable both if not pending
+            approveBtn.classList.add('disabled');
+            rejectBtn.classList.add('disabled');
+          }
+
+          approveBtn.addEventListener('click', async () => {
+            if(!isPending) return;
+            const ok = confirm(`Approve this submission and credit user ₦${payAmount.toLocaleString()}?`);
+            if(!ok) return;
+            // disable buttons immediately to prevent double-click
+            approveBtn.classList.add('disabled');
+            rejectBtn.classList.add('disabled');
+            try {
+              await setSubmissionStatusTransaction(submitActionApprovePayload(advertId, s.id, s.userId, payAmount));
+              // UI will be updated by snapshot listener; but keep buttons disabled
+            } catch(e){
+              console.error('approve failed', e);
+              alert('Approve failed: ' + (e.message || e));
+              // allow retry if appropriate
+              if(e && e.message && e.message.includes('not pending')) {
+                // reflect server-side changed status
+              } else {
+                approveBtn.classList.remove('disabled');
+                rejectBtn.classList.remove('disabled');
+              }
+            }
+          });
+
+          rejectBtn.addEventListener('click', async () => {
+            if(!isPending) return;
+            const ok = confirm('Reject this submission? This cannot be approved afterwards.');
+            if(!ok) return;
+            approveBtn.classList.add('disabled');
+            rejectBtn.classList.add('disabled');
+            try {
+              await setSubmissionStatusTransaction(submitActionRejectPayload(s.id));
+            } catch(e){
+              console.error('reject failed', e);
+              alert('Reject failed: ' + (e.message || e));
+              // allow retry if appropriate
+              if(!(e && e.message && e.message.includes('not pending'))){
+                approveBtn.classList.remove('disabled');
+                rejectBtn.classList.remove('disabled');
+              }
+            }
+          });
+
+          controls.appendChild(approveBtn);
+          controls.appendChild(rejectBtn);
+          right.appendChild(controls);
+        }
+
+        sub.appendChild(left);
+        sub.appendChild(right);
+        subList.appendChild(sub);
+      });
+
+      // after rendering, check if advert should be marked completed
+      const approvedCount = list.filter(it => it.status === 'approved').length;
+      const workerCount = Number(advert?.data?.workers || advert?.data?.worker_count || advert?.data?.requested_workers || 0) || 0;
+      if(workerCount > 0 && approvedCount >= workerCount){
+        // best-effort mark advert completed
+        markAdvertCompleted(activeAdvertId).catch(e => console.warn('mark completed failed', e));
+      }
     }
-  });
-</script>
 
+    // Helper payload creators
+    function submitActionApprovePayload(advertId, submissionId, submitterUid, amount){
+      return { type: 'approve', advertId, submissionId, submitterUid, amount };
+    }
+    function submitActionRejectPayload(submissionId){
+      return { type: 'reject', submissionId };
+    }
+
+    // Core transaction function: approve (credit) or reject. ENFORCEMENT: only allow transition when current status is 'pending'.
+    async function setSubmissionStatusTransaction(payload){
+      if(!payload || !payload.type) throw new Error('Invalid payload');
+      if(payload.type === 'approve'){
+        const { submissionId, submitterUid, amount } = payload;
+        if(!submissionId) throw new Error('Invalid submission id');
+        if(!submitterUid) throw new Error('Invalid submitter id');
+        const subRef = doc(db, 'advert_submissions', submissionId);
+        const userRef = doc(db, 'users', submitterUid);
+
+        await runTransaction(db, async (tx) => {
+          const sSnap = await tx.get(subRef);
+          if(!sSnap.exists()) throw new Error('Submission not found');
+          const sData = sSnap.data() || {};
+          const cur = (sData.status || 'pending').toLowerCase();
+          if(cur !== 'pending') throw new Error('Submission is not pending; cannot approve (server enforces).');
+
+          // credit user
+          const uSnap = await tx.get(userRef);
+          if(uSnap.exists()){
+            const u = uSnap.data() || {};
+            const balanceFields = ['balance','wallet','funds','walletBalance'];
+            let chosen = null, currentBalance = 0;
+            for(const f of balanceFields){ if(typeof u[f] !== 'undefined' && u[f] !== null && !isNaN(Number(u[f]))){ chosen = f; currentBalance = Number(u[f]); break; } }
+            if(chosen){
+              const newBal = Number(currentBalance || 0) + Number(amount || 0);
+              const upd = {}; upd[chosen] = newBal;
+              tx.update(userRef, upd);
+            } else {
+              tx.update(userRef, { balance: Number(u.balance || 0) + Number(amount || 0) });
+            }
+          } else {
+            tx.set(userRef, { balance: Number(amount || 0) }, { merge: true });
+          }
+
+          // update submission
+          tx.update(subRef, {
+            status: 'approved',
+            approvedAt: serverTimestamp(),
+            paidAmount: Number(amount || 0),
+            paidBy: currentUser ? currentUser.uid : null
+          });
+        });
+      } else if(payload.type === 'reject'){
+        const { submissionId } = payload;
+        if(!submissionId) throw new Error('Invalid submission id');
+        const subRef = doc(db, 'advert_submissions', submissionId);
+        await runTransaction(db, async (tx) => {
+          const sSnap = await tx.get(subRef);
+          if(!sSnap.exists()) throw new Error('Submission not found');
+          const sData = sSnap.data() || {};
+          const cur = (sData.status || 'pending').toLowerCase();
+          if(cur !== 'pending') throw new Error('Submission is not pending; cannot reject (server enforces).');
+          tx.update(subRef, { status: 'rejected', rejectedAt: serverTimestamp() });
+        });
+      } else {
+        throw new Error('Unknown action type');
+      }
+    }
+
+    // Mark advert completed if needed
+    async function markAdvertCompleted(advertId){
+      if(!advertId) return;
+      const advertRef = doc(db, 'advertise_tasks', advertId);
+      try {
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(advertRef);
+          if(!snap.exists()) return;
+          const data = snap.data() || {};
+          if((data.status || '').toLowerCase() === 'completed') return;
+          // set to completed
+          tx.update(advertRef, { status: 'completed', completedAt: serverTimestamp() });
+        });
+      } catch(e){
+        console.warn('markAdvertCompleted transaction failed', e);
+      }
+    }
+
+    /* ---------- adverts listener (single broad listener, client-side filtering) ---------- */
+    function startAdvertsListenerForOwner(uid){
+      // tear down previous listener
+      if(advertsUnsub){ try{ advertsUnsub(); } catch(e){}; advertsUnsub = null; }
+      advertsMap = new Map();
+      grid.innerHTML = '<div class="empty">Loading your adverts…</div>';
+      diag.textContent = 'Listening to advertise_tasks and filtering locally for your adverts…';
+
+      // single broad listener on advertise_tasks — minimizes scattered listeners
+      const primaryCol = collection(db, 'advertise_tasks');
+      advertsUnsub = onSnapshot(primaryCol, snap => {
+        // merge relevant docs
+        snap.forEach(docSnap => {
+          const d = docSnap.data() || {};
+          // check owner fields
+          const isOwner = OWNER_FIELDS.some(f => {
+            const v = d[f];
+            if(Array.isArray(v)) return v.includes(uid);
+            return v === uid;
+          });
+          if(isOwner){
+            advertsMap.set(docSnap.id, { id: docSnap.id, data: d });
+          } else {
+            // remove any previously present doc that no longer matches
+            advertsMap.delete(docSnap.id);
+          }
+        });
+        // also remove any advertsMap entries that no longer exist in collection snapshot (to keep map tidy)
+        // (optional) we won't fully prune to avoid concurrency complexity; rebuild will reflect current map
+        rebuildGrid();
+        diag.textContent = `Found ${advertsMap.size} adverts`;
+      }, err => {
+        console.error('adverts listener error', err);
+        diag.textContent = 'Failed to listen to adverts: ' + (err.message || err);
+        grid.innerHTML = `<div class="empty">Failed to load adverts: ${escapeHtml(err.message || String(err))}</div>`;
+      });
+    }
+
+    // Escaping helper
+    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // Auth init
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      if(!user){
+        diag.textContent = 'Please sign in to view your adverts.';
+        grid.innerHTML = '<div class="empty">Sign in to see your adverts.</div>';
+        return;
+      }
+      diag.textContent = `Signed in as ${user.email || user.displayName || user.uid.slice(0,8)}`;
+      // start single broad listener and filter client-side to avoid multiple owner-field listeners
+      startAdvertsListenerForOwner(user.uid);
+    });
+
+    // UI events
+    search.addEventListener('input', () => rebuildGrid());
+    refreshBtn.addEventListener('click', () => {
+      if(!currentUser) return;
+      // restart adverts listener
+      if(advertsUnsub){ try{ advertsUnsub(); } catch(e){}; advertsUnsub = null; }
+      advertsMap = new Map();
+      startAdvertsListenerForOwner(currentUser.uid);
+    });
+
+    // cleanup listeners on unload
+    window.addEventListener('beforeunload', () => {
+      if(advertsUnsub){ try{ advertsUnsub(); } catch(e){}; }
+      if(submissionsUnsub){ try{ submissionsUnsub(); } catch(e){}; }
+    });
+
+  </script>
 </body>
 </html>
