@@ -4,64 +4,98 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Referrals — Beni-Wealth</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,500,700&display=swap" rel="stylesheet">
-  <meta name="theme-color" content="#2fe0b8">
-
-    <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete ptcs and blogs, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
-
   <style>
     :root{
-      --bg-1:#0b0613; --bg-2:#0f0820; --muted:rgba(233,240,255,0.6);
-      --card: rgba(255,255,255,0.02); --accent-start:#2fe0b8; --accent-end:#7a5fff;
-      --text:#e9f0ff; --glass: rgba(255,255,255,0.03);
+      --bg-1:#0b0613;
+      --bg-2:#0f0820;
+      --muted:rgba(233,240,255,0.6);
+      --card: rgba(255,255,255,0.02);
+      --accent-start:#2fe0b8;
+      --accent-end:#7a5fff;
+      --text:#e9f0ff;
+      --glass: rgba(255,255,255,0.03);
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
     body{
-      font-family:'Poppins',sans-serif; background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
-      color:var(--text); min-height:100vh; display:flex; flex-direction:column;
+      font-family:'Poppins',sans-serif;
+      background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
-    header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-bottom:1px solid rgba(255,255,255,0.02);backdrop-filter: blur(6px);}
+
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:18px 20px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-bottom:1px solid rgba(255,255,255,0.02);
+      backdrop-filter: blur(6px);
+    }
     .brand{font-weight:700;font-size:1.15rem;color:var(--text)}
     .ref-box{display:flex;gap:10px;align-items:center}
-    .ref-code{background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));padding:8px 12px;border-radius:8px;font-weight:600;color:var(--text);border:1px solid rgba(255,255,255,0.03);}
-    .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:600;color:var(--text)}
+    .ref-code{
+      background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      padding:8px 12px;border-radius:8px;font-weight:600;color:var(--text);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    .btn{
+      background:transparent;border:1px solid rgba(255,255,255,0.06);
+      padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:600;color:var(--text)
+    }
     .btn.small{padding:6px 8px;font-size:.9rem}
-    .top-row{display:flex;gap:16px;padding:18px;max-width:1100px;margin:18px auto;width:95%;}
-    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 10px 30px rgba(2,6,23,0.7);flex:1;display:flex;flex-direction:column;gap:8px;border:1px solid rgba(255,255,255,0.03)}
+
+    .top-row{
+      display:flex;gap:16px;padding:18px;max-width:1100px;margin:18px auto;width:95%;
+    }
+    .card{
+      background:var(--card);border-radius:12px;padding:14px;
+      box-shadow:0 10px 30px rgba(2,6,23,0.7);flex:1;display:flex;flex-direction:column;gap:8px;
+      border:1px solid rgba(255,255,255,0.03)
+    }
     .card h3{margin:0;color:var(--accent-end);font-size:0.95rem}
     .big{font-size:1.4rem;font-weight:700;color:var(--text)}
     .muted{color:var(--muted);font-size:0.85rem}
+
     .controls{display:flex;gap:12px;align-items:center}
     .search{flex:1;min-width:200px}
-    .search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--text)}
+    .search input{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
+      background:rgba(255,255,255,0.02);color:var(--text)
+    }
+
     .tabs{display:flex;gap:12px;justify-content:center;margin:6px auto;max-width:1100px;width:95%}
-    .tab{padding:10px 16px;border-radius:999px;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.02);font-weight:600;color:var(--muted)}
+    .tab{
+      padding:10px 16px;border-radius:999px;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.02);
+      font-weight:600;color:var(--muted)
+    }
     .tab.active{background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;box-shadow:0 8px 18px rgba(122,95,255,0.08)}
+
     .container{max-width:1100px;margin:12px auto;display:flex;flex-direction:column;gap:14px;padding:0 20px 40px;width:95%}
     .table-card{background:var(--card);border-radius:12px;padding:8px;box-shadow:0 10px 30px rgba(2,6,23,0.6);overflow:auto;border:1px solid rgba(255,255,255,0.03)}
     table{width:100%;border-collapse:collapse;min-width:900px;color:var(--text)}
-    thead th{position:sticky;top:0;background:linear-gradient(90deg, rgba(47,224,184,0.12), rgba(122,95,255,0.08));color:var(--text);padding:12px;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.03)}
+    thead th{
+      position:sticky;top:0;background:linear-gradient(90deg, rgba(47,224,184,0.12), rgba(122,95,255,0.08));color:var(--text);
+      padding:12px;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.03)
+    }
     tbody td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.02)}
     tbody tr:hover td{background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005))}
+
     .no-data{padding:26px;text-align:center;color:var(--muted)}
-    .small{font-size:13px;color:var(--muted)}
     footer{margin-top:auto;padding:14px;text-align:center;background:transparent;color:var(--muted)}
-    .transfer-row{display:flex;gap:8px;align-items:center}
-    @media (max-width:860px){ .top-row{flex-direction:column} table{min-width:600px} .ref-box{flex-direction:column;align-items:flex-end} }
+
+    @media (max-width:860px){
+      .top-row{flex-direction:column}
+      table{min-width:600px}
+      .ref-box{flex-direction:column;align-items:flex-end}
+    }
   </style>
 </head>
 <body>
@@ -91,21 +125,19 @@
       <div class="muted">Users on non-Basic plans</div>
     </div>
 
-    <!-- Combined referral card (represents stored + computed) -->
     <div class="card">
       <h3>Referral Balance</h3>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <div class="muted">available for transfer</div>
-        <div class="big" id="storedReferralBalance">₦0</div>
+      <div class="big" id="referralBalance">₦0</div>
+      <div class="muted">Sum of bonuses from activated referrals</div>
+    </div>
 
-        <div class="muted">Total Referral earnings</div>
-        <div class="big" style="font-size:1.05rem;font-weight:700" id="computedReferralBalance">₦0</div>
-
-        <div style="margin-top:10px" class="transfer-row">
-          <button id="transferBtn" class="btn small" style="background:linear-gradient(90deg,#ffd166,#ff7a7a)">Transfer All</button>
-        </div>
+    <div class="card">
+      <h3>Search & Filter</h3>
+      <div class="controls">
+        <div class="search"><input id="searchInput" placeholder="Search username or email"/></div>
+        <div style="min-width:110px"><button id="refreshBtn" class="btn">Refresh</button></div>
       </div>
-      <div class="muted" style="margin-top:8px;font-size:12px">Transfer moves stored referral balance into your main balance. Transfers are transactional and logged.</div>
+      <div class="muted" style="margin-top:6px">Type to filter the visible table</div>
     </div>
   </div>
 
@@ -146,13 +178,9 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import {
-      getFirestore, collection, query, where, getDocs, doc, getDoc,
-      runTransaction, setDoc, limit, serverTimestamp, onSnapshot
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    // firebase config (unchanged)
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -167,24 +195,19 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // DOM refs
     const activatedBody = document.getElementById('activatedBody');
     const allBody = document.getElementById('allBody');
     const refCodeEl = document.getElementById('refCode');
     const totalRefEl = document.getElementById('totalRef');
     const activatedCountEl = document.getElementById('activatedCount');
+    const searchInput = document.getElementById('searchInput');
     const copyBtn = document.getElementById('copyBtn');
-    const computedReferralBalanceEl = document.getElementById('computedReferralBalance');
-    const storedReferralBalanceEl = document.getElementById('storedReferralBalance');
-    const transferBtn = document.getElementById('transferBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const referralBalanceEl = document.getElementById('referralBalance');
 
     let allRefs = [];
     let activatedRefs = [];
-    let signerPlan = 'basic';
-    let currentUser = null;
-    let storedReferralBalance = 0;
-    let computedReferralBalance = 0;
-    let userDocUnsub = null;
+    let signerPlan = 'basic'; // plan of the signed-in user used to compute bonuses
 
     const REFERRAL_FIELDS = [
       'referral', 'referralCode', 'ref', 'referrer', 'referredBy', 'referred_by',
@@ -203,12 +226,17 @@
         return new Date(ts).toLocaleString();
       } catch(e){ return '-'; }
     }
-    function escapeHtml(str){ return String(str || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; }); }
+
+    function escapeHtml(str){
+      return String(str || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; });
+    }
 
     function computeReferralBonus(signerPlanLocal, referredPlanLocal, isActivated){
-      if(!isActivated) return 0;
+      // signerPlanLocal & referredPlanLocal are expected to be lowercase strings
+      if(!isActivated) return 0; // only activated referrals get bonuses
       const s = (signerPlanLocal||'').toLowerCase();
       const r = (referredPlanLocal||'').toLowerCase();
+
       if(s === 'bronze'){
         if(r === 'bronze') return 500;
         if(r === 'silver') return 1000;
@@ -216,6 +244,7 @@
         if(r === 'bronze') return 700;
         if(r === 'silver') return 1400;
       }
+      // other signer plans -> no referral reward configured
       return 0;
     }
 
@@ -241,118 +270,43 @@
       }).join('');
     }
 
-    function updateTopCards(){
-      totalRefEl.textContent = allRefs.length;
-      activatedCountEl.textContent = activatedRefs.length;
-      computedReferralBalanceEl.textContent = '₦' + (computedReferralBalance || 0).toLocaleString('en-NG');
-      storedReferralBalanceEl.textContent = '₦' + (storedReferralBalance || 0).toLocaleString('en-NG');
-    }
-
-    async function safeQueryReferrals(myCode){
-      const foundDocs = new Map();
-      const qPromises = REFERRAL_FIELDS.map(field => {
-        const q = query(collection(db,'users'), where(field, '==', myCode));
-        return getDocs(q).then(snap => ({ field, snap })).catch(err => ({ field, error: err }));
-      });
-
-      const results = await Promise.all(qPromises);
-      let anySuccess = false;
-      results.forEach(res=>{
-        if(res.error){
-          console.warn('Query error for field', res.field, res.error);
-          return;
-        }
-        anySuccess = true;
-        res.snap.forEach(docSnap => {
-          if(!foundDocs.has(docSnap.id)) foundDocs.set(docSnap.id, docSnap.data());
-        });
-      });
-
-      if(foundDocs.size > 0) return { docs: Array.from(foundDocs.values()), usedFallback: false };
-
-      try {
-        console.log('Per-field queries returned none — using bounded fallback scan (limit 2000).');
-        const fallbackQ = query(collection(db,'users'), limit(2000));
-        const snap = await getDocs(fallbackQ);
-        snap.forEach(docSnap => {
-          const d = docSnap.data() || {};
-          for(const f of REFERRAL_FIELDS){
-            if(!d[f]) continue;
-            if(String(d[f]).toLowerCase() === String(myCode).toLowerCase()){
-              if(!foundDocs.has(docSnap.id)) foundDocs.set(docSnap.id, d);
-              break;
-            }
-          }
-        });
-        return { docs: Array.from(foundDocs.values()), usedFallback: true };
-      } catch(e){
-        console.error('Fallback scan failed', e);
-        throw e;
-      }
-    }
-
-    async function loadData(myCode){
-      activatedBody.innerHTML = '<tr><td colspan="6" class="no-data">Loading…</td></tr>';
-      allBody.innerHTML = '<tr><td colspan="6" class="no-data">Loading…</td></tr>';
-      allRefs = []; activatedRefs = []; computedReferralBalance = 0;
-      try{
-        if(!myCode){
-          activatedBody.innerHTML = '<tr><td colspan="6" class="no-data">No referral code found for your account.</td></tr>';
-          allBody.innerHTML = '<tr><td colspan="6" class="no-data">No referral code found for your account.</td></tr>';
-          computedReferralBalance = 0; updateTopCards(); return;
-        }
-
-        const { docs, usedFallback } = await safeQueryReferrals(myCode);
-
-        if(!docs || docs.length === 0){
-          activatedBody.innerHTML = `<tr><td colspan="6" class="no-data">No referrals found${usedFallback ? ' (fallback scan used)' : ''}.</td></tr>`;
-          allBody.innerHTML = `<tr><td colspan="6" class="no-data">No referrals found${usedFallback ? ' (fallback scan used)' : ''}.</td></tr>`;
-          computedReferralBalance = 0; updateTopCards(); return;
-        }
-
-        docs.forEach(data=>{
-          const planRaw = (data.plan || data.accountPlan || 'basic').toString();
-          const plan = planRaw.toLowerCase();
-          const isActivated = plan && plan !== 'basic';
-          const userObj = {
-            username: (data.username || data.name || '').toString(),
-            email: (data.email || '').toString(),
-            balance: Number(data.balance ?? data.wallet ?? 0) || 0,
-            registeredAt: data.createdAt || data.registeredAt || data.created_at || data.registered_at || null,
-            plan: plan,
-            isActivated: isActivated,
-            referralBonus: computeReferralBonus(signerPlan, plan, isActivated)
-          };
-          allRefs.push(userObj);
-          if(userObj.isActivated) activatedRefs.push(userObj);
-          if(userObj.referralBonus) computedReferralBalance += userObj.referralBonus;
-        });
-
-        const getTime = t => {
-          try{ if(!t) return 0; if(typeof t.toDate === 'function') return t.toDate().getTime(); const n = Date.parse(t); return isNaN(n)?0:n; }catch(e){return 0;}
-        };
-        const sortFn = (a,b) => getTime(b.registeredAt) - getTime(a.registeredAt);
-        allRefs.sort(sortFn); activatedRefs.sort(sortFn);
-
-        computedReferralBalance = computedReferralBalance || 0;
-        updateTopCards();
+    function applyFilter(){
+      const q = (searchInput.value||'').toLowerCase().trim();
+      if(!q){
         renderRows(activatedRefs, activatedBody);
         renderRows(allRefs, allBody);
-
-      }catch(err){
-        console.error('loadData failed', err);
-        activatedBody.innerHTML = '<tr><td colspan="6" class="no-data">Failed to load referrals</td></tr>';
-        allBody.innerHTML = '<tr><td colspan="6" class="no-data">Failed to load referrals</td></tr>';
-        computedReferralBalance = 0; updateTopCards();
+        updateTopCards();
+        return;
       }
+      const f1 = activatedRefs.filter(u=> (u.username||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
+      const f2 = allRefs.filter(u=> (u.username||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
+      renderRows(f1, activatedBody);
+      renderRows(f2, allBody);
+      // keep top cards accurate wrt full lists
+      updateTopCards();
     }
 
-    // UI helpers & events
+    searchInput.addEventListener('input', applyFilter);
+
     copyBtn.addEventListener('click', ()=>{
       const code = (refCodeEl.textContent || '').toString().trim();
-      if(!code){ alert('No referral code available to copy.'); return; }
+      if(!code){
+        alert('No referral code available to copy.');
+        return;
+      }
       const url = `https://beni-wealth.github.io/Beni-Wealth/register.html?ref=${encodeURIComponent(code)}`;
-      navigator.clipboard.writeText(url).then(()=>{ const prev = copyBtn.textContent; copyBtn.textContent='Copied'; setTimeout(()=>copyBtn.textContent=prev,1400); }).catch(()=>{ alert('Copy failed — please copy the link manually:\n' + url); });
+      navigator.clipboard.writeText(url).then(()=>{
+        const prev = copyBtn.textContent;
+        copyBtn.textContent='Copied';
+        setTimeout(()=>copyBtn.textContent=prev,1400);
+      }).catch(()=>{
+        alert('Copy failed — please copy the link manually:\n' + url);
+      });
+    });
+
+    refreshBtn.addEventListener('click', ()=> {
+      const code = refCodeEl.textContent || '';
+      loadData(code);
     });
 
     document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', e=>{
@@ -364,85 +318,117 @@
       if(el) el.style.display = 'block';
     }));
 
-    // Transfer all stored referral balance to main balance (transactional)
-    transferBtn.addEventListener('click', async ()=>{
-      if(!currentUser) return alert('Sign in first');
-      const uid = currentUser.uid;
-      if(!storedReferralBalance || storedReferralBalance <= 0) return alert('No stored referral balance to transfer.');
-      if(!confirm(`Confirm transfer of ₦${storedReferralBalance.toLocaleString()} from stored referral balance to your main balance?`)) return;
-
-      transferBtn.disabled = true;
-      const amountToTransferLocal = Number(storedReferralBalance || 0);
+    onAuthStateChanged(auth, async user=>{
+      if(!user) return location.href='login.html';
       try{
-        await runTransaction(db, async (tx) => {
-          const uRef = doc(db,'users',uid);
-          const snap = await tx.get(uRef);
-          if(!snap.exists()) throw new Error('user-not-found');
-          const data = snap.data() || {};
-          const curReferral = Number(data.referralBalance || 0);
-          const curBal = Number(data.balance || data.wallet || 0);
-          if(curReferral <= 0) throw new Error('insufficient-referral-balance');
-          const transferAmount = Math.min(curReferral, amountToTransferLocal);
-          const newReferral = curReferral - transferAmount;
-          const newBal = curBal + transferAmount;
-          tx.set(uRef, { referralBalance: newReferral, balance: newBal }, { merge: true });
+        const userRef = doc(db,'users',user.uid);
+        const userSnap = await getDoc(userRef);
+        const myData = userSnap.exists() ? userSnap.data() : {};
+        // signer's plan (used for bonus calc)
+        signerPlan = (myData.plan || (myData.accountPlan || 'basic')).toString().toLowerCase() || 'basic';
 
-          // write audit record with server timestamp (auto-id)
-          const recRef = doc(collection(db,'referralTransfers'));
-          tx.set(recRef, {
-            uid,
-            amount: transferAmount,
-            from: 'referralBalance',
-            to: 'balance',
-            ts: serverTimestamp()
-          });
-        });
-
-        // success message; UI will update when onSnapshot user doc fires
-        alert('Transfer successful — your main balance has been credited.');
-      }catch(e){
-        console.error('transfer failed', e);
-        if(e && e.message === 'insufficient-referral-balance') alert('Transfer failed — stored referral balance changed (insufficient). Please refresh and try again.');
-        else alert('Transfer failed: ' + (e.message||e));
-      } finally {
-        transferBtn.disabled = false;
+        const myCode = String(myData.username || myData.name || user.email?.split('@')?.[0] || user.uid || '').trim();
+        refCodeEl.textContent = myCode || '';
+        await loadData(myCode);
+      }catch(err){
+        console.error('Error fetching current user doc', err);
+        refCodeEl.textContent = user.email ? user.email.split('@')[0] : user.uid;
+        signerPlan = 'basic';
+        await loadData(refCodeEl.textContent);
       }
     });
 
-    // auth watcher + user doc realtime listener
-    onAuthStateChanged(auth, async user =>{
-      if(!user) return location.href='login.html';
-      currentUser = user;
+    async function loadData(myCode){
+      try{
+        activatedBody.innerHTML = '<tr><td colspan="6" class="no-data">Loading…</td></tr>';
+        allBody.innerHTML = '<tr><td colspan="6" class="no-data">Loading…</td></tr>';
+        allRefs = [];
+        activatedRefs = [];
 
-      // remove previous user snapshot if any
-      if(userDocUnsub) { try{ userDocUnsub(); }catch(_){ } userDocUnsub = null; }
+        if(!myCode){
+          activatedBody.innerHTML = '<tr><td colspan="6" class="no-data">No referral code found for your account.</td></tr>';
+          allBody.innerHTML = '<tr><td colspan="6" class="no-data">No referral code found for your account.</td></tr>';
+          totalRefEl.textContent = '0';
+          activatedCountEl.textContent = '0';
+          referralBalanceEl.textContent = '₦0';
+          return;
+        }
 
-      const userRef = doc(db,'users',user.uid);
-      // use onSnapshot so storedReferralBalance will update automatically when changed
-      userDocUnsub = onSnapshot(userRef, async snap => {
-        const myData = snap.exists() ? snap.data() : {};
-        signerPlan = (myData.plan || (myData.accountPlan || 'basic')).toString().toLowerCase() || 'basic';
-        storedReferralBalance = Number(myData.referralBalance || 0) || 0;
-        const myCode = String(myData.username || myData.name || user.email?.split('@')?.[0] || user.uid || '').trim();
-        refCodeEl.textContent = myCode || '';
-        updateTopCards();
+        const foundDocs = new Map();
 
-        // load referral list computed against the current code.
-        // we debounce slightly to avoid repeated loads if multiple user fields change quickly.
-        try {
-          await loadData(myCode);
-        } catch(e){ console.warn('loadData after snapshot failed', e); }
-      }, err => {
-        console.warn('user onSnapshot error', err);
-      });
+        const queries = REFERRAL_FIELDS.map(field => {
+          const q = query(collection(db,'users'), where(field, '==', myCode));
+          return getDocs(q).then(snap => ({ field, snap })).catch(err => ({ field, error: err }));
+        });
 
-      // initial small UI update while snapshot settles
-      refCodeEl.textContent = user.email ? user.email.split('@')[0] : user.uid;
-    });
+        const results = await Promise.all(queries);
 
-    // initial display
-    computedReferralBalance = 0; storedReferralBalance = 0; updateTopCards();
+        results.forEach(res => {
+          if(res.error){
+            console.warn('Query error for field', res.field, res.error);
+            return;
+          }
+          const snap = res.snap;
+          snap.forEach(docSnap => {
+            if(!foundDocs.has(docSnap.id)){
+              foundDocs.set(docSnap.id, docSnap.data());
+            }
+          });
+        });
 
+        // Build arrays and compute referralBonus per entry
+        let totalReferralBalance = 0;
+        foundDocs.forEach((d, id)=>{
+          const data = d || {};
+          const planRaw = (data.plan || data.accountPlan || 'basic').toString();
+          const plan = planRaw.toLowerCase();
+          const isActivated = plan && plan !== 'basic';
+          const userObj = {
+            username: (data.username || data.name || '').toString(),
+            email: (data.email || '').toString(),
+            balance: Number(data.balance ?? data.wallet ?? 0) || 0,
+            registeredAt: data.createdAt || data.registeredAt || data.created_at || data.registered_at || null,
+            plan: plan,
+            isActivated: isActivated,
+            // compute bonus according to signerPlan and referred plan
+            referralBonus: computeReferralBonus(signerPlan, plan, isActivated)
+          };
+          if(userObj.referralBonus && userObj.referralBonus > 0){
+            totalReferralBalance += userObj.referralBonus;
+          }
+          allRefs.push(userObj);
+          if(userObj.isActivated) activatedRefs.push(userObj);
+        });
+
+        // sort by registration date (descending)
+        const getTime = (t) => {
+          try {
+            if(!t) return 0;
+            if (typeof t.toDate === 'function') return t.toDate().getTime();
+            const n = Date.parse(t);
+            return isNaN(n) ? 0 : n;
+          } catch(e){ return 0; }
+        };
+        const sortFn = (a,b) => getTime(b.registeredAt) - getTime(a.registeredAt);
+
+        allRefs.sort(sortFn);
+        activatedRefs.sort(sortFn);
+
+        totalRefEl.textContent = allRefs.length;
+        activatedCountEl.textContent = activatedRefs.length;
+        referralBalanceEl.textContent = '₦' + totalReferralBalance.toLocaleString('en-NG');
+
+        applyFilter();
+
+      }catch(err){
+        console.error('loadData failed', err);
+        activatedBody.innerHTML = '<tr><td colspan="6" class="no-data">Failed to load referrals</td></tr>';
+        allBody.innerHTML = '<tr><td colspan="6" class="no-data">Failed to load referrals</td></tr>';
+        totalRefEl.textContent = '0';
+        activatedCountEl.textContent = '0';
+        referralBalanceEl.textContent = '₦0';
+      }
+    }
   </script>
 </body>
 </html>
