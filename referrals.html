@@ -4,176 +4,96 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Referrals — Beni-Wealth</title>
-
-  <!-- Poppins (Beni-Wealth standard) -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
-
-  <!-- Favicons & theme-color (Beni-Wealth standard) -->
-  <link rel="icon" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" />
-  <meta name="theme-color" content="#2fe0b8" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <meta name="theme-color" content="#2fe0b8">
   <style>
-    :root{
-      --bg1:#0b0613; --bg2:#0f0820; --card:rgba(255,255,255,.04);
-      --text:#e9f0ff; --muted:rgba(233,240,255,.6);
-      --accent:#2fe0b8; --accent2:#7a5fff;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{
-      font-family:'Poppins',sans-serif;
-      background:linear-gradient(180deg,var(--bg1),var(--bg2));
-      color:var(--text); min-height:100vh;
-    }
-    header{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.05)}
-    .brand{font-weight:700;font-size:1.1rem}
-    .wrap{max-width:1100px;margin:20px auto;padding:0 18px}
-    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-    .card{background:var(--card);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,.05)}
-    .card h3{font-size:.85rem;color:var(--accent2);margin-bottom:6px}
+    body{font-family:Poppins,sans-serif;background:#0b0613;color:#e9f0ff;margin:0}
+    header{padding:18px;font-weight:700;background:#111}
+    .wrap{max-width:1100px;margin:auto;padding:20px}
+    .card{background:#151020;border-radius:12px;padding:16px;margin-bottom:14px}
     .big{font-size:1.6rem;font-weight:700}
-
-    .btn{margin-top:10px;padding:10px 14px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
-    .btn-transfer{background:linear-gradient(90deg,#ffd166,#ff7a7a);color:#231004}
-
-    table{width:100%;border-collapse:collapse;margin-top:22px}
-    th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
-    th{font-size:.75rem;color:var(--muted);text-transform:uppercase}
-
-    .badge{padding:4px 10px;border-radius:999px;font-size:.7rem;font-weight:700}
-    .inactive{background:rgba(255,255,255,.1)}
-    .pending{background:linear-gradient(90deg,#facc15,#fb923c);color:#231a04}
-    .paid{background:linear-gradient(90deg,#2fe0b8,#22c55e);color:#04231a}
-
-    footer{text-align:center;padding:18px;color:var(--muted)}
+    button{padding:10px 14px;border-radius:8px;border:none;background:#2fe0b8;color:#041219;font-weight:700;cursor:pointer}
   </style>
 </head>
 <body>
-<header><div class="brand">Beni-Wealth — My Referrals</div></header>
-
+<header>My Referrals</header>
 <div class="wrap">
-  <div class="cards">
-    <div class="card"><h3>Total Referrals</h3><div class="big" id="total">0</div></div>
-    <div class="card"><h3>Activated</h3><div class="big" id="active">0</div></div>
-    <div class="card">
-      <h3>Referral Balance</h3>
-      <div class="big" id="rb">₦0</div>
-      <button class="btn btn-transfer" id="transferBtn">Transfer to Main Balance</button>
-    </div>
+  <div class="card">
+    <div>Referral Balance</div>
+    <div class="big" id="rb">₦0</div>
+    <button id="transfer">Transfer to Main Balance</button>
   </div>
-
-  <table>
-    <thead><tr><th>User</th><th>Plan</th><th>Bonus</th><th>Status</th></tr></thead>
-    <tbody id="rows"><tr><td colspan="4">Loading…</td></tr></tbody>
-  </table>
 </div>
-
-<footer>© 2025 Beni-Wealth</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs, doc, getDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, runTransaction, serverTimestamp, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-  authDomain: "beni-wealths.firebaseapp.com",
-  projectId: "beni-wealths",
-};
+const firebaseConfig = { apiKey:"AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk", authDomain:"beni-wealths.firebaseapp.com", projectId:"beni-wealths" };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+/* PLANS */
 const ACTIVE = ['bronze','silver'];
+const NORMALIZE = p => ['gold','platinum'].includes((p||'').toLowerCase()) ? 'silver' : (p||'basic').toLowerCase();
+
 const REWARD = {
-  basic:{ bronze:300, silver:600 },
-  bronze:{ bronze:500, silver:1000 },
-  silver:{ bronze:700, silver:1400 }
+  basic:  { bronze:300, silver:600 },
+  bronze: { bronze:500, silver:1000 },
+  silver: { bronze:700, silver:1400 }
 };
-const REF_FIELDS = ['referral','referralCode','ref','referrer','referredBy','referred_by','invitedBy','sponsor'];
 
-const norm = p => (p||'basic').toLowerCase();
+const REF_FIELDS = ['referral','referrer','referredBy','invitedBy','sponsor'];
 
-async function getRefs(code){
-  const m = new Map();
-  for(const f of REF_FIELDS){
-    try{
-      const q = query(collection(db,'users'), where(f,'==',code));
-      const s = await getDocs(q);
-      s.forEach(d=>m.set(d.id,d.data()));
-    }catch{}
-  }
-  return m;
-}
-
-async function creditOnce(refUid, userUid, amount, refPlan, plan){
+async function creditOnce(referrerUid,referredUid,amount){
   await runTransaction(db, async tx=>{
-    const rRef = doc(db,'users',refUid);
-    const rewardRef = doc(db,'referralRewards',`${refUid}_${userUid}`);
-    const rSnap = await tx.get(rRef);
-    if(!rSnap.exists()) return;
-    if((await tx.get(rewardRef)).exists()) return;
-
-    const rb = Number(rSnap.data().referralBalance||0);
-    tx.update(rRef,{ referralBalance: rb + amount });
-    tx.set(rewardRef,{ refUid,userUid,amount,refPlan,plan,createdAt:serverTimestamp() });
+    const me = doc(db,'users',referrerUid);
+    const lock = doc(db,'referralRewards',`${referrerUid}_${referredUid}`);
+    if((await tx.get(lock)).exists()) return;
+    const snap = await tx.get(me);
+    const rb = Number(snap.data().referralBalance||0);
+    tx.update(me,{ referralBalance: rb+amount });
+    tx.set(lock,{ amount, createdAt:serverTimestamp() });
   });
 }
 
 onAuthStateChanged(auth, async user=>{
-  if(!user) return location.href='login.html';
-
+  if(!user) return;
   const meSnap = await getDoc(doc(db,'users',user.uid));
-  if(!meSnap.exists()) return;
   const me = meSnap.data();
+  const myPlan = NORMALIZE(me.plan);
+  document.getElementById('rb').textContent = '₦'+(me.referralBalance||0);
 
-  document.getElementById('rb').textContent = '₦'+Number(me.referralBalance||0).toLocaleString('en-NG');
+  const myCode = me.username || user.email.split('@')[0];
 
-  const myPlan = norm(me.plan);
-  const myCode = (me.username || user.email.split('@')[0]).toString();
-
-  const refs = await getRefs(myCode);
-
-  let total=0, active=0;
-  const rows=[];
-
-  for(const [uid,d] of refs){
-    total++;
-    const p = norm(d.plan);
-    const isActive = ACTIVE.includes(p);
-    if(isActive) active++;
-
-    const amt = REWARD[myPlan]?.[p]||0;
-    if(isActive && amt>0) await creditOnce(user.uid,uid,amt,myPlan,p);
-
-    let badge = '<span class="badge inactive">Inactive</span>';
-    if(isActive && amt>0) badge = '<span class="badge paid">Paid</span>';
-
-    rows.push(`<tr><td>${d.username||'-'}</td><td>${p}</td><td>₦${amt}</td><td>${badge}</td></tr>`);
+  for(const f of REF_FIELDS){
+    const q = query(collection(db,'users'), where(f,'==',myCode));
+    const s = await getDocs(q);
+    for(const d of s.docs){
+      const rp = NORMALIZE(d.data().plan);
+      if(!ACTIVE.includes(rp)) continue;
+      const amt = REWARD[myPlan]?.[rp]||0;
+      if(amt>0) await creditOnce(user.uid,d.id,amt);
+    }
   }
-
-  document.getElementById('total').textContent = total;
-  document.getElementById('active').textContent = active;
-  document.getElementById('rows').innerHTML = rows.join('') || '<tr><td colspan="4">No referrals</td></tr>';
-
-  document.getElementById('transferBtn').onclick = async ()=>{
-    const bal = Number((await getDoc(doc(db,'users',user.uid))).data().referralBalance||0);
-    if(bal<=0) return alert('No referral balance');
-    if(!confirm(`Transfer ₦${bal.toLocaleString()} to main balance?`)) return;
-
-    await runTransaction(db, async tx=>{
-      const ref = doc(db,'users',user.uid);
-      const snap = await tx.get(ref);
-      const rb = Number(snap.data().referralBalance||0);
-      const b = Number(snap.data().balance||0);
-      if(rb<=0) throw 'no-balance';
-      tx.update(ref,{ referralBalance:0, balance:b+rb });
-    });
-
-    alert('Transfer successful');
-    location.reload();
-  };
 });
+
+// transfer
+const btn = document.getElementById('transfer');
+btn.onclick = async ()=>{
+  const u = auth.currentUser; if(!u) return;
+  await runTransaction(db, async tx=>{
+    const ref = doc(db,'users',u.uid);
+    const s = await tx.get(ref);
+    const rb = Number(s.data().referralBalance||0);
+    if(rb<=0) return;
+    tx.update(ref,{ referralBalance:0, balance:(Number(s.data().balance||0)+rb) });
+  });
+  location.reload();
+};
 </script>
 </body>
 </html>
