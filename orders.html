@@ -1,4 +1,5 @@
 <!doctype html>
+
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -6,164 +7,98 @@
   <title>My Adverts — Beni-Wealth</title>
 
   <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
-  <!-- Favicons & Social preview (STANDARD) -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Favicons & Social preview -->
+
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
+  <meta property="og:description" content="Manage adverts and review submissions">
   <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
-    :root{
-      --bg:#05040d;
-      --panel:#0c0a1a;
-      --card:#120f2b;
-      --border:rgba(255,255,255,.07);
-      --text:#eef3ff;
-      --muted:rgba(255,255,255,.65);
-      --accent:#2fe0b8;
-      --accent2:#7a5fff;
-      --radius:16px;
-      --max:1200px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;font-family:Poppins,system-ui;
-      background:radial-gradient(1200px 600px at 10% -10%,#120d33,transparent 60%),
-                 radial-gradient(800px 500px at 110% 10%,#0a3b31,transparent 60%),
-                 linear-gradient(180deg,#05040d,#07061a 40%,#03030b);
-      color:var(--text);
-      min-height:100vh;
-    }
-    .wrap{max-width:var(--max);margin:auto;padding:18px}
-
-    /* HEADER */
-    header{
-      display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;
-      margin-bottom:18px;
-    }
-    .back{
-      text-decoration:none;color:var(--text);
-      padding:10px 14px;border-radius:12px;
-      background:rgba(255,255,255,.05);
-    }
-    .h-title{font-weight:800;font-size:1.2rem}
-    .h-sub{color:var(--muted);font-size:13px}
-
-    /* TOOLBAR */
-    .toolbar{
-      display:grid;grid-template-columns:1fr auto;gap:12px;
-      margin-bottom:14px;
-    }
-    .search{
-      padding:12px 14px;border-radius:14px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.03);
-      color:var(--text);
-    }
-    .btn{
-      border:none;border-radius:14px;padding:12px 18px;
-      font-weight:800;cursor:pointer;
-      background:linear-gradient(90deg,var(--accent),var(--accent2));
-      color:#041219;
-    }
-    .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
-
-    .status{margin-bottom:14px;color:var(--muted);font-size:13px}
-
-    /* GRID */
-    .grid{
-      display:grid;gap:16px;
-      grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-    }
-    .card{
-      background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:16px;
-      display:flex;flex-direction:column;gap:12px;
-      transition:.2s transform,.2s box-shadow;
-    }
-    .card:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.45)}
-
-    .card-head{display:flex;gap:12px;align-items:center}
-    .thumb{width:88px;height:64px;object-fit:cover;border-radius:12px;border:1px solid var(--border)}
-    .c-title{font-weight:800}
-    .meta{color:var(--muted);font-size:12px}
-    .desc{color:var(--muted);font-size:14px;line-height:1.45}
-
-    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto}
-    .pill{padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800}
-    .pill.pending{background:#fff6d6;color:#6a4f00}
-    .pill.approved{background:#c9f3df;color:#0a5531}
-    .pill.completed{background:#e1ecff;color:#0b3a6d}
-
-    /* DETAILS PANEL */
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;z-index:1000}
-    .overlay.open{display:block}
-    .panel{
-      position:absolute;right:0;top:0;height:100%;width:100%;max-width:920px;
-      background:linear-gradient(180deg,#07081c,#02030a);
-      border-left:1px solid var(--border);
-      padding:18px;overflow:auto;
-    }
-    .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .panel-title{font-weight:900;font-size:1.15rem}
-    .close{background:transparent;border:1px solid var(--border);border-radius:12px;padding:8px 12px;color:var(--muted)}
-
-    @media (max-width:720px){
-      header{grid-template-columns:1fr}
-      .toolbar{grid-template-columns:1fr}
-      .panel{max-width:100%}
-    }
+    body{margin:0;font-family:Poppins,system-ui;background:#05040d;color:#eef3ff}
+    .wrap{max-width:1200px;margin:auto;padding:16px}
+    .back{color:#eef3ff;text-decoration:none;margin-bottom:12px;display:inline-block}
+    .title{font-size:1.2rem;font-weight:700}
+    .status{margin:12px 0;color:rgba(255,255,255,.7)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+    .card{background:#0f0b1f;border-radius:14px;padding:14px}
+    .empty{opacity:.7}
   </style>
+
 </head>
 <body>
+
 <main class="wrap">
-  <header>
-    <a href="dashboard.html" class="back">← Dashboard</a>
-    <div>
-      <div class="h-title">My Adverts</div>
-      <div class="h-sub">Manage adverts and review submissions</div>
-    </div>
-    <div></div>
-  </header>
-
-  <div class="toolbar">
-    <input id="search" class="search" placeholder="Search adverts" />
-    <button id="refresh" class="btn ghost">Refresh</button>
-  </div>
-
-  <div id="diag" class="status">Connecting…</div>
-
+  <a href="dashboard.html" class="back">← Dashboard</a>
+  <div class="title">My Adverts</div>
+  <div id="status" class="status">Initializing…</div>
   <section id="grid" class="grid"></section>
 </main>
 
-<!-- DETAILS -->
-<div id="drawer" class="overlay" aria-hidden="true">
-  <div class="panel">
-    <div class="panel-head">
-      <div>
-        <div id="dTitle" class="panel-title">Advert</div>
-        <div id="dMeta" class="meta"></div>
-      </div>
-      <button id="closeDrawer" class="close">✕</button>
-    </div>
-    <div id="dDesc" class="desc" style="margin-top:10px"></div>
-    <div id="subList" style="margin-top:14px"></div>
-  </div>
-</div>
-
-<!-- LOGIC SCRIPT (UNCHANGED FROM YOUR VERSION) -->
 <script type="module">
-/* KEEP YOUR EXISTING FIREBASE + LOGIC SCRIPT HERE UNCHANGED */
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+  import { getFirestore, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+    authDomain: "beni-wealths.firebaseapp.com",
+    projectId: "beni-wealths",
+    storageBucket: "beni-wealths.firebasestorage.app",
+    messagingSenderId: "807950483822",
+    appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+    measurementId: "G-Z2XP3YN6NS"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const status = document.getElementById('status');
+  const grid = document.getElementById('grid');
+
+  function card(data){
+    const d=document.createElement('div');
+    d.className='card';
+    d.innerHTML=`<strong>${data.title||'Untitled advert'}</strong><br><small>${data.platform||''}</small>`;
+    return d;
+  }
+
+  onAuthStateChanged(auth, async user => {
+    if(!user){
+      window.location.href='login.html';
+      return;
+    }
+
+    status.textContent='Loading adverts…';
+
+    try{
+      const q = query(collection(db,'advertise_tasks'), where('createdBy','==',user.uid));
+      const snap = await getDocs(q);
+
+      if(snap.empty){
+        status.textContent='No adverts found';
+        grid.innerHTML='<div class="empty">You have not created any adverts yet.</div>';
+        return;
+      }
+
+      status.textContent=`${snap.size} adverts found`;
+      snap.forEach(doc => grid.appendChild(card(doc.data())));
+
+    }catch(err){
+      console.error(err);
+      status.textContent='Failed to load adverts (check console)';
+    }
+  });
 </script>
+
 </body>
 </html>
