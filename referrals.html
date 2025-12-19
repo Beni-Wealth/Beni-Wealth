@@ -32,6 +32,8 @@
     .card{background:var(--card);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,0.04)}
     .card h3{font-size:.9rem;color:var(--accent-end)}
     .big{font-size:1.5rem;font-weight:700}
+    .btn{margin-top:10px;padding:10px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
+    .btn-transfer{background:linear-gradient(90deg,#ffd166,#ff7a7a);color:#221004}
 
     table{width:100%;border-collapse:collapse;margin-top:18px}
     th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:left}
@@ -54,7 +56,11 @@
   <div class="cards">
     <div class="card"><h3>Total Referrals</h3><div class="big" id="total">0</div></div>
     <div class="card"><h3>Activated</h3><div class="big" id="activated">0</div></div>
-    <div class="card"><h3>Referral Balance</h3><div class="big" id="balance">₦0</div></div>
+    <div class="card">
+      <h3>Referral Balance</h3>
+      <div class="big" id="balance">₦0</div>
+      <button class="btn btn-transfer" id="transferBtn">Transfer to Main Balance</button>
+    </div>
   </div>
 
   <table>
@@ -73,7 +79,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, query, where, getDocs, doc, getDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -99,19 +105,23 @@ function getBonus(rp, cp){ return CREDIT[rp]?.[cp] || 0; }
 onAuthStateChanged(auth, async user => {
   if(!user) return location.href='login.html';
 
-  const meSnap = await getDoc(doc(db,'users',user.uid));
+  const meRef = doc(db,'users',user.uid);
+  const meSnap = await getDoc(meRef);
   const me = meSnap.data() || {};
+
   const myPlan = (me.plan || 'basic').toLowerCase();
   const myCode = me.username || user.email.split('@')[0];
 
   let total = 0, activated = 0;
-  document.getElementById('balance').textContent = '₦' + (me.referralBalance || 0).toLocaleString('en-NG');
+  let referralBalance = Number(me.referralBalance || 0);
+
+  document.getElementById('balance').textContent = '₦' + referralBalance.toLocaleString('en-NG');
 
   const found = new Map();
   for(const f of REFERRAL_FIELDS){
     const q = query(collection(db,'users'), where(f,'==',myCode));
     const snap = await getDocs(q);
-    snap.forEach(d=>found.set(d.id,d.data()));
+    snap.forEach(d=>found.set(d.id,{ uid:d.id, ...d.data() }));
   }
 
   const rows = [];
@@ -122,23 +132,53 @@ onAuthStateChanged(auth, async user => {
     if(activatedNow) activated++;
 
     const bonus = getBonus(myPlan, plan);
-    const creditId = `${user.uid}_${d.uid}`;
+
+    let status = '<span class="badge inactive">Inactive</span>';
+    if(activatedNow && bonus > 0){
+      status = '<span class="badge pending">Pending</span>';
+    }
 
     rows.push(`
       <tr>
         <td>${d.username || '-'}</td>
         <td>${plan}</td>
         <td>₦${bonus}</td>
-        <td>
-          ${!activatedNow ? '<span class="badge inactive">Inactive</span>' :
-            bonus > 0 ? '<span class="badge paid">Paid</span>' : '<span class="badge pending">Pending</span>'}
-        </td>
+        <td>${status}</td>
       </tr>`);
   }
 
   document.getElementById('total').textContent = total;
   document.getElementById('activated').textContent = activated;
   document.getElementById('rows').innerHTML = rows.join('') || '<tr><td colspan="4">No referrals yet</td></tr>';
+
+  /* ----------- TRANSFER TO MAIN BALANCE ----------- */
+  document.getElementById('transferBtn').onclick = async () => {
+    if(referralBalance <= 0) return alert('No referral balance to transfer');
+    if(!confirm(`Transfer ₦${referralBalance.toLocaleString()} to main balance?`)) return;
+
+    try{
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(meRef);
+        const data = snap.data();
+        const rb = Number(data.referralBalance || 0);
+        if(rb <= 0) throw 'insufficient';
+
+        const bal = Number(data.balance || 0);
+        tx.set(meRef, { referralBalance: 0, balance: bal + rb }, { merge:true });
+
+        tx.set(doc(collection(db,'referralTransfers')), {
+          uid: user.uid,
+          amount: rb,
+          ts: serverTimestamp()
+        });
+      });
+
+      alert('Transfer successful');
+      location.reload();
+    }catch(e){
+      alert('Transfer failed');
+    }
+  };
 });
 </script>
 </body>
