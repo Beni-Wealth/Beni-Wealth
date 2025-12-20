@@ -1,4 +1,5 @@
 <!doctype html>
+
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -6,11 +7,15 @@
   <title>My Referrals — Beni-Wealth</title>
 
   <!-- Poppins (Beni-Wealth standard) -->
+
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
   <!-- Favicons & theme-color (Beni-Wealth standard) -->
+
   <link rel="icon" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" />
   <meta name="theme-color" content="#2fe0b8" />
+
+  <!-- STYLES UNCHANGED -->
 
   <style>
     :root{
@@ -19,11 +24,7 @@
       --accent:#2fe0b8; --accent2:#7a5fff;
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    body{
-      font-family:'Poppins',sans-serif;
-      background:linear-gradient(180deg,var(--bg1),var(--bg2));
-      color:var(--text); min-height:100vh;
-    }
+    body{font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);min-height:100vh}
     header{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.05)}
     .brand{font-weight:700;font-size:1.1rem}
     .wrap{max-width:1100px;margin:20px auto;padding:0 18px}
@@ -31,21 +32,18 @@
     .card{background:var(--card);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,.05)}
     .card h3{font-size:.85rem;color:var(--accent2);margin-bottom:6px}
     .big{font-size:1.6rem;font-weight:700}
-
     .btn{margin-top:10px;padding:10px 14px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
     .btn-transfer{background:linear-gradient(90deg,#ffd166,#ff7a7a);color:#231004}
     .btn-copy{background:linear-gradient(90deg,#2fe0b8,#7a5fff);color:#041219}
-
     table{width:100%;border-collapse:collapse;margin-top:22px}
     th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
     th{font-size:.75rem;color:var(--muted);text-transform:uppercase}
-
     .badge{padding:4px 10px;border-radius:999px;font-size:.7rem;font-weight:700}
     .inactive{background:rgba(255,255,255,.1)}
     .paid{background:linear-gradient(90deg,#2fe0b8,#22c55e);color:#04231a}
-
     footer{text-align:center;padding:18px;color:var(--muted)}
   </style>
+
 </head>
 <body>
 <header><div class="brand">Beni-Wealth — My Referrals</div></header>
@@ -85,7 +83,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* --- PLAN LOGIC --- */
+/* PLAN LOGIC (FIXED) */
 const ACTIVE = ['bronze','silver'];
 const EFFECTIVE_PLAN = p => ['gold','platinum'].includes((p||'').toLowerCase()) ? 'silver' : (p||'basic').toLowerCase();
 
@@ -135,7 +133,6 @@ onAuthStateChanged(auth, async user=>{
   const myPlan = EFFECTIVE_PLAN(me.plan);
   const myCode = (me.username || user.email.split('@')[0]).toString();
 
-  // Copy referral link (hidden but usable)
   const refLink = `https://beni-wealth.github.io/Beni-Wealth/register.html?ref=${encodeURIComponent(myCode)}`;
   document.getElementById('copyLinkBtn').onclick = async ()=>{
     await navigator.clipboard.writeText(refLink);
@@ -150,13 +147,14 @@ onAuthStateChanged(auth, async user=>{
   for(const [uid,d] of refs){
     total++;
     const p = (d.plan||'basic').toLowerCase();
+    const wasBasic = p !== 'basic';
     const isActive = ACTIVE.includes(p);
     if(isActive) active++;
 
-    const amt = REWARD[myPlan]?.[p]||0;
+    const amt = wasBasic ? (REWARD[myPlan]?.[p]||0) : 0;
     if(isActive && amt>0) await creditOnce(user.uid,uid,amt,myPlan,p);
 
-    let badge = '<span class="badge inactive">Inactive</span>';
+    let badge = '<span class="badge inactive">Pending</span>';
     if(isActive && amt>0) badge = '<span class="badge paid">Paid</span>';
 
     rows.push(`<tr><td>${d.username||'-'}</td><td>${p}</td><td>₦${amt}</td><td>${badge}</td></tr>`);
@@ -185,5 +183,6 @@ onAuthStateChanged(auth, async user=>{
   };
 });
 </script>
+
 </body>
 </html>
