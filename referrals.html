@@ -34,6 +34,7 @@
 
     .btn{margin-top:10px;padding:10px 14px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
     .btn-transfer{background:linear-gradient(90deg,#ffd166,#ff7a7a);color:#231004}
+    .btn-copy{background:linear-gradient(90deg,#2fe0b8,#7a5fff);color:#041219}
 
     table{width:100%;border-collapse:collapse;margin-top:22px}
     th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
@@ -41,7 +42,6 @@
 
     .badge{padding:4px 10px;border-radius:999px;font-size:.7rem;font-weight:700}
     .inactive{background:rgba(255,255,255,.1)}
-    .pending{background:linear-gradient(90deg,#facc15,#fb923c);color:#231a04}
     .paid{background:linear-gradient(90deg,#2fe0b8,#22c55e);color:#04231a}
 
     footer{text-align:center;padding:18px;color:var(--muted)}
@@ -58,6 +58,7 @@
       <h3>Referral Balance</h3>
       <div class="big" id="rb">₦0</div>
       <button class="btn btn-transfer" id="transferBtn">Transfer to Main Balance</button>
+      <button class="btn btn-copy" id="copyLinkBtn">Copy Referral Link</button>
     </div>
   </div>
 
@@ -84,15 +85,17 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+/* --- PLAN LOGIC --- */
 const ACTIVE = ['bronze','silver'];
+const EFFECTIVE_PLAN = p => ['gold','platinum'].includes((p||'').toLowerCase()) ? 'silver' : (p||'basic').toLowerCase();
+
 const REWARD = {
   basic:{ bronze:300, silver:600 },
   bronze:{ bronze:500, silver:1000 },
   silver:{ bronze:700, silver:1400 }
 };
-const REF_FIELDS = ['referral','referralCode','ref','referrer','referredBy','referred_by','invitedBy','sponsor'];
 
-const norm = p => (p||'basic').toLowerCase();
+const REF_FIELDS = ['referral','referralCode','ref','referrer','referredBy','referred_by','invitedBy','sponsor'];
 
 async function getRefs(code){
   const m = new Map();
@@ -129,8 +132,15 @@ onAuthStateChanged(auth, async user=>{
 
   document.getElementById('rb').textContent = '₦'+Number(me.referralBalance||0).toLocaleString('en-NG');
 
-  const myPlan = norm(me.plan);
+  const myPlan = EFFECTIVE_PLAN(me.plan);
   const myCode = (me.username || user.email.split('@')[0]).toString();
+
+  // Copy referral link (hidden but usable)
+  const refLink = `https://beni-wealth.github.io/Beni-Wealth/register.html?ref=${encodeURIComponent(myCode)}`;
+  document.getElementById('copyLinkBtn').onclick = async ()=>{
+    await navigator.clipboard.writeText(refLink);
+    alert('Referral link copied');
+  };
 
   const refs = await getRefs(myCode);
 
@@ -139,7 +149,7 @@ onAuthStateChanged(auth, async user=>{
 
   for(const [uid,d] of refs){
     total++;
-    const p = norm(d.plan);
+    const p = (d.plan||'basic').toLowerCase();
     const isActive = ACTIVE.includes(p);
     if(isActive) active++;
 
