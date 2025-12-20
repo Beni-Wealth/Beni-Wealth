@@ -7,11 +7,9 @@
   <title>My Referrals — Beni-Wealth</title>
 
   <!-- Poppins (Beni-Wealth standard) -->
-
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
   <!-- Favicons & theme-color (Beni-Wealth standard) -->
-
   <link rel="icon" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" />
   <meta name="theme-color" content="#2fe0b8" />
 
@@ -25,7 +23,7 @@
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);min-height:100vh}
-    header{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.05)}
+    header{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.05)}
     .brand{font-weight:700;font-size:1.1rem}
     .wrap{max-width:1100px;margin:20px auto;padding:0 18px}
     .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
@@ -35,6 +33,7 @@
     .btn{margin-top:10px;padding:10px 14px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
     .btn-transfer{background:linear-gradient(90deg,#ffd166,#ff7a7a);color:#231004}
     .btn-copy{background:linear-gradient(90deg,#2fe0b8,#7a5fff);color:#041219}
+    .btn-back{background:linear-gradient(90deg,#7a5fff,#2fe0b8);color:#041219}
     table{width:100%;border-collapse:collapse;margin-top:22px}
     th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
     th{font-size:.75rem;color:var(--muted);text-transform:uppercase}
@@ -46,7 +45,11 @@
 
 </head>
 <body>
-<header><div class="brand">Beni-Wealth — My Referrals</div></header>
+
+<header>
+  <button class="btn btn-back" id="backBtn">← Back</button>
+  <div class="brand">Beni-Wealth — My Referrals</div>
+</header>
 
 <div class="wrap">
   <div class="cards">
@@ -147,14 +150,13 @@ onAuthStateChanged(auth, async user=>{
   for(const [uid,d] of refs){
     total++;
     const p = (d.plan||'basic').toLowerCase();
-    const wasBasic = p !== 'basic';
     const isActive = ACTIVE.includes(p);
     if(isActive) active++;
 
-    const amt = wasBasic ? (REWARD[myPlan]?.[p]||0) : 0;
+    const amt = REWARD[myPlan]?.[p]||0;
     if(isActive && amt>0) await creditOnce(user.uid,uid,amt,myPlan,p);
 
-    let badge = '<span class="badge inactive">Pending</span>';
+    let badge = '<span class="badge inactive">Inactive</span>';
     if(isActive && amt>0) badge = '<span class="badge paid">Paid</span>';
 
     rows.push(`<tr><td>${d.username||'-'}</td><td>${p}</td><td>₦${amt}</td><td>${badge}</td></tr>`);
@@ -181,6 +183,8 @@ onAuthStateChanged(auth, async user=>{
     alert('Transfer successful');
     location.reload();
   };
+
+  document.getElementById('backBtn').onclick = ()=> location.href = 'dashboard.html';
 });
 </script>
 
