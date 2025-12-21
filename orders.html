@@ -4,18 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Adverts — Beni-Wealth</title>
+
+  <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
+
+  <!-- Favicons & theme-color -->
   <link rel="icon" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" />
   <meta name="theme-color" content="#2fe0b8">
+
   <style>
-    :root{
-      --bg1:#060511; --bg2:#0f0920;
-      --muted: rgba(255,255,255,0.62);
-      --text: #eaf2ff;
-      --accent-start:#2fe0b8; --accent-end:#7a5fff;
-      --card: rgba(255,255,255,0.02);
-      --radius:12px;
-    }
+    /* Same theme as before */
+    :root{--bg1:#060511;--bg2:#0f0920;--muted:rgba(255,255,255,0.62);--text:#eaf2ff;--accent-start:#2fe0b8;--accent-end:#7a5fff;--card:rgba(255,255,255,0.02);--radius:12px;}
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text)}
     .shell{max-width:1200px;margin:20px auto;padding:20px}
@@ -38,39 +37,39 @@
     .pill.pending{background:#fff6d6;color:#6a4f00}
     .pill.approved{background:#bff0d9;color:#05461f}
     .pill.rejected{background:#ffd6d6;color:#6a0000}
+
+    /* Details overlay */
     .details-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);z-index:999;padding:22px}
-    .details-panel{width:100%;max-width:800px;background:var(--bg1);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);color:var(--text);max-height:90vh;overflow:auto}
+    .details-panel{width:100%;max-width:850px;background:var(--bg1);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);max-height:90vh;overflow:auto}
     .closeX{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
     .sub-table{width:100%;border-collapse:collapse;margin-top:12px}
     .sub-table th, .sub-table td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.06);text-align:left;font-size:13px}
     .sub-table th{background:rgba(255,255,255,0.04);color:var(--text);font-weight:700}
-    .approve-btn{background:var(--accent-start);color:#041219;padding:6px 10px;border-radius:8px}
-    .reject-btn{background:#ff6b6b;color:#041219;padding:6px 10px;border-radius:8px}
+
+    /* Image viewer */
+    .img-viewer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.9);z-index:1001;padding:18px}
+    .viewer-img{max-width:90%;max-height:90%;border-radius:10px;object-fit:contain;cursor:pointer}
   </style>
 </head>
 <body>
-  <main class="shell">
 
+  <main class="shell">
     <header>
       <a class="back" href="dashboard.html">← Back</a>
-      <div>
-        <div class="brand">My Adverts</div>
-        <div class="muted">Search by title or advert ID</div>
-      </div>
+      <div class="brand">My Adverts</div>
     </header>
 
     <div class="toolbar">
-      <input id="search" class="search" placeholder="Search adverts by title or ID" />
+      <input id="search" class="search" placeholder="Search adverts by title or advert ID" />
       <button id="refresh" class="btn ghost">Refresh</button>
     </div>
 
     <div id="grid" class="grid" aria-live="polite">
       <div class="muted">Loading adverts…</div>
     </div>
-
   </main>
 
-  <!-- Details overlay -->
+  <!-- Submissions Overlay -->
   <div id="detailsOverlay" class="details-overlay">
     <div class="details-panel">
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -83,6 +82,9 @@
       <div id="subContainer"></div>
     </div>
   </div>
+
+  <!-- Image Viewer Overlay -->
+  <div id="imgViewer" class="img-viewer"><img id="viewerImg" class="viewer-img" src="" /></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -116,6 +118,10 @@ const advTitle = document.getElementById("advTitle");
 const advIdEl = document.getElementById("advId");
 const subContainer = document.getElementById("subContainer");
 const closeDetails = document.getElementById("closeDetails");
+const imgViewer = document.getElementById("imgViewer");
+const viewerImg = document.getElementById("viewerImg");
+
+function partial(str){ return str.slice(0,8) + "..."; }
 
 function renderGrid(filter=""){
   grid.innerHTML = "";
@@ -124,36 +130,32 @@ function renderGrid(filter=""){
   advertsMap.forEach(({id,data}) => {
     if(!data.title?.toLowerCase().includes(lower) && !id.toLowerCase().includes(lower)) return;
     any = true;
-
     const card = document.createElement("div");
     card.className="card";
-
     card.innerHTML = `
       <div class="card-head">
         <div>
-          <div class="title">${data.title||"Untitled"}</div>
-          <div class="id-copy" title="Click to copy ID" data-id="${id}">${id.slice(0,8)}…</div>
-          <div class="meta">${data.platform||""} • status: ${(data.status||"pending").toUpperCase()}</div>
+          <div class="title">${data.title}</div>
+          <div class="id-copy" data-id="${id}" title="Copy Advert ID">${partial(id)}</div>
+          <div class="meta">₦${data.unitPrice||0} • ${(data.status||"PENDING").toUpperCase()}</div>
         </div>
         <div><span class="pill ${data.status||"pending"}">${(data.status||"PENDING").toUpperCase()}</span></div>
       </div>
       <div class="actions">
         <button class="btn ghost view-btn" data-id="${id}">View Submissions</button>
       </div>`;
-
     grid.appendChild(card);
   });
   if(!any) grid.innerHTML="<div class='muted'>No adverts found</div>";
 }
 
 function attachAdvertListener(uid){
-  const col = collection(db,"advertise_tasks");
-  onSnapshot(col, snap => {
+  onSnapshot(collection(db,"advertise_tasks"), snap => {
     advertsMap.clear();
     snap.forEach(docSnap => {
       const d = docSnap.data();
       if(d.owner === uid){
-        advertsMap.set(docSnap.id,{id: docSnap.id, data:d});
+        advertsMap.set(docSnap.id,{id:docSnap.id,data:d});
       }
     });
     renderGrid(searchInput.value);
@@ -175,38 +177,40 @@ document.body.addEventListener("click", async e=>{
     alert("ID copied");
   }
   if(e.target.matches(".view-btn")){
-    const advertId = e.target.dataset.id;
-    openDetails(advertId);
+    openDetails(e.target.dataset.id);
   }
-});  
+  if(e.target.matches(".viewer-img")){
+    imgViewer.style.display="none";
+  }
+  if(e.target.matches(".thumb-img")){
+    viewerImg.src = e.target.dataset.src;
+    imgViewer.style.display="flex";
+  }
+});
 
 async function openDetails(adId){
   const advert = advertsMap.get(adId);
-  if(!advert) return;
-  advTitle.textContent = advert.data.title||"Untitled";
-  advIdEl.textContent = `(${adId})`;
-
+  advTitle.textContent = advert.data.title;
+  advIdEl.textContent = partial(adId);
   subContainer.innerHTML="<div class='muted'>Loading submissions…</div>";
 
-  const subQ = query(collection(db,"advert_submissions"), where("advertId","==", adId));
-  const snap = await getDocs(subQ);
-
+  const snap = await getDocs(query(collection(db,"advert_submissions"), where("advertId","==",adId)));
   if(snap.empty){
     subContainer.innerHTML="<div class='muted'>No submissions</div>";
   } else {
-    let html=`<table class='sub-table'><thead><tr><th>ID</th><th>User</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+    let html=`<table class='sub-table'><thead><tr><th>ID</th><th>User</th><th>Text Proof</th><th>Image</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
     snap.forEach(s=>{
-      const d = s.data();
-      const sid = s.id;
+      const d = s.data(), sid = s.id;
       html+=`<tr>
-        <td>${sid} <span class='id-copy' data-id='${sid}'>📋</span></td>
-        <td>${d.userId||""}</td>
-        <td>${d.status||""}</td>
+        <td>${partial(sid)} <span class='id-copy' data-id='${sid}'>📋</span></td>
+        <td>${partial(d.userId||"")}</td>
+        <td>${d.textProof||"<span class='muted'>No text</span>"}</td>
+        <td>${d.imageUrl?`<img src="${d.imageUrl}" class="thumb-img" data-src="${d.imageUrl}" style="width:60px;border-radius:6px;cursor:pointer">`:"<span class='muted'>No image</span>"}</td>
+        <td>${d.status}</td>
         <td>
-          <button class='approve-btn' data-id='${sid}' data-user='${d.userId||""}'>Approve</button>
+          <button class='approve-btn' data-id='${sid}' data-user='${d.userId||""}' data-price='${advert.data.unitPrice||0}'>Approve</button>
           <button class='reject-btn' data-id='${sid}'>Reject</button>
-        </td>
-      </tr>`;
+        </td></tr>`;
     });
     html+="</tbody></table>";
     subContainer.innerHTML=html;
@@ -221,20 +225,24 @@ subContainer.addEventListener("click", async e=>{
   if(e.target.matches(".approve-btn")){
     const sid = e.target.dataset.id;
     const uid = e.target.dataset.user;
+    const amount = Number(e.target.dataset.price||0);
     try {
       await runTransaction(db, async tx=>{
         const subRef = doc(db,"advert_submissions",sid);
         const subSnap = await tx.get(subRef);
-        if(!subSnap.exists()) throw "Submission not found";
-        if(subSnap.data().status!=="pending") throw "Not pending";
+        if(!subSnap.exists()) throw "Not found";
+        if(subSnap.data().status !== "pending") throw "Not pending";
 
         tx.update(subRef,{status:"approved",approvedAt:serverTimestamp()});
+
+        const userRef = doc(db,"users",uid);
+        const userSnap = await tx.get(userRef);
+        const curBal = Number(userSnap.data().balance||0);
+        tx.update(userRef,{balance:curBal+amount});
       });
-      alert("Approved");
-      openDetails(e.target.closest("button").dataset.id); // reload details
-    } catch(err){
-      alert("Approve failed: "+err);
-    }
+      alert("Approved & paid ₦"+amount);
+      openDetails(e.target.dataset.id); 
+    } catch(err){ alert("Approve failed: "+err); }
   }
   if(e.target.matches(".reject-btn")){
     const sid = e.target.dataset.id;
@@ -243,12 +251,11 @@ subContainer.addEventListener("click", async e=>{
         tx.update(doc(db,"advert_submissions",sid),{status:"rejected"});
       });
       alert("Rejected");
-      openDetails(e.target.closeDetails); // reload details
-    } catch(err){
-      alert("Reject failed: "+err);
-    }
+      openDetails(e.target.dataset.id);
+    } catch(err){ alert("Reject failed: "+err); }
   }
 });
 </script>
+
 </body>
 </html>
