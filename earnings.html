@@ -10,14 +10,6 @@
 
   <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, ptcs, blogs and shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
@@ -71,7 +63,7 @@
       </div>
     </header>
 
-    <div id="diag" class="diag">Starting…</div>
+    <div id="diag" class="diag">Loading your submissions…</div>
 
     <section class="controls">
       <input id="search" class="search" placeholder="Search by advert title, status or id" />
@@ -93,7 +85,9 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, query, where, orderBy, onSnapshot, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import {
+      getFirestore, collection, query, where, onSnapshot, getDocs, doc, getDoc
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     const firebaseConfig = {
@@ -102,7 +96,7 @@
       projectId: "beni-wealths",
       storageBucket: "beni-wealths.firebasestorage.app",
       messagingSenderId: "807950483822",
-      appId: "1:807950483822:web=e10fa87307e041c4d8417f"
+      appId: "1:80795082307e041c4d8417f"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -118,25 +112,115 @@
     const closeOverlay = document.getElementById('closeOverlay');
 
     let currentUser = null;
-    let submissions = [];
-    const advertCache = new Map();
+    let allSubs = [];
 
-    function escapeHtml(s){return String(s||'').replace(/[&<>]/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;' }[m])[m]);}
-    function niceDate(ts){try{if(!ts)return '-'; if(ts.toDate) ts=ts.toDate(); return new Date(ts).toLocaleString();}catch{return '-';}
+    function escapeHtml(s){return String(s||'').replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
+    function niceDate(ts){try{if(!ts)return '-'; if(ts.toDate) ts=ts.toDate(); return new Date(ts).toLocaleString();}catch{return '-';}}
 
-    function render(items){
-      submissions = items.slice().sort((a,b)=> {
-        const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-        const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-        return bTime - aTime;
-      });
+    function render(list){
       const q = (searchEl.value||'').toLowerCase();
-      const filtered = submissions.filter(it=>!q || (it.advertTitle||'').toLowerCase().includes(q) || (it.status||'').toLowerCase().includes(q) || it.id.includes(q));
-      if(!filtered.length){ listEl.innerHTML='<div class="empty">No submissions found.</div>'; return; }
-      listEl.innerHTML=''; filtered.forEach(it=>{/* ... unchanged rendering ... */});
+      const sorted = [...list].sort((a,b) => {
+        const at = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const bt = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return bt - at;
+      }).filter(it => !q || (it.advertTitle||'').toLowerCase().includes(q) || (it.status||'').toLowerCase().includes(q) || it.id.toLowerCase().includes(q));
+
+      if(sorted.length === 0){
+        listEl.innerHTML = '<div class="empty">No submissions found.</div>';
+        return;
+      }
+
+      listEl.innerHTML = '';
+      sorted.forEach(it => {
+        const row = document.createElement('div');
+        row.className = 'item';
+        row.innerHTML = `
+          <div>
+            <div class="title">${escapeHtml(it.advertTitle||'(no title)')}</div>
+            <div class="meta">Submitted: ${niceDate(it.createdAt)} • ID: <code>${escapeHtml(it.id)}</code></div>
+            <div class="proof">${escapeHtml(it.textProof||'')}</div>
+          </div>
+          <div style="text-align:right">
+            ${it.imageUrl?`<img class="thumb" src="${it.imageUrl}" />`:''}
+            <div class="status ${it.status}">${escapeHtml(it.status||'PENDING').toUpperCase()}</div>
+            <div class="small">Advert ID: <code>${escapeHtml(it.advertId||'')}</code></div>
+          </div>`;
+        if(it.imageUrl){
+          row.querySelector('img').onclick = () => openOverlay(it);
+        }
+        listEl.appendChild(row);
+      });
     }
 
-    /* rest of script unchanged except render() now sorts first */
+    function openOverlay(it){
+      overlayContent.innerHTML = `
+        <h2>${escapeHtml(it.advertTitle||'')}</h2>
+        <div class="small">Submission ID: ${escapeHtml(it.id)} • Advert ID: ${escapeHtml(it.advertId)}</div>
+        <p class="small">Status: <strong>${escapeHtml(it.status||'pending')}</strong></p>
+        <div>${escapeHtml(it.textProof||'')}</div>
+        ${it.imageUrl?`<img class="viewerImg" src="${it.imageUrl}" />`:''}
+      `;
+      overlay.style.display='flex';
+    }
+
+    closeOverlay.onclick=()=>{overlay.style.display='none';};
+    overlay.onclick=e=>{if(e.target===overlay) overlay.style.display='none';};
+
+    async function loadSubs(uid){
+      diag.textContent='Loading submissions…';
+      allSubs = [];
+      const subQ = query(collection(db,'advert_submissions'),where('userId','==',uid));
+      const snap = await getDocs(subQ);
+      if(snap.empty){
+        diag.textContent='No submissions found.';
+        listEl.innerHTML = '<div class="empty">No submissions found.</div>';
+        return;
+      }
+      const advertTitles = new Map();
+      for(const d of snap.docs){
+        const data = d.data();
+        const item = {
+          id: d.id,
+          advertId: data.advertId || '',
+          textProof: data.textProof || '',
+          imageUrl: data.imageUrl || '',
+          status: (data.status||'pending').toLowerCase(),
+          createdAt: data.createdAt || null
+        };
+        allSubs.push(item);
+      }
+
+      // Fetch advert titles
+      const adsToFetch = [...new Set(allSubs.map(it=>it.advertId).filter(x=>x))];
+      for(const aid of adsToFetch){
+        try{
+          const advertSnap = await getDoc(doc(db,'advertise_tasks',aid));
+          if(advertSnap.exists()){
+            advertTitles.set(aid, advertSnap.data().title || '');
+          }
+        }catch{}
+      }
+
+      allSubs.forEach(it=>{
+        it.advertTitle = advertTitles.get(it.advertId) || '';
+      });
+
+      diag.textContent='Showing submissions';
+      render(allSubs);
+    }
+
+    onAuthStateChanged(auth, user=>{
+      if(!user){
+        diag.textContent='Please sign in to view submissions';
+        listEl.innerHTML='<div class="empty">Please sign in.</div>';
+        return;
+      }
+      currentUser = user;
+      loadSubs(user.uid);
+    });
+
+    refreshBtn.onclick=()=>{ if(currentUser) loadSubs(currentUser.uid); };
+    searchEl.oninput=()=> render(allSubs);
   </script>
 </body>
 </html>
