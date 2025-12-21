@@ -1,11 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Tasks — Beni-Wealth</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <meta name="theme-color" content="#2fe0b8">
+
   <style>
     /* ================== BASE STYLES (unchanged) ================== */
     :root{
@@ -57,6 +58,7 @@
     #taskViewer{
       position:fixed;inset:0;background:var(--bg-2);z-index:3000;
       overflow:auto;padding:20px;display:none;
+      /* larger container on desktop */
       max-width:800px; margin:auto; left:0; right:0;
     }
     #viewerBack{margin-bottom:14px;}
@@ -73,7 +75,12 @@
     #viewerProofText{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
                      background:rgba(255,255,255,0.01);color:var(--text);resize:none;margin-top:6px;}
     #viewerProofStatus{margin-top:8px;color:var(--muted);font-size:12px;}
+
+    @media(min-width:900px){
+      body{padding:30px;}
+    }
   </style>
+
 </head>
 <body>
 
@@ -114,11 +121,9 @@
     <hr style="margin:18px 0;border-color:rgba(255,255,255,0.04)">
 
     <div>
-      <div class="small" style="font-weight:700;margin-bottom:6px">Submit Proof (Both Required)</div>
-      <label class="small">Text proof</label>
-      <textarea id="viewerProofText" rows="4" placeholder="Paste text proof"></textarea>
-      <label class="small" style="margin-top:6px">Image proof</label>
-      <input id="viewerProofImage" type="file" accept="image/*">
+      <div class="small" style="font-weight:700;margin-bottom:6px">Submit Proof</div>
+      <textarea id="viewerProofText" rows="4" placeholder="Text proof (link, screenshot text, explanation)"></textarea>
+      <input id="viewerProofImage" type="file" accept="image/*" style="margin-top:6px">
       <button id="viewerSubmitProofBtn" class="btn" style="margin-top:10px">Submit Proof</button>
       <div id="viewerProofStatus"></div>
     </div>
@@ -174,6 +179,7 @@
     let currentUser = null;
     let advertsListenerUnsub = null;
     const advertsCache = new Map();
+
     let activeTaskId = null;
 
     function formatNGN(n){ try { return '₦'+Math.round(n).toLocaleString('en-NG'); } catch { return '₦'+n; }}
@@ -190,11 +196,31 @@
       await addDoc(collection(db,'advert_submissions'),{advertId,userId:currentUser.uid,textProof:text,imageUrl:imageUrl,status:'pending',createdAt:serverTimestamp()});
     }
 
-    function renderAdvertCard(ad){ /* … same as before … */ }
+    function renderAdvertCard(ad){
+      const card=document.createElement('div'); card.className='card';
+      const thumb=document.createElement('img'); thumb.className='thumb'; thumb.src=ad.data.thumbnail||''; if(!ad.data.thumbnail) thumb.style.display='none';
+      const body=document.createElement('div'); body.className='card-body';
+      const h3=document.createElement('h3'); h3.textContent=ad.data.title||'';
+      const meta=document.createElement('div'); meta.className='meta'; meta.innerHTML=`<div>${ad.data.platform||''}</div><div class="price">${formatNGN(Math.round(deriveUnitPrice(ad.data)*0.7))}</div>`;
+      const btn=document.createElement('button'); btn.className='btn'; btn.textContent='Open Task'; btn.addEventListener('click',()=>openFullPageTask(ad.id));
+      body.append(h3,meta,btn); card.append(thumb,body); return card;
+    }
 
-    function rebuildGrid(){ /* … same as before … */ }
+    function rebuildGrid(){ const q=(search.value||'').toLowerCase(); grid.innerHTML=''; let any=false;
+      advertsCache.forEach(ad=>{
+        const hay=((ad.data.title||'')+' '+(ad.data.platform||'')).toLowerCase();
+        if(q && !hay.includes(q)) return;
+        const node=renderAdvertCard(ad); if(node){grid.append(node);any=true;}
+      });
+      if(!any) grid.innerHTML='<div class="empty">No tasks found</div>';
+    }
 
-    function startAdvertsListener(){ /* … same as before … */ }
+    function startAdvertsListener(){
+      if(advertsListenerUnsub) advertsListenerUnsub();
+      advertsCache.clear(); grid.innerHTML='<div class="empty">Loading tasks…</div>';
+      const q= query(collection(db,'advertise_tasks'),where('status','==','approved'));
+      advertsListenerUnsub=onSnapshot(q,snap=>{advertsCache.clear(); snap.forEach(d=>advertsCache.set(d.id,{id:d.id,data:d.data()})); rebuildGrid();},()=>grid.innerHTML='<div class="empty">Failed to load</div>');
+    }
 
     onAuthStateChanged(auth,u=>{currentUser=u; startAdvertsListener();});
     refresh.addEventListener('click',startAdvertsListener);
@@ -207,7 +233,10 @@
       viewerTitle.textContent=data.title||''; viewerPlatform.textContent=data.platform||''; viewerPrice.textContent=formatNGN(Math.round(deriveUnitPrice(data)*0.7));
       viewerDesc.textContent=data.description||'';
       viewerLink.href=data.taskLink||data.task_link||'#'; viewerLink.textContent=viewerLink.href;
-      if(data.thumbnail){ viewerThumbSmall.src=data.thumbnail; viewerThumbSmall.style.display='block'; } else viewerThumbSmall.style.display='none';
+
+      if(data.thumbnail){ viewerThumbSmall.src=data.thumbnail; viewerThumbSmall.style.display='block'; }
+      else viewerThumbSmall.style.display='none';
+
       taskViewer.style.display='block';
       history.pushState({task:true,id},'',location.pathname+'?id='+id);
     }
@@ -220,25 +249,27 @@
     viewerThumbSmall.addEventListener('click',()=>{
       if(viewerThumbSmall.src){ largeImgView.src=viewerThumbSmall.src; largeImgOverlay.style.display='flex'; }
     });
+
     largeImgOverlay.addEventListener('click',()=>{ largeImgOverlay.style.display='none'; });
 
     viewerSubmitProofBtn.addEventListener('click',async()=>{
-      if(!currentUser){ viewerProofStatus.textContent='Sign‑in required.'; return; }
-      const t=viewerProofText.value.trim(); const f=viewerProofImage.files[0];
-      if(!t || !f){ viewerProofStatus.textContent='Both text AND image proof are required.'; return; }
+      if(!currentUser){ viewerProofStatus.textContent='Sign in required'; return; }
+      const t=viewerProofText.value.trim(), f=viewerProofImage.files[0];
+      if(!t && !f){ viewerProofStatus.textContent='Provide text or image'; return; }
       viewerSubmitProofBtn.disabled=true; viewerProofStatus.textContent='Submitting…';
-      try{ const img=await uploadImgur(f); await submitProof(activeTaskId,t,img); viewerProofStatus.textContent='Submitted (pending review).'; }
-      catch{ viewerProofStatus.textContent='Submission failed.'; }
+      try{ let img=null; if(f) img=await uploadImgur(f); await submitProof(activeTaskId,t,img); viewerProofStatus.textContent='Submitted (pending review)'; }
+      catch{ viewerProofStatus.textContent='Failed to submit'; }
       viewerSubmitProofBtn.disabled=false;
     });
 
-    window.addEventListener('popstate',(e)=>{ if(!e.state?.task) taskViewer.style.display='none'; });
+    window.addEventListener('popstate',e=>{ if(!e.state?.task) taskViewer.style.display='none'; });
 
     window.addEventListener('load',()=>{
       startAdvertsListener();
       const id=new URL(location.href).searchParams.get('id');
       if(id) openFullPageTask(id);
     });
+
   </script>
 </body>
 </html>
