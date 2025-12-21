@@ -5,42 +5,73 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin — Advert Submissions</title>
 
-  <!-- Poppins + Favicons & Social preview -->
+  <!-- Poppins + Favicons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
-    /* (Your existing styles unchanged) */
-    :root{--bg1:#0b0613;--bg2:#0f0820;--muted:rgba(255,255,255,0.64);--text:#eaf2ff;--accent-start:#2fe0b8;--accent-end:#7a5fff;--card:rgba(255,255,255,0.02);--radius:12px;}
-    *{box-sizing:border-box}html,body{height:100%;margin:0;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);}
+    :root{
+      --bg1:#0b0613; --bg2:#0f0820;
+      --muted: rgba(255,255,255,0.64);
+      --text: #eaf2ff;
+      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --card: rgba(255,255,255,0.02);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
     .wrap{max-width:1100px;margin:20px auto;padding:20px}
     header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-    .brand{display:flex;align-items:center;gap:12px}
     .title{font-weight:800}
     .muted{color:var(--muted);font-size:13px}
     .card{background:var(--card);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03)}
     .controls{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-    .search{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.005));color:var(--text)}
+    .search{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));color:var(--text)}
     .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
     table{width:100%;border-collapse:collapse;min-width:900px}
     thead th{position:sticky;top:0;background:rgba(255,255,255,0.08);padding:12px;text-align:left;font-weight:700}
     tbody td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.02)}
-    .small{font-size:13px;color:var(--muted)}
     .pill{padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
     .pill.pending{background:#fff7d9;color:#6a4f00}
     .pill.approved{background:#bff0d9;color:#043f20}
     .pill.rejected{background:#ffdede;color:#6b0b0b}
-    /* Viewer overlay */
-    .viewer-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:20px}
-    .viewer{width:980px;max-width:calc(100% - 40px);background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:16px;color:var(--text)}
+
+    /* overlay viewer */
+    .viewer-backdrop{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.7);
+      z-index:9999;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .viewer{
+      max-width:980px;
+      width:90%;
+      background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
+      border-radius:12px;
+      padding:18px;
+      position:relative;
+    }
+
+    /* image proof size */
+    #vProofImg{
+      max-width: 100%;
+      max-height: 300px;     /* limit height */
+      object-fit: contain;
+      display:block;
+      margin-top:12px;
+      border-radius:8px;
+    }
   </style>
 </head>
 <body>
   <main class="wrap">
     <header>
-      <div class="brand"><div class="title">Beni-Wealth — Admin: Advert Submissions</div></div>
+      <div class="title">Beni-Wealth — Admin: Advert Submissions</div>
       <div class="muted" id="authInfo">Checking auth…</div>
     </header>
 
@@ -48,42 +79,35 @@
       <div class="controls">
         <input id="q" class="search" placeholder="Search advert id or userId" />
         <button id="refreshBtn" class="btn ghost">Refresh</button>
-        <div style="margin-left:auto" id="count" class="small">—</div>
+        <div style="margin-left:auto" id="count" class="muted">—</div>
       </div>
 
-      <div class="table-wrap card">
-        <table aria-live="polite">
-          <thead><tr><th>Advert id</th><th>UserId</th><th>Amount (₦)</th><th>Created</th><th>Approved at</th><th>Proof</th><th>Text proof</th><th>Status</th><th></th></tr></thead>
-          <tbody id="tbody"><tr><td colspan="9" class="small muted">Loading submissions…</td></tr></tbody>
+      <div class="card">
+        <table>
+          <thead><tr><th>Advert id</th><th>UserId</th><th>Amount</th><th>Created</th><th>Approved</th><th>Proof</th><th>Text</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tbody"><tr><td colspan="9" class="muted">Loading submissions…</td></tr></tbody>
         </table>
       </div>
     </section>
-
-    <footer class="small muted">© <span id="year"></span> Beni-Wealth</footer>
   </main>
 
-  <!-- Submission detail viewer -->
+  <!-- viewer -->
   <div id="viewerBackdrop" class="viewer-backdrop">
     <div class="viewer">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div id="vTitle" class="title">Submission</div>
-        <button id="vClose" class="btn ghost">Close</button>
-      </div>
-      <div>
-        <div><strong>User:</strong> <span id="vUser"></span></div>
-        <div><strong>UID:</strong> <span id="vUid"></span></div>
-        <div><strong>Amount:</strong> <span id="vAmount"></span></div>
-        <div><strong>Created:</strong> <span id="vCreated"></span></div>
-        <div><strong>Approved at:</strong> <span id="vApproved"></span></div>
-        <div><strong>Status:</strong> <span id="vStatus"></span></div>
-      </div>
-      <img id="vProofImg" style="width:100%;margin-top:10px;border-radius:8px">
+      <button id="vClose" class="btn ghost" style="position:absolute;top:12px;right:12px;">Close</button>
+      <div><strong>User:</strong> <span id="vUser"></span></div>
+      <div><strong>UID:</strong> <span id="vUid"></span></div>
+      <div><strong>Amount:</strong> <span id="vAmount"></span></div>
+      <div><strong>Created:</strong> <span id="vCreated"></span></div>
+      <div><strong>Approved at:</strong> <span id="vApproved"></span></div>
+      <div><strong>Status:</strong> <span id="vStatus"></span></div>
+      <img id="vProofImg" src="" alt="Proof"/>
       <div><strong>Text proof:</strong> <span id="vTextProof"></span></div>
-      <div style="margin-top:10px">
+      <div style="margin-top:12px">
         <button id="approveBtn" class="btn">Approve</button>
         <button id="rejectBtn" class="btn ghost">Reject</button>
       </div>
-      <div id="vNote" class="small muted"></div>
+      <div id="vNote" class="muted" style="margin-top:8px"></div>
     </div>
   </div>
 
@@ -91,17 +115,16 @@
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, collection, query, orderBy, onSnapshot,
-      runTransaction, doc, serverTimestamp
+      getFirestore, collection, query, orderBy, onSnapshot, runTransaction, doc, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
       projectId: "beni-wealths",
     };
     if (!getApps().length) initializeApp(firebaseConfig);
+
     const auth = getAuth();
     const db = getFirestore();
 
@@ -126,22 +149,20 @@
 
     let submissions = [];
 
-    function fmtDate(v) {
-      try { if (!v) return '-'; if (typeof v.toDate === 'function') return v.toDate().toLocaleString(); return new Date(v).toLocaleString(); }
-      catch { return '-'; }
+    function fmtDate(v){
+      try{ if(!v) return '-'; if(typeof v.toDate==='function') return v.toDate().toLocaleString(); return new Date(v).toLocaleString(); }
+      catch{return '-';}
     }
 
-    function renderTable() {
+    function renderTable(){
       const ql = (qInput.value||'').trim().toLowerCase();
-      const list = submissions.filter(s => {
-        const id = s.id.toLowerCase();
-        const uid = (s.data.userId||'').toLowerCase();
-        return !ql || id.includes(ql) || uid.includes(ql);
+      const list = submissions.filter(s=>{
+        return !ql || s.id.toLowerCase().includes(ql) || (s.data.userId||'').toLowerCase().includes(ql);
       });
       countEl.textContent = `${list.length} submission${list.length===1?'':'s'}`;
 
-      if (!list.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="small muted">No submissions found</td></tr>';
+      if(!list.length){
+        tbody.innerHTML = '<tr><td colspan="9" class="muted">No submissions</td></tr>';
         return;
       }
 
@@ -151,138 +172,106 @@
         return `<tr data-id="${s.id}">
           <td>${s.id}</td>
           <td>${d.userId||''}</td>
-          <td>₦${Number(d.paidAmount||0).toLocaleString('en-NG')}</td>
+          <td>₦${Number(d.paidAmount||0).toLocaleString()}</td>
           <td>${fmtDate(d.createdAt)}</td>
           <td>${fmtDate(d.approvedAt)}</td>
-          <td>${d.imageUrl ? 'Has Image' : '-'}</td>
+          <td>${d.imageUrl? 'Yes':''}</td>
           <td>${d.textProof||'-'}</td>
           <td><span class="pill ${status}">${status.toUpperCase()}</span></td>
           <td><button class="btn ghost viewBtn">Details</button></td>
         </tr>`;
       }).join('');
 
-      document.querySelectorAll('.viewBtn').forEach(btn => btn.addEventListener('click', e => openViewer(e.target.closest('tr').dataset.id)));
+      document.querySelectorAll('.viewBtn').forEach(b=>b.addEventListener('click', e=>openViewer(e.target.closest('tr').dataset.id)));
     }
 
-    function openViewer(id) {
-      const sel = submissions.find(x => x.id === id);
-      if (!sel) return;
-      const d = sel.data || {};
-      vUser.textContent = d.userId || '-';
-      vUid.textContent = d.userId || '-';
-      vAmount.textContent = '₦' + Number(d.paidAmount||0).toLocaleString('en-NG');
+    function openViewer(id){
+      const sel = submissions.find(x=>x.id===id);
+      if(!sel) return;
+      const d=sel.data||{};
+      vUser.textContent = d.userId||'-';
+      vUid.textContent = d.userId||'-';
+      vAmount.textContent = "₦"+Number(d.paidAmount||0).toLocaleString();
       vCreated.textContent = fmtDate(d.createdAt);
       vApproved.textContent = fmtDate(d.approvedAt);
       vStatus.textContent = (d.status||'PENDING').toUpperCase();
-      vProofImg.src = d.imageUrl || '';
-      vTextProof.textContent = d.textProof || '-';
-
-      viewerBackdrop.style.display = 'flex';
+      vProofImg.src = d.imageUrl||'';
+      vTextProof.textContent = d.textProof||'-';
+      viewerBackdrop.style.display = "flex";
       viewerBackdrop.dataset.selId = id;
     }
 
-    vClose.addEventListener('click', () => { viewerBackdrop.style.display = ''; });
+    // close on clicking outside viewer
+    viewerBackdrop.addEventListener('click', e=>{
+      if(e.target===viewerBackdrop){
+        viewerBackdrop.style.display="none";
+      }
+    });
 
-    approveBtn.addEventListener('click', async () => {
+    vClose.addEventListener('click', ()=>{ viewerBackdrop.style.display="none"; });
+
+    approveBtn.addEventListener('click', async ()=>{
       const selId = viewerBackdrop.dataset.selId;
-      if (!selId) return;
-      if (!confirm('Approve and credit user?')) return;
-      approveBtn.disabled = true;
-
-      try {
-        const subRef = doc(db, 'advert_submissions', selId);
-
-        await runTransaction(db, async tx => {
+      if(!selId) return;
+      if(!confirm("Approve and credit user?")) return;
+      approveBtn.disabled=true;
+      try{
+        const subRef = doc(db,'advert_submissions',selId);
+        await runTransaction(db, async tx=>{
           const subSnap = await tx.get(subRef);
-          if (!subSnap.exists()) throw new Error('Submission not found');
-          const data = subSnap.data() || {};
-          const userId = data.userId || '';
-          const oldStatus = (data.status||'').toLowerCase();
+          if(!subSnap.exists()) throw new Error("Submission missing");
+          const data = subSnap.data()||{};
+          const userId = data.userId||"";
           const oldAmt = Number(data.paidAmount||0);
-
-          const plan = (data.userPlan||'').toLowerCase();
-          const payoutRate = plan === 'bronze'?0.6:0.8;
-          const newAmt = Math.round(Number(data.unitPrice||0)*payoutRate);
-
+          const plan = (data.userPlan||"").toLowerCase();
+          const newAmt = Math.round(Number(data.unitPrice||0)*(plan==="bronze"?0.6:0.8));
           let oldBal = 0;
-          if (userId) {
-            const userRefR = doc(db,'users',userId);
-            const userSnap = await tx.get(userRefR);
+          if(userId){
+            const userSnap = await tx.get(doc(db,'users',userId));
             oldBal = Number(userSnap.data()?.balance||0);
           }
-
           tx.update(subRef,{status:'approved',approvedAt:serverTimestamp(),paidAmount:newAmt});
-
-          if (userId) {
-            const userRefW = doc(db,'users',userId);
-            tx.update(userRefW,{balance:oldBal - oldAmt + newAmt});
-          }
+          if(userId) tx.update(doc(db,'users',userId),{balance:oldBal - oldAmt + newAmt});
         });
-
-        alert('Approved & balance updated');
         renderTable();
-      } catch (e) {
-        alert('Approve failed: '+(e.message||e));
-      } finally {
-        approveBtn.disabled = false;
-      }
+      }catch(e){ console.error(e); alert("Approve failed: "+(e.message||e)); }
+      finally{ approveBtn.disabled=false; }
     });
 
-    rejectBtn.addEventListener('click', async () => {
+    rejectBtn.addEventListener('click', async ()=>{
       const selId = viewerBackdrop.dataset.selId;
-      if (!selId) return;
-      if (!confirm('Reject submission?')) return;
-      rejectBtn.disabled = true;
-
-      try {
-        const subRef = doc(db, 'advert_submissions', selId);
-
-        await runTransaction(db, async tx => {
+      if(!selId) return;
+      if(!confirm("Reject this submission?")) return;
+      rejectBtn.disabled=true;
+      try{
+        const subRef = doc(db,'advert_submissions',selId);
+        await runTransaction(db, async tx=>{
           const subSnap = await tx.get(subRef);
-          if (!subSnap.exists()) throw new Error('Submission not found');
-          const data = subSnap.data() || {};
-          const oldStatus = (data.status||'').toLowerCase();
-          const oldAmt = Number(data.paidAmount||0);
-          const userId = data.userId||''
-
-          let oldBal = 0;
-          if (userId) {
-            const userRefR = doc(db,'users',userId);
-            const userSnap = await tx.get(userRefR);
-            oldBal = Number(userSnap.data()?.balance||0);
+          if(!subSnap.exists()) throw new Error("Missing");
+          const data=subSnap.data()||{};
+          const userId=data.userId||"";
+          const oldStatus=(data.status||"").toLowerCase();
+          const oldAmt=Number(data.paidAmount||0);
+          let oldBal=0;
+          if(userId){
+            const userSnap=await tx.get(doc(db,'users',userId));
+            oldBal=Number(userSnap.data()?.balance||0);
           }
-
           tx.update(subRef,{status:'rejected',approvedAt:null});
-
-          if (userId && oldStatus==='approved' && oldAmt>0) {
-            const userRefW = doc(db,'users',userId);
-            tx.update(userRefW,{balance:oldBal - oldAmt});
+          if(userId && oldStatus==="approved" && oldAmt>0){
+            tx.update(doc(db,'users',userId),{balance:oldBal-oldAmt});
           }
         });
-
-        alert('Rejected & balance updated if needed');
         renderTable();
-      } catch (e) {
-        alert('Reject failed: '+(e.message||e));
-      } finally {
-        rejectBtn.disabled = false;
-      }
+      }catch(e){ console.error(e); alert("Reject failed: "+(e.message||e)); }
+      finally{ rejectBtn.disabled=false; }
     });
 
-    refreshBtn.addEventListener('click', () => renderTable());
-    qInput.addEventListener('input', renderTable);
-
-    onAuthStateChanged(auth, user => {
-      authInfo.textContent = user ? user.email||user.uid : 'Not signed in';
+    onAuthStateChanged(auth, user=>{
+      authInfo.textContent = user? user.email||user.uid:"Not signed in";
       const q = query(collection(db,'advert_submissions'), orderBy('createdAt','desc'));
-      onSnapshot(q, snap => {
-        submissions = [];
-        snap.forEach(docSnap => submissions.push({id:docSnap.id, data:docSnap.data()}));
-        renderTable();
-      });
+      onSnapshot(q, snap=>{ submissions=[]; snap.forEach(d=>submissions.push({id:d.id,data:d.data()})); renderTable(); });
     });
-
-    document.getElementById('year').textContent = new Date().getFullYear();
   </script>
 </body>
 </html>
