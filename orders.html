@@ -4,14 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Adverts — Beni-Wealth</title>
-
-  <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & Theme -->
   <link rel="icon" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" />
   <meta name="theme-color" content="#2fe0b8">
-
   <style>
     :root{
       --bg1:#060511; --bg2:#0f0920;
@@ -33,7 +28,6 @@
     .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
-
     .card{background:var(--card);border-radius:var(--radius);padding:14px;border:1px solid rgba(255,255,255,0.04)}
     .card-head{display:flex;gap:8px;align-items:center;justify-content:space-between}
     .title{font-weight:700;font-size:1rem}
@@ -44,7 +38,6 @@
     .pill.pending{background:#fff6d6;color:#6a4f00}
     .pill.approved{background:#bff0d9;color:#05461f}
     .pill.rejected{background:#ffd6d6;color:#6a0000}
-
     .details-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);z-index:999;padding:22px}
     .details-panel{width:100%;max-width:800px;background:var(--bg1);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);color:var(--text);max-height:90vh;overflow:auto}
     .closeX{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
@@ -118,6 +111,11 @@ let currentUser = null;
 const grid = document.getElementById("grid");
 const searchInput = document.getElementById("search");
 const refreshBtn = document.getElementById("refresh");
+const detailsOverlay = document.getElementById("detailsOverlay");
+const advTitle = document.getElementById("advTitle");
+const advIdEl = document.getElementById("advId");
+const subContainer = document.getElementById("subContainer");
+const closeDetails = document.getElementById("closeDetails");
 
 function renderGrid(filter=""){
   grid.innerHTML = "";
@@ -154,7 +152,9 @@ function attachAdvertListener(uid){
     advertsMap.clear();
     snap.forEach(docSnap => {
       const d = docSnap.data();
-      if(d.owner === uid) advertsMap.set(docSnap.id,{id: docSnap.id, data:d});
+      if(d.owner === uid){
+        advertsMap.set(docSnap.id,{id: docSnap.id, data:d});
+      }
     });
     renderGrid(searchInput.value);
   });
@@ -169,6 +169,86 @@ onAuthStateChanged(auth,user=>{
 searchInput.oninput=()=> renderGrid(searchInput.value);
 refreshBtn.onclick=()=> renderGrid(searchInput.value);
 
+document.body.addEventListener("click", async e=>{
+  if(e.target.matches(".id-copy")){
+    await navigator.clipboard.writeText(e.target.dataset.id);
+    alert("ID copied");
+  }
+  if(e.target.matches(".view-btn")){
+    const advertId = e.target.dataset.id;
+    openDetails(advertId);
+  }
+});  
+
+async function openDetails(adId){
+  const advert = advertsMap.get(adId);
+  if(!advert) return;
+  advTitle.textContent = advert.data.title||"Untitled";
+  advIdEl.textContent = `(${adId})`;
+
+  subContainer.innerHTML="<div class='muted'>Loading submissions…</div>";
+
+  const subQ = query(collection(db,"advert_submissions"), where("advertId","==", adId));
+  const snap = await getDocs(subQ);
+
+  if(snap.empty){
+    subContainer.innerHTML="<div class='muted'>No submissions</div>";
+  } else {
+    let html=`<table class='sub-table'><thead><tr><th>ID</th><th>User</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+    snap.forEach(s=>{
+      const d = s.data();
+      const sid = s.id;
+      html+=`<tr>
+        <td>${sid} <span class='id-copy' data-id='${sid}'>📋</span></td>
+        <td>${d.userId||""}</td>
+        <td>${d.status||""}</td>
+        <td>
+          <button class='approve-btn' data-id='${sid}' data-user='${d.userId||""}'>Approve</button>
+          <button class='reject-btn' data-id='${sid}'>Reject</button>
+        </td>
+      </tr>`;
+    });
+    html+="</tbody></table>";
+    subContainer.innerHTML=html;
+  }
+
+  detailsOverlay.style.display="flex";
+}
+
+closeDetails.onclick=()=> detailsOverlay.style.display="none";
+
+subContainer.addEventListener("click", async e=>{
+  if(e.target.matches(".approve-btn")){
+    const sid = e.target.dataset.id;
+    const uid = e.target.dataset.user;
+    try {
+      await runTransaction(db, async tx=>{
+        const subRef = doc(db,"advert_submissions",sid);
+        const subSnap = await tx.get(subRef);
+        if(!subSnap.exists()) throw "Submission not found";
+        if(subSnap.data().status!=="pending") throw "Not pending";
+
+        tx.update(subRef,{status:"approved",approvedAt:serverTimestamp()});
+      });
+      alert("Approved");
+      openDetails(e.target.closest("button").dataset.id); // reload details
+    } catch(err){
+      alert("Approve failed: "+err);
+    }
+  }
+  if(e.target.matches(".reject-btn")){
+    const sid = e.target.dataset.id;
+    try {
+      await runTransaction(db, async tx=>{
+        tx.update(doc(db,"advert_submissions",sid),{status:"rejected"});
+      });
+      alert("Rejected");
+      openDetails(e.target.closeDetails); // reload details
+    } catch(err){
+      alert("Reject failed: "+err);
+    }
+  }
+});
 </script>
 </body>
 </html>
