@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Tasks — Beni-Wealth</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-  <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
-
   <style>
-    /* your existing styles here… (exactly the same as your original page) */
+    /* your exact original styling (unchanged) */
     :root{
       --bg-1: #0b0613;
       --bg-2: #0f0820;
@@ -42,56 +39,45 @@
       justify-content:center;
       align-items:flex-start;
     }
-    /* … rest of your existing CSS from the original page … */
+    /* rest of your original CSS: phone, controls, cards, buttons, etc. */
+    .phone { width:100%; max-width:var(--container-w); min-height:740px; border-radius:28px; padding:18px 18px 120px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); box-shadow: 0 18px 60px rgba(0,0,0,0.6); overflow:auto; position:relative; }
+    .top { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+    .back { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; text-decoration:none; color:var(--text); border:1px solid rgba(255,255,255,0.03); font-weight:600; font-size:13px; }
+    .title { font-size:17px; font-weight:800; letter-spacing:0.2px; }
+    .sub { color:var(--muted); font-size:12px; }
+    .controls { display:flex; gap:10px; align-items:center; margin:12px 0 18px; }
+    .search { flex:1; min-width:120px; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); background:rgba(255,255,255,0.01); color:var(--text); font-size:13px; }
+    .btn { padding:10px 12px; border-radius:12px; border:none; background: linear-gradient(90deg, var(--accent-b), var(--accent-a)); color:#041219; font-weight:700; cursor:pointer; font-size:13px; box-shadow: 0 8px 30px rgba(87,52,164,0.12); }
+    .btn.ghost { background: transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); box-shadow:none; }
+    .grid { display:grid; grid-template-columns: 1fr; gap:12px; }
+    .card { background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01)); border-radius:14px; padding:12px; border:1px solid rgba(255,255,255,0.03); display:flex; gap:12px; align-items:flex-start; box-shadow: 0 18px 50px rgba(0,0,0,0.45); }
+    .thumb { width:84px; height:84px; border-radius:10px; object-fit:cover; flex:0 0 84px; background: rgba(255,255,255,0.02); cursor:pointer; border:1px solid rgba(255,255,255,0.02); }
+    .card-body { flex:1; min-width:0; }
+    .card h3 { margin:0 0 6px 0; font-size:15px; font-weight:700; color:#eaf2ff; }
+    .meta { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; margin-bottom:8px; }
+    .price { font-weight:800; color:var(--accent-b); font-size:14px; }
+    .small { font-size:12px; color:var(--muted); }
+    .empty { padding:40px; text-align:center; color:var(--muted) }
 
-    /* Full Page Viewer Styles */
-    .viewer-page {
-      position: fixed;
-      inset: 0;
-      background: #071022;
-      z-index: 9999;
+    /* full page viewer */
+    #taskViewer {
+      position:fixed;
+      inset:0;
+      background: var(--bg-2);
+      z-index:3000;
       overflow:auto;
-      padding: 24px;
-      display: none;
+      padding:18px;
+      display:none;
     }
-    .viewer-header {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .viewer-back {
-      padding: 8px 12px;
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 8px;
-      cursor: pointer;
-      color: var(--muted);
-      background: transparent;
-    }
-    .viewer-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .viewer-content img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 12px;
-    }
-    .viewer-content a {
-      color: var(--accent-b);
-      text-decoration: underline;
-    }
-    .viewer-content .small {
-      color: var(--text);
-      margin-top: 8px;
-    }
+    #viewerBack { margin-bottom:12px; }
+    #viewerBack.btn.ghost { color:var(--muted); border-color:rgba(255,255,255,0.04); }
+    #viewerProofStatus { margin-top:8px; color:var(--muted); font-size:12px; }
+    #viewerProofText { width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); background:rgba(255,255,255,0.01); color:var(--text); resize:none; margin-top:6px; }
   </style>
 </head>
 <body>
 
-  <!-- main tasks UI -->
-  <div class="phone" role="main">
+  <div class="phone">
     <div class="top">
       <a class="back" href="dashboard.html">← Dashboard</a>
       <div style="text-align:right;flex:1">
@@ -105,30 +91,36 @@
       <button id="refresh" class="btn ghost">Refresh</button>
     </div>
 
-    <div id="grid" class="grid">
+    <div id="grid" class="grid" aria-live="polite">
       <div class="empty">Loading tasks…</div>
     </div>
   </div>
 
-  <!-- full page task viewer -->
-  <div id="taskViewer" class="viewer-page" aria-hidden="true">
-    <div class="viewer-header">
-      <button id="taskBackBtn" class="viewer-back">← Back</button>
-      <div class="viewer-title" id="v_title">Task Title</div>
-    </div>
-    <div class="viewer-content">
-      <div id="v_platform" class="small"></div>
-      <div id="v_price" class="small"></div>
-      <img id="v_thumb" style="display:none" />
-      <p id="v_desc" class="small"></p>
-      <div class="small">Task Link:</div>
-      <a id="v_link" href="#" target="_blank"></a>
+  <!-- Full page task viewer -->
+  <div id="taskViewer">
+    <button id="viewerBack" class="btn ghost">← Back</button>
+    <h2 id="viewerTitle"></h2>
+    <div id="viewerPlatform" class="small"></div>
+    <div id="viewerPrice" class="price"></div>
+    <img id="viewerThumb" style="max-width:100%;display:none;margin-top:12px;" />
+    <p id="viewerDesc" class="small" style="margin-top:12px;"></p>
+    <div class="small">Task Link:</div>
+    <a id="viewerLink" target="_blank" class="small"></a>
+
+    <hr style="margin:18px 0;border-color:rgba(255,255,255,0.04)" />
+
+    <div>
+      <div class="small" style="font-weight:700;margin-bottom:6px">Submit Proof</div>
+      <textarea id="viewerProofText" rows="4" placeholder="Paste link, screenshot text or explanation"></textarea>
+      <input id="viewerProofImage" type="file" accept="image/*" style="margin-top:6px" />
+      <button id="viewerSubmitProofBtn" class="btn" style="margin-top:10px">Submit Proof</button>
+      <div id="viewerProofStatus"></div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, query, where, onSnapshot, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     const firebaseConfig = {
@@ -141,6 +133,8 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
+    const IMGUR_CLIENT_ID = 'fb533db21a59486';
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
@@ -149,148 +143,108 @@
     const search = document.getElementById('search');
     const refresh = document.getElementById('refresh');
 
-    let advertsCache = new Map();
+    const taskViewer = document.getElementById('taskViewer');
+    const viewerBack = document.getElementById('viewerBack');
+    const viewerTitle = document.getElementById('viewerTitle');
+    const viewerPlatform = document.getElementById('viewerPlatform');
+    const viewerPrice = document.getElementById('viewerPrice');
+    const viewerThumb = document.getElementById('viewerThumb');
+    const viewerDesc = document.getElementById('viewerDesc');
+    const viewerLink = document.getElementById('viewerLink');
+    const viewerProofText = document.getElementById('viewerProofText');
+    const viewerProofImage = document.getElementById('viewerProofImage');
+    const viewerSubmitProofBtn = document.getElementById('viewerSubmitProofBtn');
+    const viewerProofStatus = document.getElementById('viewerProofStatus');
 
-    function formatNGN(n){
-      try { return '₦' + Math.round(n).toLocaleString('en‑NG'); }
-      catch { return '₦' + n; }
+    let currentUser = null;
+    let advertsListenerUnsub = null;
+    const submissionsListeners = new Map();
+    const advertsCache = new Map();
+    let activeTaskId = null;
+
+    function formatNGN(n){ try { return '₦' + Math.round(n).toLocaleString('en-NG'); } catch { return '₦'+n; } }
+    function deriveUnitPrice(adData){ const maybe=Number(adData?.unitPrice ?? adData?.unit ?? NaN); if(!isNaN(maybe)&&maybe>0) return maybe; const tot=Number(adData?.totalCost||0), w=Number(adData?.workers||0); return w>0?tot/w:0; }
+
+    async function uploadImgur(file){ 
+      const form=new FormData(); form.append('image',file);
+      const res=await fetch('https://api.imgur.com/3/image',{method:'POST',headers:{Authorization:'Client-ID '+IMGUR_CLIENT_ID},body:form});
+      const j=await res.json(); return j.success?j.data.link:null;
     }
-    function deriveUnitPrice(adData) {
-      const maybe = Number(adData?.unitPrice ?? adData?.unit_price ?? adData?.unit ?? NaN);
-      if (!isNaN(maybe) && maybe > 0) return maybe;
-      const total = Number(adData?.totalCost ?? adData?.total_cost ?? adData?.total ?? 0) || 0;
-      const workers = Number(adData?.workers || adData?.worker_count || 0) || 0;
-      if (workers > 0) return total / workers;
-      return 0;
+
+    async function submitProof(advertId,text,imageUrl){
+      if(!currentUser) throw new Error('Not signed in');
+      await addDoc(collection(db,'advert_submissions'),{advertId,userId:currentUser.uid,textProof:text,imageUrl:imageUrl,status:'pending',createdAt:serverTimestamp()});
     }
 
-    function renderAdvertCard(ad) {
-      const id = ad.id;
-      const data = ad.data;
-      if (data.status !== 'approved') return null;
-
-      const unit = deriveUnitPrice(data);
-      const price = Math.round(unit * 0.7);
-
-      const card = document.createElement('div');
-      card.className = 'card';
-
-      const thumb = document.createElement('img');
-      thumb.className = 'thumb';
-      thumb.src = data.thumbnail || '';
-      if (!data.thumbnail) thumb.style.display = 'none';
-
-      const body = document.createElement('div');
-      body.className = 'card-body';
-
-      const title = document.createElement('h3');
-      title.textContent = data.title;
-
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      meta.innerHTML = `<div>${data.platform}</div><div>${formatNGN(price)}</div>`;
-
-      const openBtn = document.createElement('button');
-      openBtn.className = 'btn';
-      openBtn.textContent = 'Open Task';
-      openBtn.addEventListener('click', () => openFullPageTask(id));
-
-      body.append(title, meta, openBtn);
-      card.append(thumb, body);
-      return card;
+    function renderAdvertCard(ad){
+      const id = ad.id; const data = ad.data;
+      if(data.status!=='approved') return null;
+      const card = document.createElement('div'); card.className='card';
+      const thumb=document.createElement('img'); thumb.className='thumb'; thumb.src=data.thumbnail||''; if(!data.thumbnail) thumb.style.display='none';
+      const body=document.createElement('div'); body.className='card-body';
+      const h3=document.createElement('h3'); h3.textContent=data.title||'';
+      const meta=document.createElement('div'); meta.className='meta'; meta.innerHTML=`<div>${data.platform||''}</div><div class="price">${formatNGN(Math.round(deriveUnitPrice(data)*0.7))}</div>`;
+      const btn=document.createElement('button'); btn.className='btn'; btn.textContent='Open Task'; btn.addEventListener('click',()=>openFullPageTask(id));
+      body.append(h3,meta,btn); card.append(thumb,body); return card;
     }
 
     function rebuildGrid(){
-      const q = (search.value || '').trim().toLowerCase();
-      grid.innerHTML = '';
-      let any = false;
-      advertsCache.forEach(ad => {
-        if (q) {
-          const hay = ((ad.data.title || '') + ' ' + (ad.data.platform || '')).toLowerCase();
-          if (!hay.includes(q)) return;
-        }
-        const node = renderAdvertCard(ad);
-        if (node) { grid.appendChild(node); any = true; }
+      const q=(search.value||'').toLowerCase(); grid.innerHTML='';
+      let any=false;
+      advertsCache.forEach(ad=>{
+        const hay=((ad.data.title||'')+' '+(ad.data.platform||'')).toLowerCase();
+        if(q && !hay.includes(q)) return;
+        const node=renderAdvertCard(ad); if(node){grid.appendChild(node);any=true;}
       });
-      if (!any) grid.innerHTML = `<div class="empty">No tasks available.</div>`;
+      if(!any) grid.innerHTML='<div class="empty">No tasks available.</div>';
     }
 
     function startAdvertsListener(){
-      advertsCache.clear();
-      grid.innerHTML = `<div class="empty">Loading tasks…</div>`;
-      const advertsQ = query(collection(db, 'advertise_tasks'), where('status','==','approved'));
-      onSnapshot(advertsQ, snap => {
-        advertsCache.clear();
-        snap.forEach(docSnap => advertsCache.set(docSnap.id, { id: docSnap.id, data: docSnap.data() }));
-        rebuildGrid();
-      }, () => grid.innerHTML = `<div class="empty">Failed to load tasks</div>`);
+      if(advertsListenerUnsub) advertsListenerUnsub();
+      advertsCache.clear(); grid.innerHTML='<div class="empty">Loading tasks…</div>';
+      const q = query(collection(db,'advertise_tasks'),where('status','==','approved'));
+      advertsListenerUnsub=onSnapshot(q,snap=>{advertsCache.clear();snap.forEach(d=>advertsCache.set(d.id,{id:d.id,data:d.data()})); rebuildGrid();},()=>grid.innerHTML='<div class="empty">Failed to load tasks</div>');
     }
 
-    onAuthStateChanged(auth, () => startAdvertsListener());
-    refresh.addEventListener('click', startAdvertsListener);
-    search.addEventListener('input', rebuildGrid);
+    onAuthStateChanged(auth,user=>{currentUser=user;startAdvertsListener();});
+    refresh.addEventListener('click',startAdvertsListener);
+    search.addEventListener('input',rebuildGrid);
 
-    // ---- Full Page Viewer Logic ----
-    const taskViewer = document.getElementById('taskViewer');
-    const taskBackBtn = document.getElementById('taskBackBtn');
-    const v_title = document.getElementById('v_title');
-    const v_platform = document.getElementById('v_platform');
-    const v_price = document.getElementById('v_price');
-    const v_thumb = document.getElementById('v_thumb');
-    const v_desc = document.getElementById('v_desc');
-    const v_link = document.getElementById('v_link');
-
-    async function openFullPageTask(id) {
-      try {
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.set('id', id);
-        history.pushState({ taskViewer: true, id }, '', newUrl.toString());
-
-        taskViewer.style.display = 'block';
-        taskViewer.setAttribute('aria-hidden','false');
-
-        const snap = await getDoc(doc(db,'advertise_tasks',id));
-        if (!snap.exists()) return;
-
-        const data = snap.data();
-        v_title.textContent = data.title;
-        v_platform.textContent = data.platform;
-        v_price.textContent = formatNGN(Math.round(deriveUnitPrice(data)*0.7));
-        v_desc.textContent = data.description;
-        v_link.href = data.taskLink || data.task_link || '#';
-        v_link.textContent = data.taskLink || data.task_link || '';
-
-        if (data.thumbnail) {
-          v_thumb.src = data.thumbnail;
-          v_thumb.style.display = 'block';
-        } else {
-          v_thumb.style.display = 'none';
-        }
-      } catch {}
+    async function openFullPageTask(id){
+      activeTaskId=id;
+      const s=await getDoc(doc(db,'advertise_tasks',id)); if(!s.exists()) return;
+      const data=s.data();
+      viewerTitle.textContent=data.title||'';
+      viewerPlatform.textContent=data.platform||'';
+      viewerPrice.textContent=formatNGN(Math.round(deriveUnitPrice(data)*0.7));
+      viewerDesc.textContent=data.description||'';
+      viewerLink.href=data.taskLink||data.task_link||'#'; viewerLink.textContent=viewerLink.href;
+      if(data.thumbnail){viewerThumb.src=data.thumbnail;viewerThumb.style.display='block';}else viewerThumb.style.display='none';
+      taskViewer.style.display='block';
+      history.pushState({task:true,id},'',new URL(window.location.href).pathname+'?id='+id);
     }
 
-    function hideTaskViewer(){
-      taskViewer.style.display = 'none';
-      taskViewer.setAttribute('aria-hidden','true');
-      const u = new URL(window.location.href);
-      u.searchParams.delete('id');
-      history.replaceState({}, '', u.toString());
-    }
-
-    taskBackBtn.addEventListener('click', () => {
-      if (history.state?.taskViewer) history.back();
-      else hideTaskViewer();
+    viewerBack.addEventListener('click',()=>{
+      taskViewer.style.display='none';
+      const u=new URL(window.location.href);u.searchParams.delete('id');history.replaceState({},'',u);
     });
 
-    window.addEventListener('popstate', ev => {
-      if (!ev.state?.taskViewer) hideTaskViewer();
+    viewerSubmitProofBtn.addEventListener('click',async()=>{
+      if(!currentUser){viewerProofStatus.textContent='Sign in required.';return;}
+      const text=viewerProofText.value.trim(),file=viewerProofImage.files[0];
+      if(!text && !file){viewerProofStatus.textContent='Provide text or image.';return;}
+      viewerSubmitProofBtn.disabled=true;viewerProofStatus.textContent='Submitting…';
+      try{let imgUrl=null;if(file) imgUrl=await uploadImgur(file);await submitProof(activeTaskId,text,imgUrl);viewerProofStatus.textContent='Submitted (pending review).';}catch(e){viewerProofStatus.textContent='Submit failed.';}finally{viewerSubmitProofBtn.disabled=false;}
     });
 
-    window.addEventListener('load', () => {
-      const id = new URL(window.location.href).searchParams.get('id');
-      if (id) openFullPageTask(id);
-    });
+    window.addEventListener('popstate',(ev)=>{if(!ev.state?.task) taskViewer.style.display='none';});
 
+    window.addEventListener('load',()=>{
+      startAdvertsListener();
+      const id=new URL(window.location.href).searchParams.get('id');
+      if(id) openFullPageTask(id);
+    });
   </script>
+
 </body>
 </html>
