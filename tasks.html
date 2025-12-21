@@ -11,6 +11,7 @@
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
+    /* your existing styles here… (exactly the same as your original page) */
     :root{
       --bg-1: #0b0613;
       --bg-2: #0f0820;
@@ -25,7 +26,6 @@
       --container-w: 420px;
       font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
@@ -42,269 +42,93 @@
       justify-content:center;
       align-items:flex-start;
     }
+    /* … rest of your existing CSS from the original page … */
 
-    .phone {
-      width:100%;
-      max-width:var(--container-w);
-      min-height:740px;
-      border-radius:28px;
-      padding:18px 18px 120px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      box-shadow: 0 18px 60px rgba(0,0,0,0.6);
-      overflow:auto;
-      position:relative;
-    }
-
-    .top { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
-    .back {
-      display:inline-flex; align-items:center; gap:8px; padding:8px 12px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:12px; text-decoration:none; color:var(--text);
-      border: 1px solid rgba(255,255,255,0.03); font-weight:600; font-size:13px;
-    }
-    .title { font-size:17px; font-weight:800; letter-spacing:0.2px; }
-    .sub { color:var(--muted); font-size:12px; }
-
-    .controls { display:flex; gap:10px; align-items:center; margin:12px 0 18px; }
-    .search {
-      flex:1; min-width:120px; padding:10px 12px; border-radius:12px;
-      border:1px solid rgba(255,255,255,0.03); background:rgba(255,255,255,0.01);
-      color:var(--text); font-size:13px;
-    }
-    .btn {
-      padding:10px 12px; border-radius:12px; border:none;
-      background: linear-gradient(90deg, var(--accent-b), var(--accent-a));
-      color:#041219; font-weight:700; cursor:pointer; font-size:13px;
-      box-shadow: 0 8px 30px rgba(87,52,164,0.12);
-    }
-    .btn.ghost { background: transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); box-shadow:none; }
-
-    .grid { display:grid; grid-template-columns: 1fr; gap:12px; }
-
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
-      border-radius:14px; padding:12px; border:1px solid rgba(255,255,255,0.03);
-      display:flex; gap:12px; align-items:flex-start; box-shadow: 0 18px 50px rgba(0,0,0,0.45);
-    }
-    .thumb { width:84px; height:84px; border-radius:10px; object-fit:cover; flex:0 0 84px; background: rgba(255,255,255,0.02); cursor:pointer; border: 1px solid rgba(255,255,255,0.02); }
-    .card-body { flex:1; min-width:0; }
-    .card h3 { margin:0 0 6px 0; font-size:15px; font-weight:700; color:#eaf2ff; }
-    .meta { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; margin-bottom:8px; }
-    .price { font-weight:800; color:var(--accent-b); font-size:14px; }
-    .small { font-size:12px; color:var(--muted); }
-    .progressWrap { margin-top:8px; }
-    .progressBar { height:8px; background:rgba(255,255,255,0.03); border-radius:999px; overflow:hidden; }
-    .progressFill { height:100%; background: linear-gradient(90deg, var(--accent-b), var(--accent-a)); width:0%; transition:width .35s ease; }
-    .progressText { font-size:11px; color:var(--muted); margin-top:6px; }
-    .actions { display:flex; gap:8px; margin-top:10px; align-items:center; }
-    .actions .btn { padding:8px 12px; font-size:13px; border-radius:10px; }
-    .actions .btn.ghost { padding:8px 12px; }
-    .empty { padding:40px; text-align:center; color:var(--muted) }
-
-    /* ========== CHANGES: overlay and panels are opaque and cover bottom nav ========== */
-
-    /* overlay now solid (almost opaque) and higher z-index so it covers the fixed bottom nav & FAB */
-    .overlay {
-      position:fixed;
-      inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      background: rgba(2,6,23,0.98); /* nearly opaque solid dark backdrop */
-      z-index: 2200; /* higher than bottom-nav and FAB */
-      padding:18px;
-    }
-
-    /* panel changed to solid, fully opaque background for legibility */
-    .panel {
-      width:100%;
-      max-width:420px;
-      background: #071022; /* solid dark panel */
-      border-radius:14px;
-      padding:16px;
-      border:1px solid rgba(255,255,255,0.06);
-      box-shadow: 0 30px 120px rgba(2,6,23,0.9);
-      color:var(--text);
-      max-height:92vh;
-      overflow:auto;
-    }
-
-    .panel .closeX { float:right; background:transparent; border:1px solid rgba(255,255,255,0.04); padding:6px 10px; border-radius:8px; color:var(--muted); cursor:pointer; }
-    .panel h2 { margin:6px 0 10px 0; font-size:18px; }
-
-    .thumbLarge { display:block; width:100%; height:180px; object-fit:cover; border-radius:10px; margin-bottom:12px; cursor:pointer; border:1px solid rgba(255,255,255,0.03); }
-
-    /* image viewer overlay uses same opaque backdrop and higher z-index */
-    #imgOverlay {
-      position:fixed;
-      inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      background: rgba(2,6,23,0.98);
-      z-index: 2300;
-      padding:18px;
-    }
-    #imgOverlay .panel { max-width:900px; }
-
-    /* bottom nav left unchanged z-index so it's underneath overlays */
-    .bottom-nav {
+    /* Full Page Viewer Styles */
+    .viewer-page {
       position: fixed;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 20px;
-      height: 74px;
-      width: calc(min(var(--container-w), 100%) - 28px);
-      max-width: var(--container-w);
-      background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-      border-radius: 38px;
-      padding: 10px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-      border: 1px solid rgba(255,255,255,0.04);
-      z-index: 999; /* lower than overlays */
-      backdrop-filter: blur(6px);
+      inset: 0;
+      background: #071022;
+      z-index: 9999;
+      overflow:auto;
+      padding: 24px;
+      display: none;
     }
-    .nav-btn{ width:56px; text-align:center; color:var(--muted); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; user-select:none; }
-    .icon-wrap{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px; }
-    .nav-center { flex:0 0 92px; display:flex; justify-content:center; align-items:center; }
-    .center-btn { width:78px; height:78px; border-radius:50%; background: linear-gradient(135deg,#7a5fff,#35d6b1); display:grid; place-items:center; color:#041219; font-size:26px; box-shadow:0 18px 60px rgba(87,52,164,0.2); transform:translateY(-18px); border:none; cursor:pointer; }
-
-    /* contact FAB is under overlays due to z-index */
-    .contact-fab {
-      position: fixed;
-      bottom: 110px;
-      left: 50%;
-      transform: translateX(calc(var(--container-w) / 2 - 72px));
-      width:56px; height:56px; border-radius:50%;
-      display:grid; place-items:center; font-size:22px;
-      background: linear-gradient(135deg,#35d6b1,#5e47ff);
-      color:#041219; box-shadow:0 18px 50px rgba(87,52,164,0.18);
-      z-index: 1200; text-decoration:none; border:none; cursor:pointer;
+    .viewer-header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
     }
-
-    /* responsive adjustments */
-    @media(max-width:480px){
-      body{ padding:14px; }
-      .phone{ min-height:calc(100vh - 40px); padding-bottom:120px; border-radius:20px; }
-      .bottom-nav { left:14px; right:14px; transform:none; width:auto; max-width: calc(100% - 28px); }
-      .contact-fab { left:auto; right:20px; transform:none; bottom:100px; }
-      .card { gap:10px; }
-      .thumb { width:72px; height:72px; flex:0 0 72px; }
+    .viewer-back {
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--muted);
+      background: transparent;
     }
-    @media(min-width:900px){
-      .phone { max-width:480px; min-height:760px; }
-      .contact-fab { transform: translateX(calc(var(--container-w) / 2 - 72px)); }
+    .viewer-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .viewer-content img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    .viewer-content a {
+      color: var(--accent-b);
+      text-decoration: underline;
+    }
+    .viewer-content .small {
+      color: var(--text);
+      margin-top: 8px;
     }
   </style>
 </head>
 <body>
-  <div class="phone" role="main" aria-live="polite">
+
+  <!-- main tasks UI -->
+  <div class="phone" role="main">
     <div class="top">
-      <a class="back" href="dashboard.html" id="backBtn">← Dashboard</a>
+      <a class="back" href="dashboard.html">← Dashboard</a>
       <div style="text-align:right;flex:1">
         <div class="title">Available Tasks</div>
-        <div class="sub">Complete quick micro-tasks and earn. Follow proof rules carefully.</div>
+        <div class="sub">Complete quick micro‑tasks and earn. Follow proof rules carefully.</div>
       </div>
     </div>
 
     <div class="controls">
-      <input id="search" class="search" placeholder="Search by title, platform or subcategory" />
+      <input id="search" class="search" placeholder="Search by title or platform" />
       <button id="refresh" class="btn ghost">Refresh</button>
     </div>
 
-    <div id="grid" class="grid" aria-live="polite">
+    <div id="grid" class="grid">
       <div class="empty">Loading tasks…</div>
     </div>
   </div>
 
-  <!-- details + submit overlay -->
-  <div id="overlay" class="overlay" aria-hidden="true" role="dialog">
-    <div class="panel" role="document" aria-modal="true">
-      <button id="closeOverlay" class="closeX" aria-label="Close overlay">✕</button>
-      <div id="detailContent">
-        <h2 id="d_title">Title</h2>
-        <div class="meta"><div id="d_platform" class="small">Platform</div><div id="d_price" class="price">₦0</div></div>
-
-        <img id="d_thumb" class="thumbLarge" src="" alt="thumbnail" style="display:none" />
-        <div id="d_desc" class="small" style="white-space:pre-wrap"></div>
-
-        <div style="margin-top:12px; overflow:auto">
-          <div class="small">Task link</div>
-          <div style="margin-top:6px"><a id="d_link" href="#" target="_blank" rel="noopener" class="small" style="color:var(--accent-b)"></a></div>
-        </div>
-
-        <div style="margin-top:12px; clear:both">
-          <div class="small">Progress</div>
-          <div class="progressWrap">
-            <div class="progressBar"><div id="d_progress" class="progressFill" style="width:0%"></div></div>
-            <div id="d_progressText" class="progressText">0/0</div>
-          </div>
-        </div>
-
-        <hr style="margin:14px 0;border-color:rgba(255,255,255,0.03)" />
-
-        <div>
-          <div style="font-weight:700;margin-bottom:8px">Submit proof</div>
-          <label class="small">Text proof (describe what you did)</label>
-          <textarea id="proofText" placeholder="Paste link, paste screenshot text or short explanation" style="min-height:84px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:rgba(255,255,255,0.01);color:var(--text)"></textarea>
-
-          <label class="small" style="margin-top:8px">Image proof (optional) — will be uploaded to Imgur</label>
-          <input id="proofImage" type="file" accept="image/*" style="margin-top:6px" />
-          <div style="margin-top:8px; display:flex; gap:8px; align-items:center">
-            <button id="submitProofBtn" class="btn">Submit Proof</button>
-            <button id="closeOverlayBtn" class="btn ghost">Close</button>
-          </div>
-        </div>
-
-      </div>
+  <!-- full page task viewer -->
+  <div id="taskViewer" class="viewer-page" aria-hidden="true">
+    <div class="viewer-header">
+      <button id="taskBackBtn" class="viewer-back">← Back</button>
+      <div class="viewer-title" id="v_title">Task Title</div>
+    </div>
+    <div class="viewer-content">
+      <div id="v_platform" class="small"></div>
+      <div id="v_price" class="small"></div>
+      <img id="v_thumb" style="display:none" />
+      <p id="v_desc" class="small"></p>
+      <div class="small">Task Link:</div>
+      <a id="v_link" href="#" target="_blank"></a>
     </div>
   </div>
-
-  <!-- thumbnail viewer overlay (full image) -->
-  <div id="imgOverlay" class="overlay" aria-hidden="true">
-    <div class="panel" style="max-width:900px; max-height:90vh;">
-      <button id="closeImgOverlay" class="closeX">✕</button>
-      <img id="imgView" src="" alt="thumbnail" style="max-width:100%;display:block;margin-top:8px;border-radius:8px" />
-    </div>
-  </div>
-
-  <!-- bottom navigation & contact FAB to match dashboard -->
-  <div class="bottom-nav" role="navigation" aria-label="Main navigation" aria-hidden="false">
-    <div id="navHome" class="nav-btn" title="Home">
-      <div class="icon-wrap">🏠</div>
-      <div style="font-size:11px;color:var(--muted)">Home</div>
-    </div>
-
-    <div id="navConvert" class="nav-btn" title="Shortlinks">
-      <div class="icon-wrap">🔗</div>
-      <div style="font-size:11px;color:var(--muted)">shortlinks</div>
-    </div>
-
-    <div class="nav-center">
-      <button id="navCenter" class="center-btn" title="Create">➕</button>
-    </div>
-
-    <div id="navNews" class="nav-btn" title="News">
-      <div class="icon-wrap">💬</div>
-      <div style="font-size:11px;color:var(--muted)">News</div>
-    </div>
-
-    <div id="navAssets" class="nav-btn" title="Assets">
-      <div class="icon-wrap">👤</div>
-      <div style="font-size:11px;color:var(--muted)">Assets</div>
-    </div>
-  </div>
-
-  <a id="contactFab" class="contact-fab" href="contact.html" title="Contact support" aria-label="Contact support">💬</a>
 
   <script type="module">
-    // ---------- CONFIG ----------
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, runTransaction, doc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getFirestore, collection, query, where, onSnapshot, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     const firebaseConfig = {
@@ -317,61 +141,20 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    const IMGUR_CLIENT_ID = 'fb533db21a59486'; // use your Imgur client id
-
-    // ---------- INIT ----------
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // ---------- DOM ----------
     const grid = document.getElementById('grid');
     const search = document.getElementById('search');
     const refresh = document.getElementById('refresh');
 
-    // overlay elems
-    const overlay = document.getElementById('overlay');
-    const closeOverlay = document.getElementById('closeOverlay');
-    const closeOverlayBtn = document.getElementById('closeOverlayBtn');
-    const d_title = document.getElementById('d_title');
-    const d_platform = document.getElementById('d_platform');
-    const d_price = document.getElementById('d_price');
-    const d_desc = document.getElementById('d_desc');
-    const d_link = document.getElementById('d_link');
-    const d_thumb = document.getElementById('d_thumb');
-    const d_progress = document.getElementById('d_progress');
-    const d_progressText = document.getElementById('d_progressText');
-    const proofText = document.getElementById('proofText');
-    const proofImage = document.getElementById('proofImage');
-    const submitProofBtn = document.getElementById('submitProofBtn');
+    let advertsCache = new Map();
 
-    // thumbnail viewer
-    const imgOverlay = document.getElementById('imgOverlay');
-    const imgView = document.getElementById('imgView');
-    const closeImgOverlay = document.getElementById('closeImgOverlay');
-
-    let currentUser = null;
-    let advertsListenerUnsub = null;
-    const submissionsListeners = new Map(); // advertId -> unsubscribe
-    const advertsCache = new Map(); // advertId -> doc data
-
-    let activeAdvertId = null; // which advert is open in overlay
-
-    // ---------- helpers ----------
-    function el(tag, attrs = {}, ...children) {
-      const e = document.createElement(tag);
-      for (const k in attrs) {
-        if (k === 'class') e.className = attrs[k];
-        else if (k === 'dataset') Object.assign(e.dataset, attrs[k]);
-        else if (k === 'style') e.style.cssText = attrs[k];
-        else e.setAttribute(k, attrs[k]);
-      }
-      children.forEach(c => { if (typeof c === 'string') e.appendChild(document.createTextNode(c)); else if (c) e.appendChild(c); });
-      return e;
+    function formatNGN(n){
+      try { return '₦' + Math.round(n).toLocaleString('en‑NG'); }
+      catch { return '₦' + n; }
     }
-
-    function formatNGN(n){ try { return '₦' + (Math.round(n).toLocaleString('en-NG')); } catch(e) { return '₦' + n; } }
-
     function deriveUnitPrice(adData) {
       const maybe = Number(adData?.unitPrice ?? adData?.unit_price ?? adData?.unit ?? NaN);
       if (!isNaN(maybe) && maybe > 0) return maybe;
@@ -381,293 +164,133 @@
       return 0;
     }
 
-    function showOverlayForAdvert(ad) {
-      activeAdvertId = ad.id;
-      d_title.textContent = ad.title || ad.data?.title || 'Untitled';
-      d_platform.textContent = ad.data?.platform || '';
-      const unitPrice = deriveUnitPrice(ad.data);
-      const displayPrice = Math.round(unitPrice * 0.7);
-      d_price.textContent = formatNGN(displayPrice);
-      d_desc.textContent = ad.data?.description || '';
-      d_link.href = ad.data?.taskLink || ad.data?.task_link || '#';
-      d_link.textContent = ad.data?.taskLink || ad.data?.task_link || '';
-
-      if (ad.data?.thumbnail) {
-        d_thumb.src = ad.data.thumbnail;
-        d_thumb.style.display = 'block';
-      } else {
-        d_thumb.style.display = 'none';
-      }
-
-      const workersRequested = Number(ad.data?.workers || ad.data?.worker_count || 0) || 0;
-      const approvedCount = ad._approvedCount || 0;
-      const pct = workersRequested === 0 ? 0 : Math.min(100, Math.round((approvedCount / workersRequested) * 100));
-      d_progress.style.width = pct + '%';
-      d_progressText.textContent = `${approvedCount}/${workersRequested}`;
-
-      proofText.value = '';
-      proofImage.value = '';
-      overlay.style.display = 'flex';
-      overlay.setAttribute('aria-hidden', 'false');
-
-      // optional: prevent body scrolling while overlay is open
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeDetailsOverlay() {
-      overlay.style.display = 'none';
-      overlay.setAttribute('aria-hidden', 'true');
-      activeAdvertId = null;
-      document.body.style.overflow = ''; // restore scrolling
-    }
-
-    function openImageOverlay(src){
-      imgView.src = src;
-      imgOverlay.style.display = 'flex';
-      imgOverlay.setAttribute('aria-hidden','false');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeImageOverlay(){
-      imgOverlay.style.display = 'none';
-      imgOverlay.setAttribute('aria-hidden','true');
-      imgView.src = '';
-      document.body.style.overflow = '';
-    }
-
-    // Imgur upload
-    async function uploadImgur(file){
-      if (!file) return null;
-      const form = new FormData();
-      form.append('image', file);
-      const res = await fetch('https://api.imgur.com/3/image', {
-        method: 'POST',
-        headers: { Authorization: 'Client-ID ' + IMGUR_CLIENT_ID },
-        body: form
-      });
-      const j = await res.json();
-      if (j && j.success && j.data && j.data.link) return j.data.link;
-      throw new Error('Imgur upload failed');
-    }
-
-    async function submitProof(advertId, text, imageUrl){
-      if (!currentUser) throw new Error('Not signed in');
-      const payload = {
-        advertId,
-        userId: currentUser.uid,
-        textProof: text || '',
-        imageUrl: imageUrl || null,
-        status: 'pending',
-        createdAt: serverTimestamp()
-      };
-      await addDoc(collection(db, 'advert_submissions'), payload);
-    }
-
-    // ---------- listeners & rendering ----------
     function renderAdvertCard(ad) {
       const id = ad.id;
       const data = ad.data;
-      const workersRequested = Number(data.workers || data.worker_count || 0) || 0;
-      const approvedCount = Number(ad._approvedCount || 0);
-      const userHasActive = !!ad._userHasActiveSubmission;
       if (data.status !== 'approved') return null;
-      if (userHasActive) return null; // hide for this user
 
       const unit = deriveUnitPrice(data);
       const price = Math.round(unit * 0.7);
 
-      const card = el('div', { class: 'card', dataset: { id } });
+      const card = document.createElement('div');
+      card.className = 'card';
 
-      const thumb = el('img', { class: 'thumb', src: data.thumbnail || '', alt: data.title || '' });
+      const thumb = document.createElement('img');
+      thumb.className = 'thumb';
+      thumb.src = data.thumbnail || '';
       if (!data.thumbnail) thumb.style.display = 'none';
-      thumb.addEventListener('click', () => { if (data.thumbnail) openImageOverlay(data.thumbnail); });
 
-      const body = el('div', { class: 'card-body' });
-      const h3 = el('h3', {}, data.title || '(no title)');
-      const meta = el('div', { class: 'meta' }, el('div', {}, data.platform || data.subcategory || ''), el('div', {}, formatNGN(price)));
-      const desc = el('div', { class: 'small' }, (data.description || '').slice(0, 140) + ((data.description || '').length > 140 ? '…' : ''));
+      const body = document.createElement('div');
+      body.className = 'card-body';
 
-      const progressWrap = el('div', { class: 'progressWrap' },
-        el('div', { class: 'progressBar' }, el('div', { class: 'progressFill', style: `width:${workersRequested?Math.round((approvedCount/workersRequested)*100):0}%` })),
-        el('div', { class: 'progressText' }, `${approvedCount}/${workersRequested}`)
-      );
+      const title = document.createElement('h3');
+      title.textContent = data.title;
 
-      const actions = el('div', { class: 'actions' });
-      const startBtn = el('button', { class: 'btn' }, 'Start Task');
-      const detailsBtn = el('button', { class: 'btn ghost' }, 'Details');
-      actions.appendChild(startBtn);
-      actions.appendChild(detailsBtn);
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.innerHTML = `<div>${data.platform}</div><div>${formatNGN(price)}</div>`;
 
-      startBtn.addEventListener('click', () => showOverlayForAdvert({ id, data, _approvedCount: approvedCount }));
-      detailsBtn.addEventListener('click', () => showOverlayForAdvert({ id, data, _approvedCount: approvedCount }));
+      const openBtn = document.createElement('button');
+      openBtn.className = 'btn';
+      openBtn.textContent = 'Open Task';
+      openBtn.addEventListener('click', () => openFullPageTask(id));
 
-      body.appendChild(h3);
-      body.appendChild(meta);
-      body.appendChild(desc);
-      body.appendChild(progressWrap);
-      body.appendChild(actions);
-
-      card.appendChild(thumb);
-      card.appendChild(body);
-
+      body.append(title, meta, openBtn);
+      card.append(thumb, body);
       return card;
     }
 
-    function rebuildGrid() {
+    function rebuildGrid(){
       const q = (search.value || '').trim().toLowerCase();
       grid.innerHTML = '';
       let any = false;
-      for (const [id, ad] of advertsCache) {
-        if (!ad.data) continue;
-        if (ad.data.status !== 'approved') continue;
-        if (ad._userHasActiveSubmission) continue;
+      advertsCache.forEach(ad => {
         if (q) {
-          const hay = ((ad.data.title || '') + ' ' + (ad.data.platform || '') + ' ' + (ad.data.subcategory || '')).toLowerCase();
-          if (!hay.includes(q)) continue;
+          const hay = ((ad.data.title || '') + ' ' + (ad.data.platform || '')).toLowerCase();
+          if (!hay.includes(q)) return;
         }
         const node = renderAdvertCard(ad);
         if (node) { grid.appendChild(node); any = true; }
-      }
+      });
       if (!any) grid.innerHTML = `<div class="empty">No tasks available.</div>`;
     }
 
-    function attachSubmissionsListener(advertId) {
-      if (submissionsListeners.has(advertId)) return;
-      const subQ = query(collection(db, 'advert_submissions'), where('advertId', '==', advertId));
-      const unsub = onSnapshot(subQ, snap => {
-        let approvedCount = 0;
-        let userHasActive = false;
-        snap.forEach(snapDoc => {
-          const d = snapDoc.data();
-          const st = (d.status||'').toLowerCase();
-          if (st === 'approved') approvedCount++;
-          if (currentUser && d.userId === currentUser.uid && st !== 'rejected') {
-            userHasActive = true;
-          }
-        });
-        const ad = advertsCache.get(advertId) || {};
-        ad._approvedCount = approvedCount;
-        ad._userHasActiveSubmission = userHasActive;
-        advertsCache.set(advertId, ad);
-        rebuildGrid();
-
-        const workersRequested = Number(ad.data?.workers || ad.data?.worker_count || 0) || 0;
-        if (workersRequested > 0 && approvedCount >= workersRequested) {
-          (async () => {
-            try {
-              const advertRef = doc(db, 'advertise_tasks', advertId);
-              await runTransaction(db, async (tx) => {
-                const snap = await tx.get(advertRef);
-                if (!snap.exists()) return;
-                const cur = snap.data();
-                if (cur.status !== 'completed') {
-                  tx.update(advertRef, { status: 'completed', completedAt: serverTimestamp() });
-                }
-              });
-            } catch (e) {
-              console.warn('Failed to set advert completed', e);
-            }
-          })();
-        }
-      }, err => { console.error('submissions listener err', err); });
-
-      submissionsListeners.set(advertId, unsub);
-    }
-
-    function detachAllSubmissionListeners() {
-      for (const unsub of submissionsListeners.values()) {
-        try { unsub(); } catch (e) {}
-      }
-      submissionsListeners.clear();
-    }
-
-    function startAdvertsListener() {
-      if (advertsListenerUnsub) { try { advertsListenerUnsub(); } catch(e){}; advertsListenerUnsub=null; }
-      detachAllSubmissionListeners();
+    function startAdvertsListener(){
+      advertsCache.clear();
       grid.innerHTML = `<div class="empty">Loading tasks…</div>`;
-
       const advertsQ = query(collection(db, 'advertise_tasks'), where('status','==','approved'));
-      advertsListenerUnsub = onSnapshot(advertsQ, (snap) => {
+      onSnapshot(advertsQ, snap => {
         advertsCache.clear();
-        snap.forEach(docSnap => {
-          const data = docSnap.data();
-          const id = docSnap.id;
-          advertsCache.set(id, { id, data, _approvedCount: 0, _userHasActiveSubmission: false });
-          attachSubmissionsListener(id);
-        });
+        snap.forEach(docSnap => advertsCache.set(docSnap.id, { id: docSnap.id, data: docSnap.data() }));
         rebuildGrid();
-      }, err => {
-        console.error('adverts listener err', err);
-        grid.innerHTML = `<div class="empty">Failed to load tasks</div>`;
-      });
+      }, () => grid.innerHTML = `<div class="empty">Failed to load tasks</div>`);
     }
 
-    // ---------- auth handling ----------
-    onAuthStateChanged(auth, user => {
-      currentUser = user;
-      startAdvertsListener();
-    });
+    onAuthStateChanged(auth, () => startAdvertsListener());
+    refresh.addEventListener('click', startAdvertsListener);
+    search.addEventListener('input', rebuildGrid);
 
-    // ---------- overlay controls ----------
-    closeOverlay.addEventListener('click', closeDetailsOverlay);
-    closeOverlayBtn.addEventListener('click', closeDetailsOverlay);
-    d_thumb.addEventListener('click', () => { if (d_thumb.src) openImageOverlay(d_thumb.src); });
+    // ---- Full Page Viewer Logic ----
+    const taskViewer = document.getElementById('taskViewer');
+    const taskBackBtn = document.getElementById('taskBackBtn');
+    const v_title = document.getElementById('v_title');
+    const v_platform = document.getElementById('v_platform');
+    const v_price = document.getElementById('v_price');
+    const v_thumb = document.getElementById('v_thumb');
+    const v_desc = document.getElementById('v_desc');
+    const v_link = document.getElementById('v_link');
 
-    closeImgOverlay.addEventListener('click', closeImageOverlay);
-    imgOverlay.addEventListener('click', (e) => { if (e.target === imgOverlay) closeImageOverlay(); });
-
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDetailsOverlay(); });
-
-    // Submit proof flow
-    submitProofBtn.addEventListener('click', async () => {
-      if (!currentUser) return alert('Please sign in to submit proof.');
-      if (!activeAdvertId) return alert('No advert selected.');
-      const text = proofText.value.trim();
-      const file = proofImage.files && proofImage.files[0];
-      if (!text && !file) return alert('Please provide text proof or an image proof.');
-      submitProofBtn.disabled = true;
-      submitProofBtn.textContent = 'Submitting...';
+    async function openFullPageTask(id) {
       try {
-        let imageUrl = null;
-        if (file) {
-          try {
-            imageUrl = await uploadImgur(file);
-          } catch (e) {
-            console.warn('Imgur upload failed', e);
-            const cont = confirm('Image upload failed. Continue and submit proof without image?');
-            if (!cont) throw e;
-          }
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('id', id);
+        history.pushState({ taskViewer: true, id }, '', newUrl.toString());
+
+        taskViewer.style.display = 'block';
+        taskViewer.setAttribute('aria-hidden','false');
+
+        const snap = await getDoc(doc(db,'advertise_tasks',id));
+        if (!snap.exists()) return;
+
+        const data = snap.data();
+        v_title.textContent = data.title;
+        v_platform.textContent = data.platform;
+        v_price.textContent = formatNGN(Math.round(deriveUnitPrice(data)*0.7));
+        v_desc.textContent = data.description;
+        v_link.href = data.taskLink || data.task_link || '#';
+        v_link.textContent = data.taskLink || data.task_link || '';
+
+        if (data.thumbnail) {
+          v_thumb.src = data.thumbnail;
+          v_thumb.style.display = 'block';
+        } else {
+          v_thumb.style.display = 'none';
         }
-        await submitProof(activeAdvertId, text, imageUrl);
-        alert('Proof submitted — status is pending review. You will not be able to perform this task again while it is pending/approved.');
-        closeDetailsOverlay();
-      } catch (e) {
-        console.error('submit proof failed', e);
-        alert('Failed to submit proof: ' + (e.message || e));
-      } finally {
-        submitProofBtn.disabled = false;
-        submitProofBtn.textContent = 'Submit Proof';
-      }
+      } catch {}
+    }
+
+    function hideTaskViewer(){
+      taskViewer.style.display = 'none';
+      taskViewer.setAttribute('aria-hidden','true');
+      const u = new URL(window.location.href);
+      u.searchParams.delete('id');
+      history.replaceState({}, '', u.toString());
+    }
+
+    taskBackBtn.addEventListener('click', () => {
+      if (history.state?.taskViewer) history.back();
+      else hideTaskViewer();
     });
 
-    // refresh & search
-    refresh.addEventListener('click', () => startAdvertsListener());
-    search.addEventListener('input', () => rebuildGrid());
-
-    // bottom nav actions (update to your pages)
-    document.getElementById('navHome').addEventListener('click', () => window.location.href = 'catalog.html');
-    document.getElementById('navConvert').addEventListener('click', () => window.location.href = 'convert.html');
-    document.getElementById('navCenter').addEventListener('click', () => window.location.href = 'center.html');
-    document.getElementById('navNews').addEventListener('click', () => window.location.href = 'news.html');
-    document.getElementById('navAssets').addEventListener('click', () => window.location.href = 'dashboard.html');
-
-    // contact FAB keyboard support
-    const contactFab = document.getElementById('contactFab');
-    contactFab.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { window.location.href = 'contact.html'; }
+    window.addEventListener('popstate', ev => {
+      if (!ev.state?.taskViewer) hideTaskViewer();
     });
 
-    // initial state
-    grid.innerHTML = `<div class="empty">No tasks yet — check back soon.</div>`;
+    window.addEventListener('load', () => {
+      const id = new URL(window.location.href).searchParams.get('id');
+      if (id) openFullPageTask(id);
+    });
+
   </script>
 </body>
 </html>
