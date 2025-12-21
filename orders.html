@@ -5,86 +5,52 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Adverts — Beni-Wealth</title>
 
-  <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicons & theme-color -->
-  <link rel="icon" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" />
+  <link rel="icon" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png"/>
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
-    /* Same theme as before */
+    /* EXISTING BENI-WEALTH THEME */
     :root{--bg1:#060511;--bg2:#0f0920;--muted:rgba(255,255,255,0.62);--text:#eaf2ff;--accent-start:#2fe0b8;--accent-end:#7a5fff;--card:rgba(255,255,255,0.02);--radius:12px;}
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text)}
-    .shell{max-width:1200px;margin:20px auto;padding:20px}
-    header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
-    .back{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);text-decoration:none;color:var(--text)}
-    .brand{font-weight:700;font-size:1.1rem}
-    .muted{color:var(--muted);font-size:13px}
-    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:18px}
-    .search{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+    header{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.05);font-weight:700;font-size:1.2rem}
     .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219;font-weight:700}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
-    .card{background:var(--card);border-radius:var(--radius);padding:14px;border:1px solid rgba(255,255,255,0.04)}
-    .card-head{display:flex;gap:8px;align-items:center;justify-content:space-between}
-    .title{font-weight:700;font-size:1rem}
-    .id-copy{font-size:13px;color:var(--muted);cursor:pointer}
-    .meta{color:var(--muted);font-size:12px}
-    .actions{display:flex;gap:8px;margin-top:10px}
-    .pill{padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
-    .pill.pending{background:#fff6d6;color:#6a4f00}
-    .pill.approved{background:#bff0d9;color:#05461f}
-    .pill.rejected{background:#ffd6d6;color:#6a0000}
-
-    /* Details overlay */
-    .details-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);z-index:999;padding:22px}
-    .details-panel{width:100%;max-width:850px;background:var(--bg1);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);max-height:90vh;overflow:auto}
-    .closeX{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
-    .sub-table{width:100%;border-collapse:collapse;margin-top:12px}
-    .sub-table th, .sub-table td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.06);text-align:left;font-size:13px}
-    .sub-table th{background:rgba(255,255,255,0.04);color:var(--text);font-weight:700}
-
-    /* Image viewer */
-    .img-viewer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.9);z-index:1001;padding:18px}
-    .viewer-img{max-width:90%;max-height:90%;border-radius:10px;object-fit:contain;cursor:pointer}
+    .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);flex:1}
+    .muted{color:var(--muted)}
+    .id-copy{cursor:pointer;color:var(--muted);font-size:0.85rem}
+    table{width:100%;border-collapse:collapse;margin-top:18px}
+    th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,.06);font-size:14px;text-align:left}
+    th{background:rgba(255,255,255,0.04);font-weight:700}
+    .thumb-img{width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer}
+    #overlayViewer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.9);z-index:1000}
+    #overlayViewer img{max-width:90%;max-height:90%;border-radius:10px}
+    .disabled{opacity:.6;pointer-events:none}
   </style>
+
 </head>
 <body>
 
-  <main class="shell">
-    <header>
-      <a class="back" href="dashboard.html">← Back</a>
-      <div class="brand">My Adverts</div>
-    </header>
+  <header>
+    <a class="btn ghost" id="backBtn">← Back</a>
+    My Adverts & Submissions
+  </header>
 
-    <div class="toolbar">
-      <input id="search" class="search" placeholder="Search adverts by title or advert ID" />
-      <button id="refresh" class="btn ghost">Refresh</button>
-    </div>
-
-    <div id="grid" class="grid" aria-live="polite">
-      <div class="muted">Loading adverts…</div>
-    </div>
-  </main>
-
-  <!-- Submissions Overlay -->
-  <div id="detailsOverlay" class="details-overlay">
-    <div class="details-panel">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <span id="advTitle" class="title"></span>
-          <span id="advId" class="id-copy"></span>
-        </div>
-        <button id="closeDetails" class="closeX">✕</button>
-      </div>
-      <div id="subContainer"></div>
-    </div>
+  <!-- SEARCH & FILTER -->
+  <div style="display:flex;gap:12px;padding:0 22px">
+    <input id="searchInput" class="search" placeholder="Search adverts by title or ID"/>
+    <button id="refreshBtn" class="btn ghost">Refresh</button>
   </div>
 
-  <!-- Image Viewer Overlay -->
-  <div id="imgViewer" class="img-viewer"><img id="viewerImg" class="viewer-img" src="" /></div>
+  <!-- ADVERTS LIST -->
+  <div id="advertsSection" style="padding:22px"></div>
+
+  <!-- SUBMISSIONS VIEW (FULL PAGE) -->
+  <div id="subsSection" style="padding:22px;display:none"></div>
+
+  <!-- IMAGE OVERLAY -->
+  <div id="overlayViewer"><img id="viewerImage"/></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -98,163 +64,162 @@ const firebaseConfig = {
   apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
   projectId: "beni-wealths",
-  storageBucket: "beni-wealths.firebasestorage.app",
-  messagingSenderId: "807950483822",
-  appId: "1:80795087310246:web:e10fa87307e041c4d8417f",
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-let advertsMap = new Map();
 let currentUser = null;
+const adverts = new Map();
 
-const grid = document.getElementById("grid");
-const searchInput = document.getElementById("search");
-const refreshBtn = document.getElementById("refresh");
-const detailsOverlay = document.getElementById("detailsOverlay");
-const advTitle = document.getElementById("advTitle");
-const advIdEl = document.getElementById("advId");
-const subContainer = document.getElementById("subContainer");
-const closeDetails = document.getElementById("closeDetails");
-const imgViewer = document.getElementById("imgViewer");
-const viewerImg = document.getElementById("viewerImg");
+const advertsSection = document.getElementById("advertsSection");
+const subsSection = document.getElementById("subsSection");
+const searchInput = document.getElementById("searchInput");
+const refreshBtn = document.getElementById("refreshBtn");
+const overlayViewer = document.getElementById("overlayViewer");
+const viewerImage = document.getElementById("viewerImage");
+const backBtn = document.getElementById("backBtn");
 
-function partial(str){ return str.slice(0,8) + "..."; }
+function partial(str){ return str ? str.slice(0,8)+"..." : ""; }
+function niceTime(ts){
+  try{ return ts.toDate().toLocaleString(); }catch(e){ return "-"; }
+}
 
-function renderGrid(filter=""){
-  grid.innerHTML = "";
+function renderAdverts(filter=""){
+  advertsSection.innerHTML = "";
   const lower = filter.toLowerCase();
-  let any = false;
-  advertsMap.forEach(({id,data}) => {
+  let found = false;
+  adverts.forEach(({id,data})=>{
     if(!data.title?.toLowerCase().includes(lower) && !id.toLowerCase().includes(lower)) return;
-    any = true;
-    const card = document.createElement("div");
-    card.className="card";
-    card.innerHTML = `
-      <div class="card-head">
-        <div>
-          <div class="title">${data.title}</div>
-          <div class="id-copy" data-id="${id}" title="Copy Advert ID">${partial(id)}</div>
-          <div class="meta">₦${data.unitPrice||0} • ${(data.status||"PENDING").toUpperCase()}</div>
-        </div>
-        <div><span class="pill ${data.status||"pending"}">${(data.status||"PENDING").toUpperCase()}</span></div>
-      </div>
-      <div class="actions">
-        <button class="btn ghost view-btn" data-id="${id}">View Submissions</button>
+    found = true;
+    advertsSection.innerHTML += `
+      <div style="border:1px solid rgba(255,255,255,.1);padding:14px;border-radius:10px;margin-bottom:12px">
+        <div><strong>${data.title}</strong> <span class="id-copy" data-id="${id}" title="Copy Advert ID">${partial(id)}</span></div>
+        <div class="muted">Unit Price: ₦${data.unitPrice||0} | Status: ${(data.status||"PENDING").toUpperCase()}</div>
+        <button class="btn ghost viewSubsBtn" data-id="${id}" style="margin-top:10px">View Submissions</button>
       </div>`;
-    grid.appendChild(card);
   });
-  if(!any) grid.innerHTML="<div class='muted'>No adverts found</div>";
+  if(!found) advertsSection.innerHTML = "<div class='muted'>No adverts found</div>";
 }
 
 function attachAdvertListener(uid){
-  onSnapshot(collection(db,"advertise_tasks"), snap => {
-    advertsMap.clear();
-    snap.forEach(docSnap => {
+  onSnapshot(collection(db,"advertise_tasks"),snap=>{
+    adverts.clear();
+    snap.forEach(docSnap=>{
       const d = docSnap.data();
       if(d.owner === uid){
-        advertsMap.set(docSnap.id,{id:docSnap.id,data:d});
+        adverts.set(docSnap.id,{id:docSnap.id,data:d});
       }
     });
-    renderGrid(searchInput.value);
+    renderAdverts(searchInput.value);
   });
+}
+
+// SHOW SUBMISSIONS FULL PAGE
+async function showSubmissions(adId){
+  const advert = adverts.get(adId);
+  subsSection.style.display = "block";
+  advertsSection.style.display = "none";
+  subsSection.innerHTML = `
+    <button class="btn ghost" id="backToAdverts">← Back to Adverts</button>
+    <h2>${advert.data.title} <span class="muted">(${partial(adId)})</span></h2>
+    <div class="muted">Unit Price: ₦${advert.data.unitPrice||0}</div>
+    <div id="subsTableArea">Loading submissions…</div>
+  `;
+
+  document.getElementById("backToAdverts").onclick=()=>{
+    subsSection.style.display="none";
+    advertsSection.style.display="block";
+  };
+
+  const snap = await getDocs(query(collection(db,"advert_submissions"),where("advertId","==",adId)));
+  if(snap.empty){
+    document.getElementById("subsTableArea").innerHTML = "<div class='muted'>No submissions</div>";
+    return;
+  }
+
+  let table = `<table><thead><tr><th>Sub ID</th><th>User</th><th>Submitted</th><th>Text Proof</th><th>Image</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+  snap.forEach(s=>{
+    const d=s.data(), sid=s.id;
+    table+=`
+      <tr>
+        <td>${partial(sid)} <span class="id-copy" data-id="${sid}">📋</span></td>
+        <td>${partial(d.userId)}</td>
+        <td>${niceTime(d.createdAt)}</td>
+        <td>${d.textProof||"<span class='muted'>No text</span>"}</td>
+        <td>${d.imageUrl?`<img src="${d.imageUrl}" class="thumb-img" data-src="${d.imageUrl}">`:"<span class='muted'>No image</span>"}</td>
+        <td>${d.status||""}</td>
+        <td>
+          <button class="approve-btn btn ghost" ${d.status!=="pending"?"disabled":""} data-sid="${sid}" data-uid="${d.userId}" data-price="${advert.data.unitPrice||0}">Approve</button>
+          <button class="reject-btn btn ghost" ${d.status!=="pending"?"disabled":""} data-sid="${sid}">Reject</button>
+        </td>
+      </tr>`;
+  });
+  table += "</tbody></table>";
+  document.getElementById("subsTableArea").innerHTML = table;
 }
 
 onAuthStateChanged(auth,user=>{
   if(!user) location.href="login.html";
-  currentUser=user;
+  currentUser = user;
   attachAdvertListener(user.uid);
 });
 
-searchInput.oninput=()=> renderGrid(searchInput.value);
-refreshBtn.onclick=()=> renderGrid(searchInput.value);
+searchInput.oninput=()=> renderAdverts(searchInput.value);
+refreshBtn.onclick=()=> renderAdverts(searchInput.value);
 
-document.body.addEventListener("click", async e=>{
+// BODY CLICK EVENTS
+document.body.addEventListener("click",async e=>{
   if(e.target.matches(".id-copy")){
     await navigator.clipboard.writeText(e.target.dataset.id);
-    alert("ID copied");
+    alert("Copied!");
   }
-  if(e.target.matches(".view-btn")){
-    openDetails(e.target.dataset.id);
-  }
-  if(e.target.matches(".viewer-img")){
-    imgViewer.style.display="none";
+  if(e.target.matches(".viewSubsBtn")){
+    showSubmissions(e.target.dataset.id);
   }
   if(e.target.matches(".thumb-img")){
-    viewerImg.src = e.target.dataset.src;
-    imgViewer.style.display="flex";
+    viewerImage.src = e.target.dataset.src;
+    overlayViewer.style.display="flex";
   }
-});
-
-async function openDetails(adId){
-  const advert = advertsMap.get(adId);
-  advTitle.textContent = advert.data.title;
-  advIdEl.textContent = partial(adId);
-  subContainer.innerHTML="<div class='muted'>Loading submissions…</div>";
-
-  const snap = await getDocs(query(collection(db,"advert_submissions"), where("advertId","==",adId)));
-  if(snap.empty){
-    subContainer.innerHTML="<div class='muted'>No submissions</div>";
-  } else {
-    let html=`<table class='sub-table'><thead><tr><th>ID</th><th>User</th><th>Text Proof</th><th>Image</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
-    snap.forEach(s=>{
-      const d = s.data(), sid = s.id;
-      html+=`<tr>
-        <td>${partial(sid)} <span class='id-copy' data-id='${sid}'>📋</span></td>
-        <td>${partial(d.userId||"")}</td>
-        <td>${d.textProof||"<span class='muted'>No text</span>"}</td>
-        <td>${d.imageUrl?`<img src="${d.imageUrl}" class="thumb-img" data-src="${d.imageUrl}" style="width:60px;border-radius:6px;cursor:pointer">`:"<span class='muted'>No image</span>"}</td>
-        <td>${d.status}</td>
-        <td>
-          <button class='approve-btn' data-id='${sid}' data-user='${d.userId||""}' data-price='${advert.data.unitPrice||0}'>Approve</button>
-          <button class='reject-btn' data-id='${sid}'>Reject</button>
-        </td></tr>`;
-    });
-    html+="</tbody></table>";
-    subContainer.innerHTML=html;
-  }
-
-  detailsOverlay.style.display="flex";
-}
-
-closeDetails.onclick=()=> detailsOverlay.style.display="none";
-
-subContainer.addEventListener("click", async e=>{
   if(e.target.matches(".approve-btn")){
-    const sid = e.target.dataset.id;
-    const uid = e.target.dataset.user;
-    const amount = Number(e.target.dataset.price||0);
-    try {
-      await runTransaction(db, async tx=>{
+    const sid = e.target.dataset.sid;
+    const uid = e.target.dataset.uid;
+    const price = Number(e.target.dataset.price||0);
+    try{
+      await runTransaction(db,async tx=>{
         const subRef = doc(db,"advert_submissions",sid);
         const subSnap = await tx.get(subRef);
         if(!subSnap.exists()) throw "Not found";
-        if(subSnap.data().status !== "pending") throw "Not pending";
+        if(subSnap.data().status!=="pending") throw "Cannot approve";
 
-        tx.update(subRef,{status:"approved",approvedAt:serverTimestamp()});
+        let payout = price * (subSnap.data().userPlan==="bronze"?0.6:0.8);
+        tx.update(subRef,{status:"approved",approvedAt:serverTimestamp(),paidAmount:payout});
 
         const userRef = doc(db,"users",uid);
         const userSnap = await tx.get(userRef);
-        const curBal = Number(userSnap.data().balance||0);
-        tx.update(userRef,{balance:curBal+amount});
+        const balance = Number(userSnap.data().balance||0);
+        tx.update(userRef,{balance:balance+payout});
       });
-      alert("Approved & paid ₦"+amount);
-      openDetails(e.target.dataset.id); 
-    } catch(err){ alert("Approve failed: "+err); }
+      alert("Approved and paid!");
+      showSubmissions(e.target.closest("table").dataset.advert); // refresh list
+    }catch(err){ alert("Error: "+err); }
   }
   if(e.target.matches(".reject-btn")){
-    const sid = e.target.dataset.id;
-    try {
-      await runTransaction(db, async tx=>{
+    const sid = e.target.dataset.sid;
+    try{
+      await runTransaction(db,async tx=>{ 
         tx.update(doc(db,"advert_submissions",sid),{status:"rejected"});
       });
       alert("Rejected");
-      openDetails(e.target.dataset.id);
-    } catch(err){ alert("Reject failed: "+err); }
+      showSubmissions(e.target.closest("table").dataset.advert);
+    }catch(err){ alert("Error: "+err); }
   }
 });
+
+// Image viewer close
+overlayViewer.addEventListener("click",()=>overlayViewer.style.display="none");
+backBtn.onclick=()=>location.href="dashboard.html";
+
 </script>
 
 </body>
