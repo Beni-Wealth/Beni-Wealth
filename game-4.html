@@ -6,37 +6,25 @@
   <title>Beni-Wealth — Snakes & Ladder</title>
   <meta name="theme-color" content="#2fe0b8" />
 
-    <!-- Poppins -->
+  <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
-  <!-- Favicons & Social preview -->
+  <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete ptcs and blogs, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#2fe0b8">
 
   <style>
     :root{
-      --bg:#041225;
-      --card:#0b1220;
-      --accent:#7a5fff;
-      --accent-2:#35d6b1;
+      --bg:#041225; --card:#0b1220;
+      --accent:#7a5fff; --accent-2:#35d6b1;
       --muted:rgba(255,255,255,0.66);
-      --win:#10b981;
-      --lose:#ef4444;
-      font-family:Inter, Poppins, system-ui, Arial;
+      --win:#10b981; --lose:#ef4444;
+      font-family:Poppins, system-ui, Arial;
       color:#eaf2ff;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#031022);display:flex;align-items:center;justify-content:center;padding:18px}
-    .app{width:100%;max-width:1100px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:16px;display:grid;grid-template-columns:1fr 360px;gap:12px;box-shadow:0 30px 80px rgba(2,6,23,0.7)}
-    @media(max-width:920px){ .app{grid-template-columns:1fr;max-width:420px;padding:12px} }
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#031022);display:flex;align-items:center;justify-content:center;padding:12px}
+    .app{width:100%;max-width:1000px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:16px;display:grid;grid-template-columns:1fr 350px;gap:12px;box-shadow:0 30px 80px rgba(2,6,23,0.7)}
+    @media(max-width:800px){ .app{grid-template-columns:1fr;max-width:480px;padding:12px} }
     .board-wrap{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
     .controls{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px}
     .grid{width:100%;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(10,1fr);gap:6px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);padding:6px;border-radius:8px}
@@ -45,34 +33,14 @@
     .cell .feature{position:absolute;right:6px;top:6px;font-size:18px;opacity:0.92;z-index:2}
     .cell.snake-start{box-shadow: inset 0 0 0 2px rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.06)}
     .cell.ladder-start{box-shadow: inset 0 0 0 2px rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.06)}
-    .cell.hl{animation: pulse 700ms ease 0s 2; } @keyframes pulse { 0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)} }
-
-    .token{position:absolute;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#041219;z-index:40;transition:transform 320ms cubic-bezier(.2,.9,.2,1), box-shadow 320ms}
-    .token.player{background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 10px 30px rgba(122,95,255,0.18)}
-    .token.bot{background:linear-gradient(90deg,#ffb86b,#ff7a7a); box-shadow:0 10px 30px rgba(255,120,110,0.18)}
-    .dice{width:84px;height:84px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:34px;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);text-align:center}
-    .dice.rolling{animation: dice-spin 900ms linear infinite}
-    @keyframes dice-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
-
-    .roll-anim { transform: translateY(-8px) scale(1.06); transition: transform 220ms cubic-bezier(.2,.9,.2,1); }
-
-    .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#5b3bff);color:#041219;font-weight:800;cursor:pointer}
+    .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#041219;font-weight:800;cursor:pointer}
     .btn-ghost{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
     .muted{color:var(--muted);font-size:13px}
     .history{height:140px;overflow:auto;border-radius:8px;padding:8px;background:rgba(255,255,255,0.01);font-size:13px}
     .status{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:800}
     .small{font-size:13px;color:var(--muted)}
     .footer{display:flex;gap:8px;align-items:center;justify-content:space-between}
-
-    /* confetti */
-    .confetti-wrapper { pointer-events:none; position:fixed; inset:0; z-index:9999; overflow:hidden; }
-    .confetti { position:absolute; width:10px; height:16px; opacity:0.95; transform-origin:center; border-radius:2px; animation: fall linear forwards; }
-    @keyframes fall { 0% { transform: translateY(-10vh) rotate(0deg); opacity:1; } 100% { transform: translateY(110vh) rotate(720deg); opacity:0.95; } }
-
-    /* step animation for sliding down snake or ladder */
-    .slide-anim { transition: transform 700ms cubic-bezier(.2,.9,.2,1); transform-origin:center; filter:drop-shadow(0 18px 40px rgba(2,6,23,0.7)); }
-    /* small toast */
-    .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#041219; padding:10px 14px; border-radius:10px; font-weight:800; z-index:10000; box-shadow:0 18px 50px rgba(0,0,0,0.5) }
+    .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#041219; padding:10px 14px; border-radius:10px; font-weight:800; z-index:10000; }
   </style>
 </head>
 <body>
@@ -80,75 +48,59 @@
     <div class="board-wrap" aria-live="polite">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="font-weight:900">Snakes & Ladders • Beni-Wealth</div>
-        <div class="small">Player vs Bot — fair, visual and dramatic</div>
+        <div class="small">Player vs Bot — fair 50/50 dice</div>
       </div>
-
-      <div id="board" class="grid" aria-label="game board"></div>
-
-      <!-- hidden tokens placed absolutely into cells -->
+      <div id="board" class="grid"></div>
       <div id="playerToken" class="token player" aria-hidden="true">P</div>
       <div id="botToken" class="token bot" aria-hidden="true">B</div>
-
     </div>
 
     <div class="controls">
-      <div class="status" id="status">Welcome — press <strong>Start</strong> to play</div>
-
+      <div class="status" id="status">Welcome — press <strong>Start</strong></div>
       <div style="display:flex;gap:12px;align-items:center">
-        <div id="dice" class="dice" aria-live="polite" aria-atomic="true">—</div>
-
+        <div id="dice" class="dice">—</div>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <button id="rollBtn" class="btn" aria-label="Roll dice">Roll</button>
-          <button id="startBtn" class="btn-ghost" aria-label="Start new game">Start New Game</button>
+          <button id="rollBtn" class="btn">Roll</button>
+          <button id="startBtn" class="btn-ghost">Start New Game</button>
         </div>
       </div>
-
-      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-        <div class="small">Bias</div>
-        <div id="biasTag" class="small muted">—</div>
-        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-          <label class="small">Sound</label><input type="checkbox" id="soundToggle" checked />
-        </div>
+      <div style="margin-top:8px">
+        <div class="small">Sound</div>
+        <input type="checkbox" id="soundToggle" checked />
       </div>
 
       <div style="margin-top:8px">
-        <div style="font-weight:800">Game log</div>
-        <div id="log" class="history" aria-live="polite"></div>
+        <div class="small">Game log</div>
+        <div id="log" class="history"></div>
       </div>
 
       <div class="footer" style="margin-top:8px">
         <div class="small">Made for Beni-Wealth</div>
-        <div>
-          <button id="saveBtn" class="btn-ghost">Save result</button>
-        </div>
+        <button id="saveBtn" class="btn-ghost">Save result</button>
       </div>
     </div>
   </div>
 
-  <div id="confettiRoot" class="confetti-wrapper" style="display:none"></div>
   <div id="toastRoot" aria-hidden="true"></div>
 
   <script type="module">
-    // Firebase (modular)
     import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
-    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
-    // preserve your firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
       projectId: "beni-wealths",
       storageBucket: "beni-wealths.firebasestorage.app",
       messagingSenderId: "807950483822",
-      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      appId: "1:807950483822:web=e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // UI refs
     const boardEl = document.getElementById('board');
     const playerToken = document.getElementById('playerToken');
     const botToken = document.getElementById('botToken');
@@ -157,506 +109,145 @@
     const diceEl = document.getElementById('dice');
     const statusEl = document.getElementById('status');
     const logEl = document.getElementById('log');
-    const biasTag = document.getElementById('biasTag');
     const saveBtn = document.getElementById('saveBtn');
-    const confettiRoot = document.getElementById('confettiRoot');
-    const toastRoot = document.getElementById('toastRoot');
     const soundToggle = document.getElementById('soundToggle');
+    const toastRoot = document.getElementById('toastRoot');
 
-    // game config
-    const SIZE = 10;
-    const CELL_COUNT = SIZE*SIZE;
-    // classic-ish start positions (we only keep starts; effect = +15 for ladder, -10 for snake)
-    const ladderStartsArr = [4,9,20,28,40,51,63,71];
-    const snakeStartsArr  = [98,95,92,87,64,62,54,17];
-    const ladderStarts = new Set(ladderStartsArr);
-    const snakeStarts = new Set(snakeStartsArr);
+    const SIZE = 10, CELL_COUNT = SIZE*SIZE;
+    const ladderStarts = new Set([4,9,20,28,40,51,63,71]);
+    const snakeStarts  = new Set([98,95,92,87,64,62,54,17]);
 
-    // financial config
-    const ENTRY_FEE = 50; // ₦50 debited when game starts
-    const WIN_REWARD = 70; // ₦70 credited on win
+    let playerPos=1, botPos=1;
+    let playerTurn=true, running=false, currentUser=null, isRolling=false;
 
-    // state
-    let playerPos = 1, botPos = 1;
-    let playerTurn = true;
-    let running = false;
-    let currentUser = null;
-    let bias = null; // 'botFavored' | 'playerFavored'
-    let isRolling = false;
-
-    // build board in DISPLAY order (top -> bottom, left -> right)
     function buildBoard(){
-      boardEl.innerHTML = '';
-      for(let displayRow = 0; displayRow < SIZE; displayRow++){
-        const rowFromBottom = SIZE - 1 - displayRow;
-        const leftToRight = (rowFromBottom % 2 === 0);
-        for(let col = 0; col < SIZE; col++){
-          const num = leftToRight ? (rowFromBottom * SIZE + (col + 1)) : (rowFromBottom * SIZE + (SIZE - col));
-          const cell = document.createElement('div');
-          cell.className = 'cell';
-          cell.dataset.num = String(num);
-          const n = document.createElement('div'); n.className='num'; n.textContent = num;
+      boardEl.innerHTML='';
+      for(let r=0;r<SIZE;r++){
+        const rowFromBottom = SIZE-1-r;
+        const leftToRight = rowFromBottom%2===0;
+        for(let c=0;c<SIZE;c++){
+          const num = leftToRight ? (rowFromBottom*SIZE + (c+1)) : (rowFromBottom*SIZE + (SIZE-c));
+          const cell = document.createElement('div'); cell.className='cell'; cell.dataset.num=num;
+          const n = document.createElement('div'); n.className='num'; n.textContent=num;
           cell.appendChild(n);
           if(ladderStarts.has(num)){
-            const f = document.createElement('div'); f.className='feature'; f.textContent='🪜';
-            cell.classList.add('ladder-start');
-            cell.appendChild(f);
+            cell.classList.add('ladder-start'); const f= document.createElement('div'); f.className='feature'; f.textContent='🪜'; cell.append(f);
           } else if(snakeStarts.has(num)){
-            const f = document.createElement('div'); f.className='feature'; f.textContent='🐍';
-            cell.classList.add('snake-start');
-            cell.appendChild(f);
+            cell.classList.add('snake-start'); const f= document.createElement('div'); f.className='feature'; f.textContent='🐍'; cell.append(f);
           }
-          // alternate subtle background
-          const shade = ((rowFromBottom + (num % 2)) % 2 === 0) ? 'rgba(255,255,255,0.018)' : 'rgba(255,255,255,0.01)';
-          cell.style.background = `linear-gradient(180deg, ${shade}, transparent)`;
           boardEl.appendChild(cell);
         }
       }
     }
 
-    // lookup cell element by logical number
-    function getCellElementByNumber(n){
-      return boardEl.querySelector(`.cell[data-num="${Number(n)}"]`);
-    }
-
-    // visual placement
+    function getCell(num){ return boardEl.querySelector(`.cell[data-num="${num}"]`); }
     function placeTokens(){
-      const pCell = getCellElementByNumber(playerPos);
-      const bCell = getCellElementByNumber(botPos);
-      if(pCell){ pCell.appendChild(playerToken); playerToken.style.transform = 'translate(0,0)'; }
-      if(bCell){ bCell.appendChild(botToken); botToken.style.transform = 'translate(0,0)'; }
+      const pCell=getCell(playerPos), bCell=getCell(botPos);
+      if(pCell){pCell.appendChild(playerToken);}
+      if(bCell){bCell.appendChild(botToken);}
     }
 
-    // audio beep
-    function playBeep(freq=440, dur=120){
-      try{
-        if(!soundToggle.checked) return;
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'sine'; o.frequency.value = freq;
-        o.connect(g); g.connect(ctx.destination);
-        g.gain.value = 0.0001;
-        o.start();
-        g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + (dur/1000));
-        setTimeout(()=>{ try{ o.stop(); ctx.close(); }catch(_){} }, dur+50);
-      }catch(e){}
+    function showToast(msg,ms=2500){
+      const t=document.createElement('div'); t.className='toast'; t.textContent=msg; toastRoot.appendChild(t);
+      setTimeout(()=>{t.remove();},ms);
     }
 
-    // dramatic dice roll
-    async function dramaticRoll(){
-      if(isRolling) return null;
-      isRolling = true;
-      diceEl.classList.add('rolling','roll-anim');
-      const duration = 700 + Math.floor(Math.random()*600);
-      let last = 1;
-      return new Promise(resolve => {
-        const i = setInterval(()=>{
-          const r = Math.floor(Math.random()*6)+1;
-          diceEl.textContent = r;
-          playBeep(350 + r*60, 40);
-          last = r;
-        }, 60);
-
-        setTimeout(()=>{
-          clearInterval(i);
-          const final = Math.floor(Math.random()*6)+1;
-          diceEl.textContent = final;
-          playBeep(740 + final*40, 220);
-          diceEl.classList.remove('rolling');
-          setTimeout(()=> diceEl.classList.remove('roll-anim'), 260);
-          isRolling = false;
-          resolve(final);
-        }, duration);
-      });
+    function logMsg(t){
+      const d=document.createElement('div'); d.textContent=`${(new Date()).toLocaleTimeString()} — ${t}`;
+      logEl.prepend(d);
+      if(logEl.children.length>200) logEl.removeChild(logEl.lastChild);
     }
 
     function rollDie(){ return Math.floor(Math.random()*6)+1; }
 
-    // move token stepwise animation
-    async function animateTokenStepwise(token, from, to){
-      if(to <= from) return;
-      const path = [];
-      for(let p = from+1; p<=to; p++) path.push(p);
-      for(const pos of path){
-        const cell = getCellElementByNumber(pos);
-        if(!cell) continue;
-        cell.classList.add('hl');
-        cell.appendChild(token);
-        token.style.transform = 'translateY(-6px)';
-        await wait(140);
-        token.style.transform = 'translateY(0)';
-        cell.classList.remove('hl');
-        await wait(90);
-      }
+    async function doRollAnimation(){
+      if(isRolling) return null;
+      isRolling=true; diceEl.textContent='...';
+      await new Promise(r=>setTimeout(r,300));
+      const val = rollDie();
+      diceEl.textContent=val; isRolling=false; return val;
     }
 
-    // slide animation (for ladder/snake) — moves token overlay and snaps to target
-    async function animateSlide(token, from, to){
-      const fromCell = getCellElementByNumber(from);
-      const toCell = getCellElementByNumber(to);
-      if(!fromCell || !toCell) return;
-      fromCell.classList.add('hl'); toCell.classList.add('hl');
-
-      const clone = token.cloneNode(true);
-      clone.classList.add('slide-anim');
-      document.body.appendChild(clone);
-      const rectFrom = fromCell.getBoundingClientRect();
-      const rectTo = toCell.getBoundingClientRect();
-      clone.style.position = 'fixed';
-      clone.style.left = (rectFrom.left + rectFrom.width/2 - clone.offsetWidth/2) + 'px';
-      clone.style.top = (rectFrom.top + rectFrom.height/2 - clone.offsetHeight/2) + 'px';
-
-      await wait(40);
-      clone.style.transform = `translate(${rectTo.left - rectFrom.left}px, ${rectTo.top - rectFrom.top}px) scale(1.06)`;
-      playBeep(560, 220);
-      await wait(680);
-      clone.remove();
-      try{ toCell.appendChild(token); }catch(e){}
-      fromCell.classList.remove('hl'); toCell.classList.remove('hl');
+    function applySnL(pos){
+      if(ladderStarts.has(pos)) return {next:Math.min(CELL_COUNT,pos+15),type:'ladder'};
+      if(snakeStarts.has(pos)) return {next:Math.max(1,pos-10),type:'snake'};
+      return {next:pos,type:null};
     }
 
-    function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
+    function setStatus(t){ statusEl.textContent=t; }
 
-    function logMsg(t){
-      const d = document.createElement('div');
-      d.textContent = `${(new Date()).toLocaleTimeString()} — ${t}`;
-      logEl.prepend(d);
-      if(logEl.children.length > 200) logEl.removeChild(logEl.lastChild);
-    }
-
-    // apply snake/ladder only when landing exactly on start
-    function applySnakesLadders(pos){
-      const p = Number(pos);
-      if(ladderStarts.has(p)){
-        const next = Math.min(CELL_COUNT, p + 15);
-        return { next, type: 'ladder' };
-      }
-      if(snakeStarts.has(p)){
-        const next = Math.max(1, p - 10);
-        return { next, type: 'snake' };
-      }
-      return { next: p, type: null };
-    }
-
-    // handle case where roll would overshoot 100 -> skip turn
-    function wouldOvershoot(pos, roll){
-      return (pos + roll) > CELL_COUNT;
-    }
-
-    // user must be signed in to be debited/credited — show confirmation messages to user
-    async function chargeEntryFee(){
-      if(!currentUser) throw new Error('not-signed-in');
-      // attempt to debit either users/{uid}.balance or balances/{uid}.balance (best-effort)
-      const userId = currentUser.uid;
-      const uRef = doc(db, 'users', userId);
-      const bRef = doc(db, 'balances', userId);
-
-      try{
-        const result = await runTransaction(db, async (tx) => {
-          const uSnap = await tx.get(uRef);
-          const bSnap = await tx.get(bRef);
-          let bal = null;
-          if(uSnap.exists()){
-            const ud = uSnap.data() || {};
-            if(typeof ud.balance === 'number') bal = ud.balance;
-            else if(typeof ud.amount === 'number') bal = ud.amount;
-          }
-          if((bal === null || bal === undefined) && bSnap.exists()){
-            const bd = bSnap.data() || {};
-            if(typeof bd.balance === 'number') bal = bd.balance;
-            else if(typeof bd.amount === 'number') bal = bd.amount;
-          }
-          if(bal === null || bal === undefined) bal = 0;
-          if(Number(bal) < ENTRY_FEE) throw new Error('insufficient-funds');
-
-          const newBal = Number(bal) - ENTRY_FEE;
-          // prefer updating users doc if exists else balances
-          if(uSnap.exists()){
-            tx.set(uRef, { balance: newBal }, { merge: true });
-          } else {
-            tx.set(bRef, { balance: newBal }, { merge: true });
-          }
-          return { before: bal, after: newBal };
-        });
-        // show discreet confirmation to user
-        showToast(`₦${ENTRY_FEE} debited (entry fee).`);
-        return result;
-      }catch(e){
-        if(e.message === 'insufficient-funds') throw new Error('insufficient-funds');
-        throw e;
-      }
-    }
-
-    async function creditWinReward(){
-      if(!currentUser) throw new Error('not-signed-in');
-      const userId = currentUser.uid;
-      const uRef = doc(db, 'users', userId);
-      const bRef = doc(db, 'balances', userId);
-      try{
-        const result = await runTransaction(db, async (tx) => {
-          const uSnap = await tx.get(uRef);
-          const bSnap = await tx.get(bRef);
-          let bal = null;
-          if(uSnap.exists()){
-            const ud = uSnap.data() || {};
-            if(typeof ud.balance === 'number') bal = ud.balance;
-            else if(typeof ud.amount === 'number') bal = ud.amount;
-          }
-          if((bal === null || bal === undefined) && bSnap.exists()){
-            const bd = bSnap.data() || {};
-            if(typeof bd.balance === 'number') bal = bd.balance;
-            else if(typeof bd.amount === 'number') bal = bd.amount;
-          }
-          if(bal === null || bal === undefined) bal = 0;
-          const newBal = Number(bal) + WIN_REWARD;
-          if(uSnap.exists()){
-            tx.set(uRef, { balance: newBal }, { merge: true });
-          } else {
-            tx.set(bRef, { balance: newBal }, { merge: true });
-          }
-          return { before: bal, after: newBal };
-        });
-        showToast(`You won! ₦${WIN_REWARD} credited.`);
-        return result;
-      }catch(e){
-        console.warn('credit failed', e);
-        // still show win toast but not the internals
-        showToast('You won! Reward will be processed.');
-        return null;
-      }
-    }
-
-    // bot move with bias
     async function botMove(){
       if(!running) return;
-      setStatus('Bot is thinking...');
-      await wait(600 + Math.random()*700);
-      let final = await dramaticRoll();
-      // bias adjustments
-      if(bias === 'botFavored'){
-        if(Math.random() < 0.6){
-          const r2 = rollDie();
-          final = Math.max(final, r2);
-        }
-      } else {
-        if(Math.random() < 0.6){
-          const r2 = rollDie();
-          final = Math.min(final, r2);
-        }
+      setStatus("Bot's turn...");
+      await new Promise(r=>setTimeout(r,600));
+      const val = await doRollAnimation();
+      logMsg("Bot rolled "+val);
+      if(botPos+val<=CELL_COUNT){
+        botPos+=val;
+        const res=applySnL(botPos);
+        botPos=res.next;
       }
-      diceEl.textContent = final;
-      logMsg('Bot rolled ' + final);
-
-      // overshoot check
-      if(wouldOvershoot(botPos, final)){
-        logMsg('Bot overshot and skips turn (needs ' + (CELL_COUNT - botPos) + ')');
-        // skip bot's movement
-        playerTurn = true;
-        setStatus('Your turn');
-        return;
-      }
-
-      const next = Math.min(CELL_COUNT, botPos + final);
-      await animateTokenStepwise(botToken, botPos, next);
-      botPos = next;
-
-      const res = applySnakesLadders(botPos);
-      if(res.type === 'ladder' || res.type === 'snake'){
-        logMsg('Bot encountered ' + res.type + ' — moving to ' + res.next);
-        await animateSlide(botToken, botPos, res.next);
-        botPos = res.next;
-      }
-
       placeTokens();
-      if(botPos >= CELL_COUNT){
-        endGame('bot');
-        return;
-      }
-      playerTurn = true;
-      setStatus('Your turn');
+      if(botPos>=CELL_COUNT){endGame('bot');return;}
+      playerTurn=true; setStatus("Your turn");
     }
 
-    function endGame(winner){
-      running = false;
-      rollBtn.disabled = true;
-      startBtn.disabled = false;
-      const msg = winner === 'player' ? 'You win! 🎉' : 'Bot wins — try again!';
-      setStatus(msg);
-      logMsg('Game ended — winner: ' + winner + ' (bias: ' + bias + ')');
-      if(winner === 'player') showConfetti(3500, 120);
-      // if winner is player, credit reward and show confirmation
-      (async ()=>{
-        if(winner === 'player' && currentUser){
-          try{
-            await creditWinReward();
-          }catch(e){
-            console.warn('credit reward failed', e);
-          }
-        } else {
-          // bot won; optionally show a discreet message
-          if(currentUser) showToast('Round complete — better luck next time.');
-        }
-      })();
-    }
-
-    // player turn
     async function playerRoll(){
-      if(!running) return;
-      if(!playerTurn) return;
-      rollBtn.disabled = true;
-      const final = await dramaticRoll();
-      diceEl.textContent = final;
-      logMsg('You rolled ' + final);
-
-      // overshoot: if roll would exceed CELL_COUNT, skip turn
-      if(wouldOvershoot(playerPos, final)){
-        logMsg('Overshoot — you need ' + (CELL_COUNT - playerPos) + '. Turn skipped.');
-        setStatus(`You need ${CELL_COUNT - playerPos} to finish — turn skipped`);
-        playerTurn = false;
-        // small delay then bot moves
-        await wait(700);
-        await botMove();
-        rollBtn.disabled = !playerTurn;
-        return;
+      if(!running || !playerTurn) return;
+      rollBtn.disabled=true;
+      const val=await doRollAnimation();
+      logMsg("You rolled "+val);
+      if(playerPos+val<=CELL_COUNT){
+        playerPos+=val;
+        const res=applySnL(playerPos);
+        playerPos=res.next;
       }
-
-      const next = Math.min(CELL_COUNT, playerPos + final);
-      await animateTokenStepwise(playerToken, playerPos, next);
-      playerPos = next;
-
-      const res = applySnakesLadders(playerPos);
-      if(res.type === 'ladder' || res.type === 'snake'){
-        logMsg('You encountered ' + res.type + ' — moving to ' + res.next);
-        await animateSlide(playerToken, playerPos, res.next);
-        playerPos = res.next;
-      }
-
       placeTokens();
-      if(playerPos >= CELL_COUNT){
-        endGame('player');
-        rollBtn.disabled = true;
-        return;
-      }
-
-      playerTurn = false;
-      await wait(420);
-      rollBtn.disabled = false;
-      await wait(300);
+      if(playerPos>=CELL_COUNT){endGame('player');return;}
+      playerTurn=false;
+      await new Promise(r=>setTimeout(r,400));
       await botMove();
-      rollBtn.disabled = !playerTurn;
+      rollBtn.disabled=!playerTurn;
+    }
+
+    function endGame(w){
+      running=false; rollBtn.disabled=true; startBtn.disabled=false;
+      setStatus(w=='player'?'You win!':'Bot wins');
+      if(w=='player') showToast("You win!");
+      else showToast("Bot wins!");
     }
 
     function resetGame(){
-      playerPos = 1; botPos = 1; playerTurn = true; running = false; rollBtn.disabled = true; startBtn.disabled = false; diceEl.textContent = '—'; logEl.innerHTML=''; biasTag.textContent = '—'; setStatus('Press Start to begin'); placeTokens();
+      playerPos=1; botPos=1; running=false; playerTurn=true;
+      rollBtn.disabled=true; startBtn.disabled=false; diceEl.textContent='—'; logEl.innerHTML=''; setStatus('Press Start to begin');
+      buildBoard(); placeTokens();
     }
-
-    function decideBias(){
-      bias = Math.random() < 0.5 ? 'botFavored' : 'playerFavored';
-      biasTag.textContent = bias === 'botFavored' ? 'Bot favored (advantage)' : 'Player favored (bot disadvantaged)';
-    }
-
-    function setStatus(t){ statusEl.textContent = t; }
-    function log(t){ logMsg(t); }
 
     async function startGame(){
-      // require sign-in for debiting
-      if(!currentUser) return alert('Please sign in to play.');
+      if(!currentUser){alert('Sign in to play');return;}
+      running=true; rollBtn.disabled=false; startBtn.disabled=true;
+      logEl.innerHTML=''; setStatus('Your turn'); placeTokens();
+    }
 
-      // attempt to charge entry fee, show confirmation to user. If fails, abort start.
+    async function saveResult(){
+      if(running){alert("Finish game first");return;}
+      const winner = playerPos>=CELL_COUNT?'player':(botPos>=CELL_COUNT?'bot':null);
+      if(!winner) return alert("Game not finished");
       try{
-        await chargeEntryFee();
-      }catch(e){
-        if(e.message === 'insufficient-funds') { alert('Insufficient funds to join (₦' + ENTRY_FEE + ' required).'); return; }
-        console.error('charge error', e); alert('Could not charge entry fee. Try again later.'); return;
-      }
-
-      // fresh game
-      playerPos = 1; botPos = 1; logEl.innerHTML='';
-      playerTurn = Math.random() < 0.5;
-      decideBias();
-      running = true; rollBtn.disabled = false; startBtn.disabled = true;
-      logMsg(`New game started — ${playerTurn ? 'You start' : 'Bot starts'} • bias: ${bias}`);
-      placeTokens();
-      setStatus(playerTurn ? 'Your turn' : 'Bot is moving...');
-      await wait(350);
-      if(!playerTurn){
-        await botMove();
-      }
+        await addDoc(collection(db,'snakesAndLaddersResults'),{winner,ts:serverTimestamp(),user:currentUser?currentUser.uid:null});
+        alert("Result saved!");
+      }catch(e){alert("Save failed");}
     }
 
-    // Save result to Firestore (minimal record)
-    async function saveResultToFirebase(winner){
-      try{
-        await addDoc(collection(db,'snakesAndLaddersResults'), {
-          winner, bias, playerPos, botPos, ts: serverTimestamp(), user: currentUser ? (currentUser.uid||currentUser.email||null) : null
-        });
-        alert('Result saved to Firebase');
-      }catch(e){ console.warn('save failed', e); alert('Could not save result: ' + (e.message||e)); }
-    }
-
-    // confetti
-    function showConfetti(durationMs = 3000, count = 80){
-      confettiRoot.style.display = 'block';
-      confettiRoot.innerHTML = '';
-      const colors = ['#ff3b3b','#ffb86b','#ffd166','#6ee7b7','#7a5fff','#35d6b1','#fff'];
-      for(let i=0;i<count;i++){
-        const el = document.createElement('div');
-        el.className = 'confetti';
-        el.style.background = colors[Math.floor(Math.random()*colors.length)];
-        el.style.left = (Math.random()*100) + '%';
-        el.style.top = (-10 - Math.random()*20) + 'vh';
-        el.style.width = (6 + Math.random()*12) + 'px';
-        el.style.height = (8 + Math.random()*16) + 'px';
-        el.style.opacity = (0.8 + Math.random()*0.3);
-        const speed = 2500 + Math.random()*3500;
-        el.style.animationDuration = (speed) + 'ms';
-        el.style.transform = `rotate(${Math.floor(Math.random()*360)}deg)`;
-        confettiRoot.appendChild(el);
-      }
-      setTimeout(()=>{ confettiRoot.style.display='none'; confettiRoot.innerHTML=''; }, durationMs + 400);
-    }
-
-    // toast (brief confirmation)
-    function showToast(msg, ms = 3000){
-      const t = document.createElement('div');
-      t.className = 'toast';
-      t.textContent = msg;
-      toastRoot.appendChild(t);
-      setTimeout(()=>{ t.style.transition='opacity 300ms'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, ms);
-    }
-
-    // atomic debit transaction already implemented above (chargeEntryFee)
-    // atomic credit transaction already implemented above (creditWinReward)
-
-    // UI wiring
-    rollBtn.addEventListener('click', ()=>{ if(!isRolling) playerRoll(); });
-    startBtn.addEventListener('click', async ()=>{
-      // reset and attempt to start (will attempt to debit entry fee)
-      resetGame(); buildBoard(); placeTokens();
-      await startGame();
-    });
-    saveBtn.addEventListener('click', async ()=>{
-      if(running) return alert('Save after the game ends');
-      const winner = playerPos >= CELL_COUNT ? 'player' : (botPos >= CELL_COUNT ? 'bot' : 'none');
-      if(winner === 'none') return alert('Game not finished yet');
-      await saveResultToFirebase(winner);
+    document.addEventListener('DOMContentLoaded',()=>{
+      buildBoard(); placeTokens(); setStatus('Press Start to begin');
     });
 
-    // init
-    buildBoard();
-    resetGame();
-    placeTokens();
+    rollBtn.addEventListener('click',()=>{if(!isRolling)playerRoll();});
+    startBtn.addEventListener('click',()=>{resetGame();startGame();});
+    saveBtn.addEventListener('click',()=>saveResult());
 
-    // auth watcher to capture user id for saves / transactions
-    onAuthStateChanged(auth, user => { currentUser = user; });
-
-    // keyboard: space to roll when available
-    window.addEventListener('keydown', (e)=>{ if(e.code === 'Space'){ if(!rollBtn.disabled) playerRoll(); e.preventDefault(); } });
-
-    // small helper to set initial display
-    setStatus('Press Start to begin');
+    onAuthStateChanged(auth,u=>{currentUser=u;});
   </script>
 </body>
 </html>
