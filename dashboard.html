@@ -1,69 +1,165 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Beni-Wealth — Dashboard</title>
 
   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
 
-  <!-- Favicons & Social preview -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32"
+        href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
-    /* your existing CSS, unchanged */
-    /* (paste your entire original CSS block here) */
+    :root{
+      --bg-1: #0b0613;
+      --bg-2: #0f0820;
+      --muted: rgba(255,255,255,0.62);
+      --text: #eaf2ff;
+      --accent-a: #8446ff;
+      --accent-b: #6ce2c8;
+      --accent-grad: linear-gradient(135deg, var(--accent-a), #5b3bff 45%, var(--accent-b) 100%);
+      --container-w: 980px;
+      font-family: 'Poppins', system-ui, Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent),
+                  radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.06), transparent),
+                  linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:var(--text);
+      padding:20px; display:flex; justify-content:center;
+    }
+    .phone{
+      width:100%; max-width:var(--container-w);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:18px; padding:18px 18px 100px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+      overflow:auto; position:relative; min-height:600px;
+    }
+    .top{display:flex;gap:12px;align-items:center;margin-bottom:18px;}
+    .avatar{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:18px;color:#041219;background:var(--accent-grad);box-shadow:0 10px 34px rgba(87,52,164,0.26);position:relative;}
+    .avatar .presence{position:absolute;right:4px;bottom:4px;width:12px;height:12px;border-radius:50%;background:#00ff9d;border:2px solid rgba(0,0,0,0.22);}
+    .greeting{flex:1;}
+    .greeting h2{margin:0;font-size:17px;font-weight:700;}
+    .greeting p{margin:6px 0 0;color:var(--muted);font-size:12px;}
+
+    .asset-card{margin:8px 0 16px;border-radius:12px;padding:14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);}
+    .asset-top{display:flex;justify-content:space-between;align-items:center;}
+    .asset-left{display:flex;flex-direction:column;}
+    .asset-sub{color:var(--muted);font-size:12px;}
+    .asset-amount{font-size:28px;font-weight:800;}
+    .asset-approx{color:var(--muted);font-size:12px;margin-top:6px;}
+    .eye-btn{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);display:grid;place-items:center;cursor:pointer;}
+
+    .action-row{display:flex;gap:10px;margin-top:14px;}
+    .pill{flex:1;padding:12px;border-radius:999px;text-align:center;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,0.04);}
+    .pill.primary{background: linear-gradient(90deg,#7a5fff,#5e47ff,#35d6b1);color:#041219;}
+    .pill.ghost{background:transparent;color:var(--muted);}
+
+    .menu{margin-top:18px;display:flex;flex-direction:column;gap:12px;}
+    .menu-item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:12px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02);cursor:pointer;}
+    .menu-left{display:flex;gap:12px;align-items:center;}
+    .menu-icon{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,0.02);font-size:18px;}
+    .menu-text h4{margin:0;font-size:14px;}
+    .menu-text p{margin:4px 0 0;color:var(--muted);font-size:12px;}
+
+    .logout{margin-top:20px;padding:12px;border-radius:999px;text-align:center;border:1px solid rgba(255,255,255,0.06);color:var(--muted);cursor:pointer;}
+
+    .bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;width:calc(min(var(--container-w),100%)-28px);background:rgba(255,255,255,0.02);border-radius:38px;padding:10px;display:flex;justify-content:space-between;}
+    .nav-btn{width:56px;text-align:center;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;cursor:pointer;}
+    .nav-btn .icon-wrap{width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.02);display:grid;place-items:center;}
+
+    /* overlay */
+    .overlay{position:fixed;inset:0;display:none;z-index:1100;}
+    .overlay.open{display:block;}
+    .overlay-backdrop{position:absolute;inset:0;background:rgba(2,6,23,0.6);}
+    .overlay-panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,92%);padding:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:12px;}
+    .overlay-close{position:absolute;right:12px;top:12px;font-size:18px;border:none;cursor:pointer;}
+    .overlay-options{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
+    .overlay-option{padding:12px;text-align:center;border-radius:10px;font-weight:800;cursor:pointer;}
+    .overlay-option.primary{background: linear-gradient(90deg,#7a5fff,#35d6b1);color:#041219;}
   </style>
 </head>
+
 <body>
-  <div class="phone" role="main" aria-live="polite">
-    <!-- Your existing Dashboard content: avatar, greeting, assets, menu, bottom nav, FAB, etc. -->
-    <!-- (everything you included before the overlays) -->
+  <div class="phone">
 
-    <!-- MORE overlay -->
-    <div id="moreOverlay" class="overlay" aria-hidden="true">
+    <!-- TOP -->
+    <div class="top">
+      <div class="avatar" id="avatar">U<span class="presence" title="online"></span></div>
+      <div class="greeting"><h2 id="greeting">Hi, User</h2><p id="uidline">UID: -</p></div>
+      <button id="settingsBtn" class="eye-btn">⚙️</button>
+    </div>
+
+    <!-- ASSETS -->
+    <div class="asset-card">
+      <div class="asset-top">
+        <div class="asset-left">
+          <div class="asset-sub">Total Assets (NGN)</div>
+          <div class="asset-amount" id="balance">₦0.00</div>
+          <div class="asset-approx" id="approx">≈ ₦0.00</div>
+        </div>
+        <button id="eyeBtn" class="eye-btn">👁️</button>
+      </div>
+      <div class="action-row">
+        <div id="rechargeBtn" class="pill primary">Recharge</div>
+        <div id="withdrawBtn" class="pill ghost">Withdraw</div>
+      </div>
+    </div>
+
+    <!-- MENU -->
+    <nav class="menu">
+      <div id="ordersItem" class="menu-item"><div class="menu-left"><div class="menu-icon">📄</div><div class="menu-text"><h4>My Orders</h4></div></div></div>
+      <div id="tasksItem" class="menu-item"><div class="menu-left"><div class="menu-icon">🔎</div><div class="menu-text"><h4>Available tasks</h4></div></div></div>
+      <div id="earningsItem" class="menu-item"><div class="menu-left"><div class="menu-icon">📈</div><div class="menu-text"><h4>Earnings Report</h4></div></div></div>
+      <div id="referralsItem" class="menu-item"><div class="menu-left"><div class="menu-icon">👥</div><div class="menu-text"><h4>Referrals</h4></div></div></div>
+      <div id="moreItem" class="menu-item"><div class="menu-left"><div class="menu-icon">⋯</div><div class="menu-text"><h4>More</h4></div></div></div>
+    </nav>
+
+    <button id="logoutBtn" class="logout">Log out</button>
+
+    <!-- Bottom nav -->
+    <div class="bottom-nav">
+      <div id="navHome" class="nav-btn"><div class="icon-wrap">🏠</div><div>Home</div></div>
+      <div id="navConvert" class="nav-btn"><div class="icon-wrap">🔗</div><div>Shortlinks</div></div>
+      <div class="nav-center"><button id="navCenter" class="center-btn">➕</button></div>
+      <div id="navNews" class="nav-btn"><div class="icon-wrap">💬</div><div>News</div></div>
+      <div id="navAssets" class="nav-btn"><div class="icon-wrap">👤</div><div>Assets</div></div>
+    </div>
+
+    <!-- More Overlay -->
+    <div id="moreOverlay" class="overlay">
       <div class="overlay-backdrop" id="overlayBackdrop"></div>
-      <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
-        <button id="overlayClose" class="overlay-close" aria-label="Close">✕</button>
-        <h3 id="overlayTitle">More options</h3>
+      <div class="overlay-panel">
+        <button id="overlayClose" class="overlay-close">✕</button>
+        <h3>More options</h3>
         <div class="overlay-options">
-          <a href="ptc.html" class="overlay-option primary" id="optPtc">PTC</a>
-          <a href="blog.html" class="overlay-option primary" id="optBlog">Blog</a>
-          <a href="#" class="overlay-option primary" id="optGames">Games</a>
+          <div id="optPtc" class="overlay-option primary">PTC</div>
+          <div id="optBlog" class="overlay-option primary">Blog</div>
+          <div id="optGames" class="overlay-option primary">Games</div>
         </div>
       </div>
     </div>
 
-    <!-- BLOG overlay -->
-    <div id="blogOverlay" class="overlay" aria-hidden="true">
-      <div class="overlay-backdrop" id="blogBackdrop"></div>
-      <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="blogOverlayTitle">
-        <button id="blogOverlayClose" class="overlay-close" aria-label="Close">✕</button>
-        <h3 id="blogOverlayTitle">Blog options</h3>
-        <div class="overlay-options">
-          <a href="blog.html" class="overlay-option primary" id="optViewBlogs">View blogs</a>
-          <a href="write-blog.html" class="overlay-option primary" id="optCreateBlog">Create blog</a>
-          <a href="blog-dashboard.html" class="overlay-option primary" id="optEarnings">Earnings</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 🕹 Games Choice Overlay -->
-    <div id="gamesChoiceOverlay" class="overlay" aria-hidden="true">
+    <!-- Games Choice Overlay -->
+    <div id="gamesChoiceOverlay" class="overlay">
       <div class="overlay-backdrop" id="gamesChoiceBackdrop"></div>
-      <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="gamesChoiceTitle">
-        <button id="gamesChoiceClose" class="overlay-close" aria-label="Close">✕</button>
-        <h3 id="gamesChoiceTitle">Games Options</h3>
+      <div class="overlay-panel">
+        <button id="gamesChoiceClose" class="overlay-close">✕</button>
+        <h3>Games Options</h3>
         <div class="overlay-options">
-          <button id="optOpenGames" class="overlay-option primary">Open Games</button>
-          <button id="optGameContests" class="overlay-option primary">Game Contests</button>
+          <div id="openGamesBtn" class="overlay-option primary">Open Games</div>
+          <div id="gameContestsBtn" class="overlay-option primary">Game Contests</div>
         </div>
       </div>
     </div>
 
-    <!-- existing logout button, bottom nav, FAB, etc. -->
   </div>
 
   <script type="module">
@@ -71,7 +167,6 @@
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // FIREBASE config — unchanged
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -81,102 +176,71 @@
       appId: "1:807950483822:web=e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
+
     if(!getApps().length) initializeApp(firebaseConfig);
 
-    // Overlay elements
+    // Auth & firestore if needed
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // -------- OVERLAY LOGIC --------
+
     const moreItem = document.getElementById('moreItem');
     const moreOverlay = document.getElementById('moreOverlay');
     const overlayBackdrop = document.getElementById('overlayBackdrop');
     const overlayClose = document.getElementById('overlayClose');
 
-    const optBlog = document.getElementById('optBlog');
-    const blogOverlay = document.getElementById('blogOverlay');
-    const blogBackdrop = document.getElementById('blogBackdrop');
-    const blogOverlayClose = document.getElementById('blogOverlayClose');
-
-    // Games choice overlay
     const gamesChoiceOverlay = document.getElementById('gamesChoiceOverlay');
     const gamesChoiceBackdrop = document.getElementById('gamesChoiceBackdrop');
     const gamesChoiceClose = document.getElementById('gamesChoiceClose');
-    const optOpenGames = document.getElementById('optOpenGames');
-    const optGameContests = document.getElementById('optGameContests');
 
-    // Open More overlay
-    function openMoreOverlay(){
+    const optPtc = document.getElementById('optPtc');
+    const optBlog = document.getElementById('optBlog');
+    const optGames = document.getElementById('optGames');
+
+    const openGamesBtn = document.getElementById('openGamesBtn');
+    const gameContestsBtn = document.getElementById('gameContestsBtn');
+
+    function openMore(){
       moreOverlay.classList.add('open');
-      moreOverlay.setAttribute('aria-hidden','false');
       document.body.style.overflow = 'hidden';
-      moreOverlay.querySelector('.overlay-option')?.focus();
     }
-    function closeMoreOverlay(){
+    function closeMore(){
       moreOverlay.classList.remove('open');
-      moreOverlay.setAttribute('aria-hidden','true');
       document.body.style.overflow = '';
-      moreItem.focus();
-    }
-    moreItem.addEventListener('click', (e) => { e.preventDefault(); openMoreOverlay(); });
-    moreItem.addEventListener('keydown', (e) => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openMoreOverlay(); } });
-
-    overlayClose.addEventListener('click', (e)=>{ e.preventDefault(); closeMoreOverlay(); });
-    overlayBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); closeMoreOverlay(); });
-
-    // Close via ESC
-    window.addEventListener('keydown', (e)=>{ 
-      if(e.key === 'Escape' && moreOverlay.classList.contains('open')) closeMoreOverlay();
-    });
-
-    // BLOG overlay logic
-    function openBlogOverlay(){ 
-      closeMoreOverlay(); 
-      blogOverlay.classList.add('open'); 
-      blogOverlay.setAttribute('aria-hidden','false'); 
-      document.body.style.overflow = 'hidden'; 
-      blogOverlay.querySelector('.overlay-option')?.focus(); 
-    }
-    function closeBlogOverlay(){ 
-      blogOverlay.classList.remove('open'); 
-      blogOverlay.setAttribute('aria-hidden','true'); 
-      document.body.style.overflow = ''; 
-      moreItem.focus(); 
-    }
-    if(optBlog){
-      optBlog.addEventListener('click', (e) => { e.preventDefault(); openBlogOverlay(); });
-      optBlog.addEventListener('keydown', (e) => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openBlogOverlay(); } });
-    }
-    blogOverlayClose.addEventListener('click', (e)=>{ e.preventDefault(); closeBlogOverlay(); });
-    blogBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); closeBlogOverlay(); });
-    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && blogOverlay.classList.contains('open')) closeBlogOverlay(); });
-
-    // Games choice logic
-    const optGamesEl = document.getElementById('optGames');
-    if(optGamesEl){
-      optGamesEl.addEventListener('click', (e) => {
-        e.preventDefault();
-        closeMoreOverlay();
-        gamesChoiceOverlay.classList.add('open');
-        gamesChoiceOverlay.setAttribute('aria-hidden','false');
-        document.body.style.overflow = 'hidden';
-        optOpenGames.focus();
-      });
     }
 
-    function closeGamesChoiceOverlay(){
+    function openGamesChoice(){
+      gamesChoiceOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeGamesChoice(){
       gamesChoiceOverlay.classList.remove('open');
-      gamesChoiceOverlay.setAttribute('aria-hidden','true');
       document.body.style.overflow = '';
     }
-    gamesChoiceClose.addEventListener('click', (e)=>{ e.preventDefault(); closeGamesChoiceOverlay(); });
-    gamesChoiceBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); closeGamesChoiceOverlay(); });
-    window.addEventListener('keydown', (e) => {
-      if(e.key === 'Escape' && gamesChoiceOverlay.classList.contains('open')){
-        closeGamesChoiceOverlay();
+
+    moreItem.addEventListener('click', ()=> openMore());
+    overlayClose.addEventListener('click', ()=> closeMore());
+    overlayBackdrop.addEventListener('click', ()=> closeMore());
+
+    window.addEventListener('keydown',(e)=>{
+      if(e.key==='Escape'){
+        if(moreOverlay.classList.contains('open')) closeMore();
+        if(gamesChoiceOverlay.classList.contains('open')) closeGamesChoice();
       }
     });
 
-    optOpenGames.addEventListener('click', () => { window.location.href = 'mini-games.html'; });
-    optGameContests.addEventListener('click', () => { window.location.href = 'game-contests.html'; });
+    // More options
+    optPtc.addEventListener('click', () => { closeMore(); window.location.href='ptc.html'; });
+    optBlog.addEventListener('click', () => { closeMore(); window.location.href='blog.html'; });
+    optGames.addEventListener('click', () => { closeMore(); setTimeout(openGamesChoice, 200); });
 
-    // Continue with your existing dashboard auth/balance/nav logic unchanged...
+    // Games Choice options
+    openGamesBtn.addEventListener('click', () => { window.location.href='mini-games.html'; });
+    gameContestsBtn.addEventListener('click', () => { window.location.href='game-contests.html'; });
+
+    gamesChoiceClose.addEventListener('click', () => closeGamesChoice());
+    gamesChoiceBackdrop.addEventListener('click', () => closeGamesChoice());
 
   </script>
 </body>
