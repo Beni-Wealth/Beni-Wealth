@@ -12,16 +12,15 @@
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
 
-  <!-- *SNIP* Your existing CSS (unchanged) -->
   <style>
-    /* (Your entire existing CSS here unchanged) */
-    /* For brevity in this snippet, assume all your large CSS block above is here unchanged */
+    /* your existing CSS, unchanged */
+    /* (paste your entire original CSS block here) */
   </style>
 </head>
 <body>
   <div class="phone" role="main" aria-live="polite">
-    <!-- (YOUR EXISTING DASHBOARD CONTENT) -->
-    <!-- … avatar, greeting, menu, bottom nav, etc. … -->
+    <!-- Your existing Dashboard content: avatar, greeting, assets, menu, bottom nav, FAB, etc. -->
+    <!-- (everything you included before the overlays) -->
 
     <!-- MORE overlay -->
     <div id="moreOverlay" class="overlay" aria-hidden="true">
@@ -51,7 +50,7 @@
       </div>
     </div>
 
-    <!-- ▶️ NEW: Games Choice Overlay -->
+    <!-- 🕹 Games Choice Overlay -->
     <div id="gamesChoiceOverlay" class="overlay" aria-hidden="true">
       <div class="overlay-backdrop" id="gamesChoiceBackdrop"></div>
       <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="gamesChoiceTitle">
@@ -64,7 +63,7 @@
       </div>
     </div>
 
-    <!-- (Your LOGOUT, bottom nav, FAB, etc. content follows unchanged) -->
+    <!-- existing logout button, bottom nav, FAB, etc. -->
   </div>
 
   <script type="module">
@@ -72,7 +71,7 @@
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // FIREBASE config — same as yours
+    // FIREBASE config — unchanged
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -82,15 +81,9 @@
       appId: "1:807950483822:web=e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
-
     if(!getApps().length) initializeApp(firebaseConfig);
-    const auth = getAuth();
-    const db = getFirestore();
 
-    // ***************************
-    // Overlay & Games Logic Starts
-    // ***************************
-
+    // Overlay elements
     const moreItem = document.getElementById('moreItem');
     const moreOverlay = document.getElementById('moreOverlay');
     const overlayBackdrop = document.getElementById('overlayBackdrop');
@@ -101,7 +94,7 @@
     const blogBackdrop = document.getElementById('blogBackdrop');
     const blogOverlayClose = document.getElementById('blogOverlayClose');
 
-    // NEW: Games choice overlay refs
+    // Games choice overlay
     const gamesChoiceOverlay = document.getElementById('gamesChoiceOverlay');
     const gamesChoiceBackdrop = document.getElementById('gamesChoiceBackdrop');
     const gamesChoiceClose = document.getElementById('gamesChoiceClose');
@@ -115,26 +108,37 @@
       document.body.style.overflow = 'hidden';
       moreOverlay.querySelector('.overlay-option')?.focus();
     }
-
     function closeMoreOverlay(){
       moreOverlay.classList.remove('open');
       moreOverlay.setAttribute('aria-hidden','true');
       document.body.style.overflow = '';
       moreItem.focus();
     }
-
     moreItem.addEventListener('click', (e) => { e.preventDefault(); openMoreOverlay(); });
-    moreItem.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMoreOverlay(); } });
+    moreItem.addEventListener('keydown', (e) => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openMoreOverlay(); } });
 
     overlayClose.addEventListener('click', (e)=>{ e.preventDefault(); closeMoreOverlay(); });
     overlayBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); closeMoreOverlay(); });
 
-    // ESC to close
-    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && moreOverlay.classList.contains('open')) closeMoreOverlay(); });
+    // Close via ESC
+    window.addEventListener('keydown', (e)=>{ 
+      if(e.key === 'Escape' && moreOverlay.classList.contains('open')) closeMoreOverlay();
+    });
 
-    // BLOG overlay logic (unchanged)
-    function openBlogOverlay(){ closeMoreOverlay(); blogOverlay.classList.add('open'); blogOverlay.setAttribute('aria-hidden','false'); document.body.style.overflow = 'hidden'; blogOverlay.querySelector('.overlay-option')?.focus(); }
-    function closeBlogOverlay(){ blogOverlay.classList.remove('open'); blogOverlay.setAttribute('aria-hidden','true'); document.body.style.overflow = ''; moreItem.focus(); }
+    // BLOG overlay logic
+    function openBlogOverlay(){ 
+      closeMoreOverlay(); 
+      blogOverlay.classList.add('open'); 
+      blogOverlay.setAttribute('aria-hidden','false'); 
+      document.body.style.overflow = 'hidden'; 
+      blogOverlay.querySelector('.overlay-option')?.focus(); 
+    }
+    function closeBlogOverlay(){ 
+      blogOverlay.classList.remove('open'); 
+      blogOverlay.setAttribute('aria-hidden','true'); 
+      document.body.style.overflow = ''; 
+      moreItem.focus(); 
+    }
     if(optBlog){
       optBlog.addEventListener('click', (e) => { e.preventDefault(); openBlogOverlay(); });
       optBlog.addEventListener('keydown', (e) => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openBlogOverlay(); } });
@@ -143,9 +147,7 @@
     blogBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); closeBlogOverlay(); });
     window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && blogOverlay.classList.contains('open')) closeBlogOverlay(); });
 
-    // --- NEW: Games choice overlay handlers ---
-
-    // Intercept click on "Games" in More overlay
+    // Games choice logic
     const optGamesEl = document.getElementById('optGames');
     if(optGamesEl){
       optGamesEl.addEventListener('click', (e) => {
@@ -163,10 +165,8 @@
       gamesChoiceOverlay.setAttribute('aria-hidden','true');
       document.body.style.overflow = '';
     }
-
     gamesChoiceClose.addEventListener('click', (e)=>{ e.preventDefault(); closeGamesChoiceOverlay(); });
     gamesChoiceBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); closeGamesChoiceOverlay(); });
-
     window.addEventListener('keydown', (e) => {
       if(e.key === 'Escape' && gamesChoiceOverlay.classList.contains('open')){
         closeGamesChoiceOverlay();
@@ -176,9 +176,7 @@
     optOpenGames.addEventListener('click', () => { window.location.href = 'mini-games.html'; });
     optGameContests.addEventListener('click', () => { window.location.href = 'game-contests.html'; });
 
-    // ***************************
-    // (The rest of your dashboard auth/balance/nav logic continues unchanged)
-    // ***************************
+    // Continue with your existing dashboard auth/balance/nav logic unchanged...
 
   </script>
 </body>
