@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Games Contests — Beni-Wealth</title>
+
+  <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --bg:#041225;
+      --card:#0b1220;
+      --accent:#7a5fff;
+      --accent-light:#35d6b1;
+      --text:#eaf2ff;
+      --muted:rgba(255,255,255,0.65);
+      font-family:Poppins,system-ui,Arial;
+    }
+    body {
+      margin:0; padding:20px;
+      background:linear-gradient(180deg,var(--bg),#031022);
+      color:var(--text); display:flex; justify-content:center; align-items:flex-start;
+    }
+    .container{width:100%;max-width:900px}
+    .back-btn {
+      margin-bottom:18px;
+      display:inline-block;
+      padding:8px 14px;
+      background:var(--accent);
+      color:#041219;
+      border-radius:8px;
+      text-decoration:none;
+      font-weight:700;
+    }
+    h1{text-align:center;font-size:1.8rem;font-weight:800;margin-bottom:6px;color:var(--accent-light)}
+    .sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:18px}
+    .countdown {
+      font-size:18px;font-weight:700;text-align:center;margin-bottom:24px;
+      color:var(--accent-light);
+    }
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:18px;
+    }
+    .card {
+      background:var(--card);border-radius:12px;padding:20px;
+      display:flex;flex-direction:column;align-items:center;gap:12px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.45);cursor:pointer;
+      transition:transform 200ms ease, box-shadow 200ms ease;
+    }
+    .card:hover {
+      transform:translateY(-6px);
+      box-shadow:0 12px 36px rgba(0,0,0,0.6);
+    }
+    .card h2{margin:0;font-size:1.3rem;font-weight:700;text-align:center;}
+    .card p{font-size:14px;color:var(--muted);text-align:center;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back-btn" href="dashboard.html">← Back to Dashboard</a>
+    <h1>Games Contests</h1>
+    <div class="sub">Weekly leaderboard resets every Monday at 00:00 UTC</div>
+    <div class="countdown" id="countdown">Loading countdown…</div>
+
+    <div class="grid">
+      <div class="card" onclick="location.href='game-4-leaderboard.html'">
+        <h2>Snakes & Ladder</h2>
+        <p>See who dominated this week!</p>
+      </div>
+
+      <div class="card" onclick="location.href='game-3-leaderboard.html'">
+        <h2>Memory Flip</h2>
+        <p>Match pairs and make the weekly leaderboard!</p>
+      </div>
+
+      <div class="card" onclick="location.href='game-2-leaderboard.html'">
+        <h2>Spin The Wheel</h2>
+        <p>Spin and win — check the weekly leaderboard!</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Countdown to next Monday 00:00 UTC
+    function updateCountdown() {
+      const now = new Date();
+
+      // find next Monday 00:00 UTC
+      const day = now.getUTCDay(); // 0=Sun,1=Mon,...6=Sat
+      const daysUntilMonday = (1 + 7 - day) % 7 || 7; // if Monday, next Monday
+      const nextMonday = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + daysUntilMonday,
+        0,0,0,0
+      ));
+
+      const diff = nextMonday - now;
+      if (diff <= 0) {
+        document.getElementById('countdown').textContent = "Resetting now…";
+        return;
+      }
+
+      const hrs = Math.floor(diff / (1000*60*60));
+      const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
+      const secs = Math.floor((diff % (1000*60)) / 1000);
+
+      document.getElementById('countdown').textContent =
+        `Time until next reset: ${hrs}h ${mins}m ${secs}s`;
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  </script>
+</body>
+</html>
