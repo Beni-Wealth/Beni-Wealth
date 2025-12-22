@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Spin the Wheel Leaderboard — Beni-Wealth</title>
+
+  <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32"
+        href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+
+  <style>
+    :root {
+      --bg:#041225;
+      --card:#0b1220;
+      --accent:#7a5fff;
+      --accent-light:#35d6b1;
+      --muted:rgba(255,255,255,0.65);
+      --text:#eaf2ff;
+      font-family:Poppins,system-ui,Arial;
+    }
+    body {
+      margin:0; padding:20px;
+      background:linear-gradient(180deg,var(--bg),#031022);
+      color:var(--text); display:flex; justify-content:center;
+    }
+    .container{width:100%;max-width:800px}
+    h1{text-align:center;font-size:1.8rem;font-weight:800;margin-bottom:12px;color:var(--accent-light)}
+    .controls{display:flex;justify-content:center;margin-bottom:20px}
+    .btn{padding:10px 18px;border:none;border-radius:10px;
+         background:linear-gradient(90deg,var(--accent-light),var(--accent));
+         color:#041219;font-weight:700; cursor:pointer; font-size:14px;}
+    table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+    th,td{padding:12px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.08)}
+    th{background:linear-gradient(90deg,var(--accent),var(--accent-light));color:#041219;font-size:0.9rem;text-transform:uppercase}
+    tbody tr:hover{background:rgba(255,255,255,0.05)}
+    .empty{text-align:center;color:var(--muted);padding:40px;font-size:1.1rem}
+    @media(max-width:600px){th,td{padding:8px;font-size:13px}h1{font-size:1.5rem}}
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🌀 Spin the Wheel — Weekly Leaderboard</h1>
+    <div class="controls">
+      <button id="refreshBtn" class="btn">Refresh</button>
+    </div>
+    <div id="leaderboard"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import {
+      getFirestore, collection, query, where, getDocs, Timestamp
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:80795082307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const leaderboardEl = document.getElementById('leaderboard');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    function obfuscate(uid){
+      if(!uid) return '';
+      const start = uid.slice(0,4);
+      const end = uid.slice(-4);
+      return `${start}…${end}`;
+    }
+
+    async function loadLeaderboard(){
+      leaderboardEl.innerHTML = `<div class="empty">Loading leaderboard…</div>`;
+
+      try {
+        const now = new Date();
+        const oneWeekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+        const q = query(
+          collection(db, 'spins'),
+          where('completedAt', '>=', Timestamp.fromDate(oneWeekAgo))
+        );
+        const snap = await getDocs(q);
+
+        const totals = {};
+        snap.forEach(doc => {
+          const d = doc.data();
+          if(d.userId && typeof d.amountWon === 'number'){
+            totals[d.userId] = (totals[d.userId] || 0) + d.amountWon;
+          }
+        });
+
+        const arr = Object.entries(totals).map(([uid, sum]) => ({uid, sum}));
+
+        if(arr.length === 0){
+          leaderboardEl.innerHTML = `<div class="empty">No wins recorded in the last 7 days.</div>`;
+          return;
+        }
+
+        arr.sort((a,b) => b.sum - a.sum);
+
+        let html = `<table><thead>
+          <tr><th>Rank</th><th>Player</th><th style="text-align:right">Total Wins (₦)</th></tr>
+        </thead><tbody>`;
+
+        arr.forEach((it, i) => {
+          let medal = '';
+          if(i === 0) medal = ' 🥇';
+          else if(i === 1) medal = ' 🥈';
+          else if(i === 2) medal = ' 🥉';
+
+          html += `<tr>
+            <td>${i+1}${medal}</td>
+            <td>${obfuscate(it.uid)}</td>
+            <td style="text-align:right">${it.sum.toLocaleString('en-NG',{maximumFractionDigits:2,minimumFractionDigits:2})}</td>
+          </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        leaderboardEl.innerHTML = html;
+
+      } catch (e) {
+        console.error(e);
+        leaderboardEl.innerHTML = `<div class="empty">Failed to load leaderboard</div>`;
+      }
+    }
+
+    refreshBtn.onclick = loadLeaderboard;
+    loadLeaderboard();
+  </script>
+</body>
+</html>
