@@ -3,21 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Snakes & Ladder</title>
+  <title>Beni-Wealth — Snakes & Ladders</title>
   <meta name="theme-color" content="#2fe0b8" />
 
   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
 
   <style>
     :root{
       --bg:#041225; --card:#0b1220;
       --accent:#7a5fff; --accent-2:#35d6b1;
       --muted:rgba(255,255,255,0.66);
-      --win:#10b981; --lose:#ef4444;
       font-family:Poppins, system-ui, Arial;
       color:#eaf2ff;
     }
@@ -28,7 +24,6 @@
     .board-wrap{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
     .controls{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px}
 
-    /* 👇 IMPORTANT: make the board a positioning context for tokens */
     #board {
       position: relative;
       width:100%;
@@ -49,23 +44,17 @@
 
     .token {
       position:absolute;
-      width:38px; height:38px;
-      border-radius:50%;
-      display:grid;place-items:center;
-      font-weight:900;
-      color:#041219;
+      width:32px;
+      height:32px;
+      pointer-events:none;
       z-index:40;
-      transition: transform 320ms cubic-bezier(.2,.9,.2,1), box-shadow 320ms;
+      transition: transform 0.32s cubic-bezier(.2,.9,.2,1), filter 0.32s ease;
     }
-    .token.player{background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 10px 30px rgba(122,95,255,0.18)}
-    .token.bot{background:linear-gradient(90deg,#ffb86b,#ff7a7a); box-shadow:0 10px 30px rgba(255,120,110,0.18)}
-
     .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#041219;font-weight:800;cursor:pointer}
     .btn-ghost{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
     .muted{color:var(--muted);font-size:13px}
     .history{height:140px;overflow:auto;border-radius:8px;padding:8px;background:rgba(255,255,255,0.01);font-size:13px}
     .status{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:800}
-    .small{font-size:13px;color:var(--muted)}
     .footer{display:flex;gap:8px;align-items:center;justify-content:space-between}
     .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#041219; padding:10px 14px; border-radius:10px; font-weight:800; z-index:10000; }
   </style>
@@ -80,8 +69,14 @@
 
       <div id="board"></div>
 
-      <div id="playerToken" class="token player" aria-hidden="true">P</div>
-      <div id="botToken" class="token bot" aria-hidden="true">B</div>
+      <!-- tokens using inline SVG data URIs -->
+      <img id="playerToken" class="token player"
+           src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyOCIgc3R5bGU9ImZpbGw6IzdhNWZmZjsiIC8+PHRleHQgeD0iMzIiIHk9IjM3IiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMDQxMjE5Ij5QPC90ZXh0Pjwvc3ZnPg=="
+           aria-hidden="true">
+
+      <img id="botToken" class="token bot"
+           src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyOCIgc3R5bGU9ImZpbGwOiNmZjdhNzA7IiAvPjx0ZXh0IHg9IjMyIiB5PSIzNyIgZm9udC1zaXplPSIyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzA0MTIxOSI+QjwvdGV4dD48L3N2Zz4="
+           aria-hidden="true">
     </div>
 
     <div class="controls">
@@ -93,17 +88,14 @@
           <button id="startBtn" class="btn-ghost">Start New Game</button>
         </div>
       </div>
-
       <div style="margin-top:8px">
         <div class="small">Sound</div>
         <input type="checkbox" id="soundToggle" checked />
       </div>
-
       <div style="margin-top:8px">
         <div class="small">Game log</div>
         <div id="log" class="history"></div>
       </div>
-
       <div class="footer" style="margin-top:8px">
         <div class="small">Made for Beni-Wealth</div>
         <button id="saveBtn" class="btn-ghost">Save result</button>
@@ -140,21 +132,20 @@
     const statusEl = document.getElementById('status');
     const logEl = document.getElementById('log');
     const saveBtn = document.getElementById('saveBtn');
-    const soundToggle = document.getElementById('soundToggle');
     const toastRoot = document.getElementById('toastRoot');
 
-    const SIZE = 10, CELL_COUNT = SIZE*SIZE;
+    const SIZE = 10, CELL_COUNT = SIZE * SIZE;
     const ladderStarts = new Set([4,9,20,28,40,51,63,71]);
     const snakeStarts  = new Set([98,95,92,87,64,62,54,17]);
 
-    let playerPos=1, botPos=1;
-    let playerTurn=true, running=false, currentUser=null, isRolling=false;
+    let playerPos = 1, botPos = 1;
+    let playerTurn = true, running = false, currentUser = null, isRolling = false;
 
     function buildBoard(){
-      boardEl.innerHTML='';
+      boardEl.innerHTML = '';
       for(let r=0;r<SIZE;r++){
-        const rowFromBottom = SIZE-1-r;
-        const leftToRight = rowFromBottom%2===0;
+        const rowFromBottom = SIZE - 1 - r;
+        const leftToRight = rowFromBottom % 2 === 0;
         for(let c=0;c<SIZE;c++){
           const num = leftToRight ? (rowFromBottom*SIZE + (c+1)) : (rowFromBottom*SIZE + (SIZE-c));
           const cell = document.createElement('div'); cell.className='cell'; cell.dataset.num=num;
@@ -168,13 +159,23 @@
           boardEl.appendChild(cell);
         }
       }
+      // place tokens initially
+      placeTokensInstant();
     }
 
     function getCell(num){ return boardEl.querySelector(`.cell[data-num="${num}"]`); }
-    function placeTokens(){
-      const pCell=getCell(playerPos), bCell=getCell(botPos);
-      if(pCell){pCell.appendChild(playerToken);} 
-      if(bCell){bCell.appendChild(botToken);}
+
+    function placeTokensInstant(){
+      // directly snap tokens to initial cell positions
+      const pCell = getCell(playerPos), bCell = getCell(botPos);
+      if(pCell){
+        const pr = pCell.getBoundingClientRect(), brd = boardEl.getBoundingClientRect();
+        playerToken.style.transform = `translate(${pr.left - brd.left + (pr.width - playerToken.offsetWidth)/2}px, ${pr.top - brd.top + (pr.height - playerToken.offsetHeight)/2}px)`;
+      }
+      if(bCell){
+        const br = bCell.getBoundingClientRect(), brd = boardEl.getBoundingClientRect();
+        botToken.style.transform = `translate(${br.left - brd.left + (br.width - botToken.offsetWidth)/2}px, ${br.top - brd.top + (br.height - botToken.offsetHeight)/2}px)`;
+      }
     }
 
     function showToast(msg,ms=2500){
@@ -182,29 +183,57 @@
       setTimeout(()=>{t.remove();},ms);
     }
 
-    function logMsg(t){
-      const d=document.createElement('div'); d.textContent=`${(new Date()).toLocaleTimeString()} — ${t}`;
-      logEl.prepend(d);
-      if(logEl.children.length>200) logEl.removeChild(logEl.lastChild);
-    }
+    function logMsg(t){ const d=document.createElement('div'); d.textContent=`${new Date().toLocaleTimeString()} — ${t}`; logEl.prepend(d); if(logEl.children.length>200) logEl.removeChild(logEl.lastChild); }
 
     function rollDie(){ return Math.floor(Math.random()*6)+1; }
 
+    async function animateTokenMove(tokenEl, fromNum, toNum){
+      // step through each square with animation
+      let steps = [];
+      let pos = fromNum;
+      while(pos !== toNum){
+        pos = pos < toNum ? pos+1 : pos-1;
+        steps.push(pos);
+      }
+      const boardRect = boardEl.getBoundingClientRect();
+      for(const sq of steps){
+        const cell = getCell(sq);
+        if(!cell) continue;
+        const rect = cell.getBoundingClientRect();
+        tokenEl.style.transform = `translate(${rect.left - boardRect.left + (rect.width - tokenEl.offsetWidth)/2}px, ${rect.top - boardRect.top + (rect.height - tokenEl.offsetHeight)/2}px)`;
+        tokenEl.style.filter = 'brightness(1.2)';
+        await new Promise(r=> setTimeout(r, 240));
+        tokenEl.style.filter = '';
+      }
+    }
+
     async function doRollAnimation(){
       if(isRolling) return null;
-      isRolling=true; diceEl.textContent='...';
+      isRolling = true; diceEl.textContent='...';
       await new Promise(r=>setTimeout(r,300));
       const val = rollDie();
-      diceEl.textContent=val; isRolling=false; return val;
+      diceEl.textContent = val; isRolling=false; return val;
     }
 
-    function applySnL(pos){
-      if(ladderStarts.has(pos)) return {next:Math.min(CELL_COUNT,pos+15),type:'ladder'};
-      if(snakeStarts.has(pos)) return {next:Math.max(1,pos-10),type:'snake'};
-      return {next:pos,type:null};
-    }
+    function applySnL(pos){ if(ladderStarts.has(pos)) return {next:Math.min(CELL_COUNT,pos+15),type:'ladder'}; if(snakeStarts.has(pos)) return {next:Math.max(1,pos-10),type:'snake'}; return {next:pos,type:null}; }
 
-    function setStatus(t){ statusEl.textContent=t; }
+    async function playerRoll(){
+      if(!running || !playerTurn) return;
+      rollBtn.disabled=true;
+      const val = await doRollAnimation();
+      logMsg("You rolled "+val);
+      const old = playerPos;
+      if(playerPos+val <= CELL_COUNT){
+        playerPos+=val;
+        const res=applySnL(playerPos);
+        playerPos=res.next;
+      }
+      await animateTokenMove(playerToken, old, playerPos);
+      if(playerPos>=CELL_COUNT){ endGame('player'); return; }
+      playerTurn=false;
+      await new Promise(r=>setTimeout(r,400));
+      await botMove();
+    }
 
     async function botMove(){
       if(!running) return;
@@ -212,72 +241,43 @@
       await new Promise(r=>setTimeout(r,600));
       const val = await doRollAnimation();
       logMsg("Bot rolled "+val);
+      const old = botPos;
       if(botPos+val<=CELL_COUNT){
         botPos+=val;
         const res=applySnL(botPos);
         botPos=res.next;
       }
-      placeTokens();
-      if(botPos>=CELL_COUNT){endGame('bot');return;}
-      playerTurn=true; setStatus("Your turn");
-    }
-
-    async function playerRoll(){
-      if(!running || !playerTurn) return;
-      rollBtn.disabled=true;
-      const val=await doRollAnimation();
-      logMsg("You rolled "+val);
-      if(playerPos+val<=CELL_COUNT){
-        playerPos+=val;
-        const res=applySnL(playerPos);
-        playerPos=res.next;
-      }
-      placeTokens();
-      if(playerPos>=CELL_COUNT){endGame('player');return;}
-      playerTurn=false;
-      await new Promise(r=>setTimeout(r,400));
-      await botMove();
-      rollBtn.disabled=!playerTurn;
+      await animateTokenMove(botToken, old, botPos);
+      if(botPos>=CELL_COUNT){ endGame('bot'); return; }
+      playerTurn=true; setStatus("Your turn"); rollBtn.disabled=false;
     }
 
     function endGame(w){
       running=false; rollBtn.disabled=true; startBtn.disabled=false;
-      setStatus(w=='player'?'You win!':'Bot wins');
-      if(w=='player') showToast("You win!");
-      else showToast("Bot wins!");
+      setStatus(w=='player'?'You win!':'Bot wins'); showToast(w=='player'?"You win!":"Bot wins!");
     }
+
+    function setStatus(t){ statusEl.textContent=t; }
 
     function resetGame(){
       playerPos=1; botPos=1; running=false; playerTurn=true;
-      rollBtn.disabled=true; startBtn.disabled=false; diceEl.textContent='—'; logEl.innerHTML=''; setStatus('Press Start to begin');
-      buildBoard(); placeTokens();
-    }
-
-    async function startGame(){
-      if(!currentUser){alert('Sign in to play');return;}
-      running=true; rollBtn.disabled=false; startBtn.disabled=true;
-      logEl.innerHTML=''; setStatus('Your turn'); placeTokens();
+      rollBtn.disabled=true; startBtn.disabled=false; diceEl.textContent='—'; logEl.innerHTML='';
+      setStatus('Press Start to begin'); buildBoard();
     }
 
     async function saveResult(){
-      if(running){alert("Finish game first");return;}
+      if(running){ alert("Finish game first"); return; }
       const winner = playerPos>=CELL_COUNT?'player':(botPos>=CELL_COUNT?'bot':null);
       if(!winner) return alert("Game not finished");
-      try{
-        await addDoc(collection(db,'snakesAndLaddersResults'),{winner,ts:serverTimestamp(),user:currentUser?currentUser.uid:null});
-        alert("Result saved!");
-      }catch(e){alert("Save failed");}
+      try { await addDoc(collection(db,'snakesAndLaddersResults'),{winner,ts:serverTimestamp(),user:currentUser?currentUser.uid:null}); alert("Result saved!"); } catch(e){ alert("Save failed"); }
     }
 
-    document.addEventListener('DOMContentLoaded',()=>{
-      buildBoard(); placeTokens(); setStatus('Press Start to begin');
-    });
+    startBtn.addEventListener('click', ()=>{ resetGame(); running=true; rollBtn.disabled=false; setStatus('Your turn'); });
+    rollBtn.addEventListener('click', ()=>playerRoll());
+    saveBtn.addEventListener('click', saveResult);
 
-    rollBtn.addEventListener('click',()=>{if(!isRolling)playerRoll();});
-    startBtn.addEventListener('click',()=>{resetGame(); startGame();});
-    saveBtn.addEventListener('click',()=>saveResult());
-
-    onAuthStateChanged(auth,u=>{currentUser=u;});
+    onAuthStateChanged(auth,u=>{ currentUser=u; });
+    document.addEventListener('DOMContentLoaded', ()=>{ buildBoard(); });
   </script>
 </body>
 </html>
