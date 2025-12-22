@@ -14,103 +14,48 @@
 
   <style>
     :root {
-      --bg: #041225;
-      --card-bg: #0b1220;
-      --accent: #7a5fff;
-      --accent-light: #a179ff;
-      --muted: rgba(255,255,255,0.65);
-      --text: #eaf2ff;
-      --gold: #f1c40f;
-      --silver: #bdc3c7;
-      --bronze: #cd7f32;
-      --radius: 12px;
-      --spacing: 14px;
+      --bg:#041225;
+      --card:#0b1220;
+      --accent:#7a5fff;
+      --accent-light:#35d6b1;
+      --muted:rgba(255,255,255,0.65);
+      --text:#eaf2ff;
+      font-family:Poppins,system-ui,Arial;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0; padding: 20px;
-      font-family: Poppins, system-ui, Arial;
-      background: linear-gradient(180deg, var(--bg), #031022);
-      color: var(--text);
-      display:flex;justify-content:center;
+    body {
+      margin:0; padding:20px;
+      background:linear-gradient(180deg,var(--bg),#031022);
+      color:var(--text); display:flex; justify-content:center;
     }
-    .container { width:100%;max-width:800px; }
-    h1 {
-      text-align:center;
-      font-weight:800;
-      margin-bottom:12px;
-      font-size:1.8rem;
-      color: var(--accent-light);
-      text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
-    }
-    .controls {
-      display:flex; justify-content:center; margin-bottom:18px;
-    }
-    .btn {
-      padding:10px 18px; border:none; border-radius:var(--radius);
-      background: linear-gradient(90deg,var(--accent-light),var(--accent));
-      color:#041219; font-weight:700; cursor:pointer;
-      font-size:14px;
-      box-shadow:0 6px 18px rgba(122,95,255,0.25);
-      transition: transform .15s ease;
-    }
-    .btn:hover { transform: scale(1.04); }
-
-    table {
-      width:100%; border-collapse:collapse;
-      font-size:15px;
-      background: var(--card-bg);
-      border-radius:var(--radius);
-      overflow:hidden;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    }
-    th, td {
-      padding: var(--spacing);
-      text-align:left;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    th {
-      background: linear-gradient(90deg,var(--accent),var(--accent-light));
-      color:#041219;
-      text-transform: uppercase;
-      font-size: 0.9rem;
-      letter-spacing: 0.5px;
-    }
-    tbody tr:hover {
-      background: rgba(255,255,255,0.05);
-    }
-
-    .rank-1 td:first-child { color: var(--gold); font-weight:700; }
-    .rank-2 td:first-child { color: var(--silver); font-weight:700; }
-    .rank-3 td:first-child { color: var(--bronze); font-weight:700; }
-
-    .empty {
-      text-align:center; padding:60px;
-      color: var(--muted); font-size: 1.1rem;
-    }
-
-    @media(max-width:600px){
-      th, td { padding:10px; font-size:13px; }
-      h1 { font-size:1.5rem; }
-    }
+    .container{width:100%;max-width:800px}
+    h1{text-align:center;font-size:1.8rem;font-weight:800;margin-bottom:12px;color:var(--accent-light)}
+    .controls{display:flex;justify-content:center;margin-bottom:20px}
+    .btn{padding:10px 18px;border:none;border-radius:10px;
+         background:linear-gradient(90deg,var(--accent-light),var(--accent));
+         color:#041219;font-weight:700; cursor:pointer; font-size:14px;}
+    table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+    th,td{padding:12px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.08)}
+    th{background:linear-gradient(90deg,var(--accent),var(--accent-light));color:#041219;font-size:0.9rem;text-transform:uppercase}
+    tbody tr:hover{background:rgba(255,255,255,0.05)}
+    .empty{text-align:center;color:var(--muted);padding:40px;font-size:1.1rem}
+    @media(max-width:600px){th,td{padding:8px;font-size:13px}h1{font-size:1.5rem}}
   </style>
 </head>
 
 <body>
   <div class="container">
-    <h1>🏆 Snakes & Ladders Leaderboard</h1>
+    <h1>🐍 Snakes & Ladders — Weekly Leaderboard</h1>
     <div class="controls">
       <button id="refreshBtn" class="btn">Refresh</button>
     </div>
-
-    <div id="list">
-      <div class="empty">Loading leaderboard…</div>
-    </div>
+    <div id="leaderboard"></div>
   </div>
 
   <script type="module">
     import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import {
+      getFirestore, collection, query, where, getDocs, Timestamp
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
@@ -118,59 +63,72 @@
       projectId: "beni-wealths",
       storageBucket: "beni-wealths.firebasestorage.app",
       messagingSenderId: "807950483822",
-      appId: "1:807950483822:web=e10fa87307e041c4d8417f",
+      appId: "1:80795082307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
 
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const listEl = document.getElementById('list');
+    const leaderboardEl = document.getElementById('leaderboard');
     const refreshBtn = document.getElementById('refreshBtn');
 
-    const obfuscate = uid => {
+    function obfuscate(uid){
       if(!uid) return '';
-      const start = uid.slice(0,4);
-      const end = uid.slice(-4);
-      return `${start}…${end}`;
-    };
+      return `${uid.slice(0,4)}…${uid.slice(-4)}`;
+    }
 
     async function loadLeaderboard(){
-      listEl.innerHTML = `<div class="empty">Loading leaderboard…</div>`;
+      leaderboardEl.innerHTML = `<div class="empty">Loading leaderboard…</div>`;
+
       try {
-        const snap = await getDocs(collection(db, 'snakesAndLaddersResults'));
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+        const q = query(
+          collection(db, 'snakesAndLaddersResults'),
+          where('ts', '>=', Timestamp.fromDate(sevenDaysAgo))
+        );
+        const snap = await getDocs(q);
+
         const counts = {};
         snap.forEach(doc => {
           const d = doc.data();
-          if(d.winner === 'player' && d.user){
+          if(d.user && d.winner === 'player'){
             counts[d.user] = (counts[d.user]||0) + 1;
           }
         });
 
-        const arr = Object.entries(counts).map(([uid,wins]) => ({uid,wins}));
+        const arr = Object.entries(counts).map(([uid,wins]) => ({uid, wins}));
+
         if(arr.length === 0){
-          listEl.innerHTML = `<div class="empty">No wins yet</div>`;
+          leaderboardEl.innerHTML = `<div class="empty">No wins in the past 7 days</div>`;
           return;
         }
 
         arr.sort((a,b) => b.wins - a.wins);
 
         let html = `<table><thead>
-          <tr><th>Rank</th><th>Player</th><th style="text-align:right">Wins</th></tr></thead><tbody>`;
-        arr.forEach((item,i) => {
-          const cls = `rank-${i+1}`;
-          html += `<tr class="${cls}">
-                    <td>${i+1}</td>
-                    <td>${obfuscate(item.uid)}</td>
-                    <td style="text-align:right">${item.wins}</td>
-                  </tr>`;
-        });
-        html += `</tbody></table>`;
-        listEl.innerHTML = html;
+          <tr><th>Rank</th><th>Player</th><th style="text-align:right">Wins</th></tr>
+        </thead><tbody>`;
 
+        arr.forEach((it, i) => {
+          let medal = '';
+          if(i === 0) medal = ' 🥇';
+          else if(i === 1) medal = ' 🥈';
+          else if(i === 2) medal = ' 🥉';
+
+          html += `<tr>
+            <td>${i+1}${medal}</td>
+            <td>${obfuscate(it.uid)}</td>
+            <td style="text-align:right">${it.wins}</td>
+          </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        leaderboardEl.innerHTML = html;
       } catch (e) {
         console.error(e);
-        listEl.innerHTML = `<div class="empty">Failed to load leaderboard</div>`;
+        leaderboardEl.innerHTML = `<div class="empty">Failed to load leaderboard</div>`;
       }
     }
 
