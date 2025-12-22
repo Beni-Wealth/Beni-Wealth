@@ -27,12 +27,39 @@
     @media(max-width:800px){ .app{grid-template-columns:1fr;max-width:480px;padding:12px} }
     .board-wrap{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
     .controls{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px}
-    .grid{width:100%;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(10,1fr);gap:6px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);padding:6px;border-radius:8px}
+
+    /* 👇 IMPORTANT: make the board a positioning context for tokens */
+    #board {
+      position: relative;
+      width:100%;
+      aspect-ratio:1/1;
+      display:grid;
+      grid-template-columns:repeat(10,1fr);
+      gap:6px;
+      background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);
+      padding:6px;
+      border-radius:8px;
+    }
+
     .cell{background:linear-gradient(180deg,rgba(255,255,255,0.012),transparent);border-radius:6px;display:block;padding:6px;font-size:12px;color:var(--muted);position:relative;overflow:visible;min-height:0}
     .cell .num{position:absolute;left:6px;top:6px;font-weight:800;color:var(--muted);font-size:12px;z-index:2}
     .cell .feature{position:absolute;right:6px;top:6px;font-size:18px;opacity:0.92;z-index:2}
     .cell.snake-start{box-shadow: inset 0 0 0 2px rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.06)}
     .cell.ladder-start{box-shadow: inset 0 0 0 2px rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.06)}
+
+    .token {
+      position:absolute;
+      width:38px; height:38px;
+      border-radius:50%;
+      display:grid;place-items:center;
+      font-weight:900;
+      color:#041219;
+      z-index:40;
+      transition: transform 320ms cubic-bezier(.2,.9,.2,1), box-shadow 320ms;
+    }
+    .token.player{background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 10px 30px rgba(122,95,255,0.18)}
+    .token.bot{background:linear-gradient(90deg,#ffb86b,#ff7a7a); box-shadow:0 10px 30px rgba(255,120,110,0.18)}
+
     .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#041219;font-weight:800;cursor:pointer}
     .btn-ghost{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
     .muted{color:var(--muted);font-size:13px}
@@ -50,7 +77,9 @@
         <div style="font-weight:900">Snakes & Ladders • Beni-Wealth</div>
         <div class="small">Player vs Bot — fair 50/50 dice</div>
       </div>
-      <div id="board" class="grid"></div>
+
+      <div id="board"></div>
+
       <div id="playerToken" class="token player" aria-hidden="true">P</div>
       <div id="botToken" class="token bot" aria-hidden="true">B</div>
     </div>
@@ -64,6 +93,7 @@
           <button id="startBtn" class="btn-ghost">Start New Game</button>
         </div>
       </div>
+
       <div style="margin-top:8px">
         <div class="small">Sound</div>
         <input type="checkbox" id="soundToggle" checked />
@@ -85,7 +115,7 @@
 
   <script type="module">
     import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     const firebaseConfig = {
@@ -143,7 +173,7 @@
     function getCell(num){ return boardEl.querySelector(`.cell[data-num="${num}"]`); }
     function placeTokens(){
       const pCell=getCell(playerPos), bCell=getCell(botPos);
-      if(pCell){pCell.appendChild(playerToken);}
+      if(pCell){pCell.appendChild(playerToken);} 
       if(bCell){bCell.appendChild(botToken);}
     }
 
@@ -244,7 +274,7 @@
     });
 
     rollBtn.addEventListener('click',()=>{if(!isRolling)playerRoll();});
-    startBtn.addEventListener('click',()=>{resetGame();startGame();});
+    startBtn.addEventListener('click',()=>{resetGame(); startGame();});
     saveBtn.addEventListener('click',()=>saveResult());
 
     onAuthStateChanged(auth,u=>{currentUser=u;});
