@@ -71,6 +71,7 @@ const auth = getAuth(app);
 
 let currentUser = null;
 const adverts = new Map();
+const pendingCounts = {};
 
 const advertsSection = document.getElementById("advertsSection");
 const subsSection = document.getElementById("subsSection");
@@ -85,6 +86,7 @@ function niceTime(ts){
   try{ return ts.toDate().toLocaleString(); }catch(e){ return "-"; }
 }
 
+// render adverts with pending badge
 function renderAdverts(filter=""){
   advertsSection.innerHTML = "";
   const lower = filter.toLowerCase();
@@ -92,9 +94,11 @@ function renderAdverts(filter=""){
   adverts.forEach(({id,data})=>{
     if(!data.title?.toLowerCase().includes(lower) && !id.toLowerCase().includes(lower)) return;
     found = true;
+    const pending = pendingCounts[id] || 0;
+    const badge = pending > 0 ? `<span style="margin-left:8px;font-size:0.9rem;color:#2fe0b8;">🔔 ${pending}</span>` : "";
     advertsSection.innerHTML += `
       <div style="border:1px solid rgba(255,255,255,.1);padding:14px;border-radius:10px;margin-bottom:12px">
-        <div><strong>${data.title}</strong> <span class="id-copy" data-id="${id}" title="Copy Advert ID">${partial(id)}</span></div>
+        <div><strong>${data.title}</strong>${badge}</div>
         <div class="muted">Unit Price: ₦${data.unitPrice||0} | Status: ${(data.status||"PENDING").toUpperCase()}</div>
         <button class="btn ghost viewSubsBtn" data-id="${id}" style="margin-top:10px">View Submissions</button>
       </div>`;
@@ -102,6 +106,7 @@ function renderAdverts(filter=""){
   if(!found) advertsSection.innerHTML = "<div class='muted'>No adverts found</div>";
 }
 
+// fetch user's adverts and pending counts
 function attachAdvertListener(uid){
   onSnapshot(collection(db,"advertise_tasks"),snap=>{
     adverts.clear();
@@ -111,11 +116,24 @@ function attachAdvertListener(uid){
         adverts.set(docSnap.id,{id:docSnap.id,data:d});
       }
     });
-    renderAdverts(searchInput.value);
+    updatePendingCounts();
   });
 }
 
-// SHOW SUBMISSIONS FULL PAGE
+// count pending submissions per advert
+async function updatePendingCounts(){
+  Object.keys(pendingCounts).forEach(k=>delete pendingCounts[k]);
+  const allSubs = await getDocs(collection(db,"advert_submissions"));
+  allSubs.forEach(s => {
+    const d = s.data();
+    if(adverts.has(d.advertId) && d.status === "pending"){
+      pendingCounts[d.advertId] = (pendingCounts[d.advertId]||0) + 1;
+    }
+  });
+  renderAdverts(searchInput.value);
+}
+
+// show submissions list
 async function showSubmissions(adId){
   const advert = adverts.get(adId);
   subsSection.style.display = "block";
@@ -126,7 +144,6 @@ async function showSubmissions(adId){
     <div class="muted">Unit Price: ₦${advert.data.unitPrice||0}</div>
     <div id="subsTableArea">Loading submissions…</div>
   `;
-
   document.getElementById("backToAdverts").onclick=()=>{
     subsSection.style.display="none";
     advertsSection.style.display="block";
@@ -143,14 +160,15 @@ async function showSubmissions(adId){
     const d=s.data(), sid=s.id;
     table+=`
       <tr>
-        <td>${partial(sid)} <span class="id-copy" data-id="${sid}">📋</span></td>
+        <td>${partial(sid)}</td>
         <td>${partial(d.userId)}</td>
         <td>${niceTime(d.createdAt)}</td>
         <td>${d.textProof||"<span class='muted'>No text</span>"}</td>
         <td>${d.imageUrl?`<img src="${d.imageUrl}" class="thumb-img" data-src="${d.imageUrl}">`:"<span class='muted'>No image</span>"}</td>
         <td>${d.status||""}</td>
         <td>
-          <button class="approve-btn btn ghost" ${d.status!=="pending"?"disabled":""} data-sid="${sid}" data-uid="${d.userId}" data-price="${advert.data.unitPrice||0}">Approve</button>
+          <button class="approve-btn btn ghost" ${d.status!=="pending"?"disabled":""} 
+            data-sid="${sid}" data-uid="${d.userId}" data-plan="${d.userPlan||''}" data-price="${advert.data.unitPrice||0}">Approve</button>
           <button class="reject-btn btn ghost" ${d.status!=="pending"?"disabled":""} data-sid="${sid}">Reject</button>
         </td>
       </tr>`;
@@ -166,33 +184,33 @@ onAuthStateChanged(auth,user=>{
 });
 
 searchInput.oninput=()=> renderAdverts(searchInput.value);
-refreshBtn.onclick=()=> renderAdverts(searchInput.value);
+refreshBtn.onclick=()=> updatePendingCounts();
 
-// BODY CLICK EVENTS
+// events
 document.body.addEventListener("click",async e=>{
-  if(e.target.matches(".id-copy")){
-    await navigator.clipboard.writeText(e.target.dataset.id);
-    alert("Copied!");
-  }
+
   if(e.target.matches(".viewSubsBtn")){
     showSubmissions(e.target.dataset.id);
   }
+
   if(e.target.matches(".thumb-img")){
     viewerImage.src = e.target.dataset.src;
     overlayViewer.style.display="flex";
   }
+
   if(e.target.matches(".approve-btn")){
     const sid = e.target.dataset.sid;
     const uid = e.target.dataset.uid;
+    const plan = e.target.dataset.plan.toLowerCase();
     const price = Number(e.target.dataset.price||0);
+
     try{
       await runTransaction(db,async tx=>{
         const subRef = doc(db,"advert_submissions",sid);
         const subSnap = await tx.get(subRef);
-        if(!subSnap.exists()) throw "Not found";
-        if(subSnap.data().status!=="pending") throw "Cannot approve";
+        if(!subSnap.exists() || subSnap.data().status!=="pending") throw "Cannot approve";
 
-        let payout = price * (subSnap.data().userPlan==="bronze"?0.6:0.8);
+        const payout = Math.round(price * (plan==="bronze"?0.6:0.8));
         tx.update(subRef,{status:"approved",approvedAt:serverTimestamp(),paidAmount:payout});
 
         const userRef = doc(db,"users",uid);
@@ -200,23 +218,27 @@ document.body.addEventListener("click",async e=>{
         const balance = Number(userSnap.data().balance||0);
         tx.update(userRef,{balance:balance+payout});
       });
-      alert("Approved and paid!");
-      showSubmissions(e.target.closest("table").dataset.advert); // refresh list
+
+      alert("Approved and credited!");
+      updatePendingCounts();
+      showSubmissions(e.target.closest("table").dataset.advert);
+
     }catch(err){ alert("Error: "+err); }
   }
+
   if(e.target.matches(".reject-btn")){
     const sid = e.target.dataset.sid;
     try{
-      await runTransaction(db,async tx=>{ 
+      await runTransaction(db,async tx=>{
         tx.update(doc(db,"advert_submissions",sid),{status:"rejected"});
       });
       alert("Rejected");
+      updatePendingCounts();
       showSubmissions(e.target.closest("table").dataset.advert);
     }catch(err){ alert("Error: "+err); }
   }
 });
 
-// Image viewer close
 overlayViewer.addEventListener("click",()=>overlayViewer.style.display="none");
 backBtn.onclick=()=>location.href="dashboard.html";
 
