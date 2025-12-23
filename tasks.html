@@ -6,13 +6,13 @@
   <title>Tasks — Beni-Wealth</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Favicon -->
+  <!-- Favicon (as always requested) -->
   <link rel="icon" type="image/png" sizes="32x32"
         href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
-    /* ================== BASE STYLES ================== */
+    /* ================== BASE STYLES (unchanged) ================== */
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820;
       --text:#eaf2ff; --muted:rgba(255,255,255,0.62);
@@ -59,23 +59,21 @@
     .small{font-size:12px;color:var(--muted);}
     .empty{text-align:center;color:var(--muted);padding:40px;}
 
-    #taskViewer{position:fixed;inset:0;background:var(--bg-2);z-index:3000;overflow:auto;padding:20px;display:none;max-width:800px;margin:auto;}
-    #viewerThumbSmall{width:120px;height:120px;object-fit:cover;border-radius:8px;margin-top:12px;cursor:pointer;border:1px solid rgba(255,255,255,0.15);}
-    #largeImgOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.95);z-index:4000;padding:18px;}
+    /* ================== FULL PAGE VIEWER ================== */
+    #taskViewer{
+      position:fixed;inset:0;background:var(--bg-2);z-index:3000;
+      overflow:auto;padding:20px;display:none;
+      max-width:800px; margin:auto; left:0; right:0;
+    }
+    #viewerBack{margin-bottom:14px;}
+    #viewerThumbSmall{
+      width:120px;height:120px;object-fit:cover;border-radius:8px;margin-top:12px;cursor:pointer;border:1px solid rgba(255,255,255,0.15);
+    }
+    #largeImgOverlay{
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+      background:rgba(2,6,23,0.95);z-index:4000;padding:18px;
+    }
     #largeImgOverlay img{max-width:90%;max-height:80%;border-radius:10px;}
-
-    /* Styled proof text and file input */
-    #viewerProofText {
-      width:100%; border-radius:8px; padding:8px; margin-top:6px;
-      border:1px solid rgba(255,255,255,0.04); background:rgba(255,255,255,0.01);
-      color:var(--text); font-size:13px; resize:vertical;
-    }
-    #viewerProofImage {
-      width:100%; margin-top:6px; padding:4px;
-      border-radius:8px; border:1px solid rgba(255,255,255,0.04);
-      color:var(--text);
-    }
-    #viewerProofStatus {margin-top:6px; color:var(--muted); font-size:12px;}
   </style>
 </head>
 <body>
@@ -99,13 +97,13 @@
     </div>
   </div>
 
-  <!-- Full Page Task Viewer -->
+  <!-- full page task viewer -->
   <div id="taskViewer">
     <button id="viewerBack" class="btn ghost">← Back</button>
     <h2 id="viewerTitle"></h2>
     <div id="viewerPlatform" class="small"></div>
     <div id="viewerPrice" class="price"></div>
-    <img id="viewerThumbSmall" style="display:none"/>
+    <img id="viewerThumbSmall" style="display:none" />
     <p id="viewerDesc" class="small" style="margin-top:12px;"></p>
     <div class="small">Task Link:</div>
     <a id="viewerLink" target="_blank" class="small"></a>
@@ -113,16 +111,16 @@
     <hr style="margin:18px 0;border-color:rgba(255,255,255,0.04)">
 
     <label class="small">Text proof</label>
-    <textarea id="viewerProofText" rows="4" placeholder="Enter your text proof…"></textarea>
+    <textarea id="viewerProofText" rows="4" placeholder="Text proof"></textarea>
 
-    <label class="small" style="margin-top:8px">Image proof</label>
+    <label class="small" style="margin-top:6px">Image proof</label>
     <input id="viewerProofImage" type="file" accept="image/*">
 
     <button id="viewerSubmitProofBtn" class="btn" style="margin-top:10px">Submit Proof</button>
     <div id="viewerProofStatus" class="small"></div>
   </div>
 
-  <!-- Enlarged Image Overlay -->
+  <!-- enlarged thumbnail overlay -->
   <div id="largeImgOverlay">
     <img id="largeImgView" src="">
   </div>
@@ -211,3 +209,63 @@
         const thumb=document.createElement('img');thumb.className='thumb';thumb.src=ad.data.thumbnail||'';if(!ad.data.thumbnail)thumb.style.display='none';
         const body=document.createElement('div');body.className='card-body';
         const h3=document.createElement('h3');h3.textContent=ad.data.title||'';
+        const meta=document.createElement('div');meta.className='meta';
+        meta.innerHTML=`<div>${ad.data.platform||''}</div><div class="price">${formatNGN(Math.round(deriveUnitPrice(ad.data)*0.7))}</div>`;
+        const btn=document.createElement('button');btn.className='btn';btn.textContent='Open Task';
+        btn.addEventListener('click',()=>openFullPageTask(ad.id));
+        body.append(h3,meta,btn);card.append(thumb,body);grid.append(card);any=true;
+      });
+      if(!any)grid.innerHTML='<div class="empty">No tasks available</div>';
+    }
+
+    function attachSubmissionsListeners(){
+      advertsCache.forEach(ad=>{
+        const subQ=query(collection(db,'advert_submissions'),where('advertId','==',ad.id));
+        onSnapshot(subQ,snap=>{
+          let count=0;snap.forEach(doc=>{if((doc.data().status||'').toLowerCase()==='approved')count++});
+          ad.approvedCount=count;
+          displayTasks();
+        });
+      });
+    }
+
+    function startAdvertsListener(){
+      grid.innerHTML='<div class="empty">Loading tasks…</div>';
+      const taskQ=query(collection(db,'advertise_tasks'),where('status','==','approved'));
+      if(advertsListenerUnsub)advertsListenerUnsub();
+      advertsListenerUnsub=onSnapshot(taskQ,snap=>{advertsCache.clear();snap.forEach(docSnap=>advertsCache.set(docSnap.id,{id:docSnap.id,data:docSnap.data(),approvedCount:0}));attachSubmissionsListeners();displayTasks();},err=>{grid.innerHTML='<div class="empty">Failed to load tasks</div>';});    }
+
+    async function openFullPageTask(id){
+      activeTaskId=id;
+      const s=await getDoc(doc(db,'advertise_tasks',id));if(!s.exists())return;
+      const d=s.data();
+      viewerTitle.textContent=d.title||'';viewerPlatform.textContent=d.platform||'';viewerPrice.textContent=formatNGN(Math.round(deriveUnitPrice(d)*0.7));
+      viewerDesc.textContent=d.description||'';viewerLink.href=d.taskLink||'#';viewerLink.textContent=viewerLink.href;
+      if(d.thumbnail){viewerThumbSmall.src=d.thumbnail;viewerThumbSmall.style.display='block';}else viewerThumbSmall.style.display='none';
+      taskViewer.style.display='block';history.pushState({task:true,id},'',location.pathname+'?id='+id);
+    }
+
+    viewerBack.addEventListener('click',()=>{taskViewer.style.display='none';const u=new URL(location.href);u.searchParams.delete('id');history.replaceState({},'',u);});
+    viewerThumbSmall.addEventListener('click',()=>{if(viewerThumbSmall.src){largeImgView.src=viewerThumbSmall.src;largeImgOverlay.style.display='flex';}});
+    largeImgOverlay.addEventListener('click',()=>{largeImgOverlay.style.display='none';});
+
+    viewerSubmitProofBtn.addEventListener('click',async()=>{
+      if(!currentUser){viewerProofStatus.textContent='Sign-in required';return;}
+      const text=viewerProofText.value.trim();const f=viewerProofImage.files[0];
+      if(!text||!f){viewerProofStatus.textContent='Both text and image proof are required';return;}
+      viewerSubmitProofBtn.disabled=true;viewerProofStatus.textContent='Submitting…';
+      const img=await uploadImgur(f);
+      await addDoc(collection(db,'advert_submissions'),{advertId:activeTaskId,userId:currentUser.uid,textProof:text,imageUrl:img,status:'pending',createdAt:serverTimestamp()});
+      window.location.href='tasks.html';
+    });
+
+    onAuthStateChanged(auth,async user=>{currentUser=user;userSubmissionIds.clear();if(user)await fetchUserSubs(user.uid);startAdvertsListener();});
+
+    refresh.addEventListener('click',async()=>{if(currentUser)await fetchUserSubs(currentUser.uid);startAdvertsListener();});
+
+    search.addEventListener('input',displayTasks);
+
+    window.addEventListener('load',()=>{const id=new URL(location.href).searchParams.get('id');if(id)openFullPageTask(id);});
+  </script>
+</body>
+</html>
