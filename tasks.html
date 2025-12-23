@@ -12,7 +12,7 @@
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
-    /* ================== BASE STYLES (unchanged) ================== */
+    /* ================== BASE STYLES ================== */
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820;
       --text:#eaf2ff; --muted:rgba(255,255,255,0.62);
@@ -59,49 +59,23 @@
     .small{font-size:12px;color:var(--muted);}
     .empty{text-align:center;color:var(--muted);padding:40px;}
 
-    /* ================== FULL PAGE VIEWER ================== */
-    #taskViewer{
-      position:fixed;inset:0;background:var(--bg-2);z-index:3000;
-      overflow:auto;padding:20px;display:none;
-      max-width:800px; margin:auto; left:0; right:0;
-    }
-    #viewerBack{margin-bottom:14px;}
-    #viewerThumbSmall{
-      width:120px;height:120px;object-fit:cover;border-radius:8px;margin-top:12px;cursor:pointer;border:1px solid rgba(255,255,255,0.15);
-    }
-    #largeImgOverlay{
-      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-      background:rgba(2,6,23,0.95);z-index:4000;padding:18px;
-    }
+    #taskViewer{position:fixed;inset:0;background:var(--bg-2);z-index:3000;overflow:auto;padding:20px;display:none;max-width:800px;margin:auto;}
+    #viewerThumbSmall{width:120px;height:120px;object-fit:cover;border-radius:8px;margin-top:12px;cursor:pointer;border:1px solid rgba(255,255,255,0.15);}
+    #largeImgOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.95);z-index:4000;padding:18px;}
     #largeImgOverlay img{max-width:90%;max-height:80%;border-radius:10px;}
 
-    /* ================== PROOF INPUT STYLES ================== */
+    /* Styled proof text and file input */
     #viewerProofText {
-      width: 100%;
-      background: rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.04);
-      color: var(--text);
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-family: 'Poppins',sans-serif;
-      resize: vertical;
-      margin-top: 6px;
+      width:100%; border-radius:8px; padding:8px; margin-top:6px;
+      border:1px solid rgba(255,255,255,0.04); background:rgba(255,255,255,0.01);
+      color:var(--text); font-size:13px; resize:vertical;
     }
     #viewerProofImage {
-      width: 100%;
-      margin-top: 6px;
-      padding: 6px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.04);
-      background: rgba(255,255,255,0.01);
-      color: var(--text);
+      width:100%; margin-top:6px; padding:4px;
+      border-radius:8px; border:1px solid rgba(255,255,255,0.04);
+      color:var(--text);
     }
-    #viewerProofStatus {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 12px;
-    }
+    #viewerProofStatus {margin-top:6px; color:var(--muted); font-size:12px;}
   </style>
 </head>
 <body>
@@ -125,13 +99,13 @@
     </div>
   </div>
 
-  <!-- full page task viewer -->
+  <!-- Full Page Task Viewer -->
   <div id="taskViewer">
     <button id="viewerBack" class="btn ghost">← Back</button>
     <h2 id="viewerTitle"></h2>
     <div id="viewerPlatform" class="small"></div>
     <div id="viewerPrice" class="price"></div>
-    <img id="viewerThumbSmall" style="display:none" />
+    <img id="viewerThumbSmall" style="display:none"/>
     <p id="viewerDesc" class="small" style="margin-top:12px;"></p>
     <div class="small">Task Link:</div>
     <a id="viewerLink" target="_blank" class="small"></a>
@@ -139,7 +113,7 @@
     <hr style="margin:18px 0;border-color:rgba(255,255,255,0.04)">
 
     <label class="small">Text proof</label>
-    <textarea id="viewerProofText" rows="4" placeholder="Enter text proof here…"></textarea>
+    <textarea id="viewerProofText" rows="4" placeholder="Enter your text proof…"></textarea>
 
     <label class="small" style="margin-top:8px">Image proof</label>
     <input id="viewerProofImage" type="file" accept="image/*">
@@ -148,12 +122,92 @@
     <div id="viewerProofStatus" class="small"></div>
   </div>
 
-  <!-- enlarged thumbnail overlay -->
+  <!-- Enlarged Image Overlay -->
   <div id="largeImgOverlay">
     <img id="largeImgView" src="">
   </div>
 
-  <!-- Your existing script goes here without changes -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import {
+      getFirestore, collection, query, where,
+      onSnapshot, addDoc, serverTimestamp,
+      doc, getDoc, getDocs
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
-</body>
-</html>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    const IMGUR_CLIENT_ID = 'fb533db21a59486';
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const grid = document.getElementById('grid');
+    const search = document.getElementById('search');
+    const refresh = document.getElementById('refresh');
+
+    const taskViewer = document.getElementById('taskViewer');
+    const viewerBack = document.getElementById('viewerBack');
+    const viewerTitle = document.getElementById('viewerTitle');
+    const viewerPlatform = document.getElementById('viewerPlatform');
+    const viewerPrice = document.getElementById('viewerPrice');
+    const viewerThumbSmall = document.getElementById('viewerThumbSmall');
+    const viewerDesc = document.getElementById('viewerDesc');
+    const viewerLink = document.getElementById('viewerLink');
+
+    const viewerProofText = document.getElementById('viewerProofText');
+    const viewerProofImage = document.getElementById('viewerProofImage');
+    const viewerSubmitProofBtn = document.getElementById('viewerSubmitProofBtn');
+    const viewerProofStatus = document.getElementById('viewerProofStatus');
+
+    const largeImgOverlay = document.getElementById('largeImgOverlay');
+    const largeImgView = document.getElementById('largeImgView');
+
+    let currentUser = null;
+    let advertsCache = new Map();
+    let userSubmissionIds = new Set();
+    let activeTaskId = null;
+    let advertsListenerUnsub = null;
+
+    function formatNGN(n){ try{return '₦'+Math.round(n).toLocaleString('en-NG');}catch{return '₦'+n;} }
+    function deriveUnitPrice(ad){const m=Number(ad?.unitPrice ?? ad?.unit ?? NaN);if(!isNaN(m)&&m>0) return m;const tot=Number(ad?.totalCost||0),w=Number(ad?.workers||0);return w>0?tot/w:0;}
+
+    async function uploadImgur(file){
+      const form=new FormData();form.append('image',file);
+      const res=await fetch('https://api.imgur.com/3/image',{method:'POST',headers:{Authorization:'Client-ID '+IMGUR_CLIENT_ID},body:form});
+      const j=await res.json();return j.success?j.data.link:null;
+    }
+
+    async function fetchUserSubs(uid){
+      userSubmissionIds.clear();
+      const subQ=query(collection(db,'advert_submissions'),where('userId','==',uid));
+      const snap=await getDocs(subQ);
+      snap.forEach(s=>{const d=s.data();const st=(d.status||'').toLowerCase();
+        if(st==='pending'||st==='approved') userSubmissionIds.add(d.advertId);
+      });
+    }
+
+    function displayTasks(){
+      const q=search.value.trim().toLowerCase();
+      grid.innerHTML='';
+      let any=false;
+      advertsCache.forEach(ad=>{
+        if(userSubmissionIds.has(ad.id)) return;
+        const workers=Number(ad.data.workers||0);
+        const approvedCount=Number(ad.data.approvedCount||0);
+        if(approvedCount>=workers) return;
+        const hay=((ad.data.title||'')+' '+(ad.data.platform||'')).toLowerCase();
+        if(q&&!hay.includes(q)) return;
+        const card=document.createElement('div');card.className='card';
+        const thumb=document.createElement('img');thumb.className='thumb';thumb.src=ad.data.thumbnail||'';if(!ad.data.thumbnail)thumb.style.display='none';
+        const body=document.createElement('div');body.className='card-body';
+        const h3=document.createElement('h3');h3.textContent=ad.data.title||'';
