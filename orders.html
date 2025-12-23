@@ -56,7 +56,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore, collection, query, where, onSnapshot, getDocs, doc,
-  runTransaction, serverTimestamp
+  runTransaction, serverTimestamp, orderBy
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
@@ -133,7 +133,7 @@ async function updatePendingCounts(){
   renderAdverts(searchInput.value);
 }
 
-// show submissions list
+// show submissions list (newest first)
 async function showSubmissions(adId){
   const advert = adverts.get(adId);
   subsSection.style.display = "block";
@@ -149,7 +149,14 @@ async function showSubmissions(adId){
     advertsSection.style.display="block";
   };
 
-  const snap = await getDocs(query(collection(db,"advert_submissions"),where("advertId","==",adId)));
+  const snap = await getDocs(
+    query(
+      collection(db,"advert_submissions"),
+      where("advertId","==",adId),
+      orderBy("createdAt","desc")
+    )
+  );
+
   if(snap.empty){
     document.getElementById("subsTableArea").innerHTML = "<div class='muted'>No submissions</div>";
     return;
@@ -218,7 +225,6 @@ document.body.addEventListener("click",async e=>{
         const balance = Number(userSnap.data().balance||0);
         tx.update(userRef,{balance:balance+payout});
       });
-
       alert("Approved and credited!");
       updatePendingCounts();
       showSubmissions(e.target.closest("table").dataset.advert);
@@ -235,6 +241,7 @@ document.body.addEventListener("click",async e=>{
       alert("Rejected");
       updatePendingCounts();
       showSubmissions(e.target.closest("table").dataset.advert);
+
     }catch(err){ alert("Error: "+err); }
   }
 });
@@ -246,3 +253,4 @@ backBtn.onclick=()=>location.href="dashboard.html";
 
 </body>
 </html>
+
