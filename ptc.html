@@ -8,42 +8,64 @@
   <meta name="theme-color" content="#7a5fff" />
   <style>
     :root{
-      --bg:#0b0613;--panel:#0f0820;--muted:rgba(255,255,255,0.62);
-      --card:#0f1120;--accent1:#7a5fff;--accent2:#35d6b1;--text:#eaf2ff;
-      --gap:14px;--radius:12px;
+      --bg:#0b0613;
+      --panel:#0f0820;
+      --muted:rgba(255,255,255,0.62);
+      --card:#0f1120;
+      --accent1:#7a5fff;
+      --accent2:#35d6b1;
+      --text:#eaf2ff;
+      --gap:14px;
+      --radius:12px;
     }
+
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
     body{
+      margin:0;
+      min-height:100vh;
       font-family:'Poppins',system-ui,Arial;
       background:linear-gradient(180deg,var(--bg),var(--panel));
-      color:var(--text);padding:18px;
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:18px;
     }
+
     .wrap{ max-width:1100px; margin:0 auto; }
+
     header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; }
-    .brand h1{ margin:0;font-size:20px }
-    .hint{color:var(--muted);font-size:13px;}
+    .brand { display:flex; flex-direction:column; gap:4px; }
+    h1{margin:0;font-size:20px}
+    .hint{color:var(--muted);font-size:13px;margin-top:2px}
+
     .controls{display:flex;gap:12px;align-items:center}
-    .search{ padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--text);font-size:14px; outline:none;}
-    .filter{ padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--muted);font-size:14px;}
-    .signinBtn{ padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;}
+    .search{ padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--text);min-width:200px;font-size:14px; outline:none; }
+    .search::placeholder{color:rgba(255,255,255,0.32)}
+    .filter{ padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--muted);font-size:14px; }
+    .signinBtn{ padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219; }
+
     .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:var(--gap); }
 
-    .card{ background:var(--card); padding:14px; border-radius:var(--radius); border:1px solid rgba(255,255,255,0.03); 
-          box-shadow:0 14px 40px rgba(0,0,0,0.55); display:flex; flex-direction:column; gap:10px; }
+    .card{ background:var(--card); padding:14px; border-radius:var(--radius); border:1px solid rgba(255,255,255,0.03); box-shadow:0 14px 40px rgba(0,0,0,0.55); display:flex; flex-direction:column; gap:10px; transition:transform .14s ease, box-shadow .14s ease; }
     .card:active, .card:focus-within { transform: translateY(2px); }
     .card h3{margin:0;font-size:16px;color:var(--accent1);font-weight:700}
     .meta{color:var(--muted);font-size:13px;margin-top:4px}
     .reward{font-weight:800;font-size:16px;margin-top:6px;color:var(--text)}
-    .views-count{font-size:13px;color:var(--muted);margin-top:4px;}
+    .views-count{font-size:13px;color:var(--muted);}
 
     .actions{margin-top:auto;display:flex;gap:8px;align-items:center}
     .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
     .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;flex:1;min-width:0}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);border-radius:10px;padding:10px 12px;font-weight:700}
 
     .visited{opacity:0.8;box-shadow:0 8px 24px rgba(0,0,0,0.45);border:1px solid rgba(61,46,111,0.12)}
     .visited-badge{font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);display:inline-block;margin-left:6px}
+
+    footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
+
+    .spinner { width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.22); border-top-color: #ffffff; animation:spin 0.9s linear infinite; display:none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:rgba(0,0,0,0.7); color:#fff; padding:10px 14px; border-radius:8px; z-index:99999; font-size:14px; display:none; }
     .toast.show { display:block; animation:fade .3s ease; }
@@ -57,12 +79,14 @@
         <h1>PTC Catalog</h1>
         <div class="hint">Tap a card to open the PTC page</div>
       </div>
-      <div class="controls">
-        <input id="searchInput" class="search" placeholder="Search PTC title or description...">
-        <select id="filterSelect" class="filter">
+
+      <div class="controls" role="search" aria-label="Search PTCs">
+        <input id="searchInput" class="search" placeholder="Search PTC title or description..." aria-label="Search PTCs">
+        <select id="filterSelect" class="filter" aria-label="Filter PTCs">
           <option value="all">All</option>
           <option value="fresh">Unvisited</option>
           <option value="visited">Visited</option>
+          <option value="mostViewed">Most Viewed</option>
         </select>
         <button id="signinBtn" class="signinBtn">Sign in</button>
       </div>
@@ -71,22 +95,27 @@
     <main>
       <div id="grid" class="grid" role="list" aria-live="polite"></div>
     </main>
+
+    <footer>20 PTC links • Each opens the corresponding <code>ptc-X.html</code> page in a new tab.</footer>
   </div>
 
-  <div id="toast" class="toast"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script type="module">
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, serverTimestamp, increment,
-      query, where, getDocs
+      getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, serverTimestamp, increment
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "...",
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
-      projectId: "beni-wealths"
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.appspot.com",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
     };
     if(!getApps().length) initializeApp(firebaseConfig);
     const auth = getAuth();
@@ -98,7 +127,7 @@
     const signinBtn = document.getElementById('signinBtn');
     const toast = document.getElementById('toast');
 
-    const REWARD = 0.40;
+    const REWARD = 0.40; // ₦0.40 per click
     const COOLDOWN_MS = 1 * 60 * 60 * 1000;
 
     function showToast(msg, ms=3000){
@@ -109,102 +138,140 @@
     }
 
     let currentUser=null;
-    const provider = new GoogleAuthProvider();
+    const provider=new GoogleAuthProvider();
+
     signinBtn.addEventListener('click', async ()=>{
-      try{ await signInWithPopup(auth,provider); }catch(err){ showToast('Sign-in failed'); }
+      try{ await signInWithPopup(auth, provider); }
+      catch(e){ showToast('Sign in failed'); }
     });
+
     onAuthStateChanged(auth,user=>{
       currentUser=user;
-      signinBtn.textContent = user?'Signed in':'Sign in';
-      signinBtn.disabled = !!user;
+      signinBtn.textContent=user?'Signed in':'Sign in';
+      signinBtn.disabled=!!user;
     });
 
-    function makePTC(i){
-      return { id:i, title:`PTC #${i}`, description:`Visit the page and earn`, reward:REWARD.toFixed(2) };
-    }
-    const PTCs = Array.from({length:20},(_,k)=>makePTC(k+1));
-
-    async function getTotalViews(ptcId){
+    // ----------------- Views Count Helpers -----------------
+    async function getViewCount(ptcId){
       try{
-        const snap = await getDoc(doc(db,'ptcCounts',String(ptcId)));
+        const snap=await getDoc(doc(db,'ptcViews',String(ptcId)));
         return snap.exists()?snap.data().count||0:0;
       }catch{return 0;}
     }
-
-    async function updateTotalViews(ptcId){
-      const ref = doc(db,'ptcCounts',String(ptcId));
-      try{ await updateDoc(ref,{ count: increment(1) }); }
+    async function incrementViewCount(ptcId){
+      const ref=doc(db,'ptcViews',String(ptcId));
+      try{ await updateDoc(ref,{ count:increment(1) }); }
       catch{ await setDoc(ref,{ count:1 }); }
     }
 
-    async function handlePTCClick(ptc,itemEl){
+    function makePTC(i){
+      return { id:i, title:`PTC #${i}`, description:`Visit the page and complete a small task to earn.`, reward:REWARD.toFixed(2) };
+    }
+    const PTCs=Array.from({length:20},(_,k)=>makePTC(k+1));
+
+    async function handlePTCClick(ptc,ui={}){
+      const btnOpen=ui.btnOpen;
+      const spinner=ui.spinnerEl;
+      const itemEl=ui.itemEl;
+
       if(!currentUser){ showToast('Sign in to earn'); return; }
-      const uid = currentUser.uid;
-      const docId = `${ptc.id}_${uid}`;
-      const clickRef = doc(db,'ptcClicks',docId);
-      const snap = await getDoc(clickRef);
+      const uid=currentUser.uid;
+      const docId=`${ptc.id}_${uid}`;
+      const clickRef=doc(db,'ptcClicks',docId);
+      const snap=await getDoc(clickRef);
 
       if(snap.exists()){
-        const last = snap.data().lastClickedAt;
+        const data=snap.data();
+        const last=data.lastClickedAt;
         if(last){
-          const lastMs = last.toDate().getTime();
-          if(Date.now()-lastMs < COOLDOWN_MS){
-            const mins = Math.ceil((COOLDOWN_MS - (Date.now()-lastMs))/60000);
-            showToast(`Try again in ${mins} min`);
-            return;
-          }
+          const diff=Date.now()-last.toDate().getTime();
+          if(diff<COOLDOWN_MS){ showToast('Try again later'); return; }
         }
       }
 
-      await setDoc(clickRef,{ ptcId:ptc.id, viewerUid:uid, lastClickedAt: serverTimestamp() },{ merge:true });
+      await setDoc(clickRef,{ ptcId:ptc.id, viewerUid:uid, lastClickedAt:serverTimestamp() },{ merge:true });
 
-      try{
-        // record total views count
-        await updateTotalViews(ptc.id);
-        const total = await getTotalViews(ptc.id);
-        const viewElem = itemEl.querySelector('.views-count');
-        if(viewElem) viewElem.textContent = `Views: ${total}`;
+      await addDoc(collection(db,'transactions'),{
+        userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,
+        note:`PTC click reward`,createdAt:serverTimestamp()
+      });
+      await updateDoc(doc(db,'users',uid),{ balance:increment(REWARD) });
 
-        await addDoc(collection(db,'transactions'),{
-          userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,
-          note:`PTC click reward`,createdAt:serverTimestamp()
-        });
-        await updateDoc(doc(db,'users',uid),{ balance:increment(REWARD) });
-        showToast(`Credited ₦${REWARD.toFixed(2)}`);
-      }catch(err){ console.error(err); showToast('Credit failed'); }
+      markVisitedLocal(ptc.id);
+      if(itemEl){ itemEl.classList.add('visited'); }
+
+      // ------ UPDATE VIEW COUNT ------
+      await incrementViewCount(ptc.id);
+      const viewsElem=itemEl.querySelector('.views-count');
+      if(viewsElem){ viewsElem.textContent = `Views: ${await getViewCount(ptc.id)}`; }
+
+      showToast(`Credited ₦${REWARD.toFixed(2)}! Opened.`);
+      window.open(`ptc-${ptc.id}.html`,'_blank','noopener');
     }
 
     function makeCard(ptc){
-      const item=document.createElement('div');item.className='card';
-      const title=document.createElement('h3');title.textContent=ptc.title;
-      const desc=document.createElement('div');desc.className='meta';desc.textContent=ptc.description;
-      const reward=document.createElement('div');reward.className='reward';reward.textContent=`Reward: ₦${ptc.reward}`;
-      const views=document.createElement('div');views.className='views-count';views.textContent='Views: ...';
+      const item=document.createElement('div'); item.className='card';
+      item.tabIndex=0;
 
-      const btnOpen=document.createElement('button');btnOpen.className='btn primary';btnOpen.textContent='Open';
-      btnOpen.addEventListener('click',()=>handlePTCClick(ptc,item));
+      const h=document.createElement('h3'); h.textContent=ptc.title;
+      const meta=document.createElement('div'); meta.className='meta'; meta.textContent=ptc.description;
+      const reward=document.createElement('div'); reward.className='reward'; reward.textContent=`Reward: ₦${ptc.reward}`;
 
-      item.append(title,desc,reward,views,btnOpen);
-      getTotalViews(ptc.id).then(count=>views.textContent=`Views: ${count}`);
+      const views=document.createElement('div'); views.className='views-count'; views.textContent=`Views: ...`;
+
+      const badge=document.createElement('div'); badge.className='visited-badge'; badge.style.display='none'; badge.textContent='Visited';
+
+      const actions=document.createElement('div'); actions.className='actions';
+      const btnOpen=document.createElement('button'); btnOpen.className='btn primary';
+      btnOpen.innerHTML=`<span class="btn-text">Open</span><span class="spinner" aria-hidden="true"></span>`;
+      const spinnerEl=btnOpen.querySelector('.spinner');
+      btnOpen.addEventListener('click',e=>{ e.stopPropagation(); handlePTCClick(ptc,{btnOpen,spinnerEl,itemEl:item}); });
+
+      const btnDetails=document.createElement('button'); btnDetails.className='btn ghost'; btnDetails.textContent='Details';
+      btnDetails.addEventListener('click',e=>{ e.stopPropagation(); alert(`${ptc.title}\nReward: ₦${ptc.reward}\n\n${ptc.description}`); });
+
+      actions.appendChild(btnOpen); actions.appendChild(btnDetails);
+
+      item.appendChild(h); item.appendChild(meta); item.appendChild(reward); item.appendChild(views); item.appendChild(badge); item.appendChild(actions);
+
+      if(isVisitedLocal(ptc.id)){ item.classList.add('visited'); badge.style.display='inline-block'; }
+
+      getViewCount(ptc.id).then(c=>views.textContent=`Views: ${c}`);
 
       return item;
     }
 
-    function render(){
-      GRID.innerHTML='';
-      PTCs.forEach(ptc=>GRID.appendChild(makeCard(ptc)));
+    function render(items){
+      GRID.innerHTML=''; items.forEach(it=>GRID.appendChild(makeCard(it)));
     }
 
-    render();
+    function filterAndRender(){
+      let arr=[...PTCs];
+      const q=searchInput.value.trim().toLowerCase();
+      const f=filterSelect.value;
 
-    searchInput.addEventListener('input',()=>{
-      const q=searchInput.value.toLowerCase();
-      document.querySelectorAll('.card').forEach(card=>{
-        const txt=card.textContent.toLowerCase();
-        card.style.display=txt.includes(q)?'':'none';
-      });
-    });
-    filterSelect.addEventListener('change',render);
+      if(q) arr=arr.filter(p=>`${p.title} ${p.description}`.toLowerCase().includes(q));
+      if(f==='fresh') arr=arr.filter(p=>!isVisitedLocal(p.id));
+      if(f==='visited') arr=arr.filter(p=>isVisitedLocal(p.id));
+      if(f==='mostViewed') arr.sort((a,b)=>0); /* we'll re-sort soon */
+
+      // fetch view counts and sort if needed
+      if(f==='mostViewed'){
+        Promise.all(arr.map(async p=>({p,views: await getViewCount(p.id)})))
+        .then(results=>{
+          results.sort((x,y)=>y.views - x.views);
+          render(results.map(r=>r.p));
+        });
+        return;
+      }
+
+      render(arr);
+    }
+
+    searchInput.addEventListener('input',()=>debounce(filterAndRender(),180));
+    filterSelect.addEventListener('change',filterAndRender);
+
+    render(PTCs);
 
   </script>
 </body>
