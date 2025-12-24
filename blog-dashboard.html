@@ -39,6 +39,7 @@
 
     #errorBox{ margin-top:12px; padding:10px; background:rgba(255,0,0,0.06); border:1px solid rgba(255,0,0,0.12); color:#ffd6d6; border-radius:8px; display:none; white-space:pre-wrap; font-size:13px }
     #statusArea{ margin-top:12px }
+
     @media(max-width:980px){ .cards{ grid-template-columns:1fr; } .toolbar{ flex-direction:column; align-items:flex-start; gap:8px } }
   </style>
 </head>
@@ -82,8 +83,9 @@
   <script type="module">
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, onSnapshot, doc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, runTransaction, serverTimestamp, increment, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+    // FIREBASE CONFIG — replace if needed
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -94,11 +96,11 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    if (!getApps().length) initializeApp(firebaseConfig);
-
+    if(!getApps().length) initializeApp(firebaseConfig);
     const auth = getAuth();
     const db = getFirestore();
 
+    // UI refs
     const publishedCountEl = document.getElementById('publishedCount');
     const blogBalanceEl = document.getElementById('blogBalance');
     const withdrawBtn = document.getElementById('withdrawBtn');
@@ -116,96 +118,112 @@
     function showError(txt){ errorBox.style.display='block'; errorBox.textContent = txt; console.error(txt); }
     function clearError(){ errorBox.style.display='none'; errorBox.textContent=''; }
 
+    // Sign-in (Google)
     const provider = new GoogleAuthProvider();
-    signinBtn.addEventListener('click', async ()=> {
-      try { await signInWithPopup(auth, provider); }
-      catch(e){ showError('Sign-in failed: ' + (e && e.message ? e.message : String(e))); }
+    signinBtn.addEventListener('click', async ()=>{
+      try{ await signInWithPopup(auth, provider); }catch(e){ showError('Sign-in failed: ' + (e && e.message? e.message: String(e))); }
     });
 
-    backBtn.addEventListener('click', () => {
+    backBtn.addEventListener('click', ()=>{ // go back to dashboard
       if(window.opener) window.close(); else window.location.href = 'dashboard.html';
     });
 
-    async function subscribeCounts(uid) {
+    // Subscribe to published count for current user
+    async function subscribeCounts(uid){
+      // unsubscribe previous
       if(publishedUnsub) publishedUnsub();
 
       const col = collection(db, 'blogs');
       const q = query(col, where('userId','==',uid));
-
-      publishedUnsub = onSnapshot(q, (snap) => {
+      publishedUnsub = onSnapshot(q, (snap)=>{
         const docs = snap.docs || [];
-        const published = docs.filter(d => {
-          const st = (d.data().status || '').toLowerCase();
-          return st === 'published' || st === 'approved' || st === 'taken down';
-        }).length;
+        const published = docs.filter(d=> (d.data().status === 'published' || d.data().status === 'approved' 'taken_down')).length;
         publishedCountEl.textContent = published;
-      }, (err) => {
-        console.error('published count error', err);
-        showError('Error loading your blogs: ' + (err && err.message ? err.message : String(err)));
-      });
+      }, (err)=>{ console.error('published count error', err); showError('Error loading your blogs: ' + (err && err.message? err.message: String(err))); });
 
+      // also subscribe to user doc for blogBalance
       const uRef = doc(db, 'users', uid);
+      // use onSnapshot via getDoc? modular doesn't have onSnapshot imported — we'll use getDoc polling via onSnapshot of doc
       if(userUnsub) userUnsub();
-      userUnsub = onSnapshot(uRef, (snap) => {
+      userUnsub = onSnapshot(uRef, (snap)=>{
         const data = snap.exists() ? snap.data() : {};
         const b = Number(data.blogBalance || 0);
         blogBalanceEl.textContent = `₦ ${b.toFixed(2)}`;
         withdrawBtn.disabled = b < 100;
         withdrawNote.textContent = b < 100 ? 'Minimum ₦100 to withdraw' : 'You can withdraw your blog earnings to main balance';
-      }, (err) => {
-        console.error('user doc error', err);
-        showError('Error loading account info: ' + (err && err.message ? err.message : String(err)));
-      });
+      }, (err)=>{ console.error('user doc error', err); showError('Error loading account info: ' + (err && err.message? err.message: String(err))); });
     }
 
-    withdrawBtn.addEventListener('click', async () => {
+    // Withdraw: move entire blogBalance to main balance (only if >=100). Use runTransaction for atomicity and create a transaction doc.
+    withdrawBtn.addEventListener('click', async ()=>{
       clearError();
-      if(!currentUser) { showError('Sign in to withdraw'); return; }
+      if(!currentUser){ showError('You must sign in to withdraw'); return; }
       const uid = currentUser.uid;
       const userRef = doc(db, 'users', uid);
 
-      try {
+      try{
         showStatus('Processing withdrawal…');
-        await runTransaction(db, async (t) => {
+        await runTransaction(db, async (t)=>{
           const snap = await t.get(userRef);
           if(!snap.exists()) throw new Error('User profile not found');
           const data = snap.data();
           const blogBal = Number(data.blogBalance || 0);
           const mainBal = Number(data.balance || 0);
-          if(blogBal < 100) throw new Error('Minimum ₦100 required to withdraw.');
+          if(blogBal < 100) throw new Error('Insufficient blog balance. Minimum ₦100 required.');
 
-          const amount = Math.floor(blogBal);
-          t.update(userRef, { blogBalance: blogBal - amount, balance: mainBal + amount });
+          // amount to transfer: whole blogBal
+          const amount = Math.floor(blogBal); // integer naira
+          if(amount <= 0) throw new Error('Nothing to withdraw');
 
+          // new balances
+          const newBlogBal = blogBal - amount;
+          const newMainBal = mainBal + amount;
+
+          // update user doc
+          t.update(userRef, { blogBalance: newBlogBal, balance: newMainBal });
+
+          // create transaction record (use deterministic doc ref)
           const txRef = doc(collection(db,'transactions'));
           t.set(txRef, {
             userId: uid,
             type: 'withdraw_blog_to_main',
             source: 'blog_withdrawal',
             amount: amount,
-            note: `Withdraw ₦${amount} from blog balance`,
+            note: `Withdraw ₦${amount} from blog balance to main balance`,
             createdAt: serverTimestamp()
           });
+
+          // admin action log (optional)
+          const logRef = doc(collection(db,'adminActions'));
+          t.set(logRef, {
+            action: 'withdraw_blog_to_main', userId: uid, amount, createdAt: serverTimestamp()
+          });
         });
-        showStatus('Withdrawal successful!');
-      } catch(err) {
-        showError('Withdrawal failed: ' + (err.message || String(err)));
+
+        showStatus('Withdrawal complete — funds moved to main balance');
+      }catch(err){
+        console.error('withdraw error', err);
+        showError('Withdrawal failed: ' + (err && err.message? err.message: String(err)));
       }
     });
 
-    onAuthStateChanged(auth, (user) => {
+    // onAuth
+    onAuthStateChanged(auth, async (user)=>{
       currentUser = user;
       clearError();
-      if(user) {
+      if(user){
         signinBtn.textContent = 'Signed in'; signinBtn.disabled = true;
-        subscribeCounts(user.uid);
-      } else {
+        try{ await subscribeCounts(user.uid); }catch(e){ console.error(e); }
+      }else{
         signinBtn.textContent = 'Sign in'; signinBtn.disabled = false;
         publishedCountEl.textContent = '—';
         blogBalanceEl.textContent = '₦ —';
         withdrawBtn.disabled = true;
+        if(publishedUnsub) publishedUnsub();
+        if(userUnsub) userUnsub();
       }
     });
+
   </script>
 </body>
 </html>
