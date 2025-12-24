@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — PTC Catalog</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <meta name="theme-color" content="#7a5fff" />
   <style>
     :root{
@@ -52,7 +52,6 @@
     .card h3{margin:0;font-size:16px;color:var(--accent1);font-weight:700}
     .meta{color:var(--muted);font-size:13px;margin-top:4px}
     .reward{font-weight:800;font-size:16px;margin-top:6px;color:var(--text)}
-    .views-count{font-size:13px;color:var(--muted);}
 
     .actions{margin-top:auto;display:flex;gap:8px;align-items:center}
     .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
@@ -64,8 +63,30 @@
 
     footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
 
+    /* Spinner */
     .spinner { width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.22); border-top-color: #ffffff; animation:spin 0.9s linear infinite; display:none; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width:720px) {
+      body{padding:12px}
+      header{flex-direction:column;align-items:flex-start;gap:8px}
+      .controls{width:100%;display:flex;gap:8px}
+      .search{flex:1;min-width:0}
+      .grid{grid-template-columns:1fr;gap:12px}
+      .actions{flex-direction:column-reverse}
+      .btn.primary{width:100%}
+      .btn.ghost{width:100%}
+      .card{padding:12px}
+      h1{font-size:18px}
+    }
+
+    @media (max-width:420px){
+      .search{padding:10px}
+      .filter{padding:8px}
+      .brand h1{font-size:16px}
+      .hint{font-size:12px}
+      .btn{font-size:15px;padding:12px;border-radius:12px}
+    }
 
     .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:rgba(0,0,0,0.7); color:#fff; padding:10px 14px; border-radius:8px; z-index:99999; font-size:14px; display:none; }
     .toast.show { display:block; animation:fade .3s ease; }
@@ -86,7 +107,6 @@
           <option value="all">All</option>
           <option value="fresh">Unvisited</option>
           <option value="visited">Visited</option>
-          <option value="mostViewed">Most Viewed</option>
         </select>
         <button id="signinBtn" class="signinBtn">Sign in</button>
       </div>
@@ -102,12 +122,14 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script type="module">
+    // Firebase imports (modular)
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
       getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, serverTimestamp, increment
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+    // CONFIG - replace with your project values if different
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -117,161 +139,297 @@
       appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
+
     if(!getApps().length) initializeApp(firebaseConfig);
     const auth = getAuth();
     const db = getFirestore();
 
+    // UI
     const GRID = document.getElementById('grid');
     const searchInput = document.getElementById('searchInput');
     const filterSelect = document.getElementById('filterSelect');
     const signinBtn = document.getElementById('signinBtn');
     const toast = document.getElementById('toast');
 
+    // Reward and cooldown
     const REWARD = 0.40; // ₦0.40 per click
-    const COOLDOWN_MS = 1 * 60 * 60 * 1000;
+    const COOLDOWN_MS = 1 * 60 * 60 * 1000; // 1 hour
+    const VISITED_EXPIRE_MS = COOLDOWN_MS; // visited badge expires after 1 hour
 
-    function showToast(msg, ms=3000){
+    // Data: 20 PTCs
+    function makePTC(i){
+      return {
+        id: i,
+        title: `PTC #${i}`,
+        description: `Visit the page and complete a small task to earn.`,
+        reward: REWARD.toFixed(2)
+      };
+    }
+    const PTCs = Array.from({length:20}, (_,k)=> makePTC(k+1));
+
+    // local storage helpers for quick UI visited flag (store timestamp)
+    function storageKey(id){ return `ptc_visited_${id}`; }
+    function getVisitedTs(id){
+      try{
+        const v = localStorage.getItem(storageKey(id));
+        if(!v) return null;
+        const n = Number(v);
+        if(!isFinite(n)) return null;
+        return n;
+      }catch(e){ return null; }
+    }
+    function isVisitedLocal(id){
+      try {
+        const ts = getVisitedTs(id);
+        if(!ts) return false;
+        const age = Date.now() - ts;
+        if(age >= VISITED_EXPIRE_MS){
+          // expired -> remove
+          try { localStorage.removeItem(storageKey(id)); } catch(e){}
+          return false;
+        }
+        return true;
+      } catch(e) { return false; }
+    }
+    function markVisitedLocal(id){
+      try{ localStorage.setItem(storageKey(id), String(Date.now())); }catch(e){}
+    }
+    function clearVisitedLocal(id){
+      try{ localStorage.removeItem(storageKey(id)); }catch(e){}
+    }
+
+    // Auth state
+    let currentUser = null;
+    const provider = new GoogleAuthProvider();
+
+    signinBtn.addEventListener('click', async ()=>{
+      try{ await signInWithPopup(auth, provider); }catch(err){ showToast('Sign-in failed: ' + (err && err.message ? err.message : String(err)), 4000); console.error('signIn error', err); }
+    });
+
+    onAuthStateChanged(auth, user=>{
+      currentUser = user;
+      if(user){ signinBtn.textContent = 'Signed in'; signinBtn.disabled = true; } else { signinBtn.textContent = 'Sign in'; signinBtn.disabled = false; }
+    });
+
+    // show small toast
+    function showToast(msg, ms = 3000){
       toast.textContent = msg;
       toast.classList.add('show');
       clearTimeout(toast._t);
-      toast._t = setTimeout(()=> toast.classList.remove('show'), ms);
+      toast._t = setTimeout(()=> { toast.classList.remove('show'); }, ms);
     }
 
-    let currentUser=null;
-    const provider=new GoogleAuthProvider();
+    // pending guard to prevent duplicate parallel requests for the same ptc+user
+    const pending = new Set();
 
-    signinBtn.addEventListener('click', async ()=>{
-      try{ await signInWithPopup(auth, provider); }
-      catch(e){ showToast('Sign in failed'); }
-    });
+    // Server-side check & crediting logic
+    // doc path: ptcClicks/<ptcId>_<uid> with fields { ptcId, viewerUid, lastClickedAt, count }
+    async function handlePTCClick(ptc, ui = {}) {
+      // ui: { btnOpen, spinnerEl, itemEl }
+      const btnOpen = ui.btnOpen;
+      const spinner = ui.spinnerEl;
+      const itemEl = ui.itemEl;
 
-    onAuthStateChanged(auth,user=>{
-      currentUser=user;
-      signinBtn.textContent=user?'Signed in':'Sign in';
-      signinBtn.disabled=!!user;
-    });
-
-    // ----------------- Views Count Helpers -----------------
-    async function getViewCount(ptcId){
-      try{
-        const snap=await getDoc(doc(db,'ptcViews',String(ptcId)));
-        return snap.exists()?snap.data().count||0:0;
-      }catch{return 0;}
-    }
-    async function incrementViewCount(ptcId){
-      const ref=doc(db,'ptcViews',String(ptcId));
-      try{ await updateDoc(ref,{ count:increment(1) }); }
-      catch{ await setDoc(ref,{ count:1 }); }
-    }
-
-    function makePTC(i){
-      return { id:i, title:`PTC #${i}`, description:`Visit the page and complete a small task to earn.`, reward:REWARD.toFixed(2) };
-    }
-    const PTCs=Array.from({length:20},(_,k)=>makePTC(k+1));
-
-    async function handlePTCClick(ptc,ui={}){
-      const btnOpen=ui.btnOpen;
-      const spinner=ui.spinnerEl;
-      const itemEl=ui.itemEl;
-
-      if(!currentUser){ showToast('Sign in to earn'); return; }
-      const uid=currentUser.uid;
-      const docId=`${ptc.id}_${uid}`;
-      const clickRef=doc(db,'ptcClicks',docId);
-      const snap=await getDoc(clickRef);
-
-      if(snap.exists()){
-        const data=snap.data();
-        const last=data.lastClickedAt;
-        if(last){
-          const diff=Date.now()-last.toDate().getTime();
-          if(diff<COOLDOWN_MS){ showToast('Try again later'); return; }
-        }
+      // If user not signed in, prompt sign-in
+      if(!currentUser){
+        showToast('Sign in to earn. Opening sign-in...', 2500);
+        try{ await signInWithPopup(auth, provider); }catch(err){ showToast('Sign-in failed. Cannot credit.', 3000); return; }
       }
+      if(!currentUser){ showToast('Sign in required to earn.', 2500); return; }
 
-      await setDoc(clickRef,{ ptcId:ptc.id, viewerUid:uid, lastClickedAt:serverTimestamp() },{ merge:true });
+      const uid = currentUser.uid;
+      const clickDocId = `${ptc.id}_${uid}`;
 
-      await addDoc(collection(db,'transactions'),{
-        userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,
-        note:`PTC click reward`,createdAt:serverTimestamp()
-      });
-      await updateDoc(doc(db,'users',uid),{ balance:increment(REWARD) });
+      // prevent duplicate parallel processing
+      if(pending.has(clickDocId)){
+        showToast('Processing... please wait', 1500);
+        return;
+      }
+      pending.add(clickDocId);
 
-      markVisitedLocal(ptc.id);
-      if(itemEl){ itemEl.classList.add('visited'); }
+      // show spinner + disable button
+      if(btnOpen){ try { btnOpen.disabled = true; } catch(e){} if(spinner) spinner.style.display = 'inline-block'; }
 
-      // ------ UPDATE VIEW COUNT ------
-      await incrementViewCount(ptc.id);
-      const viewsElem=itemEl.querySelector('.views-count');
-      if(viewsElem){ viewsElem.textContent = `Views: ${await getViewCount(ptc.id)}`; }
+      try{
+        const clickRef = doc(db, 'ptcClicks', clickDocId);
+        const snap = await getDoc(clickRef);
 
-      showToast(`Credited ₦${REWARD.toFixed(2)}! Opened.`);
-      window.open(`ptc-${ptc.id}.html`,'_blank','noopener');
+        if(snap.exists()){
+          const data = snap.data();
+          const last = data && data.lastClickedAt;
+          if(last){
+            const lastMs = typeof last.toDate === 'function' ? last.toDate().getTime() : (new Date(last)).getTime();
+            const diff = Date.now() - lastMs;
+            if(diff < COOLDOWN_MS){
+              const mins = Math.ceil((COOLDOWN_MS - diff) / 60000);
+              showToast(`You already claimed this PTC. Try again in ${mins} minute(s).`, 4500);
+              return;
+            }
+          }
+        }
+
+        // Allowed: record click and credit (server records)
+        try{
+          if(snap.exists()){
+            await updateDoc(clickRef, { lastClickedAt: serverTimestamp(), count: increment(1) });
+          }else{
+            await setDoc(clickRef, { ptcId: ptc.id, viewerUid: uid, lastClickedAt: serverTimestamp(), count: 1 });
+          }
+        }catch(e){ console.warn('ptcClicks write failed', e); }
+
+        // Credit user: add transaction and increment balance
+        try{
+          const txsCol = collection(db, 'transactions');
+          await addDoc(txsCol, {
+            userId: uid,
+            type: 'ptc_click',
+            source: `ptc_${ptc.id}`,
+            amount: REWARD,
+            note: `PTC click reward for ptc-${ptc.id}`,
+            createdAt: serverTimestamp()
+          });
+        }catch(e){ console.warn('transaction doc creation failed', e); }
+
+        try{
+          const userRef = doc(db, 'users', uid);
+          await updateDoc(userRef, { balance: increment(REWARD) });
+        }catch(e){ console.warn('update user balance failed', e); showToast('Credited but balance update blocked by rules.', 4000); }
+
+        // mark local visited timestamp & update card UI
+        markVisitedLocal(ptc.id);
+        if(itemEl){
+          const visitedBadge = itemEl.querySelector('.visited-badge');
+          if(visitedBadge) visitedBadge.style.display = 'inline-block';
+          itemEl.classList.add('visited');
+        }
+
+        showToast(`Credited ₦${REWARD.toFixed(2)} to your balance. Opening PTC...`, 2000);
+
+        // open the ptc page in a new tab
+        const url = `ptc-${ptc.id}.html`;
+        window.open(url, '_blank', 'noopener');
+
+      }catch(err){
+        console.error('handlePTCClick error', err);
+        showToast('Error processing PTC click: ' + (err && err.message ? err.message : String(err)), 4000);
+      }finally{
+        // cleanup
+        pending.delete(clickDocId);
+        if(btnOpen){ try { btnOpen.disabled = false; } catch(e){} if(spinner) spinner.style.display = 'none'; }
+      }
     }
 
+    // Build card DOM
     function makeCard(ptc){
-      const item=document.createElement('div'); item.className='card';
-      item.tabIndex=0;
+      const item = document.createElement('div');
+      item.className = 'card';
+      item.setAttribute('role','listitem');
+      item.tabIndex = 0;
 
-      const h=document.createElement('h3'); h.textContent=ptc.title;
-      const meta=document.createElement('div'); meta.className='meta'; meta.textContent=ptc.description;
-      const reward=document.createElement('div'); reward.className='reward'; reward.textContent=`Reward: ₦${ptc.reward}`;
+      const h = document.createElement('h3'); h.textContent = ptc.title;
+      const meta = document.createElement('div'); meta.className='meta'; meta.textContent = ptc.description;
+      const reward = document.createElement('div'); reward.className='reward'; reward.textContent = `Reward: ₦${ptc.reward}`;
 
-      const views=document.createElement('div'); views.className='views-count'; views.textContent=`Views: ...`;
+      const visitedBadge = document.createElement('div'); visitedBadge.className='visited-badge'; visitedBadge.style.display='none'; visitedBadge.textContent='Visited';
 
-      const badge=document.createElement('div'); badge.className='visited-badge'; badge.style.display='none'; badge.textContent='Visited';
+      const actions = document.createElement('div'); actions.className='actions';
+      const btnOpen = document.createElement('button'); btnOpen.className='btn primary';
+      btnOpen.innerHTML = `<span class="btn-text">Open</span><span class="spinner" aria-hidden="true"></span>`;
+      const spinnerEl = btnOpen.querySelector('.spinner');
 
-      const actions=document.createElement('div'); actions.className='actions';
-      const btnOpen=document.createElement('button'); btnOpen.className='btn primary';
-      btnOpen.innerHTML=`<span class="btn-text">Open</span><span class="spinner" aria-hidden="true"></span>`;
-      const spinnerEl=btnOpen.querySelector('.spinner');
-      btnOpen.addEventListener('click',e=>{ e.stopPropagation(); handlePTCClick(ptc,{btnOpen,spinnerEl,itemEl:item}); });
+      const btnDetails = document.createElement('button'); btnDetails.className='btn ghost'; btnDetails.textContent='Details';
 
-      const btnDetails=document.createElement('button'); btnDetails.className='btn ghost'; btnDetails.textContent='Details';
-      btnDetails.addEventListener('click',e=>{ e.stopPropagation(); alert(`${ptc.title}\nReward: ₦${ptc.reward}\n\n${ptc.description}`); });
+      // open (crediting + open)
+      btnOpen.addEventListener('click', (e) => { e.stopPropagation(); handlePTCClick(ptc, { btnOpen, spinnerEl, itemEl: item }); });
 
-      actions.appendChild(btnOpen); actions.appendChild(btnDetails);
+      // allow tapping the card itself to open (mobile-friendly)
+      item.addEventListener('click', (e) => { if(e.target.closest('button')) return; btnOpen.click(); });
 
-      item.appendChild(h); item.appendChild(meta); item.appendChild(reward); item.appendChild(views); item.appendChild(badge); item.appendChild(actions);
+      // keyboard support: Enter opens
+      item.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btnOpen.click(); } });
 
-      if(isVisitedLocal(ptc.id)){ item.classList.add('visited'); badge.style.display='inline-block'; }
+      btnDetails.addEventListener('click', (e) => { e.stopPropagation(); alert(`${ptc.title}\nReward: ₦${ptc.reward}\n\n${ptc.description}`); });
 
-      getViewCount(ptc.id).then(c=>views.textContent=`Views: ${c}`);
+      actions.appendChild(btnOpen);
+      actions.appendChild(btnDetails);
+
+      item.appendChild(h);
+      item.appendChild(meta);
+      item.appendChild(reward);
+
+      const bottomRow = document.createElement('div');
+      bottomRow.style.display = 'flex';
+      bottomRow.style.alignItems = 'center';
+      bottomRow.style.justifyContent = 'space-between';
+      bottomRow.style.gap = '10px';
+      bottomRow.appendChild(visitedBadge);
+      bottomRow.appendChild(actions);
+
+      item.appendChild(bottomRow);
+
+      // initial visited state (will remove if expired)
+      applyVisitedStyle(item, visitedBadge, ptc.id);
 
       return item;
     }
 
-    function render(items){
-      GRID.innerHTML=''; items.forEach(it=>GRID.appendChild(makeCard(it)));
-    }
-
-    function filterAndRender(){
-      let arr=[...PTCs];
-      const q=searchInput.value.trim().toLowerCase();
-      const f=filterSelect.value;
-
-      if(q) arr=arr.filter(p=>`${p.title} ${p.description}`.toLowerCase().includes(q));
-      if(f==='fresh') arr=arr.filter(p=>!isVisitedLocal(p.id));
-      if(f==='visited') arr=arr.filter(p=>isVisitedLocal(p.id));
-      if(f==='mostViewed') arr.sort((a,b)=>0); /* we'll re-sort soon */
-
-      // fetch view counts and sort if needed
-      if(f==='mostViewed'){
-        Promise.all(arr.map(async p=>({p,views: await getViewCount(p.id)})))
-        .then(results=>{
-          results.sort((x,y)=>y.views - x.views);
-          render(results.map(r=>r.p));
-        });
-        return;
+    function applyVisitedStyle(item, badge, id){
+      if(isVisitedLocal(id)){
+        item.classList.add('visited');
+        badge.style.display = 'inline-block';
+      } else {
+        item.classList.remove('visited');
+        badge.style.display = 'none';
       }
-
-      render(arr);
     }
 
-    searchInput.addEventListener('input',()=>debounce(filterAndRender(),180));
-    filterSelect.addEventListener('change',filterAndRender);
+    // render grid
+    function render(items){
+      GRID.innerHTML='';
+      items.forEach(it => GRID.appendChild(makeCard(it)));
+    }
 
     render(PTCs);
+
+    // search/filter
+    function filterAndRender(){
+      const q = searchInput.value.trim().toLowerCase();
+      const f = filterSelect.value;
+      const filtered = PTCs.filter(p => {
+        const text = (p.title + ' ' + p.description + ' ' + p.reward).toLowerCase();
+        if(q && !text.includes(q)) return false;
+        if(f === 'fresh' && isVisitedLocal(p.id)) return false;
+        if(f === 'visited' && !isVisitedLocal(p.id)) return false;
+        return true;
+      });
+      render(filtered);
+    }
+
+    searchInput.addEventListener('input', debounce(filterAndRender, 180));
+    filterSelect.addEventListener('change', filterAndRender);
+
+    // debounce
+    function debounce(fn, ms=200){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=> fn(...a), ms); }; }
+
+    // Periodically clean expired local visited markers and update UI (keeps badges accurate as time passes)
+    setInterval(()=> {
+      // iterate keys and remove expired ones; then re-render current view so badges refresh
+      let changed = false;
+      try{
+        for(let i=1;i<=20;i++){
+          const k = storageKey(i);
+          const v = localStorage.getItem(k);
+          if(!v) continue;
+          const ts = Number(v);
+          if(!isFinite(ts)) { localStorage.removeItem(k); changed = true; continue; }
+          if(Date.now() - ts >= VISITED_EXPIRE_MS){ localStorage.removeItem(k); changed = true; }
+        }
+      }catch(e){ /* ignore storage errors */ }
+      if(changed) filterAndRender();
+    }, 30 * 1000); // check every 30s
+
+    // expose for debugging
+    window._ptc = { PTCs, isVisitedLocal, markVisitedLocal, clearVisitedLocal };
 
   </script>
 </body>
