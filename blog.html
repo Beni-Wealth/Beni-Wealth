@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Published Blogs</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
   <style>
     :root{
       --bg-1:#041021;
@@ -23,15 +23,15 @@
     h1{ margin:0; font-size:20px }
     .note{ color:var(--muted); font-size:13px }
     .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-    .card{ background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.01)); border-radius:12px; padding:14px; border:1px solid rgba(255,255,255,0.03); cursor:pointer; display:flex; flex-direction:column; gap:10px; min-height:220px }
+    .card{ background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.01)); border-radius:12px; padding:14px; border:1px solid rgba(255,255,255,0.03); cursor:pointer; display:flex; flex-direction:column; gap:10px; min-height:240px }
     .thumb{ width:100%; height:140px; object-fit:cover; border-radius:8px; background:var(--glass); border:1px dashed rgba(255,255,255,0.03) }
     .title{ font-weight:700; font-size:15px; margin:0 }
     .meta{ color:var(--muted); font-size:13px; display:flex; justify-content:space-between; align-items:center }
     .tags{ font-size:12px; color:var(--muted) }
     .small-btn{ padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.04); background:var(--pill-bg); font-size:12px; cursor:pointer }
-    .status{ font-size:13px; color:var(--muted) }
+    .views-count{ font-size:13px; color:var(--muted) }
 
-    /* Full-page viewer (replaces overlay) */
+    /* Full-page viewer */
     .viewer-page{ position:fixed; inset:0; background: linear-gradient(180deg, rgba(2,6,10,0.98), rgba(2,6,10,0.99)); z-index:9999; display:none; overflow:auto; }
     .viewer-page.show{ display:block; }
     .viewer-inner{ max-width:var(--max-width); margin:0 auto; padding:28px; min-height:100vh; box-sizing:border-box; }
@@ -44,17 +44,30 @@
     .viewer-close{ background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); padding:8px 12px; border-radius:8px; cursor:pointer }
     .viewer-footer-note{ color:var(--muted); font-size:13px }
 
-    /* Responsive */
+    /* Congrats Popup */
+    #congratsOverlay {
+      position:fixed; inset:0; background:rgba(0,0,0,0.8); display:none;
+      align-items:center; justify-content:center; z-index:10000;
+    }
+    #congratsBox {
+      background:#071a2b; padding:24px; border-radius:12px; text-align:center;
+      width:90%; max-width:360px; color:#eaf2ff; font-family:'Poppins',sans-serif;
+    }
+    #congratsBox h2{ margin:0 0 12px; font-size:20px; }
+    #congratsBox p{ margin:6px 0; font-size:15px; }
+    #congratsBox button{ margin-top:12px; padding:8px 14px; border:none; background:var(--accent-gradient); border-radius:8px; font-weight:700; cursor:pointer; color:#041219; }
+
     @media(max-width:980px){ .grid{ grid-template-columns:repeat(2,1fr); } .wrap{ padding:18px; } .viewer-inner{ padding:18px; } }
-    @media(max-width:720px){ .grid{ grid-template-columns:1fr; gap:12px; } .card{ min-height:unset } .viewer-inner{ padding:14px; } .viewer-content{ padding:14px; } .viewer-header{ flex-direction:column; align-items:flex-start; gap:8px } }
+    @media(max-width:720px){ .grid{ grid-template-columns:1fr; gap:12px; } }
   </style>
 </head>
 <body>
+
   <div class="wrap" id="mainPage">
     <header>
       <h1>Published Blogs</h1>
       <div style="display:flex;gap:12px;align-items:center">
-        <div class="note">Click a blog to open. Watch 10s earn ₦1.</div>
+        <div class="note">Click a blog to open.</div>
         <button id="signinBtn" class="small-btn">Sign in</button>
       </div>
     </header>
@@ -63,347 +76,178 @@
     <div id="grid" class="grid" role="list" aria-label="Published blogs"></div>
   </div>
 
-  <!-- Full page viewer -->
+  <!-- Blog Viewer -->
   <div id="viewerPage" class="viewer-page" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="viewer-inner">
       <div class="viewer-header">
         <div>
-          <h2 id="viewTitle" class="viewer-title">Title</h2>
-          <div id="viewMeta" class="viewer-by">By — • Published: —</div>
+          <h2 id="viewTitle" class="viewer-title"></h2>
+          <div id="viewMeta" class="viewer-by"></div>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
           <div class="timer-pill" id="timerPill">10s</div>
           <button id="closeViewer" class="viewer-close">Back</button>
         </div>
       </div>
-
-      <div id="viewContent" class="viewer-content" style="white-space:pre-wrap">Blog content</div>
-
+      <div id="viewContent" class="viewer-content"></div>
       <div class="viewer-controls">
-        <div id="viewStatus" class="viewer-footer-note">Blog ID: <span id="viewId"></span></div>
+        <div class="viewer-footer-note">Blog ID: <span id="viewId"></span></div>
         <div id="awardMsg" class="viewer-footer-note" aria-live="polite"></div>
       </div>
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-      getFirestore, collection, query, where, onSnapshot, doc, getDoc,
-      addDoc, updateDoc, serverTimestamp, increment, setDoc
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+  <!-- Congrats Popup -->
+  <div id="congratsOverlay">
+    <div id="congratsBox">
+      <h2>Congratulations!</h2>
+      <p id="congratsText"></p>
+      <button onclick="document.getElementById('congratsOverlay').style.display='none'">OK</button>
+    </div>
+  </div>
 
-    // FIREBASE CONFIG - replace if needed
-    const firebaseConfig = {
-      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-      authDomain: "beni-wealths.firebaseapp.com",
-      projectId: "beni-wealths",
-      storageBucket: "beni-wealths.appspot.com",
-      messagingSenderId: "807950483822",
-      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
-      measurementId: "G-Z2XP3YN6NS"
-    };
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getFirestore, collection, query, where, onSnapshot, doc, getDoc,
+  updateDoc, setDoc, serverTimestamp, increment
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    if(!getApps().length) initializeApp(firebaseConfig);
-    const auth = getAuth();
-    const db = getFirestore();
+const firebaseConfig = {
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  authDomain: "beni-wealths.firebaseapp.com",
+  projectId: "beni-wealths",
+  storageBucket: "beni-wealths.appspot.com",
+  messagingSenderId: "807950483822",
+  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+  measurementId: "G-Z2XP3YN6NS"
+};
 
-    // UI refs
-    const grid = document.getElementById('grid');
-    const statusArea = document.getElementById('statusArea');
-    const signinBtn = document.getElementById('signinBtn');
+if(!getApps().length) initializeApp(firebaseConfig);
 
-    const viewerPage = document.getElementById('viewerPage');
-    const viewTitle = document.getElementById('viewTitle');
-    const viewMeta = document.getElementById('viewMeta');
-    const viewContent = document.getElementById('viewContent');
-    const viewId = document.getElementById('viewId');
-    const timerPill = document.getElementById('timerPill');
-    const awardMsg = document.getElementById('awardMsg');
-    const closeViewer = document.getElementById('closeViewer');
+const auth = getAuth();
+const db = getFirestore();
 
-    let currentUser = null;
-    let currentTimer = null;
-    let remaining = 10;
-    let activeBlog = null;
-    const COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 hours
+const grid = document.getElementById('grid');
+const statusArea = document.getElementById('statusArea');
+const signinBtn = document.getElementById('signinBtn');
 
-    function showStatus(text){ statusArea.textContent = text; }
-    function clearStatus(){ statusArea.textContent = ''; }
-    function makeThumb(src){ if(src) return src; return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width=\"320\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"#071a28\"/><text x=\"50%\" y=\"50%\" fill=\"#aaaaaa\" font-size=\"16\" dominant-baseline=\"middle\" text-anchor=\"middle\">No thumbnail</text></svg>'; }
+const viewerPage = document.getElementById('viewerPage');
+const viewTitle = document.getElementById('viewTitle');
+const viewMeta = document.getElementById('viewMeta');
+const viewContent = document.getElementById('viewContent');
+const viewId = document.getElementById('viewId');
+const timerPill = document.getElementById('timerPill');
+const awardMsg = document.getElementById('awardMsg');
+const closeViewer = document.getElementById('closeViewer');
 
-    // Subscribe published blogs (live). Client-side sort by publishedAt desc.
-    function subscribePublished(){
-      showStatus('Loading published blogs…');
-      const col = collection(db, 'blogs');
-      const q = query(col, where('status','==','published'));
-      onSnapshot(q, (snap) => {
-        const docs = snap.docs.slice().sort((a,b)=>{
-          const ad = a.data().publishedAt;
-          const bd = b.data().publishedAt;
-          const at = ad && typeof ad.toDate === 'function' ? ad.toDate().getTime() : (ad ? new Date(ad).getTime() : 0);
-          const bt = bd && typeof bd.toDate === 'function' ? bd.toDate().getTime() : (bd ? new Date(bd).getTime() : 0);
-          return bt - at;
-        });
-        renderGrid(docs);
-        clearStatus();
-      }, (err) => {
-        console.error('subscribePublished error', err);
-        showStatus('Error loading blogs: ' + (err && err.message ? err.message : String(err)));
-      });
+const congratsOverlay = document.getElementById('congratsOverlay');
+const congratsText = document.getElementById('congratsText');
+
+let currentUser=null, currentTimer=null, remaining=10, activeBlog=null;
+
+// **1 hour cooldown**
+const COOLDOWN_MS = 1 * 60 * 60 * 1000;
+
+function showStatus(txt){ statusArea.textContent=txt; }
+function clearStatus(){ statusArea.textContent=''; }
+
+async function getViewCount(blogId){
+  try{
+    const snap=await getDoc(doc(db,'blogViewsCount',blogId));
+    return snap.exists() ? (snap.data().count||0) : 0;
+  }catch{return 0;}
+}
+
+function renderGrid(docs){
+  grid.innerHTML='';
+  if(!docs.length){ grid.innerHTML='<div class="note">No blogs found</div>'; return; }
+  docs.forEach(async snapDoc => {
+    const id = snapDoc.id;
+    const data = snapDoc.data();
+    const views = await getViewCount(id);
+    const card=document.createElement('article'); card.className='card';
+    card.innerHTML = `
+      <img class="thumb" src="${data.thumbnail||''}">
+      <div><h3 class="title">${data.title||'Untitled'}</h3></div>
+      <div class="meta"><div class="tags">${(data.tags||[]).join(', ')}</div><div class="small-btn">Read</div></div>
+      <div class="views-count">Views: ${views}</div>
+    `;
+    card.onclick = ()=> openFullPage(id, data);
+    grid.appendChild(card);
+  });
+}
+
+function subscribePublished(){
+  showStatus('Loading blogs…');
+  const q = query(collection(db,'blogs'), where('status','==','published'));
+  onSnapshot(q,(snap)=>{
+    renderGrid(snap.docs);
+    clearStatus();
+  },err=>{
+    showStatus('Error loading blogs');
+    console.error(err);
+  });
+}
+
+async function rewardView(blogId){
+  if(!currentUser) return;
+  try{
+    // cooldown log
+    const viewDocRef = doc(db,'blogViews',`${blogId}_${currentUser.uid}`);
+    await updateDoc(viewDocRef,{ lastViewedAt: serverTimestamp() });
+
+    // increment count
+    const countRef = doc(db,'blogViewsCount',blogId);
+    try{ await updateDoc(countRef,{ count: increment(1) }); }
+    catch{ await setDoc(countRef,{ count:1 }); }
+
+    // author credit
+    const authorId=activeBlog.data.userId;
+    if(authorId){
+      const authorRef=doc(db,'users',authorId);
+      await updateDoc(authorRef,{ balance: increment(1) });
     }
 
-    function renderGrid(docs){
-      grid.innerHTML = '';
-      if(!docs || docs.length === 0){ grid.innerHTML = '<div class="note">No published blogs yet.</div>'; return; }
-      docs.forEach(snap => {
-        const id = snap.id;
-        const data = snap.data();
-        const card = document.createElement('article');
-        card.className = 'card';
-        card.tabIndex = 0;
-        card.innerHTML = `
-          <img class="thumb" src="${makeThumb(escapeAttr(data.thumbnail))}" alt="${escapeAttr(data.title||'Untitled')}">
-          <div>
-            <h3 class="title">${escapeHtml(data.title||'Untitled')}</h3>
-            <div class="meta"><div class="tags">${escapeHtml((data.tags||[]).join(', '))}</div><div class="small-btn">Read</div></div>
-            <div class="note" style="margin-top:8px">${escapeHtml((data.content||'').slice(0,140))}${(data.content && data.content.length>140)?'…':''}</div>
-          </div>
-        `;
-        card.addEventListener('click', ()=> openFullPage(id, data));
-        card.addEventListener('keypress', (e)=> { if(e.key === 'Enter') openFullPage(id,data); });
-        grid.appendChild(card);
-      });
-    }
+    // viewer credit
+    const viewerRef=doc(db,'users',currentUser.uid);
+    await updateDoc(viewerRef,{ balance: increment(0.5) });
 
-    // helper escaping
-    function escapeHtml(str){ if(!str) return ''; return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-    function escapeAttr(str){ if(!str) return ''; return String(str).replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+    congratsText.textContent=`You earned ₦0.5!`;
+    congratsOverlay.style.display='flex';
+    awardMsg.textContent='';
 
-    // Open as a full-page view. If data is missing (deep link), fetch doc.
-    async function openFullPage(id, data){
-      try{
-        showStatus('Loading blog…');
-        let docData = data;
-        if(!docData){
-          const snap = await getDoc(doc(db,'blogs',id));
-          if(!snap.exists()){
-            showStatus('Blog not found');
-            return;
-          }
-          docData = snap.data();
-        }
-        activeBlog = { id, data: docData };
+  }catch(err){ console.error(err); awardMsg.textContent='Reward failed'; }
+}
 
-        // update UI
-        viewTitle.textContent = docData.title || 'Untitled';
-        viewMeta.textContent = `By ${docData.author || docData.userId || 'Unknown'} • Published: ${formatDate(docData.publishedAt)}`;
-        viewContent.textContent = docData.content || '';
-        viewId.textContent = id;
-        awardMsg.textContent = '';
-        remaining = 10;
-        timerPill.textContent = `${remaining}s`;
+async function openFullPage(id,data){
+  activeBlog={id,data};
+  viewTitle.textContent=data.title||'Untitled';
+  viewMeta.textContent=`Published: ${data.publishedAt?.toDate?.().toLocaleString()||'-'}`;
+  viewContent.textContent=data.content||'';
+  viewId.textContent=id;
+  awardMsg.textContent='';
+  remaining=10; timerPill.textContent=`${remaining}s`;
+  viewerPage.classList.add('show');
 
-        // show viewer page (full-screen)
-        viewerPage.classList.add('show');
-        viewerPage.setAttribute('aria-hidden','false');
+  if(currentTimer){ clearInterval(currentTimer); currentTimer=null; }
+  if(!currentUser){ awardMsg.textContent='Sign-in to earn ₦0.5'; return; }
 
-        // update URL
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.set('id', id);
-        history.pushState({ viewer: true, id }, '', newUrl.toString());
+  currentTimer=setInterval(()=>{
+    remaining--; timerPill.textContent=`${remaining}s`;
+    if(remaining<=0){ clearInterval(currentTimer); currentTimer=null; rewardView(id); }
+  },1000);
+}
 
-        // timer logic only for signed-in users and not author
-        if(currentTimer){ clearInterval(currentTimer); currentTimer = null; }
-        if(!currentUser){
-          awardMsg.textContent = 'Sign in to earn ₦1 when you watch 10s.';
-          clearStatus();
-          return;
-        }
-        const viewerUid = currentUser.uid;
-        const authorId = docData.userId || docData.authorId;
-        if(viewerUid === authorId){
-          awardMsg.textContent = 'You are the author — viewing does not award.';
-          clearStatus();
-          return;
-        }
+const provider=new GoogleAuthProvider();
+signinBtn.onclick=async()=>{ try{ await signInWithPopup(auth,provider); }catch(err){ console.error(err); } };
+onAuthStateChanged(auth,user=>{ currentUser=user; signinBtn.textContent=user?'Signed in':'Sign in'; signinBtn.disabled=!!user; });
 
-        // check cooldown then start timer
-        await checkCooldownAndStart(id, viewerUid);
-        clearStatus();
-      }catch(err){
-        console.error('openFullPage error', err);
-        showStatus('Error opening blog: ' + (err && err.message ? err.message : String(err)));
-      }
-    }
+closeViewer.onclick=()=>{ viewerPage.classList.remove('show'); if(currentTimer){ clearInterval(currentTimer); currentTimer=null; } };
 
-    // Popstate (back button) handling — hide viewer when navigating back
-    window.addEventListener('popstate', (ev) => {
-      const state = ev.state || {};
-      if(!state.viewer){
-        // hide viewer page
-        hideViewer();
-      } else if(state.viewer && state.id){
-        // open viewer for id (deep navigation)
-        openFullPage(state.id, null);
-      }
-    });
+window.addEventListener('load',subscribePublished);
 
-    // hide viewer and clear url param
-    function hideViewer(){
-      viewerPage.classList.remove('show');
-      viewerPage.setAttribute('aria-hidden','true');
-      if(currentTimer){ clearInterval(currentTimer); currentTimer = null; }
-      activeBlog = null;
-      awardMsg.textContent = '';
-      // remove id param from URL (go back to list)
-      const u = new URL(window.location.href);
-      if(u.searchParams.has('id')) {
-        u.searchParams.delete('id');
-        history.replaceState({}, '', u.toString());
-      }
-    }
-
-    closeViewer.addEventListener('click', ()=> {
-      // use history.back if we added an entry, else hide
-      if(history.state && history.state.viewer) history.back();
-      else hideViewer();
-    });
-
-    // cooldown logic (per blogId + viewerUid using blogViews/<blogId>_<viewerUid>)
-    async function checkCooldown(blogId, viewerUid){
-      try{
-        const viewDocRef = doc(db, 'blogViews', `${blogId}_${viewerUid}`);
-        const snap = await getDoc(viewDocRef);
-        if(!snap.exists()) return { allowed: true };
-        const data = snap.data();
-        const last = data && data.lastViewedAt;
-        if(!last) return { allowed: true };
-        const lastMs = typeof last.toDate === 'function' ? last.toDate().getTime() : (new Date(last).getTime ? new Date(last).getTime() : 0);
-        const now = Date.now();
-        const diff = now - lastMs;
-        if(diff >= COOLDOWN_MS) return { allowed: true };
-        return { allowed: false, remainingMs: COOLDOWN_MS - diff };
-      }catch(err){
-        console.error('checkCooldown error', err);
-        return { allowed: true };
-      }
-    }
-
-    async function checkCooldownAndStart(blogId, viewerUid){
-      awardMsg.textContent = 'Checking view cooldown…';
-      const res = await checkCooldown(blogId, viewerUid);
-      if(!res.allowed){
-        const mins = Math.ceil(res.remainingMs / 60000);
-        awardMsg.textContent = `You can reward this blog in ${mins} minute(s).`;
-        return;
-      }
-      awardMsg.textContent = 'Watch 10s to reward author ₦1 and earn ₦1.';
-      currentTimer = setInterval(()=>{
-        remaining -= 1;
-        timerPill.textContent = `${remaining}s`;
-        if(remaining <= 0){
-          clearInterval(currentTimer);
-          currentTimer = null;
-          timerPill.textContent = '0s';
-          awardView(blogId, viewerUid);
-        }
-      }, 1000);
-    }
-
-    // award both author and viewer, and record lastViewedAt
-    async function awardView(blogId, viewerUid){
-      if(!activeBlog) return;
-      const authorId = activeBlog.data.userId || activeBlog.data.authorId;
-      if(!authorId){
-        awardMsg.textContent = 'Author info missing; cannot award.';
-        return;
-      }
-      awardMsg.textContent = 'Awarding ₦1 to you…';
-      try{
-        const viewDocRef = doc(db, 'blogViews', `${blogId}_${viewerUid}`);
-
-        // optimistic attempt: update, else set
-        try{
-          await updateDoc(viewDocRef, { lastViewedAt: serverTimestamp(), count: increment(1) });
-        }catch(err){
-          try{ await setDoc(viewDocRef, { blogId, viewerUid, lastViewedAt: serverTimestamp(), count: 1 }); }catch(inner){ console.warn('setDoc blogViews failed', inner); }
-        }
-
-        const txsCol = collection(db, 'transactions');
-
-        // Author transaction + increment blogBalance
-        await addDoc(txsCol, {
-          userId: authorId,
-          type: 'view_reward',
-          source: 'blog_view',
-          amount: 1,
-          note: `Paid ₦1 for view of blog ${blogId}`,
-          blogId,
-          createdAt: serverTimestamp()
-        });
-        const authorRef = doc(db, 'users', authorId);
-        try{ await updateDoc(authorRef, { blogBalance: increment(1) }); }catch(e){ console.warn('author balance update failed', e); }
-
-        // Viewer transaction + increment balance
-        await addDoc(txsCol, {
-          userId: viewerUid,
-          type: 'view_bonus',
-          source: 'blog_view_watch',
-          amount: 1,
-          note: `Earned ₦1 for watching blog ${blogId}`,
-          blogId,
-          createdAt: serverTimestamp()
-        });
-        const viewerRef = doc(db, 'users', viewerUid);
-        try{ await updateDoc(viewerRef, { balance: increment(1) }); }catch(e){ console.warn('viewer balance update failed', e); }
-
-        // Notifications
-        const notCol = collection(db, 'notifications');
-        await addDoc(notCol, { userId: authorId, type: 'blog_reward', message: `Your blog "${activeBlog.data.title || 'Untitled'}" earned ₦1 from a viewer.`, blogId, createdAt: serverTimestamp() });
-        await addDoc(notCol, { userId: viewerUid, type: 'view_credited', message: `You earned ₦1 for watching "${activeBlog.data.title || 'Untitled'}".`, blogId, createdAt: serverTimestamp() });
-
-        awardMsg.textContent = 'Success — you were paid ₦1.';
-      }catch(err){
-        console.error('awardView error', err);
-        awardMsg.textContent = 'Error awarding: ' + (err && err.message ? err.message : String(err));
-      }
-    }
-
-    function formatDate(ts){ if(!ts) return '-'; try{ if(typeof ts.toDate === 'function') return ts.toDate().toLocaleString(); return new Date(ts).toLocaleString(); }catch(e){ return '-'; } }
-
-    // Auth
-    const provider = new GoogleAuthProvider();
-    signinBtn.addEventListener('click', async ()=>{
-      try{ await signInWithPopup(auth, provider); }catch(err){ console.error('signIn error', err); showStatus('Sign-in failed: ' + (err && err.message ? err.message : String(err))); }
-    });
-    onAuthStateChanged(auth, user=>{
-      currentUser = user;
-      if(user){ signinBtn.textContent = 'Signed in'; signinBtn.disabled = true; } else { signinBtn.textContent = 'Sign in'; signinBtn.disabled = false; }
-    });
-
-    // On load: if URL has ?id=... open that blog as full page
-    window.addEventListener('load', async ()=>{
-      subscribePublished();
-      const u = new URL(window.location.href);
-      const id = u.searchParams.get('id');
-      if(id){
-        // fetch document and open
-        try{
-          const snap = await getDoc(doc(db,'blogs',id));
-          if(snap.exists()) openFullPage(id, snap.data());
-          else showStatus('Blog not found (deep link).');
-        }catch(err){ console.error('deep open error', err); showStatus('Error loading blog: ' + (err && err.message ? err.message : String(err))); }
-      }
-    });
-
-    // helper: open by id from other pages (if you want)
-    window.openBlog = (id) => { openFullPage(id, null); };
-
-    // small accessibility: close viewer on ESC
-    window.addEventListener('keydown', (e)=> { if(e.key === 'Escape' && viewerPage.classList.contains('show')) { if(history.state && history.state.viewer) history.back(); else hideViewer(); } });
-
-  </script>
+</script>
 </body>
 </html>
