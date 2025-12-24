@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Publisher Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
   <style>
     :root{
       --bg-1:#041021;
@@ -37,7 +37,7 @@
     .actions{ margin-top:18px; display:flex; gap:8px; align-items:center }
     .note-quiet{ color:var(--muted); font-size:13px }
 
-    #errorBox{ margin-top:12px; padding:10px; background:rgba(255,0,0,0.06); border:1px solid rgba(255,0,0,0.12); color:#ffd6d6; border-radius:8px; display:none; white-space:pre-wrap; font-size:13px }
+    #errorBox{ margin-top:12px; padding:10px; background:rgba(255,0,255,0.06); border:1px solid rgba(255,0,0,0.12); color:#ffd6d6; border-radius:8px; display:none; white-space:pre-wrap; font-size:13px }
     #statusArea{ margin-top:12px }
 
     @media(max-width:980px){ .cards{ grid-template-columns:1fr; } .toolbar{ flex-direction:column; align-items:flex-start; gap:8px } }
@@ -92,7 +92,7 @@
       projectId: "beni-wealths",
       storageBucket: "beni-wealths.appspot.com",
       messagingSenderId: "807950483822",
-      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      appId: "1:807950483822:web=e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
 
@@ -130,20 +130,20 @@
 
     // Subscribe to published count for current user
     async function subscribeCounts(uid){
-      // unsubscribe previous
       if(publishedUnsub) publishedUnsub();
 
       const col = collection(db, 'blogs');
       const q = query(col, where('userId','==',uid));
       publishedUnsub = onSnapshot(q, (snap)=>{
         const docs = snap.docs || [];
-        const published = docs.filter(d=> (d.data().status === 'published' || d.data().status === 'approved' 'taken_down')).length;
+        const published = docs.filter(d => {
+          const st = d.data().status;
+          return st === 'published' || st === 'approved' || st === 'taken_down';
+        }).length;
         publishedCountEl.textContent = published;
       }, (err)=>{ console.error('published count error', err); showError('Error loading your blogs: ' + (err && err.message? err.message: String(err))); });
 
-      // also subscribe to user doc for blogBalance
       const uRef = doc(db, 'users', uid);
-      // use onSnapshot via getDoc? modular doesn't have onSnapshot imported — we'll use getDoc polling via onSnapshot of doc
       if(userUnsub) userUnsub();
       userUnsub = onSnapshot(uRef, (snap)=>{
         const data = snap.exists() ? snap.data() : {};
@@ -154,7 +154,7 @@
       }, (err)=>{ console.error('user doc error', err); showError('Error loading account info: ' + (err && err.message? err.message: String(err))); });
     }
 
-    // Withdraw: move entire blogBalance to main balance (only if >=100). Use runTransaction for atomicity and create a transaction doc.
+    // Withdraw logic (unchanged)
     withdrawBtn.addEventListener('click', async ()=>{
       clearError();
       if(!currentUser){ showError('You must sign in to withdraw'); return; }
@@ -171,18 +171,12 @@
           const mainBal = Number(data.balance || 0);
           if(blogBal < 100) throw new Error('Insufficient blog balance. Minimum ₦100 required.');
 
-          // amount to transfer: whole blogBal
-          const amount = Math.floor(blogBal); // integer naira
-          if(amount <= 0) throw new Error('Nothing to withdraw');
-
-          // new balances
+          const amount = Math.floor(blogBal);
           const newBlogBal = blogBal - amount;
           const newMainBal = mainBal + amount;
 
-          // update user doc
           t.update(userRef, { blogBalance: newBlogBal, balance: newMainBal });
 
-          // create transaction record (use deterministic doc ref)
           const txRef = doc(collection(db,'transactions'));
           t.set(txRef, {
             userId: uid,
@@ -193,7 +187,6 @@
             createdAt: serverTimestamp()
           });
 
-          // admin action log (optional)
           const logRef = doc(collection(db,'adminActions'));
           t.set(logRef, {
             action: 'withdraw_blog_to_main', userId: uid, amount, createdAt: serverTimestamp()
@@ -208,17 +201,17 @@
     });
 
     // onAuth
-    onAuthStateChanged(auth, async (user)=>{
-      currentUser = user;
+    onAuthStateChanged(auth,async(user)=>{
+      currentUser=user;
       clearError();
       if(user){
-        signinBtn.textContent = 'Signed in'; signinBtn.disabled = true;
-        try{ await subscribeCounts(user.uid); }catch(e){ console.error(e); }
-      }else{
-        signinBtn.textContent = 'Sign in'; signinBtn.disabled = false;
-        publishedCountEl.textContent = '—';
-        blogBalanceEl.textContent = '₦ —';
-        withdrawBtn.disabled = true;
+        signinBtn.textContent='Signed in'; signinBtn.disabled=true;
+        try{ await subscribeCounts(user.uid); }catch(e){console.error(e);}
+      } else {
+        signinBtn.textContent='Sign in'; signinBtn.disabled=false;
+        publishedCountEl.textContent='—';
+        blogBalanceEl.textContent='₦ —';
+        withdrawBtn.disabled=true;
         if(publishedUnsub) publishedUnsub();
         if(userUnsub) userUnsub();
       }
