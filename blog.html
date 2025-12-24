@@ -23,7 +23,7 @@
     h1{margin:0;font-size:20px}
     .note{color:var(--muted);font-size:13px}
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    .card{background:linear-gradient(180deg,var(--card),rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;display:flex;flex-direction:column;gap:10px;min-height:240px}
+    .card{background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;display:flex;flex-direction:column;gap:10px;min-height:240px}
     .thumb{width:100%;height:140px;object-fit:cover;border-radius:8px;background:var(--glass);border:1px dashed rgba(255,255,255,0.03)}
     .title{font-weight:700;font-size:15px;margin:0}
     .meta{color:var(--muted);font-size:13px;display:flex;justify-content:space-between;align-items:center}
@@ -31,6 +31,7 @@
     .small-btn{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:var(--pill-bg);font-size:12px;cursor:pointer}
     .views-count{font-size:13px;color:var(--muted)}
 
+    /* Full-page viewer */
     .viewer-page{position:fixed;inset:0;background:linear-gradient(180deg,rgba(2,6,10,0.98),rgba(2,6,10,0.99));z-index:9999;display:none;overflow:auto;}
     .viewer-page.show{display:block;}
     .viewer-inner{max-width:var(--max-width);margin:0 auto;padding:28px;min-height:100vh;box-sizing:border-box;}
@@ -43,8 +44,15 @@
     .viewer-close{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer}
     .viewer-footer-note{color:var(--muted);font-size:13px}
 
-    #congratsOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:10000;}
-    #congratsBox{background:#071a2b;padding:24px;border-radius:12px;text-align:center;width:90%;max-width:360px;color:#eaf2ff;font-family:'Poppins',sans-serif;}
+    /* Congrats Popup */
+    #congratsOverlay {
+      position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;
+      align-items:center;justify-content:center;z-index:10000;
+    }
+    #congratsBox {
+      background:#071a2b;padding:24px;border-radius:12px;text-align:center;
+      width:90%;max-width:360px;color:#eaf2ff;font-family:'Poppins',sans-serif;
+    }
     #congratsBox h2{margin:0 0 12px;font-size:20px;}
     #congratsBox p{margin:6px 0;font-size:15px;}
     #congratsBox button{margin-top:12px;padding:8px 14px;border:none;background:var(--accent-gradient);border-radius:8px;font-weight:700;cursor:pointer;color:#041219;}
@@ -103,37 +111,47 @@ import {
   updateDoc, setDoc, serverTimestamp, increment
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+// Your Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
   projectId: "beni-wealths",
   storageBucket: "beni-wealths.appspot.com",
   messagingSenderId: "807950483822",
-  appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+  appId: "1:807950483822:web=e10fa87307e041c4d8417f",
   measurementId: "G-Z2XP3YN6NS"
 };
 
-if(!getApps().length) initializeApp(firebaseConfig);
+if (!getApps().length) initializeApp(firebaseConfig);
 
 const auth = getAuth();
 const db = getFirestore();
 
-const grid=document.getElementById('grid'), statusArea=document.getElementById('statusArea');
-const signinBtn=document.getElementById('signinBtn'), viewerPage=document.getElementById('viewerPage');
-const viewTitle=document.getElementById('viewTitle'), viewMeta=document.getElementById('viewMeta');
-const viewContent=document.getElementById('viewContent'), viewId=document.getElementById('viewId');
-const timerPill=document.getElementById('timerPill'), awardMsg=document.getElementById('awardMsg');
-const congratsOverlay=document.getElementById('congratsOverlay'), congratsText=document.getElementById('congratsText');
-let currentUser=null, currentTimer=null, remaining=10, activeBlog=null;
+const grid = document.getElementById('grid');
+const statusArea = document.getElementById('statusArea');
+const signinBtn = document.getElementById('signinBtn');
+
+const viewerPage = document.getElementById('viewerPage');
+const viewTitle = document.getElementById('viewTitle');
+const viewMeta = document.getElementById('viewMeta');
+const viewContent = document.getElementById('viewContent');
+const viewId = document.getElementById('viewId');
+const timerPill = document.getElementById('timerPill');
+const awardMsg = document.getElementById('awardMsg');
+
+const congratsOverlay = document.getElementById('congratsOverlay');
+const congratsText = document.getElementById('congratsText');
+
+let currentUser = null, currentTimer = null, remaining = 10, activeBlog = null;
 
 // 1 hour cooldown
 const COOLDOWN_MS = 1 * 60 * 60 * 1000;
 
-// update statusArea
+// Utility functions
 function showStatus(txt){ statusArea.textContent = txt; }
 function clearStatus(){ statusArea.textContent = ''; }
 
-// properly track view counts
+// Get total views
 async function getViewCount(blogId){
   try{
     const snap = await getDoc(doc(db,'blogViewsCount',blogId));
@@ -141,113 +159,114 @@ async function getViewCount(blogId){
   }catch{return 0;}
 }
 
-// render grid
+// Render blog cards
 function renderGrid(docs){
   grid.innerHTML='';
-  if(!docs.length){ grid.innerHTML='<div class="note">No blogs found</div>'; return; }
+  if(!docs.length){
+    grid.innerHTML='<div class="note">No blogs found</div>';
+    return;
+  }
   docs.forEach(async snapDoc => {
-    const id=snapDoc.id; const data=snapDoc.data();
+    const id = snapDoc.id, data = snapDoc.data();
     const views = await getViewCount(id);
-    const card=document.createElement('article'); card.className='card';
-    card.innerHTML=`
+    const card = document.createElement('article'); card.className='card';
+    card.innerHTML = `
       <img class="thumb" src="${data.thumbnail||''}">
       <div><h3 class="title">${data.title||'Untitled'}</h3></div>
       <div class="meta"><div class="tags">${(data.tags||[]).join(', ')}</div><div class="small-btn">Read</div></div>
       <div class="views-count">Views: ${views}</div>
     `;
-    card.onclick=()=>openFullPage(id,data);
+    card.onclick = ()=> openFullPage(id,data);
     grid.appendChild(card);
   });
 }
 
-// subscribe published blogs
+// Subscribe to published blogs
 function subscribePublished(){
   showStatus('Loading blogs…');
-  const q=query(collection(db,'blogs'),where('status','==','published'));
+  const q = query(collection(db,'blogs'), where('status','==','published'));
   onSnapshot(q,(snap)=>{
     renderGrid(snap.docs);
     clearStatus();
-  }, err=>{
-    showStatus('Error loading blogs'); console.error(err);
+  },err=>{
+    showStatus('Error loading blogs');
+    console.error(err);
   });
 }
 
-// reward view — with cooldown
+// Reward logic with cooldown and blogBalance credit
 async function rewardView(blogId){
   if(!currentUser) return;
   try{
-    const viewRef=doc(db,'blogViews',`${blogId}_${currentUser.uid}`);
-    const snap=await getDoc(viewRef);
-    const now=Date.now();
-    let allow=true;
-
-    if(snap.exists()){
-      const last = snap.data().lastRewardedAt;
+    const viewRef = doc(db,'blogViews',`${blogId}_${currentUser.uid}`);
+    const snapView = await getDoc(viewRef);
+    let allow = true;
+    if(snapView.exists()){
+      const last = snapView.data().lastRewardedAt;
       if(last && last.toDate){
-        const lastMs = last.toDate().getTime();
-        if(now - lastMs < COOLDOWN_MS) allow=false;
+        const diff = Date.now() - last.toDate().getTime();
+        if(diff < COOLDOWN_MS) allow = false;
       }
     }
-
     if(!allow){
-      awardMsg.textContent='You must wait before earning again.';
+      awardMsg.textContent = 'Cooldown active. Try later.';
       return;
     }
-
-    // update user‑view record
     await setDoc(viewRef,{ blogId, userId:currentUser.uid, lastRewardedAt: serverTimestamp() });
 
-    // increment blog view count
     const countRef = doc(db,'blogViewsCount',blogId);
     try{ await updateDoc(countRef,{ count: increment(1) }); }
     catch{ await setDoc(countRef,{ count:1 }); }
 
-    // credit author
     const authorId = activeBlog.data.userId;
     if(authorId){
       const authorRef = doc(db,'users',authorId);
-      await updateDoc(authorRef,{ balance: increment(1) });
+      const authorSnap = await getDoc(authorRef);
+      if(authorSnap.exists()){
+        await updateDoc(authorRef,{ blogBalance: increment(1) });
+      } else {
+        await setDoc(authorRef,{ blogBalance:1 },{ merge:true });
+      }
     }
 
-    // credit viewer
     const viewerRef = doc(db,'users',currentUser.uid);
-    await updateDoc(viewerRef,{ balance: increment(0.5) });
+    const viewerSnap = await getDoc(viewerRef);
+    if(viewerSnap.exists()){
+      await updateDoc(viewerRef,{ balance: increment(0.5) });
+    } else {
+      await setDoc(viewerRef,{ balance:0.5 },{ merge:true });
+    }
 
-    congratsText.textContent=`You earned ₦0.5!`;
+    congratsText.textContent = `You earned ₦0.5!`;
     congratsOverlay.style.display='flex';
     awardMsg.textContent='';
 
-  }catch(err){ console.error(err); awardMsg.textContent='Reward failed'; }
+  }catch(err){
+    console.error(err);
+    awardMsg.textContent='Reward failed';
+  }
 }
 
-// open blog with timer
-async function openFullPage(id,data){
+// Open blog viewer and start 10s timer
+function openFullPage(id,data){
   activeBlog={id,data};
-  viewTitle.textContent=data.title||'Untitled';
-  viewMeta.textContent=`Published: ${data.publishedAt?.toDate?.().toLocaleString()||'-'}`;
-  viewContent.textContent=data.content||'';
-  viewId.textContent=id;
+  viewTitle.textContent = data.title||'Untitled';
+  viewMeta.textContent = `Published: ${data.publishedAt?.toDate?.().toLocaleString()||'-'}`;
+  viewContent.textContent = data.content||'';
+  viewId.textContent = id;
   awardMsg.textContent='';
   remaining=10; timerPill.textContent=`${remaining}s`;
   viewerPage.classList.add('show');
-
   if(currentTimer){ clearInterval(currentTimer); currentTimer=null; }
-  if(!currentUser){
-    awardMsg.textContent='Sign‑in to earn ₦0.5';
-    return;
-  }
-
+  if(!currentUser){ awardMsg.textContent='Sign‑in to earn ₦0.5'; return; }
   currentTimer=setInterval(()=>{
     remaining--; timerPill.textContent=`${remaining}s`;
-    if(remaining<=0){
-      clearInterval(currentTimer); currentTimer=null;
-      rewardView(id);
-    }
+    if(remaining<=0){ clearInterval(currentTimer); currentTimer=null; rewardView(id); }
   },1000);
 }
 
 const provider=new GoogleAuthProvider();
-signinBtn.onclick=async()=>{ try{ await signInWithPopup(auth,provider); }catch(err){ console.error(err); } };
+signinBtn.onclick=async()=>{ try{ await signInWithPopup(auth,provider); }catch(e){ console.error(e); } };
 onAuthStateChanged(auth,user=>{
   currentUser=user;
   signinBtn.textContent=user?'Signed in':'Sign in';
