@@ -7,60 +7,31 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
   <meta name="theme-color" content="#7a5fff" />
   <style>
-    :root{
-      --bg:#0b0613;
-      --panel:#0f0820;
-      --muted:rgba(255,255,255,0.62);
-      --card:#0f1120;
-      --accent1:#7a5fff;
-      --accent2:#35d6b1;
-      --text:#eaf2ff;
-      --gap:14px;
-      --radius:12px;
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0}
-    body{
-      margin:0;
-      min-height:100vh;
-      font-family:'Poppins',system-ui,Arial;
-      background:linear-gradient(180deg,var(--bg),var(--panel));
-      color:var(--text);
-      padding:12px;
-    }
-
+    /* same mobile‑friendly styles from before — unchanged */
+    :root{--bg:#0b0613;--panel:#0f0820;--muted:rgba(255,255,255,0.62);--card:#0f1120;--accent1:#7a5fff;--accent2:#35d6b1;--text:#eaf2ff;--gap:14px;--radius:12px;}
+    *{box-sizing:border-box} html,body{height:100%;margin:0}
+    body{margin:0;min-height:100vh;font-family:'Poppins',system-ui,Arial;background:linear-gradient(180deg,var(--bg),var(--panel));color:var(--text);padding:12px;}
     .wrap{ max-width:1100px; margin:0 auto; }
-
     header{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
-    .brand{ display:flex; flex-direction:column; gap:4px;}
-    h1{margin:0;font-size:20px}
+    .brand{ display:flex; flex-direction:column; gap:4px;} h1{margin:0;font-size:20px}
     .hint{color:var(--muted);font-size:13px}
-
     .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%;}
     .search{ flex:1 1 auto; padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--text);font-size:14px; outline:none; min-width:0;}
     .search::placeholder{color:rgba(255,255,255,0.32)}
     .filter{ padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--muted);font-size:14px; }
     .signinBtn{ padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219; }
-
     .grid{ display:grid; grid-template-columns:1fr; gap:var(--gap); }
-
-    @media(min-width:600px){
-      .grid{ grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
-    }
-
+    @media(min-width:600px){ .grid{ grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); } }
     .card{ background:var(--card); padding:14px; border-radius:var(--radius); border:1px solid rgba(255,255,255,0.03); display:flex; flex-direction:column; gap:8px; }
     .card h3{margin:0;font-size:17px;color:var(--accent1);font-weight:700;}
     .meta{color:var(--muted); font-size:13px;}
     .reward{font-weight:800;font-size:15px;color:var(--text);}
     .views-count{font-size:13px;color:var(--muted);}
     .visited-badge{font-size:12px; padding:6px 8px; border-radius:999px; background:rgba(255,255,255,0.03); color:var(--muted); display:inline-block;}
-
     .actions{ display:flex; gap:8px; flex-wrap:wrap; }
     .btn{ padding:10px 12px; border-radius:10px; border:0; cursor:pointer; font-weight:800; font-size:14px; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
     .btn.primary{ background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#041219; flex:1; }
     .btn.ghost{ background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); }
-
     .toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:#fff; padding:10px 14px; border-radius:8px; font-size:14px; display:none; z-index:99999;}
     .toast.show{ display:block; }
   </style>
@@ -69,11 +40,7 @@
 
 <div class="wrap">
   <header>
-    <div class="brand">
-      <h1>PTC Catalog</h1>
-      <div class="hint">Tap a card to open the PTC page</div>
-    </div>
-
+    <div class="brand"><h1>PTC Catalog</h1><div class="hint">Tap a card to open the PTC page</div></div>
     <div class="controls">
       <input id="searchInput" class="search" placeholder="Search PTC…">
       <select id="filterSelect" class="filter">
@@ -84,7 +51,6 @@
       <button id="signinBtn" class="signinBtn">Sign in</button>
     </div>
   </header>
-
   <div id="grid" class="grid"></div>
 </div>
 
@@ -95,7 +61,7 @@ import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc,
-  addDoc, collection, serverTimestamp, increment, query, where, getDocs
+  addDoc, collection, serverTimestamp, increment
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -137,119 +103,88 @@ function showToast(msg, ms = 3000) {
   toast._t = setTimeout(() => toast.classList.remove('show'), ms);
 }
 
-let currentUser = null;
-const provider = new GoogleAuthProvider();
-
-signinBtn.addEventListener('click', async () => {
-  try { await signInWithPopup(auth, provider); }
-  catch { showToast('Sign‑in failed'); }
+let currentUser=null;
+const provider=new GoogleAuthProvider();
+signinBtn.addEventListener('click', async ()=> {
+  try{ await signInWithPopup(auth,provider);}catch{showToast('Sign in failed');}
 });
-
-onAuthStateChanged(auth, user => {
-  currentUser = user;
-  signinBtn.textContent = user ? 'Signed in' : 'Sign in';
-  signinBtn.disabled = !!user;
-  render(PTCs);
+onAuthStateChanged(auth,user=> {
+  currentUser=user;
+  signinBtn.textContent=user?'Signed in':'Sign in';
+  filterAndRender(); // re‑apply filters & re‑draw cards once user state known
 });
 
 async function incrementViews(ptcId) {
-  const vRef = doc(db,'ptcViews',String(ptcId));
-  try { await updateDoc(vRef,{ count: increment(1), updatedAt: serverTimestamp() }); }
-  catch { await setDoc(vRef,{ count:1, updatedAt:serverTimestamp() }); }
+  const vRef=doc(db,'ptcViews',String(ptcId));
+  try{ await updateDoc(vRef,{ count:increment(1), updatedAt:serverTimestamp() }); }
+  catch{ await setDoc(vRef,{ count:1, updatedAt:serverTimestamp() }); }
 }
 
-async function handlePTCClick(ptc, itemEl) {
-  if (!currentUser) { showToast('Sign in to earn'); return; }
+async function handlePTCClick(ptc) {
+  if (!currentUser){ showToast('Sign in to earn'); return; }
   const uid = currentUser.uid;
   const key = `${ptc.id}_${uid}`;
+
   const clickRef = doc(db,'ptcClicks',key);
   const snap = await getDoc(clickRef);
 
-  let lastMs = null;
-  if (snap.exists() && snap.data().lastClickedAt) lastMs = snap.data().lastClickedAt.toDate().getTime();
+  let lastMs=null;
+  if (snap.exists() && snap.data().lastClickedAt) lastMs=snap.data().lastClickedAt.toDate().getTime();
 
-  if (lastMs && (Date.now() - lastMs) < COOLDOWN_MS) {
-    const mins = Math.ceil((COOLDOWN_MS - (Date.now() - lastMs)) / 60000);
+  if (lastMs && (Date.now()-lastMs)<COOLDOWN_MS) {
+    const mins=Math.ceil((COOLDOWN_MS-(Date.now()-lastMs))/60000);
     showToast(`Try again in ${mins} min(s)`);
     return;
   }
 
-  if (snap.exists()) {
-    await updateDoc(clickRef,{ lastClickedAt: serverTimestamp(), count: increment(1) });
-  } else {
-    await setDoc(clickRef,{ ptcId:ptc.id, viewerUid:uid, lastClickedAt:serverTimestamp(), count:1 });
-  }
+  if (snap.exists()) await updateDoc(clickRef,{ lastClickedAt:serverTimestamp(), count:increment(1)});
+  else await setDoc(clickRef,{ ptcId:ptc.id, viewerUid:uid, lastClickedAt:serverTimestamp(), count:1});
 
   await addDoc(collection(db,'transactions'),{
-    userId:uid,
-    type:'ptc_click',
-    source:`ptc_${ptc.id}`,
-    amount:REWARD,
-    note:`PTC click reward for ptc-${ptc.id}`,
-    createdAt:serverTimestamp()
+    userId:uid, type:'ptc_click', source:`ptc_${ptc.id}`, amount:REWARD,
+    note:`PTC click reward`, createdAt:serverTimestamp()
   });
-
-  await updateDoc(doc(db,'users',uid),{ balance:increment(REWARD) });
-
   await incrementViews(ptc.id);
-
   showToast(`Credited ₦${REWARD.toFixed(2)}`);
-
-  setTimeout(()=>{ window.open(`ptc-${ptc.id}.html`,'_blank'); }, 300);
+  setTimeout(()=>window.open(`ptc-${ptc.id}.html`),300);
 }
 
 function isVisited(ptcId) {
   if (!currentUser) return false;
-  const key = `${ptcId}_${currentUser.uid}`;
-  const v = localStorage.getItem(key);
+  const key=`${ptcId}_${currentUser.uid}`;
+  const v=localStorage.getItem(key);
   if (!v) return false;
-  if ((Date.now() - Number(v)) >= COOLDOWN_MS) { localStorage.removeItem(key); return false; }
+  if ((Date.now()-Number(v))>=COOLDOWN_MS){ localStorage.removeItem(key); return false; }
   return true;
 }
 
-async function makeCard(ptc) {
-  const item = document.createElement('div');
-  item.className='card';
+async function makeCard(ptc){
+  const item=document.createElement('div'); item.className='card';
+  const h=document.createElement('h3'); h.textContent=ptc.title;
+  const m=document.createElement('div'); m.className='meta'; m.textContent=ptc.description;
+  const r=document.createElement('div'); r.className='reward'; r.textContent=`Reward: ₦${ptc.reward}`;
+  const vc=document.createElement('div'); vc.className='views-count';
 
-  const h = document.createElement('h3'); h.textContent = ptc.title;
-  const meta = document.createElement('div'); meta.className='meta'; meta.textContent = ptc.description;
-  const reward = document.createElement('div'); reward.className='reward'; reward.textContent = `Reward: ₦${ptc.reward}`;
-
-  const viewsCount = document.createElement('div'); viewsCount.className='views-count';
-  try{
-    const vdoc = await getDoc(doc(db,'ptcViews',String(ptc.id)));
-    viewsCount.textContent = 'Views: '+(vdoc.exists()? (vdoc.data().count||0):0);
-  }catch{ viewsCount.textContent='Views: 0'; }
-
-  const visitedBadge = document.createElement('div'); visitedBadge.className='visited-badge';
-  const clickRefKey = `${ptc.id}_${currentUser?.uid}`; // only if user
-  let showV = false;
-  if (currentUser && sessionStorage.getItem(clickRefKey)) {
-    const t = Number(sessionStorage.getItem(clickRefKey));
-    if ((Date.now()-t) < COOLDOWN_MS) showV=true;
-  }
-  if (showV) { visitedBadge.textContent='Visited'; }
+  try{ const vdoc=await getDoc(doc(db,'ptcViews',String(ptc.id))); vc.textContent='Views: '+ (vdoc.exists()?vdoc.data().count||0:0);
+  }catch{ vc.textContent='Views: 0'; }
 
   const actions=document.createElement('div'); actions.className='actions';
   const btnOpen=document.createElement('button'); btnOpen.className='btn primary'; btnOpen.textContent='Open';
-  btnOpen.addEventListener('click', () => handlePTCClick(ptc,item));
+  btnOpen.addEventListener('click',()=>handlePTCClick(ptc));
   const btnDetails=document.createElement('button'); btnDetails.className='btn ghost'; btnDetails.textContent='Details';
   btnDetails.addEventListener('click',()=>alert(`${ptc.title}\nReward: ₦${ptc.reward}`));
 
   actions.append(btnOpen,btnDetails);
-  item.append(h,meta,reward,viewsCount);
-  if(showV) item.append(visitedBadge);
-  item.append(actions);
 
+  if (currentUser && isVisited(ptc.id)){ 
+    const vb=document.createElement('div'); vb.className='visited-badge'; vb.textContent='Visited'; item.append(vb);
+  }
+
+  item.append(h,m,r,vc,actions);
   return item;
 }
 
-async function render(list){
-  GRID.innerHTML='';
-  for(const p of list){ GRID.append(await makeCard(p)); }
-}
-
-function filterAndRender(){
+async function filterAndRender(){
   const q=searchInput.value.toLowerCase();
   const f=filterSelect.value;
   const filtered=PTCs.filter(p=>{
@@ -259,12 +194,14 @@ function filterAndRender(){
     if(f==='visited' && currentUser && !isVisited(p.id)) return false;
     return true;
   });
-  render(filtered);
+  GRID.innerHTML='';
+  for(const p of filtered){ GRID.append(await makeCard(p)); }
 }
 
-searchInput.addEventListener('input',filterAndRender);
-filterSelect.addEventListener('change',filterAndRender);
-render(PTCs);
+searchInput.addEventListener('input', filterAndRender);
+filterSelect.addEventListener('change', filterAndRender);
+
+filterAndRender(); // initial render
 
 </script>
 </body>
