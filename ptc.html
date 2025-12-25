@@ -18,7 +18,6 @@
       --gap:14px;
       --radius:12px;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
     body{
@@ -27,70 +26,31 @@
       font-family:'Poppins',system-ui,Arial;
       background:linear-gradient(180deg,var(--bg),var(--panel));
       color:var(--text);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
       padding:18px;
     }
-
     .wrap{ max-width:1100px; margin:0 auto; }
-
     header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; }
     .brand { display:flex; flex-direction:column; gap:4px; }
     h1{margin:0;font-size:20px}
     .hint{color:var(--muted);font-size:13px;margin-top:2px}
-
     .controls{display:flex;gap:12px;align-items:center}
-    .search{ padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--text);min-width:200px;font-size:14px; outline:none; }
+    .search{ padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--text);min-width:200px;font-size:14px; outline:none;}
     .search::placeholder{color:rgba(255,255,255,0.32)}
-    .filter{ padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--muted);font-size:14px; }
-    .signinBtn{ padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219; }
-
+    .filter{ padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--muted);font-size:14px;}
+    .signinBtn{ padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;}
     .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:var(--gap); }
-
-    .card{ background:var(--card); padding:14px; border-radius:var(--radius); border:1px solid rgba(255,255,255,0.03); box-shadow:0 14px 40px rgba(0,0,0,0.55); display:flex; flex-direction:column; gap:10px; transition:transform .14s ease, box-shadow .14s ease; }
-    .card:active, .card:focus-within { transform: translateY(2px); }
+    .card{ background:var(--card); padding:14px; border-radius:var(--radius); border:1px solid rgba(255,255,255,0.03); box-shadow:0 14px 40px rgba(0,0,0,0.55); display:flex; flex-direction:column; gap:10px;}
     .card h3{margin:0;font-size:16px;color:var(--accent1);font-weight:700;}
     .meta{color:var(--muted);font-size:13px;margin-top:4px;}
     .reward{font-weight:800;font-size:16px;margin-top:6px;color:var(--text);}
     .views-count{font-size:13px;color:var(--muted);}
-
     .actions{margin-top:auto;display:flex;gap:8px;align-items:center}
     .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
     .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;flex:1;min-width:0}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);border-radius:10px;padding:10px 12px;font-weight:700}
-
-    .visited{opacity:0.8;box-shadow:0 8px 24px rgba(0,0,0,0.45);border:1px solid rgba(61,46,111,0.12)}
-    .visited-badge{font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);display:inline-block;margin-left:6px}
-
-    footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
-
-    /* Spinner */
-    .spinner { width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.22); border-top-color: #ffffff; animation:spin 0.9s linear infinite; display:none; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    @media (max-width:720px) {
-      body{padding:12px}
-      header{flex-direction:column;align-items:flex-start;gap:8px}
-      .controls{width:100%;display:flex;gap:8px}
-      .search{flex:1;min-width:0}
-      .grid{grid-template-columns:1fr;gap:12px}
-      .actions{flex-direction:column-reverse}
-      .btn.primary{width:100%}
-      .btn.ghost{width:100%}
-      .card{padding:12px}
-      h1{font-size:18px}
-    }
-    @media (max-width:420px){
-      .search{padding:10px}
-      .filter{padding:8px}
-      .brand h1{font-size:16px}
-      .hint{font-size:12px}
-      .btn{font-size:15px;padding:12px;border-radius:12px}
-    }
-
-    .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:rgba(0,0,0,0.7); color:#fff; padding:10px 14px; border-radius:8px; z-index:99999; font-size:14px; display:none; }
-    .toast.show { display:block; animation:fade .3s ease; }
-    @keyframes fade { from{opacity:0; transform:translateX(-50%) translateY(6px)} to{opacity:1; transform:translateX(-50%) translateY(0)} }
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);}
+    .visited-badge{font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);display:inline-block;}
+    .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:rgba(0,0,0,0.7); color:#fff; padding:10px 14px; border-radius:8px; z-index:99999; font-size:14px; display:none;}
+    .toast.show{ display:block; }
   </style>
 </head>
 <body>
@@ -102,9 +62,9 @@
         <div class="hint">Tap a card to open the PTC page</div>
       </div>
 
-      <div class="controls" role="search" aria-label="Search PTCs">
-        <input id="searchInput" class="search" placeholder="Search PTC title or description..." aria-label="Search PTCs">
-        <select id="filterSelect" class="filter" aria-label="Filter PTCs">
+      <div class="controls">
+        <input id="searchInput" class="search" placeholder="Search PTC title or description...">
+        <select id="filterSelect" class="filter">
           <option value="all">All</option>
           <option value="fresh">Unvisited</option>
           <option value="visited">Visited</option>
@@ -114,21 +74,16 @@
     </header>
 
     <main>
-      <div id="grid" class="grid" role="list" aria-live="polite"></div>
+      <div id="grid" class="grid"></div>
     </main>
-
-    <footer>20 PTC links • Each opens the corresponding <code>ptc-X.html</code> page in a new tab.</footer>
   </div>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="toast" class="toast"></div>
 
   <script type="module">
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-      getFirestore, doc, getDoc, setDoc, updateDoc,
-      addDoc, collection, serverTimestamp, increment, getDocs, query, where
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, serverTimestamp, increment, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
@@ -150,55 +105,129 @@
     const signinBtn = document.getElementById('signinBtn');
     const toast = document.getElementById('toast');
 
+    const TOTAL_PTCS = 50;
     const REWARD = 0.40;
-    const COOLDOWN_MS = 1 * 60 * 60 * 1000; // 1 hour
-    const PTCs = Array.from({length:20}, (_,k)=>({id:k+1,title:`PTC #${k+1}`,description:`Visit the page and complete a small task to earn.`,reward:REWARD.toFixed(2)}));
+    const COOLDOWN_MS = 1 * 60 * 60 * 1000;
 
-    function showToast(msg, ms=3000){
+    const PTCs = Array.from({ length: TOTAL_PTCS }, (_, i) => ({
+      id: i + 1,
+      title: `PTC #${i + 1}`,
+      description: `Visit the page and complete a small task to earn.`,
+      reward: REWARD.toFixed(2)
+    }));
+
+    function showToast(msg, ms = 3000) {
       toast.textContent = msg;
       toast.classList.add('show');
       clearTimeout(toast._t);
-      toast._t = setTimeout(()=> toast.classList.remove('show'), ms);
+      toast._t = setTimeout(() => toast.classList.remove('show'), ms);
     }
 
-    let currentUser=null;
-    const provider=new GoogleAuthProvider();
-    signinBtn.addEventListener('click', async ()=>{
-      try{ await signInWithPopup(auth,provider);}catch{showToast('Sign‑in failed');}
+    let currentUser = null;
+    const provider = new GoogleAuthProvider();
+    signinBtn.addEventListener('click', async () => {
+      try { await signInWithPopup(auth, provider); }
+      catch { showToast('Sign‑in failed'); }
     });
-    onAuthStateChanged(auth,user=>{ currentUser=user; signinBtn.textContent=user?'Signed in':'Sign in'; signinBtn.disabled=!!user; });
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      signinBtn.textContent = user ? 'Signed in' : 'Sign in';
+      signinBtn.disabled = !!user;
+    });
 
-    const pending=new Set();
-
-    async function incrementViews(ptcId){
-      try{
-        const vRef=doc(db,'ptcViews',String(ptcId));
-        try{await updateDoc(vRef,{count:increment(1),updatedAt:serverTimestamp()});}catch{await setDoc(vRef,{count:1,updatedAt:serverTimestamp()});}
-      }catch(e){console.error('view inc failed',e);}
+    async function incrementViews(ptcId) {
+      const vRef = doc(db, 'ptcViews', String(ptcId));
+      try { await updateDoc(vRef, { count: increment(1), updatedAt: serverTimestamp() }); }
+      catch { await setDoc(vRef, { count: 1, updatedAt: serverTimestamp() }); }
     }
 
-    async function handlePTCClick(ptc,{btnOpen,spinnerEl,itemEl}={}){
-      if(!currentUser){showToast('Sign in to earn');return;}
-      const uid=currentUser.uid;
-      const key=`${ptc.id}_${uid}`;
-      if(pending.has(key)){showToast('Processing…');return;}
-      pending.add(key);
-      if(btnOpen)btnOpen.disabled=true; if(spinnerEl)spinnerEl.style.display='inline-block';
+    async function handlePTCClick(ptc, { btnOpen, spinnerEl, itemEl } = {}) {
+      if (!currentUser) { showToast('Sign in to earn'); return; }
+      const uid = currentUser.uid;
+      const key = `${ptc.id}_${uid}`;
 
-      try{
-        const clickRef=doc(db,'ptcClicks',key);
-        const snap=await getDoc(clickRef);
-        let lastMs=null; if(snap.exists()&&snap.data().lastClickedAt) lastMs=snap.data().lastClickedAt.toDate().getTime();
-        if(lastMs && Date.now()-lastMs<COOLDOWN_MS){
-          const mins=Math.ceil((COOLDOWN_MS-(Date.now()-lastMs))/60000);
-          showToast(`Try again in ${mins} min(s)`); return;
-        }
-        if(snap.exists())await updateDoc(clickRef,{lastClickedAt:serverTimestamp(),count:increment(1)});
-        else await setDoc(clickRef,{ptcId:ptc.id,viewerUid:uid,lastClickedAt:serverTimestamp(),count:1});
-        await addDoc(collection(db,'transactions'),{userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,note:`PTC click reward`,createdAt:serverTimestamp()});
-        await updateDoc(doc(db,'users',uid),{balance:increment(REWARD)});
-        await incrementViews(ptc.id);
-        localStorage.setItem(`ptc_visited_${ptc.id}`,String(Date.now()));
-        showToast(`Credited ₦${REWARD.toFixed(2)}`);
-        ``` (script continued—character limit)
-::contentReference[oaicite:0]{index=0}
+      const clickRef = doc(db,'ptcClicks',key);
+      const snap = await getDoc(clickRef);
+      let lastMs = null;
+      if (snap.exists() && snap.data().lastClickedAt) lastMs = snap.data().lastClickedAt.toDate().getTime();
+      if (lastMs && Date.now() - lastMs < COOLDOWN_MS) {
+        const mins = Math.ceil((COOLDOWN_MS - (Date.now() - lastMs)) / 60000);
+        showToast(`Try again in ${mins} min(s)`);
+        return;
+      }
+
+      if (snap.exists()) await updateDoc(clickRef,{ lastClickedAt: serverTimestamp(), count: increment(1) });
+      else await setDoc(clickRef,{ ptcId:ptc.id, viewerUid:uid, lastClickedAt:serverTimestamp(), count:1 });
+
+      await addDoc(collection(db,'transactions'), {
+        userId:uid, type:'ptc_click', source:`ptc_${ptc.id}`, amount:REWARD,
+        note:`PTC click reward for ptc-${ptc.id}`, createdAt:serverTimestamp()
+      });
+      await updateDoc(doc(db,'users',uid), { balance:increment(REWARD) });
+
+      await incrementViews(ptc.id);
+      showToast(`Credited ₦${REWARD.toFixed(2)}`);
+
+      localStorage.setItem(`ptc_clk_${ptc.id}_${uid}`, String(Date.now()));
+      window.open(`ptc-${ptc.id}.html`, '_blank','noopener');
+    }
+
+    function isVisited(ptcId, uid) {
+      const key = `ptc_clk_${ptcId}_${uid}`;
+      const v = localStorage.getItem(key);
+      if (!v) return false;
+      if (Date.now() - Number(v) >= COOLDOWN_MS) { localStorage.removeItem(key); return false; }
+      return true;
+    }
+
+    async function makeCard(ptc) {
+      const item = document.createElement('div'); item.className = 'card';
+      const h = document.createElement('h3'); h.textContent = ptc.title;
+      const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = ptc.description;
+      const reward = document.createElement('div'); reward.className = 'reward'; reward.textContent = `Reward: ₦${ptc.reward}`;
+      const viewsCount = document.createElement('div'); viewsCount.className = 'views-count'; viewsCount.textContent = 'Views: …';
+
+      const vdoc = await getDoc(doc(db,'ptcViews',String(ptc.id)));
+      viewsCount.textContent = 'Views: ' + (vdoc.exists()? (vdoc.data().count||0): 0);
+
+      const visitedBadge = document.createElement('div'); visitedBadge.className='visited-badge';
+
+      if (currentUser && isVisited(ptc.id, currentUser.uid)) { visitedBadge.textContent='Visited'; item.append(visitedBadge); }
+
+      const actions = document.createElement('div'); actions.className='actions';
+      const btnOpen = document.createElement('button'); btnOpen.className='btn primary'; btnOpen.textContent='Open';
+      btnOpen.addEventListener('click', e=>{ e.stopPropagation(); handlePTCClick(ptc,{btnOpen,itemEl:item}); });
+      const btnDetails=document.createElement('button'); btnDetails.className='btn ghost'; btnDetails.textContent='Details';
+      btnDetails.addEventListener('click', e=>{ e.stopPropagation(); alert(`${ptc.title}\nReward: ₦${ptc.reward}`); });
+
+      actions.append(btnOpen, btnDetails);
+
+      item.append(h,meta,reward,viewsCount,actions);
+      return item;
+    }
+
+    async function render(items) {
+      GRID.innerHTML=''; for (const p of items) { GRID.append(await makeCard(p)); }
+    }
+
+    function filterAndRender(){
+      const q = searchInput.value.trim().toLowerCase();
+      const f = filterSelect.value;
+      const filtered = PTCs.filter(p=>{
+        const text=(p.title+' '+p.description+' '+p.reward).toLowerCase();
+        if(q && !text.includes(q)) return false;
+        if(f==='fresh' && currentUser && isVisited(p.id,currentUser.uid)) return false;
+        if(f==='visited' && currentUser && !isVisited(p.id,currentUser.uid)) return false;
+        return true;
+      });
+      render(filtered);
+    }
+
+    searchInput.addEventListener('input', filterAndRender);
+    filterSelect.addEventListener('change', filterAndRender);
+    onAuthStateChanged(auth,()=>render(PTCs)); // re‑render on login
+
+    render(PTCs);
+  </script>
+</body>
+</html>
