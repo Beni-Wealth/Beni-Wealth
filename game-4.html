@@ -52,8 +52,8 @@
 
     .token {
       position:absolute;
-      font-size:40px; /* emoji token size */
-      width:40px;height:40px;
+      font-size:24px; /* smaller emoji size */
+      width:24px;height:24px;
       display:flex;place-items:center;justify-content:center;
       transform:translate(-50%,-50%);
       transition: transform 350ms ease;
@@ -66,7 +66,15 @@
       justify-content:center;
       width:100%;
     }
-    .dice{width:60px;height:60px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#041219;cursor:pointer;transform-style:preserve-3d;transition:transform 1s ease;}
+    .dice {
+      font-size:48px; /* bigger dice emoji */
+      cursor:pointer;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition: transform 400ms ease;
+    }
 
     .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#041219;font-weight:800;cursor:pointer}
     .btn-ghost{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
@@ -92,9 +100,8 @@
       <div id="playerToken" class="token">🧍‍♂️</div>
       <div id="botToken" class="token">🤖</div>
 
-      <!-- moved dice below board -->
       <div id="diceArea">
-        <div id="dice" class="dice">—</div>
+        <div id="dice" class="dice">🎲</div> <!-- dice emoji -->
       </div>
     </div>
 
@@ -110,7 +117,7 @@
 
   <script type="module">
     import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, doc, updateDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getFirestore, doc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     const firebaseConfig = {
@@ -173,24 +180,24 @@
       if(logEl.children.length>200) logEl.removeChild(logEl.lastChild);
     }
 
-    async function rollAnimation(){
-      const angleX=360*Math.floor(Math.random()*2);
-      const angleY=360*Math.floor(Math.random()*2);
-      diceEl.style.transform=`rotateX(${angleX}deg) rotateY(${angleY}deg)`;
-      await new Promise(r=>setTimeout(r,800));
+    async function flipDice(){
+      // animate flip
+      diceEl.style.transform = "rotateX(720deg) rotateY(360deg)";
+      await new Promise(r=>setTimeout(r,600));
+      diceEl.style.transform = ""; // reset
       return Math.floor(Math.random()*6)+1;
     }
 
     async function doRoll(){
       if(!running) return null;
-      const val=await rollAnimation();
-      diceEl.textContent=val;
+      const val = await flipDice();
+      diceEl.textContent = val; // show number
       return val;
     }
 
     async function dramaticMove(token, from, to){
-      for(let p=from+1; p<=to; p++){
-        const cell=getCell(p);
+      for(let next = from+1; next <= to; next++){
+        const cell = getCell(next);
         if(cell) cell.appendChild(token);
         await new Promise(r=>setTimeout(r,200));
       }
@@ -200,27 +207,29 @@
       if(!running) return;
       statusEl.textContent="Bot's turn...";
       await new Promise(r=>setTimeout(r,500));
-      const val=await doRoll();
+      const val = await doRoll();
       logMsg("Bot rolled "+val);
-      if(botPos+val<=100){
-        const old=botPos; botPos+=val;
+      if(botPos + val <= 100){
+        const old = botPos;
+        botPos += val;
         await dramaticMove(botToken, old, botPos);
       }
       placeTokens();
-      if(botPos>=100){winner('bot');return;}
+      if(botPos >= 100){endGame('bot'); return;}
       playerTurn=true; statusEl.textContent="Your turn";
     }
 
     async function playerRoll(){
       if(!running || !playerTurn) return;
-      const val=await doRoll();
+      const val = await doRoll();
       logMsg("You rolled "+val);
-      if(playerPos+val<=100){
-        const old=playerPos; playerPos+=val;
+      if(playerPos + val <= 100){
+        const old = playerPos;
+        playerPos += val;
         await dramaticMove(playerToken, old, playerPos);
       }
       placeTokens();
-      if(playerPos>=100){winner('player');return;}
+      if(playerPos >= 100){endGame('player'); return;}
       playerTurn=false;
       await new Promise(r=>setTimeout(r,300));
       await botMove();
@@ -228,31 +237,32 @@
 
     async function updateBalance(delta){
       if(!currentUser) return;
-      const userRef=doc(db,'users',currentUser.uid);
+      const userRef = doc(db,'users',currentUser.uid);
       await updateDoc(userRef,{balance:increment(delta)});
     }
 
-    function winner(w){
+    function endGame(w){
       running=false;
-      statusEl.textContent = w=='player'?'You win!':'Bot wins';
-      if(w=='player'){updateBalance(70);} 
+      statusEl.textContent = w=='player' ? "You win!" : "Bot wins";
+      if(w == 'player'){updateBalance(70);}
     }
 
     async function startGame(){
-      if(!currentUser){alert('Sign in to play');return;}
+      if(!currentUser){alert('Sign in to play'); return;}
       await updateBalance(-50);
       running=true; playerTurn=true;
       buildBoard(); placeTokens();
-      logEl.innerHTML='';
+      logEl.innerHTML=''; 
       statusEl.textContent='Your turn';
     }
 
-    onAuthStateChanged(auth,u=>{currentUser=u;});
-    startBtn.addEventListener('click',startGame);
-    diceEl.addEventListener('click',playerRoll);
+    onAuthStateChanged(auth, u=>{currentUser=u;});
+    startBtn.addEventListener('click', startGame);
+    diceEl.addEventListener('click', playerRoll);
 
     document.addEventListener('DOMContentLoaded',()=>{
-      buildBoard(); placeTokens();
+      buildBoard();
+      placeTokens();
     });
   </script>
 </body>
