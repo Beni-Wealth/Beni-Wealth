@@ -22,13 +22,17 @@
       color:#eaf2ff;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#031022);display:flex;align-items:center;justify-content:center;padding:12px}
-    .app{width:100%;max-width:1000px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:16px;display:grid;grid-template-columns:1fr 350px;gap:12px;box-shadow:0 30px 80px rgba(2,6,23,0.7)}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#031022);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px}
+    
+    /* Back button */
+    .back-btn{align-self:flex-start;margin-bottom:8px;padding:8px 12px;border-radius:8px;background:var(--accent-2);color:#041219;font-weight:700;text-decoration:none;}
+
+    .app{width:100%;max-width:1000px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:16px;display:grid;grid-template-columns:1fr 350px;gap:12px;box-shadow:0 30px 80px rgba(2,6,23,0.7);margin-top:8px}
     @media(max-width:800px){ .app{grid-template-columns:1fr;max-width:480px;padding:12px} }
     .board-wrap{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
     .controls{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px}
 
-    /* 👇 IMPORTANT: make the board a positioning context for tokens */
+    /* Board */
     #board {
       position: relative;
       width:100%;
@@ -39,83 +43,66 @@
       background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);
       padding:6px;
       border-radius:8px;
+      transform:translateY(12px);
     }
 
-    .cell{background:linear-gradient(180deg,rgba(255,255,255,0.012),transparent);border-radius:6px;display:block;padding:6px;font-size:12px;color:var(--muted);position:relative;overflow:visible;min-height:0}
+    .cell{background:linear-gradient(180deg,rgba(255,255,255,0.012),transparent);border-radius:6px;display:block;padding:6px;font-size:12px;color:var(--muted);position:relative;min-height:0}
     .cell .num{position:absolute;left:6px;top:6px;font-weight:800;color:var(--muted);font-size:12px;z-index:2}
-    .cell .feature{position:absolute;right:6px;top:6px;font-size:18px;opacity:0.92;z-index:2}
-    .cell.snake-start{box-shadow: inset 0 0 0 2px rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.06)}
-    .cell.ladder-start{box-shadow: inset 0 0 0 2px rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.06)}
-
     .token {
       position:absolute;
       width:38px; height:38px;
       border-radius:50%;
       display:grid;place-items:center;
       font-weight:900;
-      color:#041219;
       z-index:40;
-      transition: transform 320ms cubic-bezier(.2,.9,.2,1), box-shadow 320ms;
+      transition: transform 350ms cubic-bezier(.2,.9,.2,1), box-shadow 350ms;
     }
     .token.player{background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 10px 30px rgba(122,95,255,0.18)}
     .token.bot{background:linear-gradient(90deg,#ffb86b,#ff7a7a); box-shadow:0 10px 30px rgba(255,120,110,0.18)}
 
+    /* Dice */
+    .dice-wrapper{perspective:800px;margin-top:12px;}
+    .dice{width:60px;height:60px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#041219;cursor:pointer;transform-style:preserve-3d;transition:transform 1s ease;}
+    
     .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#041219;font-weight:800;cursor:pointer}
     .btn-ghost{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
     .muted{color:var(--muted);font-size:13px}
     .history{height:140px;overflow:auto;border-radius:8px;padding:8px;background:rgba(255,255,255,0.01);font-size:13px}
     .status{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:800}
     .small{font-size:13px;color:var(--muted)}
-    .footer{display:flex;gap:8px;align-items:center;justify-content:space-between}
-    .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#041219; padding:10px 14px; border-radius:10px; font-weight:800; z-index:10000; }
   </style>
 </head>
 <body>
+
+  <a href="dashboard.html" class="back-btn">← Back to Dashboard</a>
+
   <div class="app" role="application" aria-label="Snakes and ladders">
     <div class="board-wrap" aria-live="polite">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="font-weight:900">Snakes & Ladders • Beni-Wealth</div>
         <div class="small">Player vs Bot — fair 50/50 dice</div>
       </div>
-
       <div id="board"></div>
-
       <div id="playerToken" class="token player" aria-hidden="true">P</div>
       <div id="botToken" class="token bot" aria-hidden="true">B</div>
+      <div class="dice-wrapper">
+        <div id="dice" class="dice">—</div>
+      </div>
     </div>
 
     <div class="controls">
       <div class="status" id="status">Welcome — press <strong>Start</strong></div>
-      <div style="display:flex;gap:12px;align-items:center">
-        <div id="dice" class="dice">—</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <button id="rollBtn" class="btn">Roll</button>
-          <button id="startBtn" class="btn-ghost">Start New Game</button>
-        </div>
-      </div>
-
-      <div style="margin-top:8px">
-        <div class="small">Sound</div>
-        <input type="checkbox" id="soundToggle" checked />
-      </div>
-
+      <button id="startBtn" class="btn-ghost">Start New Game</button>
       <div style="margin-top:8px">
         <div class="small">Game log</div>
         <div id="log" class="history"></div>
       </div>
-
-      <div class="footer" style="margin-top:8px">
-        <div class="small">Made for Beni-Wealth</div>
-        <button id="saveBtn" class="btn-ghost">Save result</button>
-      </div>
     </div>
   </div>
 
-  <div id="toastRoot" aria-hidden="true"></div>
-
   <script type="module">
     import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, doc, updateDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     const firebaseConfig = {
@@ -131,153 +118,146 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // Sounds
+    const diceSound = new Audio("https://example.com/dice-roll.mp3");
+    const moveSound = new Audio("https://example.com/token-move.mp3");
+    const winSound = new Audio("https://example.com/win.mp3");
+    const loseSound = new Audio("https://example.com/lose.mp3");
+
     const boardEl = document.getElementById('board');
     const playerToken = document.getElementById('playerToken');
     const botToken = document.getElementById('botToken');
-    const rollBtn = document.getElementById('rollBtn');
-    const startBtn = document.getElementById('startBtn');
     const diceEl = document.getElementById('dice');
+    const startBtn = document.getElementById('startBtn');
     const statusEl = document.getElementById('status');
     const logEl = document.getElementById('log');
-    const saveBtn = document.getElementById('saveBtn');
-    const soundToggle = document.getElementById('soundToggle');
-    const toastRoot = document.getElementById('toastRoot');
-
-    const SIZE = 10, CELL_COUNT = SIZE*SIZE;
-    const ladderStarts = new Set([4,9,20,28,40,51,63,71]);
-    const snakeStarts  = new Set([98,95,92,87,64,62,54,17]);
 
     let playerPos=1, botPos=1;
-    let playerTurn=true, running=false, currentUser=null, isRolling=false;
+    let playerTurn=true, running=false;
+    let currentUser=null;
+    let rollCount=0;
 
     function buildBoard(){
       boardEl.innerHTML='';
+      const SIZE=10;
       for(let r=0;r<SIZE;r++){
-        const rowFromBottom = SIZE-1-r;
-        const leftToRight = rowFromBottom%2===0;
+        const rowFromBottom=SIZE-1-r;
+        const leftToRight=rowFromBottom%2===0;
         for(let c=0;c<SIZE;c++){
-          const num = leftToRight ? (rowFromBottom*SIZE + (c+1)) : (rowFromBottom*SIZE + (SIZE-c));
-          const cell = document.createElement('div'); cell.className='cell'; cell.dataset.num=num;
-          const n = document.createElement('div'); n.className='num'; n.textContent=num;
+          const num=leftToRight
+            ? (rowFromBottom*SIZE + (c+1))
+            : (rowFromBottom*SIZE + (SIZE-c));
+          const cell=document.createElement('div');
+          cell.className='cell';
+          cell.dataset.num=num;
+          const n=document.createElement('div');
+          n.className='num'; n.textContent=num;
           cell.appendChild(n);
-          if(ladderStarts.has(num)){
-            cell.classList.add('ladder-start'); const f= document.createElement('div'); f.className='feature'; f.textContent='🪜'; cell.append(f);
-          } else if(snakeStarts.has(num)){
-            cell.classList.add('snake-start'); const f= document.createElement('div'); f.className='feature'; f.textContent='🐍'; cell.append(f);
-          }
           boardEl.appendChild(cell);
         }
       }
     }
 
-    function getCell(num){ return boardEl.querySelector(`.cell[data-num="${num}"]`); }
+    function getCell(num){return boardEl.querySelector(`.cell[data-num="${num}"]`);}
     function placeTokens(){
-      const pCell=getCell(playerPos), bCell=getCell(botPos);
-      if(pCell){pCell.appendChild(playerToken);} 
-      if(bCell){bCell.appendChild(botToken);}
+      const pc=getCell(playerPos), bc=getCell(botPos);
+      if(pc) pc.appendChild(playerToken);
+      if(bc) bc.appendChild(botToken);
     }
 
-    function showToast(msg,ms=2500){
-      const t=document.createElement('div'); t.className='toast'; t.textContent=msg; toastRoot.appendChild(t);
-      setTimeout(()=>{t.remove();},ms);
-    }
-
-    function logMsg(t){
-      const d=document.createElement('div'); d.textContent=`${(new Date()).toLocaleTimeString()} — ${t}`;
+    function logMsg(msg){
+      const d=document.createElement('div');
+      d.textContent=msg;
       logEl.prepend(d);
       if(logEl.children.length>200) logEl.removeChild(logEl.lastChild);
     }
 
-    function rollDie(){ return Math.floor(Math.random()*6)+1; }
-
-    async function doRollAnimation(){
-      if(isRolling) return null;
-      isRolling=true; diceEl.textContent='...';
-      await new Promise(r=>setTimeout(r,300));
-      const val = rollDie();
-      diceEl.textContent=val; isRolling=false; return val;
+    function rollDiceAnimation(){
+      // 3D look
+      const angleX=360*Math.floor(Math.random()*2);
+      const angleY=360*Math.floor(Math.random()*2);
+      diceEl.style.transform=`rotateX(${angleX}deg) rotateY(${angleY}deg)`;
     }
 
-    function applySnL(pos){
-      if(ladderStarts.has(pos)) return {next:Math.min(CELL_COUNT,pos+15),type:'ladder'};
-      if(snakeStarts.has(pos)) return {next:Math.max(1,pos-10),type:'snake'};
-      return {next:pos,type:null};
+    function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+    async function dramaticMove(token, from, to){
+      const step=from<to?1:-1;
+      for(let p=from; p!==to+step; p+=step){
+        const cell=getCell(p);
+        if(cell) cell.appendChild(token);
+        moveSound.play();
+        await sleep(200);
+      }
     }
 
-    function setStatus(t){ statusEl.textContent=t; }
+    async function doRoll(){
+      if(!running) return null;
+      diceSound.play();
+      rollDiceAnimation();
+      await sleep(1000);
+      const val=Math.floor(Math.random()*6)+1;
+      diceEl.textContent=val;
+      return val;
+    }
 
     async function botMove(){
       if(!running) return;
-      setStatus("Bot's turn...");
-      await new Promise(r=>setTimeout(r,600));
-      const val = await doRollAnimation();
+      statusEl.textContent="Bot's turn...";
+      await sleep(600);
+      const val=await doRoll();
       logMsg("Bot rolled "+val);
-      if(botPos+val<=CELL_COUNT){
-        botPos+=val;
-        const res=applySnL(botPos);
-        botPos=res.next;
+      if(botPos+val<=100){
+        const old=botPos; botPos+=val;
+        await dramaticMove(botToken,old,botPos);
       }
       placeTokens();
-      if(botPos>=CELL_COUNT){endGame('bot');return;}
-      playerTurn=true; setStatus("Your turn");
+      if(botPos>=100){endGame('bot');return;}
+      playerTurn=true; statusEl.textContent="Your turn";
     }
 
     async function playerRoll(){
       if(!running || !playerTurn) return;
-      rollBtn.disabled=true;
-      const val=await doRollAnimation();
+      const val=await doRoll();
       logMsg("You rolled "+val);
-      if(playerPos+val<=CELL_COUNT){
-        playerPos+=val;
-        const res=applySnL(playerPos);
-        playerPos=res.next;
+      if(playerPos+val<=100){
+        const old=playerPos; playerPos+=val;
+        await dramaticMove(playerToken,old,playerPos);
       }
       placeTokens();
-      if(playerPos>=CELL_COUNT){endGame('player');return;}
+      if(playerPos>=100){endGame('player');return;}
       playerTurn=false;
-      await new Promise(r=>setTimeout(r,400));
+      await sleep(400);
       await botMove();
-      rollBtn.disabled=!playerTurn;
     }
 
-    function endGame(w){
-      running=false; rollBtn.disabled=true; startBtn.disabled=false;
-      setStatus(w=='player'?'You win!':'Bot wins');
-      if(w=='player') showToast("You win!");
-      else showToast("Bot wins!");
+    async function updateBalance(delta){
+      if(!currentUser) return;
+      const userRef=doc(db,'users',currentUser.uid);
+      await updateDoc(userRef,{balance:increment(delta)});
     }
 
-    function resetGame(){
-      playerPos=1; botPos=1; running=false; playerTurn=true;
-      rollBtn.disabled=true; startBtn.disabled=false; diceEl.textContent='—'; logEl.innerHTML=''; setStatus('Press Start to begin');
-      buildBoard(); placeTokens();
+    function endGame(winner){
+      running=false; statusEl.textContent = winner=='player' ? "You win!" : "Bot wins!";
+      if(winner=='player'){winSound.play();updateBalance(70);}else{loseSound.play();}
     }
 
     async function startGame(){
       if(!currentUser){alert('Sign in to play');return;}
-      running=true; rollBtn.disabled=false; startBtn.disabled=true;
-      logEl.innerHTML=''; setStatus('Your turn'); placeTokens();
+      await updateBalance(-50);
+      running=true; playerTurn=true;
+      buildBoard(); placeTokens();
+      logEl.innerHTML='';
+      statusEl.textContent='Your turn';
     }
-
-    async function saveResult(){
-      if(running){alert("Finish game first");return;}
-      const winner = playerPos>=CELL_COUNT?'player':(botPos>=CELL_COUNT?'bot':null);
-      if(!winner) return alert("Game not finished");
-      try{
-        await addDoc(collection(db,'snakesAndLaddersResults'),{winner,ts:serverTimestamp(),user:currentUser?currentUser.uid:null});
-        alert("Result saved!");
-      }catch(e){alert("Save failed");}
-    }
-
-    document.addEventListener('DOMContentLoaded',()=>{
-      buildBoard(); placeTokens(); setStatus('Press Start to begin');
-    });
-
-    rollBtn.addEventListener('click',()=>{if(!isRolling)playerRoll();});
-    startBtn.addEventListener('click',()=>{resetGame(); startGame();});
-    saveBtn.addEventListener('click',()=>saveResult());
 
     onAuthStateChanged(auth,u=>{currentUser=u;});
+    startBtn.addEventListener('click',startGame);
+    diceEl.addEventListener('click',playerRoll);
+
+    document.addEventListener('DOMContentLoaded',()=>{
+      buildBoard(); placeTokens();
+    });
   </script>
 </body>
 </html>
