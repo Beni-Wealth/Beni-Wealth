@@ -179,19 +179,25 @@
     function formatNGN(n){ try{return '₦'+Math.round(n).toLocaleString('en-NG');}catch{return '₦'+n;} }
     function deriveUnitPrice(ad){const m=Number(ad?.unitPrice ?? ad?.unit ?? NaN);if(!isNaN(m)&&m>0) return m;const tot=Number(ad?.totalCost||0),w=Number(ad?.workers||0);return w>0?tot/w:0;}
 
-    async function uploadImgur(file){
-      const form=new FormData();form.append('image',file);
-      const res=await fetch('https://api.imgur.com/3/image',{method:'POST',headers:{Authorization:'Client-ID '+IMGUR_CLIENT_ID},body:form});
-      const j=await res.json();return j.success?j.data.link:null;
+    async function uploadImgur(file){const form=new FormData();form.append('image',file);const res=await fetch('https://api.imgur.com/3/image',{method:'POST',headers:{Authorization:'Client-ID '+IMGUR_CLIENT_ID},body:form});const j=await res.json();return j.success?j.data.link:null;}
+
+    async function fetchUserSubs(uid){userSubmissionIds.clear();const subQ=query(collection(db,'advert_submissions'),where('userId','==',uid));const snap=await getDocs(subQ);snap.forEach(s=>{const d=s.data();const st=(d.status||'').toLowerCase();if(st==='pending'||st==='approved') userSubmissionIds.add(d.advertId);});}
+
+    function progressColor(pct){
+      if(pct>=100) return 'var(--accent-a)';
+      if(pct>=80) return '#f2cd4b';
+      return 'var(--accent-b)';
     }
 
-    async function fetchUserSubs(uid){
-      userSubmissionIds.clear();
-      const subQ=query(collection(db,'advert_submissions'),where('userId','==',uid));
-      const snap=await getDocs(subQ);
-      snap.forEach(s=>{const d=s.data();const st=(d.status||'').toLowerCase();
-        if(st==='pending'||st==='approved') userSubmissionIds.add(d.advertId);
-      });
+    function createProgressHTML(approved,workers){
+      const pct=workers>0?Math.min((approved/workers)*100,100):0;
+      return `
+        <div style="margin-top:8px;font-size:12px;color:var(--muted);">
+          ${approved} / ${workers} completed
+        </div>
+        <div style="background:rgba(255,255,255,0.1);height:6px;border-radius:4px;overflow:hidden;margin-top:4px;">
+          <div style="width:${pct}%;height:100%;background:${progressColor(pct)};"></div>
+        </div>`;
     }
 
     function displayTasks(){
@@ -201,8 +207,8 @@
       advertsCache.forEach(ad=>{
         if(userSubmissionIds.has(ad.id)) return;
         const workers=Number(ad.data.workers||0);
-        const approvedCount=Number(ad.data.approvedCount||0);
-        if(approvedCount>=workers) return;
+        const approvedCount=Number(ad.adprovedCount||0);
+        if(workers>0 && approvedCount>=workers) return;
         const hay=((ad.data.title||'')+' '+(ad.data.platform||'')).toLowerCase();
         if(q&&!hay.includes(q)) return;
         const card=document.createElement('div');card.className='card';
@@ -211,9 +217,14 @@
         const h3=document.createElement('h3');h3.textContent=ad.data.title||'';
         const meta=document.createElement('div');meta.className='meta';
         meta.innerHTML=`<div>${ad.data.platform||''}</div><div class="price">${formatNGN(Math.round(deriveUnitPrice(ad.data)*0.7))}</div>`;
+        body.append(h3,meta);
+        if(workers>0){
+          const wrap=document.createElement('div');wrap.innerHTML=createProgressHTML(approvedCount,workers);
+          body.append(wrap);
+        }
         const btn=document.createElement('button');btn.className='btn';btn.textContent='Open Task';
         btn.addEventListener('click',()=>openFullPageTask(ad.id));
-        body.append(h3,meta,btn);card.append(thumb,body);grid.append(card);any=true;
+        body.append(btn);card.append(thumb,body);grid.append(card);any=true;
       });
       if(!any)grid.innerHTML='<div class="empty">No tasks available</div>';
     }
@@ -221,19 +232,11 @@
     function attachSubmissionsListeners(){
       advertsCache.forEach(ad=>{
         const subQ=query(collection(db,'advert_submissions'),where('advertId','==',ad.id));
-        onSnapshot(subQ,snap=>{
-          let count=0;snap.forEach(doc=>{if((doc.data().status||'').toLowerCase()==='approved')count++});
-          ad.approvedCount=count;
-          displayTasks();
-        });
+        onSnapshot(subQ,snap=>{let c=0;snap.forEach(doc=>{if((doc.data().status||'').toLowerCase()==='approved')c++});ad.adprovedCount=c;displayTasks();});
       });
     }
 
-    function startAdvertsListener(){
-      grid.innerHTML='<div class="empty">Loading tasks…</div>';
-      const taskQ=query(collection(db,'advertise_tasks'),where('status','==','approved'));
-      if(advertsListenerUnsub)advertsListenerUnsub();
-      advertsListenerUnsub=onSnapshot(taskQ,snap=>{advertsCache.clear();snap.forEach(docSnap=>advertsCache.set(docSnap.id,{id:docSnap.id,data:docSnap.data(),approvedCount:0}));attachSubmissionsListeners();displayTasks();},err=>{grid.innerHTML='<div class="empty">Failed to load tasks</div>';});    }
+    function startAdvertsListener(){grid.innerHTML='<div class="empty">Loading tasks…</div>';const taskQ=query(collection(db,'advertise_tasks'),where('status','==','approved'));if(advertsListenerUnsub)advertsListenerUnsub();advertsListenerUnsub=onSnapshot(taskQ,snap=>{advertsCache.clear();snap.forEach(docSnap=>advertsCache.set(docSnap.id,{id:docSnap.id,data:docSnap.data(),adprovedCount:0}));attachSubmissionsListeners();displayTasks();});}
 
     async function openFullPageTask(id){
       activeTaskId=id;
@@ -241,6 +244,10 @@
       const d=s.data();
       viewerTitle.textContent=d.title||'';viewerPlatform.textContent=d.platform||'';viewerPrice.textContent=formatNGN(Math.round(deriveUnitPrice(d)*0.7));
       viewerDesc.textContent=d.description||'';viewerLink.href=d.taskLink||'#';viewerLink.textContent=viewerLink.href;
+      const approved=Number(advertsCache.get(id)?.adprovedCount||0);const workers=Number(d.workers||0);
+      if(workers>0){
+        viewerDesc.insertAdjacentHTML('afterend',createProgressHTML(approved,workers));
+      }
       if(d.thumbnail){viewerThumbSmall.src=d.thumbnail;viewerThumbSmall.style.display='block';}else viewerThumbSmall.style.display='none';
       taskViewer.style.display='block';history.pushState({task:true,id},'',location.pathname+'?id='+id);
     }
@@ -249,22 +256,11 @@
     viewerThumbSmall.addEventListener('click',()=>{if(viewerThumbSmall.src){largeImgView.src=viewerThumbSmall.src;largeImgOverlay.style.display='flex';}});
     largeImgOverlay.addEventListener('click',()=>{largeImgOverlay.style.display='none';});
 
-    viewerSubmitProofBtn.addEventListener('click',async()=>{
-      if(!currentUser){viewerProofStatus.textContent='Sign-in required';return;}
-      const text=viewerProofText.value.trim();const f=viewerProofImage.files[0];
-      if(!text||!f){viewerProofStatus.textContent='Both text and image proof are required';return;}
-      viewerSubmitProofBtn.disabled=true;viewerProofStatus.textContent='Submitting…';
-      const img=await uploadImgur(f);
-      await addDoc(collection(db,'advert_submissions'),{advertId:activeTaskId,userId:currentUser.uid,textProof:text,imageUrl:img,status:'pending',createdAt:serverTimestamp()});
-      window.location.href='tasks.html';
-    });
+    viewerSubmitProofBtn.addEventListener('click',async()=>{if(!currentUser){viewerProofStatus.textContent='Sign-in required';return;}const text=viewerProofText.value.trim();const f=viewerProofImage.files[0];if(!text||!f){viewerProofStatus.textContent='Both text and image proof are required';return;}viewerSubmitProofBtn.disabled=true;viewerProofStatus.textContent='Submitting…';const img=await uploadImgur(f);await addDoc(collection(db,'advert_submissions'),{advertId:activeTaskId,userId:currentUser.uid,textProof:text,imageUrl:img,status:'pending',createdAt:serverTimestamp()});window.location.href='tasks.html';});
 
     onAuthStateChanged(auth,async user=>{currentUser=user;userSubmissionIds.clear();if(user)await fetchUserSubs(user.uid);startAdvertsListener();});
-
     refresh.addEventListener('click',async()=>{if(currentUser)await fetchUserSubs(currentUser.uid);startAdvertsListener();});
-
     search.addEventListener('input',displayTasks);
-
     window.addEventListener('load',()=>{const id=new URL(location.href).searchParams.get('id');if(id)openFullPageTask(id);});
   </script>
 </body>
