@@ -142,8 +142,22 @@ onAuthStateChanged(auth,user=>{
   currentUser=user;
   signinBtn.textContent=user?'Signed in':'Sign in';
   signinBtn.disabled=!!user;
-  render(PTCs);
+  filterAndRender();
 });
+
+// returns true if within cooldown
+async function isVisited(ptc){
+  if(!currentUser) return false;
+  try{
+    const snap = await getDoc(doc(db,'ptcClicks',`${ptc.id}_${currentUser.uid}`));
+    if(!snap.exists() || !snap.data().lastClickedAt) return false;
+    const last = snap.data().lastClickedAt.toDate().getTime();
+    return (Date.now() - last) < COOLDOWN_MS;
+  }catch(e){
+    console.error('visited check',e);
+    return false;
+  }
+}
 
 async function incrementViewCount(ptcId){
   const ref = doc(db,'ptcViews',String(ptcId));
@@ -184,7 +198,7 @@ async function handleOpen(ptc,btn,spinner){
   window.open(`ptc-${ptc.id}.html`,'_blank');
 }
 
-function makeCard(ptc){
+function makeCard(ptc, visitedState){
   const item = document.createElement('div'); item.className='card';
   const h3=document.createElement('h3'); h3.textContent=ptc.title;
   const meta=document.createElement('div'); meta.className='meta'; meta.textContent=ptc.description;
@@ -194,6 +208,10 @@ function makeCard(ptc){
   (async()=>{
     try{const vdoc=await getDoc(doc(db,'ptcViews',String(ptc.id))); viewsEl.textContent='Views: '+(vdoc.exists()?vdoc.data().count||0:0);}catch{viewsEl.textContent='Views: 0';}
   })();
+
+  if(visitedState) {
+    const b=document.createElement('div'); b.className='badge'; b.textContent='Visited'; item.appendChild(b);
+  }
 
   const actions=document.createElement('div'); actions.className='actions';
   const btnOpen=document.createElement('button'); btnOpen.className='btn primary';
@@ -210,15 +228,27 @@ function makeCard(ptc){
   return item;
 }
 
-function render(list){
+async function filterAndRender(){
+  const q=searchInput.value.trim().toLowerCase();
+  const f=filterSelect.value;
   GRID.innerHTML='';
-  list.forEach(ptc=>GRID.appendChild(makeCard(ptc)));
+
+  for(const ptc of PTCs){
+    const text=(ptc.title+' '+ptc.description).toLowerCase();
+    if(q&&!text.includes(q)) continue;
+
+    const visited = await isVisited(ptc);
+    if(f==='fresh' && visited) continue;
+    if(f==='visited' && !visited) continue;
+
+    GRID.appendChild(makeCard(ptc,visited));
+  }
 }
 
-render(PTCs);
+searchInput.addEventListener('input',filterAndRender);
+filterSelect.addEventListener('change',filterAndRender);
 
-searchInput.addEventListener('input',()=>render(PTCs));
-filterSelect.addEventListener('change',()=>render(PTCs));
+filterAndRender();
 </script>
 
 </body>
