@@ -10,29 +10,30 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <link rel="icon" type="image/png" sizes="32x32"
+        href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
 
   <style>
     :root{
       --bg:#041225; --card:#0b1220;
       --accent:#7a5fff; --accent-2:#35d6b1;
       --muted:rgba(255,255,255,0.66);
-      --win:#10b981; --lose:#ef4444;
       font-family:Poppins, system-ui, Arial;
       color:#eaf2ff;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#031022);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px}
     
-    /* Back button */
-    .back-btn{align-self:flex-start;margin-bottom:8px;padding:8px 12px;border-radius:8px;background:var(--accent-2);color:#041219;font-weight:700;text-decoration:none;}
+    .back-btn{
+      align-self:flex-start;margin-bottom:8px;padding:8px 12px;border-radius:8px;
+      background:var(--accent-2);color:#041219;font-weight:700;text-decoration:none;
+    }
 
     .app{width:100%;max-width:1000px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:16px;display:grid;grid-template-columns:1fr 350px;gap:12px;box-shadow:0 30px 80px rgba(2,6,23,0.7);margin-top:8px}
     @media(max-width:800px){ .app{grid-template-columns:1fr;max-width:480px;padding:12px} }
     .board-wrap{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
     .controls{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px}
 
-    /* Board */
     #board {
       position: relative;
       width:100%;
@@ -48,27 +49,29 @@
 
     .cell{background:linear-gradient(180deg,rgba(255,255,255,0.012),transparent);border-radius:6px;display:block;padding:6px;font-size:12px;color:var(--muted);position:relative;min-height:0}
     .cell .num{position:absolute;left:6px;top:6px;font-weight:800;color:var(--muted);font-size:12px;z-index:2}
+
     .token {
       position:absolute;
-      width:38px; height:38px;
-      border-radius:50%;
-      display:grid;place-items:center;
-      font-weight:900;
+      font-size:40px; /* emoji token size */
+      width:40px;height:40px;
+      display:flex;place-items:center;justify-content:center;
+      transform:translate(-50%,-50%);
+      transition: transform 350ms ease;
       z-index:40;
-      transition: transform 350ms cubic-bezier(.2,.9,.2,1), box-shadow 350ms;
     }
-    .token.player{background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 10px 30px rgba(122,95,255,0.18)}
-    .token.bot{background:linear-gradient(90deg,#ffb86b,#ff7a7a); box-shadow:0 10px 30px rgba(255,120,110,0.18)}
 
-    /* Dice */
-    .dice-wrapper{perspective:800px;margin-top:12px;}
+    #diceArea {
+      margin-top:16px;
+      display:flex;
+      justify-content:center;
+      width:100%;
+    }
     .dice{width:60px;height:60px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#041219;cursor:pointer;transform-style:preserve-3d;transition:transform 1s ease;}
-    
+
     .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#041219;font-weight:800;cursor:pointer}
     .btn-ghost{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
-    .muted{color:var(--muted);font-size:13px}
-    .history{height:140px;overflow:auto;border-radius:8px;padding:8px;background:rgba(255,255,255,0.01);font-size:13px}
     .status{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:800}
+    .history{height:140px;overflow:auto;border-radius:8px;padding:8px;background:rgba(255,255,255,0.01);font-size:13px}
     .small{font-size:13px;color:var(--muted)}
   </style>
 </head>
@@ -77,15 +80,20 @@
   <a href="dashboard.html" class="back-btn">← Back to Dashboard</a>
 
   <div class="app" role="application" aria-label="Snakes and ladders">
-    <div class="board-wrap" aria-live="polite">
+    <div class="board-wrap">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="font-weight:900">Snakes & Ladders • Beni-Wealth</div>
         <div class="small">Player vs Bot — fair 50/50 dice</div>
       </div>
+
       <div id="board"></div>
-      <div id="playerToken" class="token player" aria-hidden="true">P</div>
-      <div id="botToken" class="token bot" aria-hidden="true">B</div>
-      <div class="dice-wrapper">
+
+      <!-- emoji tokens -->
+      <div id="playerToken" class="token">🧍‍♂️</div>
+      <div id="botToken" class="token">🤖</div>
+
+      <!-- moved dice below board -->
+      <div id="diceArea">
         <div id="dice" class="dice">—</div>
       </div>
     </div>
@@ -102,7 +110,7 @@
 
   <script type="module">
     import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, doc, updateDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getFirestore, doc, updateDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     const firebaseConfig = {
@@ -118,12 +126,6 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // Sounds
-    const diceSound = new Audio("https://example.com/dice-roll.mp3");
-    const moveSound = new Audio("https://example.com/token-move.mp3");
-    const winSound = new Audio("https://example.com/win.mp3");
-    const loseSound = new Audio("https://example.com/lose.mp3");
-
     const boardEl = document.getElementById('board');
     const playerToken = document.getElementById('playerToken');
     const botToken = document.getElementById('botToken');
@@ -135,7 +137,6 @@
     let playerPos=1, botPos=1;
     let playerTurn=true, running=false;
     let currentUser=null;
-    let rollCount=0;
 
     function buildBoard(){
       boardEl.innerHTML='';
@@ -172,47 +173,41 @@
       if(logEl.children.length>200) logEl.removeChild(logEl.lastChild);
     }
 
-    function rollDiceAnimation(){
-      // 3D look
+    async function rollAnimation(){
       const angleX=360*Math.floor(Math.random()*2);
       const angleY=360*Math.floor(Math.random()*2);
       diceEl.style.transform=`rotateX(${angleX}deg) rotateY(${angleY}deg)`;
-    }
-
-    function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-
-    async function dramaticMove(token, from, to){
-      const step=from<to?1:-1;
-      for(let p=from; p!==to+step; p+=step){
-        const cell=getCell(p);
-        if(cell) cell.appendChild(token);
-        moveSound.play();
-        await sleep(200);
-      }
+      await new Promise(r=>setTimeout(r,800));
+      return Math.floor(Math.random()*6)+1;
     }
 
     async function doRoll(){
       if(!running) return null;
-      diceSound.play();
-      rollDiceAnimation();
-      await sleep(1000);
-      const val=Math.floor(Math.random()*6)+1;
+      const val=await rollAnimation();
       diceEl.textContent=val;
       return val;
+    }
+
+    async function dramaticMove(token, from, to){
+      for(let p=from+1; p<=to; p++){
+        const cell=getCell(p);
+        if(cell) cell.appendChild(token);
+        await new Promise(r=>setTimeout(r,200));
+      }
     }
 
     async function botMove(){
       if(!running) return;
       statusEl.textContent="Bot's turn...";
-      await sleep(600);
+      await new Promise(r=>setTimeout(r,500));
       const val=await doRoll();
       logMsg("Bot rolled "+val);
       if(botPos+val<=100){
         const old=botPos; botPos+=val;
-        await dramaticMove(botToken,old,botPos);
+        await dramaticMove(botToken, old, botPos);
       }
       placeTokens();
-      if(botPos>=100){endGame('bot');return;}
+      if(botPos>=100){winner('bot');return;}
       playerTurn=true; statusEl.textContent="Your turn";
     }
 
@@ -222,12 +217,12 @@
       logMsg("You rolled "+val);
       if(playerPos+val<=100){
         const old=playerPos; playerPos+=val;
-        await dramaticMove(playerToken,old,playerPos);
+        await dramaticMove(playerToken, old, playerPos);
       }
       placeTokens();
-      if(playerPos>=100){endGame('player');return;}
+      if(playerPos>=100){winner('player');return;}
       playerTurn=false;
-      await sleep(400);
+      await new Promise(r=>setTimeout(r,300));
       await botMove();
     }
 
@@ -237,9 +232,10 @@
       await updateDoc(userRef,{balance:increment(delta)});
     }
 
-    function endGame(winner){
-      running=false; statusEl.textContent = winner=='player' ? "You win!" : "Bot wins!";
-      if(winner=='player'){winSound.play();updateBalance(70);}else{loseSound.play();}
+    function winner(w){
+      running=false;
+      statusEl.textContent = w=='player'?'You win!':'Bot wins';
+      if(w=='player'){updateBalance(70);} 
     }
 
     async function startGame(){
