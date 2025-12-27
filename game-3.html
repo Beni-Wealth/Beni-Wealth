@@ -8,115 +8,47 @@
   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
 
-  <!-- Favicons & Social preview -->
+  <!-- Favicons -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="theme-color" content="#2fe0b8">
 
   <style>
     :root{
-      --bg1:#071021; --bg2:#0d1224; --muted:rgba(255,255,255,0.66); --text:#eaf2ff;
+      --bg1:#071021; --bg2:#0d1224; --text:#eaf2ff; --muted:rgba(255,255,255,0.66);
       --accent:#7a5fff; --success:#10b981; --danger:#ef4444;
       font-family:"Poppins",system-ui,Roboto,Arial;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.04), transparent), linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--text);-webkit-font-smoothing:antialiased}
+    html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.04), transparent), linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--text);}
     .wrap{max-width:980px;margin:18px auto;padding:14px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-    .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#35d6b1);display:grid;place-items:center;color:#041219;font-weight:800}
-    .title{font-weight:800}
-    .muted{color:var(--muted);font-size:13px}
-    .controls{display:flex;gap:10px;align-items:center}
+    .controls, .hud{display:flex;gap:10px;align-items:center}
     .btn{background:linear-gradient(90deg,var(--accent),#35d6b1);border:0;padding:10px 14px;border-radius:10px;color:#041219;font-weight:800;cursor:pointer}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
-    .layout{display:flex;gap:16px;flex-wrap:wrap}
-    .left{flex:1;min-width:260px}
-    .right{width:320px;min-width:220px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.02)}
-
-    .board{
-      display:grid;
-      grid-template-columns:repeat(4, minmax(56px, 1fr));
-      gap:10px;margin-top:12px;width:100%;
-      touch-action: manipulation;
-    }
-
-    .tile{
-      aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:grid;place-items:center;font-weight:800;font-size:clamp(14px,3.8vw,22px);cursor:pointer;user-select:none;position:relative;border:2px solid rgba(255,255,255,0.03);transition:transform .12s ease, background .18s ease
-    }
-    .tile.flipped{background:linear-gradient(90deg,#fff,#fff0);color:#041219}
-    .tile.matched{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.6);color:#041219;cursor:default}
-
-    .hud{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap}
-    .scorebox{font-weight:700}
+    .board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+    .tile{aspect-ratio:1/1;border-radius:10px;background:rgba(255,255,255,0.02);display:grid;place-items:center;font-size:clamp(14px,3.8vw,22px);cursor:pointer;border:2px solid rgba(255,255,255,0.03)}
+    .tile.flipped{background:rgba(255,255,255,0.15);color:#041219}
+    .tile.matched{background:rgba(16,185,129,0.2);border-color:rgba(16,185,129,0.6);color:#041219;cursor:default}
     .log{margin-top:12px;max-height:260px;overflow:auto;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);font-size:13px}
-    .muted-note{color:var(--muted);font-size:13px;margin-top:8px}
-    .center{display:flex;align-items:center;justify-content:center}
-    .modal{position:fixed;left:0;top:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);z-index:9999}
-    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:14px;border-radius:12px;min-width:260px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <div style="display:flex;gap:12px;align-items:center">
-        <div class="logo">BW</div>
-        <div>
-          <div class="title">Memory Flip — You vs Bot</div>
-          <div class="muted">Match pairs to score. Win to earn ₦50. Entry fee: ₦20.</div>
-        </div>
-      </div>
+    <h2>Memory Flip — You vs Bot</h2>
 
-      <div class="controls">
-        <div style="text-align:right">
-          <div class="muted">Balance</div>
-          <div id="balance" style="font-weight:800">₦0.00</div>
-        </div>
-        <button id="playBtn" class="btn">Play (₦20)</button>
-        <button id="backBtn" class="btn ghost">Back</button>
-      </div>
-    </header>
-
-    <div class="layout">
-      <div class="left">
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap">
-            <div style="font-weight:800">Game</div>
-            <div class="muted small" id="turnIndicator">Not playing</div>
-            <div class="scorebox">MMR: <span id="playerMMR">1000</span></div>
-            <div class="scorebox">Win streak: <span id="winStreak">0</span></div>
-          </div>
-
-          <div id="boardWrap">
-            <div class="board" id="board"></div>
-          </div>
-
-          <div class="hud">
-            <div class="scorebox">You: <span id="playerScore">0</span></div>
-            <div class="scorebox">Bot: <span id="botScore">0</span></div>
-            <div><button id="restartBtn" class="btn ghost">Restart</button></div>
-          </div>
-
-          <div class="muted-note" id="gameNote">Press Play to start (₦20 will be charged).</div>
-        </div>
-      </div>
-
-      <div class="right">
-        <div class="card">
-          <div style="font-weight:900">Game log</div>
-          <div id="gamelog" class="log"><div class="muted">No activity yet</div></div>
-        </div>
-      </div>
+    <div class="controls">
+      <div>Balance: <span id="balance">₦0.00</span></div>
+      <button id="playBtn" class="btn">Play (₦20)</button>
     </div>
-  </div>
 
-  <div id="modal" class="modal">
-    <div class="panel">
-      <div id="modalTitle" style="font-weight:900">Game over</div>
-      <div id="modalBody" class="muted-note" style="margin-top:12px"></div>
-      <div class="center" style="margin-top:12px">
-        <button id="modalClose" class="btn">Close</button>
-      </div>
+    <div class="board" id="board"></div>
+
+    <div class="hud">
+      <div>You: <span id="playerScore">0</span></div>
+      <div>Bot: <span id="botScore">0</span></div>
+      <div>MMR: <span id="playerMMR">1000</span></div>
+      <div>Win streak: <span id="winStreak">0</span></div>
     </div>
+
+    <div class="log" id="gamelog"><div style="color:var(--muted)">No activity yet</div></div>
   </div>
 
   <script type="module">
@@ -130,110 +62,90 @@
       projectId: "beni-wealths",
       storageBucket: "beni-wealths.firebasestorage.app",
       messagingSenderId: "807950483822",
-      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      appId: "1:807950483822:web=e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const playBtn = document.getElementById('playBtn');
-    const backBtn = document.getElementById('backBtn');
-    const restartBtn = document.getElementById('restartBtn');
-    const balanceEl = document.getElementById('balance');
     const boardEl = document.getElementById('board');
+    const playBtn = document.getElementById('playBtn');
+    const balanceEl = document.getElementById('balance');
     const playerScoreEl = document.getElementById('playerScore');
     const botScoreEl = document.getElementById('botScore');
     const gamelog = document.getElementById('gamelog');
-    const turnIndicator = document.getElementById('turnIndicator');
-    const modal = document.getElementById('modal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
-    const modalClose = document.getElementById('modalClose');
-    const gameNote = document.getElementById('gameNote');
     const playerMMREl = document.getElementById('playerMMR');
     const winStreakEl = document.getElementById('winStreak');
 
-    const ENTRY_FEE = 20;
-    const WIN_REWARD = 50;
-
-    let currentUser = null;
-    let userBalance = 0;
-
-    let tiles = [];
-    let firstFlip = null;
-    let secondFlip = null;
-    let lockBoard = true;
-    let playerScore = 0;
-    let botScore = 0;
-    let remainingPairs = 0;
-    let turn = 'none';
-
-    let playerMMR = 1000;
-    let winStreak = 0;
-    let maxWinStreak = 0;
-
+    const ENTRY_FEE = 20, WIN_REWARD = 50;
     const fruits = ['🍎','🍌','🍇','🍓','🍉','🥭','🍍','🍑'];
 
-    function formatN(n){ return '₦' + Number(n||0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
-    function log(msg){
-      const d=document.createElement('div'); d.style.padding='8px 0'; d.innerHTML=msg;
-      if(gamelog.firstChild && gamelog.firstChild.className==='muted') gamelog.innerHTML='';
-      gamelog.prepend(d);
-      while(gamelog.children.length>120) gamelog.removeChild(gamelog.lastChild);
-    }
+    let currentUser = null, userBalance = 0;
+    let tiles = [], firstFlip = null, secondFlip = null;
+    let lockBoard = true, playerScore = 0, botScore = 0, remainingPairs = 0;
+    let turn = 'none';
+    let playerMMR = 1000, winStreak = 0, maxWinStreak = 0;
 
-    async function refreshBalanceDisplay(){
+    function formatN(n){ return '₦'+Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+    function log(msg){
+      const div=document.createElement('div'); div.textContent=msg;
+      if(gamelog.firstChild?.style?.color==='var(--muted)') gamelog.innerHTML='';
+      gamelog.prepend(div);
+    }
+    async function refreshBalance(){
       if(!currentUser){ balanceEl.textContent=formatN(0); return; }
       try{
-        const uRef=doc(db,'users',currentUser.uid); const uSnap=await getDoc(uRef);
-        userBalance = uSnap.exists? Number(uSnap.data().balance||0):0;
-      }catch(e){ console.warn('balance failed',e); }
+        const uRef=doc(db,'users',currentUser.uid),snap=await getDoc(uRef);
+        userBalance = snap.exists()?Number(snap.data().balance||0):0;
+      } catch{}
       balanceEl.textContent=formatN(userBalance);
     }
 
-    async function fetchPlayerStats(){ const uRef=doc(db,'memoryGames',currentUser.uid); const uSnap=await getDoc(uRef);
-      if(uSnap.exists()){ const d=uSnap.data(); playerMMR=d.mmr||1000; winStreak=d.currentWinStreak||0; maxWinStreak=d.maxWinStreak||0; }
+    async function fetchStats(){
+      if(!currentUser) return;
+      const sRef=doc(db,'memoryGames',currentUser.uid),snap=await getDoc(sRef);
+      if(snap.exists()){ const d=snap.data();
+        playerMMR=d.mmr||1000; winStreak=d.currentWinStreak||0; maxWinStreak=d.maxWinStreak||0;
+      }
       playerMMREl.textContent=playerMMR; winStreakEl.textContent=winStreak;
     }
 
-    function getBotMistakeRate(){ if(winStreak>=6)return 0.02; if(winStreak>=4)return 0.04; if(winStreak>=2)return 0.07; return 0.12; }
-
     function createBoard(){
-      tiles=[]; boardEl.innerHTML=''; firstFlip=secondFlip=null; lockBoard=true;
+      boardEl.innerHTML=''; tiles=[];
+      firstFlip=secondFlip=null; lockBoard=true;
       playerScore=0; botScore=0; playerScoreEl.textContent='0'; botScoreEl.textContent='0';
       const vals=[...Array(8).keys()].flatMap(i=>[i,i]).sort(()=>Math.random()-0.5);
       remainingPairs=vals.length/2;
       vals.forEach(v=>{
-        const div=document.createElement('div'); div.className='tile';
-        div.dataset.value=v; div.dataset.emoji=fruits[v];
-        div.addEventListener('click',()=>{ if(turn==='player') flipTile(div); });
-        boardEl.appendChild(div); tiles.push(div);
+        const tile=document.createElement('div');
+        tile.className='tile'; tile.dataset.value=v; tile.dataset.emoji=fruits[v];
+        tile.addEventListener('click',()=>{ if(turn==='player') flipCard(tile); });
+        boardEl.appendChild(tile); tiles.push(tile);
       });
-      turn='player'; setStatus('Your turn');
-      lockBoard=false;
+      lockBoard=false; turn='player';
+      log('Game started — Your turn');
     }
 
-    function flipTile(tile){
-      if(lockBoard||tile.classList.contains('flipped')||tile.classList.contains('matched'))return;
+    function flipCard(tile){
+      if(lockBoard||tile.classList.contains('flipped')||tile.classList.contains('matched')) return;
       tile.classList.add('flipped'); tile.textContent=tile.dataset.emoji;
       if(!firstFlip){ firstFlip=tile; return; }
       secondFlip=tile; lockBoard=true; setTimeout(checkMatch,300);
     }
 
-    function nextTurn(){ turn = (turn==='player'?'bot':'player'); setStatus(turn==='player'?"Your turn":"Bot's turn"); }
+    function nextTurn(){ turn = turn==='player'?'bot':'player'; log(turn==='player'?"Your turn":"Bot's turn"); }
 
     function checkMatch(){
-      const match=firstFlip.dataset.value===secondFlip.dataset.value;
-      const actor=turn;
+      const match = firstFlip.dataset.value===secondFlip.dataset.value;
       if(match){
         firstFlip.classList.add('matched'); secondFlip.classList.add('matched');
-        if(actor==='player'){ playerScore++; playerScoreEl.textContent=playerScore; log('You matched a pair'); }
-        else { botScore++; botScoreEl.textContent=botScore; log('Bot matched a pair'); }
+        if(turn==='player'){ playerScore++; playerScoreEl.textContent=playerScore; log('You matched!'); }
+        else { botScore++; botScoreEl.textContent=botScore; log('Bot matched!'); }
         remainingPairs--;
         firstFlip=secondFlip=null; lockBoard=false;
-        if(remainingPairs<=0) return endGame();
-        if(actor==='bot') setTimeout(botPlay,600); // bot gets another turn
+        if(remainingPairs===0) return finishGame();
+        if(turn==='bot') setTimeout(botPlay,500);
       } else {
         setTimeout(()=>{
           firstFlip.classList.remove('flipped'); firstFlip.textContent='';
@@ -244,66 +156,49 @@
       }
     }
 
-    function botFindPair(){
-      const seen={};
-      tiles.forEach((t,i)=>{
-        if(t.classList.contains('flipped')&&!t.classList.contains('matched')){
-          const v=t.dataset.value;
-          seen[v]=seen[v]||[]; seen[v].push(t);
-        }
-      });
-      for(const v in seen){ if(seen[v].length>=2) return seen[v]; }
-      return null;
-    }
-
     function botPlay(){
       if(turn!=='bot'||lockBoard) return;
-      lockBoard=true; setStatus("Bot is thinking...");
-      const mistakeRate=getBotMistakeRate();
-      const knownPair=botFindPair();
-      if(knownPair && Math.random()>mistakeRate){
-        flipTile(knownPair[0]);
-        setTimeout(()=>flipTile(knownPair[1]),500);
-      } else {
-        const avail=tiles.filter(t=>!t.classList.contains('flipped')&&!t.classList.contains('matched'));
-        if(avail.length){
-          const a=avail[Math.floor(Math.random()*avail.length)];
-          flipTile(a);
-          setTimeout(()=>{
-            const avail2=tiles.filter(t=>!t.classList.contains('flipped')&&!t.classList.contains('matched')&&t!==a);
-            if(avail2.length) flipTile(avail2[Math.floor(Math.random()*avail2.length)]);
-          },500);
+      lockBoard=true;
+      const unseen=tiles.filter(t=>!t.classList.contains('flipped')&&!t.classList.contains('matched'));
+      if(unseen.length===0) return;
+      const pick1=unseen[Math.floor(Math.random()*unseen.length)];
+      flipCard(pick1);
+      setTimeout(()=>{
+        const unseen2=tiles.filter(t=>!t.classList.contains('flipped')&&!t.classList.contains('matched'));
+        if(unseen2.length){
+          const pick2=unseen2[Math.floor(Math.random()*unseen2.length)];
+          flipCard(pick2);
         }
-      }
+      },500);
     }
 
-    function endGame(){
-      const didWin=playerScore>botScore;
+    async function finishGame(){
+      const didWin = playerScore>botScore;
       log(didWin?'You won!':'Bot won!');
-      setStatus(didWin?'You won!':'Bot won');
-      updatePlayerStats(didWin);
-      modalTitle.textContent=didWin?'You won!':'You lost';
-      modalBody.textContent=`Final: You ${playerScore} • Bot ${botScore}<br>MMR: ${playerMMR}, Streak: ${winStreak}`;
-      modal.style.display='flex';
+      updateStats(didWin);
     }
 
-    modalClose.addEventListener('click',()=>modal.style.display='none');
+    async function updateStats(didWin){
+      if(!currentUser) return;
+      if(didWin) winStreak++; else winStreak=0;
+      playerMMR += didWin?20:-15; maxWinStreak=Math.max(maxWinStreak,winStreak);
+      await setDoc(doc(db,'memoryGames',currentUser.uid),{ mmr:playerMMR,currentWinStreak:winStreak,maxWinStreak,updatedAt:serverTimestamp() },{merge:true});
+      playerMMREl.textContent=playerMMR; winStreakEl.textContent=winStreak;
+    }
 
     playBtn.addEventListener('click',async()=>{
-      if(!currentUser)return alert('Sign in'); if(userBalance<ENTRY_FEE)return alert('Insufficient funds');
-      await runTransaction(db, async(t)=>{
+      if(!currentUser){ alert('Sign in'); return; }
+      if(userBalance<ENTRY_FEE){ alert('Insufficient funds'); return; }
+      await runTransaction(db,async t=>{
         const uRef=doc(db,'users',currentUser.uid),us=await t.get(uRef);
-        const bal=us.exists()?Number(us.data().balance||0):0; if(bal<ENTRY_FEE)throw'nf';
-        t.update(uRef,{balance:bal-ENTRY_FEE}); userBalance=bal-ENTRY_FEE;
+        const bal=us.exists()?Number(us.data().balance||0):0;
+        if(bal<ENTRY_FEE) throw 'nf';
+        t.update(uRef,{ balance:bal-ENTRY_FEE }); userBalance=bal-ENTRY_FEE;
       });
-      refreshBalanceDisplay(); createBoard(); gameNote.textContent='Game started';
+      refreshBalance(); createBoard();
     });
 
-    restartBtn.addEventListener('click',()=>{ boardEl.innerHTML=''; gameNote.textContent='Press Play to start'; });
-
-    backBtn.addEventListener('click',()=>window.history.back());
-
-    onAuthStateChanged(auth,async(u)=>{ currentUser=u; await refreshBalanceDisplay(); await fetchPlayerStats(); });
+    onAuthStateChanged(auth,async user=>{ currentUser=user; refreshBalance(); fetchStats(); });
   </script>
 </body>
 </html>
