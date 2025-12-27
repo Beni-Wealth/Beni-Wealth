@@ -43,7 +43,6 @@
     .tile{
       aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:grid;place-items:center;font-weight:800;font-size:clamp(14px,3.8vw,22px);cursor:pointer;user-select:none;position:relative;border:2px solid rgba(255,255,255,0.03);transition:transform .12s ease, background .18s ease
     }
-    .tile:hover{transform:translateY(-4px)}
     .tile.flipped{background:linear-gradient(90deg,#fff,#fff0);color:#041219}
     .tile.matched{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.6);color:#041219;cursor:default}
 
@@ -110,11 +109,11 @@
     </div>
   </div>
 
-  <div id="modal" class="modal" role="dialog" aria-modal="true">
+  <div id="modal" class="modal">
     <div class="panel">
       <div id="modalTitle" style="font-weight:900">Game over</div>
       <div id="modalBody" class="muted-note" style="margin-top:12px"></div>
-      <div style="margin-top:12px" class="center">
+      <div class="center" style="margin-top:12px">
         <button id="modalClose" class="btn">Close</button>
       </div>
     </div>
@@ -160,6 +159,7 @@
 
     let currentUser = null;
     let userBalance = 0;
+
     let tiles = [];
     let firstFlip = null;
     let secondFlip = null;
@@ -167,6 +167,8 @@
     let playerScore = 0;
     let botScore = 0;
     let remainingPairs = 0;
+    let turn = 'none';
+
     let playerMMR = 1000;
     let winStreak = 0;
     let maxWinStreak = 0;
@@ -175,9 +177,7 @@
 
     function formatN(n){ return '₦' + Number(n||0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
     function log(msg){
-      const d = document.createElement('div');
-      d.style.padding='8px 0';
-      d.innerHTML=msg;
+      const d=document.createElement('div'); d.style.padding='8px 0'; d.innerHTML=msg;
       if(gamelog.firstChild && gamelog.firstChild.className==='muted') gamelog.innerHTML='';
       gamelog.prepend(d);
       while(gamelog.children.length>120) gamelog.removeChild(gamelog.lastChild);
@@ -186,130 +186,124 @@
     async function refreshBalanceDisplay(){
       if(!currentUser){ balanceEl.textContent=formatN(0); return; }
       try{
-        const uRef=doc(db,'users',currentUser.uid);
-        const uSnap=await getDoc(uRef);
-        userBalance = uSnap.exists() ? Number(uSnap.data().balance??0) : 0;
-      }catch(e){ console.warn('balance read failed',e); }
+        const uRef=doc(db,'users',currentUser.uid); const uSnap=await getDoc(uRef);
+        userBalance = uSnap.exists? Number(uSnap.data().balance||0):0;
+      }catch(e){ console.warn('balance failed',e); }
       balanceEl.textContent=formatN(userBalance);
     }
 
-    async function fetchPlayerStats(){
-      if(!currentUser) return;
-      const uRef=doc(db,'memoryGames',currentUser.uid);
-      const uSnap=await getDoc(uRef);
-      if(uSnap.exists()){
-        const data=uSnap.data();
-        playerMMR = data.mmr??1000;
-        winStreak = data.currentWinStreak??0;
-        maxWinStreak = data.maxWinStreak??winStreak;
-      } else { playerMMR=1000; winStreak=0; maxWinStreak=0; }
-      playerMMREl.textContent=playerMMR;
-      winStreakEl.textContent=winStreak;
+    async function fetchPlayerStats(){ const uRef=doc(db,'memoryGames',currentUser.uid); const uSnap=await getDoc(uRef);
+      if(uSnap.exists()){ const d=uSnap.data(); playerMMR=d.mmr||1000; winStreak=d.currentWinStreak||0; maxWinStreak=d.maxWinStreak||0; }
+      playerMMREl.textContent=playerMMR; winStreakEl.textContent=winStreak;
     }
 
-    async function updatePlayerStats(didWin){
-      if(!currentUser) return;
-      if(didWin) winStreak++;
-      else winStreak=0;
-      playerMMR += didWin? 20:-15;
-      maxWinStreak = Math.max(maxWinStreak, winStreak);
-      await setDoc(doc(db,'memoryGames',currentUser.uid), { mmr:playerMMR, currentWinStreak:winStreak, maxWinStreak:maxWinStreak, updatedAt:serverTimestamp() }, { merge:true });
-      playerMMREl.textContent=playerMMR;
-      winStreakEl.textContent=winStreak;
-    }
+    function getBotMistakeRate(){ if(winStreak>=6)return 0.02; if(winStreak>=4)return 0.04; if(winStreak>=2)return 0.07; return 0.12; }
 
     function createBoard(){
-      tiles=[];
-      const tileValues=[...Array(8).keys()].flatMap(i=>[i,i]);
-      remainingPairs = tileValues.length/2;
-      tiles = tileValues.sort(()=>Math.random()-0.5).map(v=>{
-        const div = document.createElement('div');
-        div.className='tile';
-        div.dataset.value = v;
-        div.dataset.emoji = fruits[v];
-        div.addEventListener('click',()=>handleFlip(div));
-        boardEl.appendChild(div);
-        return div;
+      tiles=[]; boardEl.innerHTML=''; firstFlip=secondFlip=null; lockBoard=true;
+      playerScore=0; botScore=0; playerScoreEl.textContent='0'; botScoreEl.textContent='0';
+      const vals=[...Array(8).keys()].flatMap(i=>[i,i]).sort(()=>Math.random()-0.5);
+      remainingPairs=vals.length/2;
+      vals.forEach(v=>{
+        const div=document.createElement('div'); div.className='tile';
+        div.dataset.value=v; div.dataset.emoji=fruits[v];
+        div.addEventListener('click',()=>{ if(turn==='player') flipTile(div); });
+        boardEl.appendChild(div); tiles.push(div);
       });
+      turn='player'; setStatus('Your turn');
+      lockBoard=false;
     }
 
-    function handleFlip(tile){
-      if(lockBoard || tile.classList.contains('flipped') || tile.classList.contains('matched')) return;
-      tile.classList.add('flipped');
-      tile.textContent = tile.dataset.emoji;
-      if(!firstFlip){ firstFlip = tile; return; }
-      secondFlip = tile;
-      lockBoard = true;
-      checkMatch();
+    function flipTile(tile){
+      if(lockBoard||tile.classList.contains('flipped')||tile.classList.contains('matched'))return;
+      tile.classList.add('flipped'); tile.textContent=tile.dataset.emoji;
+      if(!firstFlip){ firstFlip=tile; return; }
+      secondFlip=tile; lockBoard=true; setTimeout(checkMatch,300);
     }
+
+    function nextTurn(){ turn = (turn==='player'?'bot':'player'); setStatus(turn==='player'?"Your turn":"Bot's turn"); }
 
     function checkMatch(){
-      const isMatch = firstFlip.dataset.value === secondFlip.dataset.value;
-      if(isMatch){
-        firstFlip.classList.add('matched');
-        secondFlip.classList.add('matched');
-        playerScore++;
-        playerScoreEl.textContent = playerScore;
+      const match=firstFlip.dataset.value===secondFlip.dataset.value;
+      const actor=turn;
+      if(match){
+        firstFlip.classList.add('matched'); secondFlip.classList.add('matched');
+        if(actor==='player'){ playerScore++; playerScoreEl.textContent=playerScore; log('You matched a pair'); }
+        else { botScore++; botScoreEl.textContent=botScore; log('Bot matched a pair'); }
         remainingPairs--;
-        log(`You matched a pair!`);
-        firstFlip = secondFlip = null;
-        lockBoard = false;
-        if(remainingPairs === 0) endGame();
+        firstFlip=secondFlip=null; lockBoard=false;
+        if(remainingPairs<=0) return endGame();
+        if(actor==='bot') setTimeout(botPlay,600); // bot gets another turn
       } else {
-        log(`No match.`);
         setTimeout(()=>{
           firstFlip.classList.remove('flipped'); firstFlip.textContent='';
           secondFlip.classList.remove('flipped'); secondFlip.textContent='';
-          firstFlip = secondFlip = null;
-          lockBoard = false;
-        }, 600);
+          firstFlip=secondFlip=null; lockBoard=false; nextTurn();
+          if(turn==='bot') setTimeout(botPlay,600);
+        },600);
+      }
+    }
+
+    function botFindPair(){
+      const seen={};
+      tiles.forEach((t,i)=>{
+        if(t.classList.contains('flipped')&&!t.classList.contains('matched')){
+          const v=t.dataset.value;
+          seen[v]=seen[v]||[]; seen[v].push(t);
+        }
+      });
+      for(const v in seen){ if(seen[v].length>=2) return seen[v]; }
+      return null;
+    }
+
+    function botPlay(){
+      if(turn!=='bot'||lockBoard) return;
+      lockBoard=true; setStatus("Bot is thinking...");
+      const mistakeRate=getBotMistakeRate();
+      const knownPair=botFindPair();
+      if(knownPair && Math.random()>mistakeRate){
+        flipTile(knownPair[0]);
+        setTimeout(()=>flipTile(knownPair[1]),500);
+      } else {
+        const avail=tiles.filter(t=>!t.classList.contains('flipped')&&!t.classList.contains('matched'));
+        if(avail.length){
+          const a=avail[Math.floor(Math.random()*avail.length)];
+          flipTile(a);
+          setTimeout(()=>{
+            const avail2=tiles.filter(t=>!t.classList.contains('flipped')&&!t.classList.contains('matched')&&t!==a);
+            if(avail2.length) flipTile(avail2[Math.floor(Math.random()*avail2.length)]);
+          },500);
+        }
       }
     }
 
     function endGame(){
-      const didWin = playerScore>botScore;
-      log(didWin?`You won! +₦${WIN_REWARD}`:'You lost.');
+      const didWin=playerScore>botScore;
+      log(didWin?'You won!':'Bot won!');
+      setStatus(didWin?'You won!':'Bot won');
       updatePlayerStats(didWin);
-      modalTitle.textContent = didWin?'Victory':'Defeat';
-      modalBody.textContent = didWin?`You earned ₦${WIN_REWARD}. Your MMR: ${playerMMR}, Win streak: ${winStreak}`:`Your MMR: ${playerMMR}, Win streak: ${winStreak}`;
+      modalTitle.textContent=didWin?'You won!':'You lost';
+      modalBody.textContent=`Final: You ${playerScore} • Bot ${botScore}<br>MMR: ${playerMMR}, Streak: ${winStreak}`;
       modal.style.display='flex';
     }
 
     modalClose.addEventListener('click',()=>modal.style.display='none');
 
-    playBtn.addEventListener('click', async ()=>{
-      if(!currentUser) return alert('Please sign in first');
-      if(userBalance<ENTRY_FEE) return alert('Insufficient balance');
-      await runTransaction(db, async (t)=>{
-        const uRef=doc(db,'users',currentUser.uid);
-        const uSnap=await t.get(uRef);
-        const bal = uSnap.exists()? Number(uSnap.data().balance??0) : 0;
-        if(bal<ENTRY_FEE) throw 'Insufficient balance';
-        t.update(uRef,{ balance: bal-ENTRY_FEE });
-        userBalance=bal-ENTRY_FEE;
-        balanceEl.textContent=formatN(userBalance);
+    playBtn.addEventListener('click',async()=>{
+      if(!currentUser)return alert('Sign in'); if(userBalance<ENTRY_FEE)return alert('Insufficient funds');
+      await runTransaction(db, async(t)=>{
+        const uRef=doc(db,'users',currentUser.uid),us=await t.get(uRef);
+        const bal=us.exists()?Number(us.data().balance||0):0; if(bal<ENTRY_FEE)throw'nf';
+        t.update(uRef,{balance:bal-ENTRY_FEE}); userBalance=bal-ENTRY_FEE;
       });
-      gameNote.textContent='Game started';
-      createBoard();
-      lockBoard=false;
+      refreshBalanceDisplay(); createBoard(); gameNote.textContent='Game started';
     });
 
-    restartBtn.addEventListener('click',()=>{
-      boardEl.innerHTML='';
-      playerScore=0; botScore=0;
-      playerScoreEl.textContent='0'; botScoreEl.textContent='0';
-      firstFlip=secondFlip=null;
-      lockBoard=true;
-      gameNote.textContent='Press Play to start';
-    });
+    restartBtn.addEventListener('click',()=>{ boardEl.innerHTML=''; gameNote.textContent='Press Play to start'; });
 
     backBtn.addEventListener('click',()=>window.history.back());
 
-    onAuthStateChanged(auth, async user=>{
-      currentUser=user;
-      await refreshBalanceDisplay();
-      await fetchPlayerStats();
-    });
+    onAuthStateChanged(auth,async(u)=>{ currentUser=u; await refreshBalanceDisplay(); await fetchPlayerStats(); });
   </script>
 </body>
 </html>
