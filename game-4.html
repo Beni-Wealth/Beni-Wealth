@@ -3,296 +3,660 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Beni-Wealth — Snakes & Ladders</title>
+  <title>Beni-Wealth — Snakes & Ladder</title>
   <meta name="theme-color" content="#2fe0b8" />
 
-  <!-- Poppins -->
+    <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" sizes="32x32"
-        href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <!-- Favicons & Social preview -->
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
+  <meta property="og:description" content="Complete simple micro-tasks, complete ptcs and blogs, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
+  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#2fe0b8">
 
   <style>
     :root{
-      --bg:#041225; --card:#0b1220;
-      --accent:#7a5fff; --accent-2:#35d6b1;
+      --bg:#041225;
+      --card:#0b1220;
+      --accent:#7a5fff;
+      --accent-2:#35d6b1;
       --muted:rgba(255,255,255,0.66);
-      font-family:Poppins, system-ui, Arial;
+      --win:#10b981;
+      --lose:#ef4444;
+      font-family:Inter, Poppins, system-ui, Arial;
       color:#eaf2ff;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#031022);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px}
-
-    .back-btn{
-      align-self:flex-start;margin-bottom:8px;padding:8px 12px;border-radius:8px;
-      background:var(--accent-2);color:#041219;font-weight:700;text-decoration:none;
-    }
-
-    .app{width:100%;max-width:1000px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:16px;display:grid;grid-template-columns:1fr 350px;gap:12px;box-shadow:0 30px 80px rgba(2,6,23,0.7);margin-top:8px}
-    @media(max-width:800px){ .app{grid-template-columns:1fr;max-width:480px;padding:12px} }
-    .board-wrap{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);position:relative}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#031022);display:flex;align-items:center;justify-content:center;padding:18px}
+    .app{width:100%;max-width:1100px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:16px;display:grid;grid-template-columns:1fr 360px;gap:12px;box-shadow:0 30px 80px rgba(2,6,23,0.7)}
+    @media(max-width:920px){ .app{grid-template-columns:1fr;max-width:420px;padding:12px} }
+    .board-wrap{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
     .controls{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px}
+    .grid{width:100%;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(10,1fr);gap:6px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);padding:6px;border-radius:8px}
+    .cell{background:linear-gradient(180deg,rgba(255,255,255,0.012),transparent);border-radius:6px;display:block;padding:6px;font-size:12px;color:var(--muted);position:relative;overflow:visible;min-height:0}
+    .cell .num{position:absolute;left:6px;top:6px;font-weight:800;color:var(--muted);font-size:12px;z-index:2}
+    .cell .feature{position:absolute;right:6px;top:6px;font-size:18px;opacity:0.92;z-index:2}
+    .cell.snake-start{box-shadow: inset 0 0 0 2px rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.06)}
+    .cell.ladder-start{box-shadow: inset 0 0 0 2px rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.06)}
+    .cell.hl{animation: pulse 700ms ease 0s 2; } @keyframes pulse { 0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)} }
 
-    #board {
-      position: relative;
-      width:100%;
-      aspect-ratio:1/1;
-      display:grid;
-      grid-template-columns:repeat(10,1fr);
-      gap:4px;
-      background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);
-      padding:4px;
-      border-radius:8px;
-      transform:translateY(12px);
-    }
+    .token{position:absolute;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#041219;z-index:40;transition:transform 320ms cubic-bezier(.2,.9,.2,1), box-shadow 320ms}
+    .token.player{background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 10px 30px rgba(122,95,255,0.18)}
+    .token.bot{background:linear-gradient(90deg,#ffb86b,#ff7a7a); box-shadow:0 10px 30px rgba(255,120,110,0.18)}
+    .dice{width:84px;height:84px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:34px;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);text-align:center}
+    .dice.rolling{animation: dice-spin 900ms linear infinite}
+    @keyframes dice-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
 
-    .cell{background:linear-gradient(180deg,rgba(255,255,255,0.012),transparent);border-radius:6px;display:block;padding:4px;font-size:12px;color:var(--muted);position:relative}
-    .cell .num{position:absolute;left:4px;top:4px;font-weight:800;color:var(--muted);font-size:12px;z-index:2}
+    .roll-anim { transform: translateY(-8px) scale(1.06); transition: transform 220ms cubic-bezier(.2,.9,.2,1); }
 
-    .token {
-      position:absolute;
-      font-size:20px;
-      width:24px;height:24px;
-      display:flex;place-items:center;justify-content:center;
-      transform:translate(-50%,-50%);
-      transition: transform 350ms ease;
-      z-index:40;
-    }
-
-    #diceArea {
-      margin-top:16px;
-      display:flex;
-      justify-content:center;
-      width:100%;
-    }
-    .dice {
-      font-size:56px;
-      cursor:pointer;
-      user-select:none;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      transition: transform 400ms ease;
-      padding:10px;
-      background:rgba(255,255,255,0.04);
-      border-radius:12px;
-    }
-
-    .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#041219;font-weight:800;cursor:pointer}
+    .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#5b3bff);color:#041219;font-weight:800;cursor:pointer}
     .btn-ghost{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
-    .status{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:800}
+    .muted{color:var(--muted);font-size:13px}
     .history{height:140px;overflow:auto;border-radius:8px;padding:8px;background:rgba(255,255,255,0.01);font-size:13px}
+    .status{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:800}
     .small{font-size:13px;color:var(--muted)}
+    .footer{display:flex;gap:8px;align-items:center;justify-content:space-between}
 
-    .snake {background:rgba(255,0,0,0.2);border-radius:4px;}
-    .ladder {background:rgba(0,255,0,0.2);border-radius:4px;}
+    /* confetti */
+    .confetti-wrapper { pointer-events:none; position:fixed; inset:0; z-index:9999; overflow:hidden; }
+    .confetti { position:absolute; width:10px; height:16px; opacity:0.95; transform-origin:center; border-radius:2px; animation: fall linear forwards; }
+    @keyframes fall { 0% { transform: translateY(-10vh) rotate(0deg); opacity:1; } 100% { transform: translateY(110vh) rotate(720deg); opacity:0.95; } }
+
+    /* step animation for sliding down snake or ladder */
+    .slide-anim { transition: transform 700ms cubic-bezier(.2,.9,.2,1); transform-origin:center; filter:drop-shadow(0 18px 40px rgba(2,6,23,0.7)); }
+    /* small toast */
+    .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#041219; padding:10px 14px; border-radius:10px; font-weight:800; z-index:10000; box-shadow:0 18px 50px rgba(0,0,0,0.5) }
   </style>
 </head>
 <body>
-
-  <a href="dashboard.html" class="back-btn">← Back to Dashboard</a>
-
-  <div class="app">
-    <div class="board-wrap">
+  <div class="app" role="application" aria-label="Snakes and ladders">
+    <div class="board-wrap" aria-live="polite">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="font-weight:900">Snakes & Ladders • Beni-Wealth</div>
-        <div class="small">Player vs Bot — fair 50/50 dice</div>
+        <div class="small">Player vs Bot — fair, visual and dramatic</div>
       </div>
 
-      <div id="board"></div>
+      <div id="board" class="grid" aria-label="game board"></div>
 
-      <div id="playerToken" class="token">🧍‍♂️</div>
-      <div id="botToken" class="token">🤖</div>
+      <!-- hidden tokens placed absolutely into cells -->
+      <div id="playerToken" class="token player" aria-hidden="true">P</div>
+      <div id="botToken" class="token bot" aria-hidden="true">B</div>
 
-      <div id="diceArea">
-        <div id="dice" class="dice">🎲</div>
-      </div>
     </div>
 
     <div class="controls">
-      <div class="status" id="status">Welcome — press <strong>Start</strong></div>
-      <button id="startBtn" class="btn-ghost">Start New Game</button>
+      <div class="status" id="status">Welcome — press <strong>Start</strong> to play</div>
+
+      <div style="display:flex;gap:12px;align-items:center">
+        <div id="dice" class="dice" aria-live="polite" aria-atomic="true">—</div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button id="rollBtn" class="btn" aria-label="Roll dice">Roll</button>
+          <button id="startBtn" class="btn-ghost" aria-label="Start new game">Start New Game</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <div class="small">Bias</div>
+        <div id="biasTag" class="small muted">—</div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <label class="small">Sound</label><input type="checkbox" id="soundToggle" checked />
+        </div>
+      </div>
+
       <div style="margin-top:8px">
-        <div class="small">Game log</div>
-        <div id="log" class="history"></div>
+        <div style="font-weight:800">Game log</div>
+        <div id="log" class="history" aria-live="polite"></div>
+      </div>
+
+      <div class="footer" style="margin-top:8px">
+        <div class="small">Made for Beni-Wealth</div>
+        <div>
+          <button id="saveBtn" class="btn-ghost">Save result</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getFirestore, doc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+  <div id="confettiRoot" class="confetti-wrapper" style="display:none"></div>
+  <div id="toastRoot" aria-hidden="true"></div>
 
+  <script type="module">
+    // Firebase (modular)
+    import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+    // preserve your firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
       projectId: "beni-wealths",
       storageBucket: "beni-wealths.firebasestorage.app",
       messagingSenderId: "807950483822",
-      appId: "1:807950483822:web=e10fa87307e041c4d8417f",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
-
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // UI refs
     const boardEl = document.getElementById('board');
     const playerToken = document.getElementById('playerToken');
     const botToken = document.getElementById('botToken');
-    const diceEl = document.getElementById('dice');
+    const rollBtn = document.getElementById('rollBtn');
     const startBtn = document.getElementById('startBtn');
+    const diceEl = document.getElementById('dice');
     const statusEl = document.getElementById('status');
     const logEl = document.getElementById('log');
+    const biasTag = document.getElementById('biasTag');
+    const saveBtn = document.getElementById('saveBtn');
+    const confettiRoot = document.getElementById('confettiRoot');
+    const toastRoot = document.getElementById('toastRoot');
+    const soundToggle = document.getElementById('soundToggle');
 
-    let playerPos=1, botPos=1;
-    let playerTurn=true, running=false;
-    let currentUser=null;
+    // game config
+    const SIZE = 10;
+    const CELL_COUNT = SIZE*SIZE;
+    // classic-ish start positions (we only keep starts; effect = +15 for ladder, -10 for snake)
+    const ladderStartsArr = [4,9,20,28,40,51,63,71];
+    const snakeStartsArr  = [98,95,92,87,64,62,54,17];
+    const ladderStarts = new Set(ladderStartsArr);
+    const snakeStarts = new Set(snakeStartsArr);
 
-    const snakes = {16:6, 48:38, 79:69};
-    const ladders = {3:23, 42:62, 70:90};
+    // financial config
+    const ENTRY_FEE = 50; // ₦50 debited when game starts
+    const WIN_REWARD = 70; // ₦70 credited on win
 
+    // state
+    let playerPos = 1, botPos = 1;
+    let playerTurn = true;
+    let running = false;
+    let currentUser = null;
+    let bias = null; // 'botFavored' | 'playerFavored'
+    let isRolling = false;
+
+    // build board in DISPLAY order (top -> bottom, left -> right)
     function buildBoard(){
-      boardEl.innerHTML='';
-      const SIZE=10;
-      for(let r=0;r<SIZE;r++){
-        const rowFromBottom=SIZE-1-r;
-        const leftToRight=rowFromBottom%2===0;
-        for(let c=0;c<SIZE;c++){
-          const num=leftToRight
-            ? (rowFromBottom*SIZE + (c+1))
-            : (rowFromBottom*SIZE + (SIZE-c));
-          const cell=document.createElement('div');
-          cell.className='cell';
-          cell.dataset.num=num;
-          const n=document.createElement('div');
-          n.className='num'; n.textContent=num;
+      boardEl.innerHTML = '';
+      for(let displayRow = 0; displayRow < SIZE; displayRow++){
+        const rowFromBottom = SIZE - 1 - displayRow;
+        const leftToRight = (rowFromBottom % 2 === 0);
+        for(let col = 0; col < SIZE; col++){
+          const num = leftToRight ? (rowFromBottom * SIZE + (col + 1)) : (rowFromBottom * SIZE + (SIZE - col));
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.num = String(num);
+          const n = document.createElement('div'); n.className='num'; n.textContent = num;
           cell.appendChild(n);
-
-          if(snakes[num]) cell.classList.add('snake');
-          if(ladders[num]) cell.classList.add('ladder');
-
+          if(ladderStarts.has(num)){
+            const f = document.createElement('div'); f.className='feature'; f.textContent='🪜';
+            cell.classList.add('ladder-start');
+            cell.appendChild(f);
+          } else if(snakeStarts.has(num)){
+            const f = document.createElement('div'); f.className='feature'; f.textContent='🐍';
+            cell.classList.add('snake-start');
+            cell.appendChild(f);
+          }
+          // alternate subtle background
+          const shade = ((rowFromBottom + (num % 2)) % 2 === 0) ? 'rgba(255,255,255,0.018)' : 'rgba(255,255,255,0.01)';
+          cell.style.background = `linear-gradient(180deg, ${shade}, transparent)`;
           boardEl.appendChild(cell);
         }
       }
     }
 
-    function getCell(num){return boardEl.querySelector(`.cell[data-num="${num}"]`);}
+    // lookup cell element by logical number
+    function getCellElementByNumber(n){
+      return boardEl.querySelector(`.cell[data-num="${Number(n)}"]`);
+    }
+
+    // visual placement
     function placeTokens(){
-      const pc=getCell(playerPos), bc=getCell(botPos);
-      if(pc) pc.appendChild(playerToken);
-      if(bc) bc.appendChild(botToken);
+      const pCell = getCellElementByNumber(playerPos);
+      const bCell = getCellElementByNumber(botPos);
+      if(pCell){ pCell.appendChild(playerToken); playerToken.style.transform = 'translate(0,0)'; }
+      if(bCell){ bCell.appendChild(botToken); botToken.style.transform = 'translate(0,0)'; }
     }
 
-    function logMsg(msg){
-      const d=document.createElement('div');
-      d.textContent=msg;
+    // audio beep
+    function playBeep(freq=440, dur=120){
+      try{
+        if(!soundToggle.checked) return;
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = freq;
+        o.connect(g); g.connect(ctx.destination);
+        g.gain.value = 0.0001;
+        o.start();
+        g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + (dur/1000));
+        setTimeout(()=>{ try{ o.stop(); ctx.close(); }catch(_){} }, dur+50);
+      }catch(e){}
+    }
+
+    // dramatic dice roll
+    async function dramaticRoll(){
+      if(isRolling) return null;
+      isRolling = true;
+      diceEl.classList.add('rolling','roll-anim');
+      const duration = 700 + Math.floor(Math.random()*600);
+      let last = 1;
+      return new Promise(resolve => {
+        const i = setInterval(()=>{
+          const r = Math.floor(Math.random()*6)+1;
+          diceEl.textContent = r;
+          playBeep(350 + r*60, 40);
+          last = r;
+        }, 60);
+
+        setTimeout(()=>{
+          clearInterval(i);
+          const final = Math.floor(Math.random()*6)+1;
+          diceEl.textContent = final;
+          playBeep(740 + final*40, 220);
+          diceEl.classList.remove('rolling');
+          setTimeout(()=> diceEl.classList.remove('roll-anim'), 260);
+          isRolling = false;
+          resolve(final);
+        }, duration);
+      });
+    }
+
+    function rollDie(){ return Math.floor(Math.random()*6)+1; }
+
+    // move token stepwise animation
+    async function animateTokenStepwise(token, from, to){
+      if(to <= from) return;
+      const path = [];
+      for(let p = from+1; p<=to; p++) path.push(p);
+      for(const pos of path){
+        const cell = getCellElementByNumber(pos);
+        if(!cell) continue;
+        cell.classList.add('hl');
+        cell.appendChild(token);
+        token.style.transform = 'translateY(-6px)';
+        await wait(140);
+        token.style.transform = 'translateY(0)';
+        cell.classList.remove('hl');
+        await wait(90);
+      }
+    }
+
+    // slide animation (for ladder/snake) — moves token overlay and snaps to target
+    async function animateSlide(token, from, to){
+      const fromCell = getCellElementByNumber(from);
+      const toCell = getCellElementByNumber(to);
+      if(!fromCell || !toCell) return;
+      fromCell.classList.add('hl'); toCell.classList.add('hl');
+
+      const clone = token.cloneNode(true);
+      clone.classList.add('slide-anim');
+      document.body.appendChild(clone);
+      const rectFrom = fromCell.getBoundingClientRect();
+      const rectTo = toCell.getBoundingClientRect();
+      clone.style.position = 'fixed';
+      clone.style.left = (rectFrom.left + rectFrom.width/2 - clone.offsetWidth/2) + 'px';
+      clone.style.top = (rectFrom.top + rectFrom.height/2 - clone.offsetHeight/2) + 'px';
+
+      await wait(40);
+      clone.style.transform = `translate(${rectTo.left - rectFrom.left}px, ${rectTo.top - rectFrom.top}px) scale(1.06)`;
+      playBeep(560, 220);
+      await wait(680);
+      clone.remove();
+      try{ toCell.appendChild(token); }catch(e){}
+      fromCell.classList.remove('hl'); toCell.classList.remove('hl');
+    }
+
+    function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+    function logMsg(t){
+      const d = document.createElement('div');
+      d.textContent = `${(new Date()).toLocaleTimeString()} — ${t}`;
       logEl.prepend(d);
-      if(logEl.children.length>200) logEl.removeChild(logEl.lastChild);
+      if(logEl.children.length > 200) logEl.removeChild(logEl.lastChild);
     }
 
-    function rollDice(){
-      diceEl.style.transform = "rotateX(720deg) rotateY(360deg)";
-      const val = Math.floor(Math.random()*6)+1;
-      setTimeout(()=>{diceEl.style.transform=""; diceEl.textContent=val;},600);
-      return val;
+    // apply snake/ladder only when landing exactly on start
+    function applySnakesLadders(pos){
+      const p = Number(pos);
+      if(ladderStarts.has(p)){
+        const next = Math.min(CELL_COUNT, p + 15);
+        return { next, type: 'ladder' };
+      }
+      if(snakeStarts.has(p)){
+        const next = Math.max(1, p - 10);
+        return { next, type: 'snake' };
+      }
+      return { next: p, type: null };
     }
 
-    async function dramaticMove(token, from, to){
-      for(let next=from+1; next<=to; next++){
-        const cell = getCell(next);
-        if(cell) cell.appendChild(token);
-        await new Promise(r=>setTimeout(r,150));
+    // handle case where roll would overshoot 100 -> skip turn
+    function wouldOvershoot(pos, roll){
+      return (pos + roll) > CELL_COUNT;
+    }
+
+    // user must be signed in to be debited/credited — show confirmation messages to user
+    async function chargeEntryFee(){
+      if(!currentUser) throw new Error('not-signed-in');
+      // attempt to debit either users/{uid}.balance or balances/{uid}.balance (best-effort)
+      const userId = currentUser.uid;
+      const uRef = doc(db, 'users', userId);
+      const bRef = doc(db, 'balances', userId);
+
+      try{
+        const result = await runTransaction(db, async (tx) => {
+          const uSnap = await tx.get(uRef);
+          const bSnap = await tx.get(bRef);
+          let bal = null;
+          if(uSnap.exists()){
+            const ud = uSnap.data() || {};
+            if(typeof ud.balance === 'number') bal = ud.balance;
+            else if(typeof ud.amount === 'number') bal = ud.amount;
+          }
+          if((bal === null || bal === undefined) && bSnap.exists()){
+            const bd = bSnap.data() || {};
+            if(typeof bd.balance === 'number') bal = bd.balance;
+            else if(typeof bd.amount === 'number') bal = bd.amount;
+          }
+          if(bal === null || bal === undefined) bal = 0;
+          if(Number(bal) < ENTRY_FEE) throw new Error('insufficient-funds');
+
+          const newBal = Number(bal) - ENTRY_FEE;
+          // prefer updating users doc if exists else balances
+          if(uSnap.exists()){
+            tx.set(uRef, { balance: newBal }, { merge: true });
+          } else {
+            tx.set(bRef, { balance: newBal }, { merge: true });
+          }
+          return { before: bal, after: newBal };
+        });
+        // show discreet confirmation to user
+        showToast(`₦${ENTRY_FEE} debited (entry fee).`);
+        return result;
+      }catch(e){
+        if(e.message === 'insufficient-funds') throw new Error('insufficient-funds');
+        throw e;
       }
     }
 
-    async function updateBalance(delta){
-      if(!currentUser) return;
-      const userRef = doc(db,'users',currentUser.uid);
-      await updateDoc(userRef,{balance:increment(delta)});
+    async function creditWinReward(){
+      if(!currentUser) throw new Error('not-signed-in');
+      const userId = currentUser.uid;
+      const uRef = doc(db, 'users', userId);
+      const bRef = doc(db, 'balances', userId);
+      try{
+        const result = await runTransaction(db, async (tx) => {
+          const uSnap = await tx.get(uRef);
+          const bSnap = await tx.get(bRef);
+          let bal = null;
+          if(uSnap.exists()){
+            const ud = uSnap.data() || {};
+            if(typeof ud.balance === 'number') bal = ud.balance;
+            else if(typeof ud.amount === 'number') bal = ud.amount;
+          }
+          if((bal === null || bal === undefined) && bSnap.exists()){
+            const bd = bSnap.data() || {};
+            if(typeof bd.balance === 'number') bal = bd.balance;
+            else if(typeof bd.amount === 'number') bal = bd.amount;
+          }
+          if(bal === null || bal === undefined) bal = 0;
+          const newBal = Number(bal) + WIN_REWARD;
+          if(uSnap.exists()){
+            tx.set(uRef, { balance: newBal }, { merge: true });
+          } else {
+            tx.set(bRef, { balance: newBal }, { merge: true });
+          }
+          return { before: bal, after: newBal };
+        });
+        showToast(`You won! ₦${WIN_REWARD} credited.`);
+        return result;
+      }catch(e){
+        console.warn('credit failed', e);
+        // still show win toast but not the internals
+        showToast('You won! Reward will be processed.');
+        return null;
+      }
     }
 
-    async function playerRoll(){
-      if(!running || !playerTurn) return;
-      const val = rollDice();
-      logMsg("You rolled "+val);
-      if(playerPos+val <= 100){
-        const old = playerPos;
-        playerPos+=val;
-        await dramaticMove(playerToken, old, playerPos);
-      }
-
-      // Snakes or ladders
-      if(snakes[playerPos]){
-        logMsg("Oops! Snake bites! Drop 10 positions");
-        const old=playerPos; playerPos-=10;
-        await dramaticMove(playerToken, old-10, playerPos);
-      } else if(ladders[playerPos]){
-        logMsg("Yay! Ladder! Move up 20 positions");
-        const old=playerPos; playerPos+=20;
-        if(playerPos>100) playerPos=100;
-        await dramaticMove(playerToken, old, playerPos);
-      }
-
-      placeTokens();
-      if(playerPos>=100){endGame('player'); return;}
-      playerTurn=false; setTimeout(botMove,300);
-    }
-
+    // bot move with bias
     async function botMove(){
       if(!running) return;
-      statusEl.textContent="Bot's turn...";
-      await new Promise(r=>setTimeout(r,500));
-      const val = rollDice();
-      logMsg("Bot rolled "+val);
-      if(botPos+val<=100){
-        const old=botPos;
-        botPos+=val;
-        await dramaticMove(botToken, old, botPos);
+      setStatus('Bot is thinking...');
+      await wait(600 + Math.random()*700);
+      let final = await dramaticRoll();
+      // bias adjustments
+      if(bias === 'botFavored'){
+        if(Math.random() < 0.6){
+          const r2 = rollDie();
+          final = Math.max(final, r2);
+        }
+      } else {
+        if(Math.random() < 0.6){
+          const r2 = rollDie();
+          final = Math.min(final, r2);
+        }
+      }
+      diceEl.textContent = final;
+      logMsg('Bot rolled ' + final);
+
+      // overshoot check
+      if(wouldOvershoot(botPos, final)){
+        logMsg('Bot overshot and skips turn (needs ' + (CELL_COUNT - botPos) + ')');
+        // skip bot's movement
+        playerTurn = true;
+        setStatus('Your turn');
+        return;
       }
 
-      if(snakes[botPos]){
-        logMsg("Bot bitten by snake! -10");
-        botPos-=10;
-      } else if(ladders[botPos]){
-        logMsg("Bot climbs ladder! +20");
-        botPos+=20;
-        if(botPos>100) botPos=100;
+      const next = Math.min(CELL_COUNT, botPos + final);
+      await animateTokenStepwise(botToken, botPos, next);
+      botPos = next;
+
+      const res = applySnakesLadders(botPos);
+      if(res.type === 'ladder' || res.type === 'snake'){
+        logMsg('Bot encountered ' + res.type + ' — moving to ' + res.next);
+        await animateSlide(botToken, botPos, res.next);
+        botPos = res.next;
       }
 
       placeTokens();
-      if(botPos>=100){endGame('bot'); return;}
-      playerTurn=true; statusEl.textContent="Your turn";
-      diceEl.textContent="🎲";
+      if(botPos >= CELL_COUNT){
+        endGame('bot');
+        return;
+      }
+      playerTurn = true;
+      setStatus('Your turn');
     }
+
+    function endGame(winner){
+      running = false;
+      rollBtn.disabled = true;
+      startBtn.disabled = false;
+      const msg = winner === 'player' ? 'You win! 🎉' : 'Bot wins — try again!';
+      setStatus(msg);
+      logMsg('Game ended — winner: ' + winner + ' (bias: ' + bias + ')');
+      if(winner === 'player') showConfetti(3500, 120);
+      // if winner is player, credit reward and show confirmation
+      (async ()=>{
+        if(winner === 'player' && currentUser){
+          try{
+            await creditWinReward();
+          }catch(e){
+            console.warn('credit reward failed', e);
+          }
+        } else {
+          // bot won; optionally show a discreet message
+          if(currentUser) showToast('Round complete — better luck next time.');
+        }
+      })();
+    }
+
+    // player turn
+    async function playerRoll(){
+      if(!running) return;
+      if(!playerTurn) return;
+      rollBtn.disabled = true;
+      const final = await dramaticRoll();
+      diceEl.textContent = final;
+      logMsg('You rolled ' + final);
+
+      // overshoot: if roll would exceed CELL_COUNT, skip turn
+      if(wouldOvershoot(playerPos, final)){
+        logMsg('Overshoot — you need ' + (CELL_COUNT - playerPos) + '. Turn skipped.');
+        setStatus(`You need ${CELL_COUNT - playerPos} to finish — turn skipped`);
+        playerTurn = false;
+        // small delay then bot moves
+        await wait(700);
+        await botMove();
+        rollBtn.disabled = !playerTurn;
+        return;
+      }
+
+      const next = Math.min(CELL_COUNT, playerPos + final);
+      await animateTokenStepwise(playerToken, playerPos, next);
+      playerPos = next;
+
+      const res = applySnakesLadders(playerPos);
+      if(res.type === 'ladder' || res.type === 'snake'){
+        logMsg('You encountered ' + res.type + ' — moving to ' + res.next);
+        await animateSlide(playerToken, playerPos, res.next);
+        playerPos = res.next;
+      }
+
+      placeTokens();
+      if(playerPos >= CELL_COUNT){
+        endGame('player');
+        rollBtn.disabled = true;
+        return;
+      }
+
+      playerTurn = false;
+      await wait(420);
+      rollBtn.disabled = false;
+      await wait(300);
+      await botMove();
+      rollBtn.disabled = !playerTurn;
+    }
+
+    function resetGame(){
+      playerPos = 1; botPos = 1; playerTurn = true; running = false; rollBtn.disabled = true; startBtn.disabled = false; diceEl.textContent = '—'; logEl.innerHTML=''; biasTag.textContent = '—'; setStatus('Press Start to begin'); placeTokens();
+    }
+
+    function decideBias(){
+      bias = Math.random() < 0.5 ? 'botFavored' : 'playerFavored';
+      biasTag.textContent = bias === 'botFavored' ? 'Bot favored (advantage)' : 'Player favored (bot disadvantaged)';
+    }
+
+    function setStatus(t){ statusEl.textContent = t; }
+    function log(t){ logMsg(t); }
 
     async function startGame(){
-      if(!currentUser){alert('Sign in to play'); return;}
-      await updateBalance(-50); // debit for starting game
-      running=true; playerTurn=true;
-      playerPos=1; botPos=1;
-      buildBoard(); placeTokens();
-      logEl.innerHTML=''; statusEl.textContent='Your turn';
-      diceEl.textContent="🎲";
-    }
+      // require sign-in for debiting
+      if(!currentUser) return alert('Please sign in to play.');
 
-    async function endGame(w){
-      running=false;
-      if(w=='player'){
-        statusEl.textContent="You win!";
-        await updateBalance(70); // credit win
-      } else {
-        statusEl.textContent="Bot wins!";
+      // attempt to charge entry fee, show confirmation to user. If fails, abort start.
+      try{
+        await chargeEntryFee();
+      }catch(e){
+        if(e.message === 'insufficient-funds') { alert('Insufficient funds to join (₦' + ENTRY_FEE + ' required).'); return; }
+        console.error('charge error', e); alert('Could not charge entry fee. Try again later.'); return;
+      }
+
+      // fresh game
+      playerPos = 1; botPos = 1; logEl.innerHTML='';
+      playerTurn = Math.random() < 0.5;
+      decideBias();
+      running = true; rollBtn.disabled = false; startBtn.disabled = true;
+      logMsg(`New game started — ${playerTurn ? 'You start' : 'Bot starts'} • bias: ${bias}`);
+      placeTokens();
+      setStatus(playerTurn ? 'Your turn' : 'Bot is moving...');
+      await wait(350);
+      if(!playerTurn){
+        await botMove();
       }
     }
 
-    onAuthStateChanged(auth,u=>{currentUser=u;});
-    startBtn.addEventListener('click', startGame);
-    diceEl.addEventListener('click', playerRoll);
+    // Save result to Firestore (minimal record)
+    async function saveResultToFirebase(winner){
+      try{
+        await addDoc(collection(db,'snakesAndLaddersResults'), {
+          winner, bias, playerPos, botPos, ts: serverTimestamp(), user: currentUser ? (currentUser.uid||currentUser.email||null) : null
+        });
+        alert('Result saved to Firebase');
+      }catch(e){ console.warn('save failed', e); alert('Could not save result: ' + (e.message||e)); }
+    }
 
-    document.addEventListener('DOMContentLoaded',()=>{buildBoard(); placeTokens();});
+    // confetti
+    function showConfetti(durationMs = 3000, count = 80){
+      confettiRoot.style.display = 'block';
+      confettiRoot.innerHTML = '';
+      const colors = ['#ff3b3b','#ffb86b','#ffd166','#6ee7b7','#7a5fff','#35d6b1','#fff'];
+      for(let i=0;i<count;i++){
+        const el = document.createElement('div');
+        el.className = 'confetti';
+        el.style.background = colors[Math.floor(Math.random()*colors.length)];
+        el.style.left = (Math.random()*100) + '%';
+        el.style.top = (-10 - Math.random()*20) + 'vh';
+        el.style.width = (6 + Math.random()*12) + 'px';
+        el.style.height = (8 + Math.random()*16) + 'px';
+        el.style.opacity = (0.8 + Math.random()*0.3);
+        const speed = 2500 + Math.random()*3500;
+        el.style.animationDuration = (speed) + 'ms';
+        el.style.transform = `rotate(${Math.floor(Math.random()*360)}deg)`;
+        confettiRoot.appendChild(el);
+      }
+      setTimeout(()=>{ confettiRoot.style.display='none'; confettiRoot.innerHTML=''; }, durationMs + 400);
+    }
+
+    // toast (brief confirmation)
+    function showToast(msg, ms = 3000){
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = msg;
+      toastRoot.appendChild(t);
+      setTimeout(()=>{ t.style.transition='opacity 300ms'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, ms);
+    }
+
+    // atomic debit transaction already implemented above (chargeEntryFee)
+    // atomic credit transaction already implemented above (creditWinReward)
+
+    // UI wiring
+    rollBtn.addEventListener('click', ()=>{ if(!isRolling) playerRoll(); });
+    startBtn.addEventListener('click', async ()=>{
+      // reset and attempt to start (will attempt to debit entry fee)
+      resetGame(); buildBoard(); placeTokens();
+      await startGame();
+    });
+    saveBtn.addEventListener('click', async ()=>{
+      if(running) return alert('Save after the game ends');
+      const winner = playerPos >= CELL_COUNT ? 'player' : (botPos >= CELL_COUNT ? 'bot' : 'none');
+      if(winner === 'none') return alert('Game not finished yet');
+      await saveResultToFirebase(winner);
+    });
+
+    // init
+    buildBoard();
+    resetGame();
+    placeTokens();
+
+    // auth watcher to capture user id for saves / transactions
+    onAuthStateChanged(auth, user => { currentUser = user; });
+
+    // keyboard: space to roll when available
+    window.addEventListener('keydown', (e)=>{ if(e.code === 'Space'){ if(!rollBtn.disabled) playerRoll(); e.preventDefault(); } });
+
+    // small helper to set initial display
+    setStatus('Press Start to begin');
   </script>
 </body>
 </html>
