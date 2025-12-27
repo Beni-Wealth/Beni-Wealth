@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>Beni-Wealth — Memory Flip)</title>
+  <title>Beni-Wealth — Memory Flip</title>
 
   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
@@ -20,11 +20,154 @@
   <meta name="twitter:card" content="summary_large_image">
 
   <style>
-    /* … (all your existing CSS exactly as before) … */
+    :root{
+      --bg1:#071021; --bg2:#0d1224; --muted:rgba(255,255,255,0.66); --text:#eaf2ff;
+      --accent:#7a5fff; --success:#10b981; --danger:#ef4444;
+      font-family:"Poppins",system-ui,Roboto,Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.04), transparent), linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--text);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:980px;margin:18px auto;padding:14px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#35d6b1);display:grid;place-items:center;color:#041219;font-weight:800}
+    .title{font-weight:800}
+    .muted{color:var(--muted);font-size:13px}
+    .controls{display:flex;gap:10px;align-items:center}
+    .btn{background:linear-gradient(90deg,var(--accent),#35d6b1);border:0;padding:10px 14px;border-radius:10px;color:#041219;font-weight:800;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
+    .layout{display:flex;gap:16px;flex-wrap:wrap}
+    .left{flex:1;min-width:260px}
+    .right{width:320px;min-width:220px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.02)}
+
+    .board{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(56px, 1fr));
+      gap:10px;margin-top:12px;width:100%;
+      touch-action: manipulation;
+    }
+
+    .tile{
+      aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:grid;place-items:center;font-weight:800;font-size:clamp(14px,3.8vw,22px);cursor:pointer;user-select:none;position:relative;border:2px solid rgba(255,255,255,0.03);transition:transform .12s ease, background .18s ease; -webkit-tap-highlight-color: rgba(0,0,0,0)
+    }
+    .tile:hover{transform:translateY(-4px)}
+    .tile.flipped{background:linear-gradient(90deg,#fff,#fff0);color:#041219}
+    .tile.matched{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.6);color:#041219;cursor:default}
+
+    .hud{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap}
+    .scorebox{font-weight:700}
+    .log{margin-top:12px;max-height:260px;overflow:auto;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);font-size:13px}
+    .muted-note{color:var(--muted);font-size:13px;margin-top:8px}
+    .center{display:flex;align-items:center;justify-content:center}
+    .modal{position:fixed;left:0;top:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);z-index:9999}
+    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:14px;border-radius:12px;min-width:260px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+
+    .music-controls{display:flex;gap:8px;align-items:center;margin-left:6px}
+    .icon-btn{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,0.02);cursor:pointer;font-weight:800}
+    .volume{width:110px}
+
+    @media(max-width:880px){
+      .wrap{padding:12px;margin:12px}
+      header{gap:8px}
+      .logo{width:48px;height:48px}
+      .controls{flex-wrap:wrap;justify-content:flex-end}
+      .right{width:100%}
+      .board{gap:8px;grid-template-columns:repeat(4, minmax(48px, 1fr));}
+      .tile{font-size:clamp(12px,4.2vw,20px);border-radius:8px}
+      .muted-note{font-size:12px}
+      .btn{padding:10px 12px}
+    }
+
+    @media(max-width:420px){
+      .board{gap:6px;grid-template-columns:repeat(4, minmax(42px, 1fr));}
+      .tile{border-radius:6px}
+      header{align-items:flex-start}
+    }
   </style>
 </head>
 <body>
-  <!-- … (all your existing HTML UI exactly as before) … -->
+  <div class="wrap">
+    <header>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="logo">BW</div>
+        <div>
+          <div class="title">Memory Flip — You vs Bot</div>
+          <div class="muted">Match pairs to score. Win to earn ₦50. Entry fee: ₦20.</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div style="text-align:right">
+          <div class="muted">Balance</div>
+          <div id="balance" style="font-weight:800">₦0.00</div>
+        </div>
+
+        <div class="music-controls" title="Music controls" aria-hidden="false">
+          <div id="musicToggle" class="icon-btn" aria-pressed="false" role="button" title="Toggle music">♪</div>
+          <input id="vol" class="volume" type="range" min="0" max="1" step="0.05" value="0.45" aria-label="music volume">
+        </div>
+
+        <button id="playBtn" class="btn">Play (₦20)</button>
+        <button id="backBtn" class="btn ghost">Back</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <div class="left">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap">
+            <div style="font-weight:800">Game</div>
+            <div class="muted small" id="turnIndicator">Not playing</div>
+            <div class="scorebox">MMR: <span id="playerMMR">1000</span></div>
+            <div class="scorebox">Win streak: <span id="winStreak">0</span></div>
+          </div>
+
+          <div id="boardWrap">
+            <div class="board" id="board"></div>
+          </div>
+
+          <div class="hud">
+            <div class="scorebox">You: <span id="playerScore">0</span></div>
+            <div class="scorebox">Bot: <span id="botScore">0</span></div>
+            <div><button id="restartBtn" class="btn ghost">Restart</button></div>
+          </div>
+
+          <div class="muted-note" id="gameNote">Press Play to start (₦20 will be charged).</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="card">
+          <div style="font-weight:900">Game log</div>
+          <div id="gamelog" class="log"><div class="muted">No activity yet</div></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div style="font-weight:900">How it works</div>
+          <div class="muted-note">
+            - Click a tile to flip. Match two identical tiles to score 1 point. <br>
+            - Players alternate turns; matches give an extra turn. <br>
+            - If you win, ₦50 is credited to your balance automatically. <br>
+            - Your MMR and win streak adjust based on results.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="bgMusic" loop crossorigin="anonymous">
+    <source src="music/ambient-loop.mp3" type="audio/mpeg">
+  </audio>
+
+  <div id="modal" class="modal" role="dialog" aria-modal="true">
+    <div class="panel">
+      <div id="modalTitle" style="font-weight:900">Game over</div>
+      <div id="modalBody" class="muted-note" style="margin-top:12px"></div>
+      <div style="margin-top:12px" class="center">
+        <button id="modalClose" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -44,7 +187,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // UI refs
     const playBtn = document.getElementById('playBtn');
     const backBtn = document.getElementById('backBtn');
     const restartBtn = document.getElementById('restartBtn');
@@ -59,82 +201,204 @@
     const modalBody = document.getElementById('modalBody');
     const modalClose = document.getElementById('modalClose');
     const gameNote = document.getElementById('gameNote');
+    const playerMMREl = document.getElementById('playerMMR');
+    const winStreakEl = document.getElementById('winStreak');
 
-    // (all helper functions, music logic, balance refresh, setupTiles, renderBoard, updateScores, user click logic — unchanged)
+    const bgMusic = document.getElementById('bgMusic');
+    const musicToggle = document.getElementById('musicToggle');
+    const volSlider = document.getElementById('vol');
+    const MUSIC_KEY = 'bw_music_enabled_v1';
+    const MUSIC_VOL_KEY = 'bw_music_vol_v1';
 
-    // ******************
-    // NEW BOT LOGIC
-    // ******************
-    async function botTurn(){
-      if(remainingPairs <= 0) return;
+    const ENTRY_FEE = 20;
+    const WIN_REWARD = 50;
 
-      turn = 'bot';
-      lockBoard = true;
-      setStatus("Bot is thinking...");
-      await sleep(650);
+    let currentUser = null;
+    let userBalance = 0;
+    let gameIdRef = null;
+    let tiles = [];
+    let firstFlip = null;
+    let secondFlip = null;
+    let lockBoard = true;
+    let playerScore = 0;
+    let botScore = 0;
+    let turn = 'none';
+    let botMemory = {};
+    let remainingPairs = 0;
 
-      // 10% chance bot forgets what it saw
-      if(Math.random() < 0.10){
-        botMemory = {};
-        log(`<div style="color:orange">Bot got confused and forgot cards!</div>`);
-      }
+    let playerMMR = 1000;
+    let winStreak = 0;
+    let maxWinStreak = 0;
 
-      // 50% chance to even try memory
-      if(Math.random() < 0.5){
-        for(const val in botMemory){
-          const idxs = Array.from(botMemory[val]).filter(i => !tiles[i].matched);
-          if(idxs.length >= 2){
-            if(Math.random() < 0.6){
-              await botFlipSequence(idxs[0], idxs[1]);
-              return;
-            }
-          }
-        }
-      }
+    function formatN(n){ return '₦' + Number(n||0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+    function log(msg){
+      const d = document.createElement('div');
+      d.style.padding='8px 0';
+      d.innerHTML=msg;
+      if(gamelog.firstChild && gamelog.firstChild.className==='muted') gamelog.innerHTML='';
+      gamelog.prepend(d);
+      while(gamelog.children.length>120) gamelog.removeChild(gamelog.lastChild);
+    }
+    function setStatus(text){ turnIndicator.textContent=text; }
 
-      // small chance to combine known + random guess
-      if(Math.random() < 0.4){
-        for(const val in botMemory){
-          const idxs = Array.from(botMemory[val]).filter(i => !tiles[i].matched);
-          if(idxs.length === 1){
-            const knownIdx = idxs[0];
-            const unseen = tiles.map((t,i) => i).filter(i => !tiles[i].matched && !tiles[i].flipped);
-            if(unseen.length > 0){
-              const pick = unseen[Math.floor(Math.random()*unseen.length)];
-              await botFlipSequence(knownIdx, pick);
-              return;
-            }
-          }
-        }
-      }
-
-      // fallback: pick two random unseen
-      const unseenTiles = tiles.map((t,i) => i).filter(i => !tiles[i].matched && !tiles[i].flipped);
-      if(unseenTiles.length === 0){
-        turn = 'player';
-        lockBoard = false;
-        setStatus("Your turn");
-        return;
-      }
-      let a = unseenTiles[Math.floor(Math.random()*unseenTiles.length)];
-      let left = unseenTiles.filter(i => i !== a);
-      let b = left[Math.floor(Math.random()*left.length)];
-      await botFlipSequence(a,b);
+    function initMusicControls(){
+      const enabled = localStorage.getItem(MUSIC_KEY) !== '0';
+      musicToggle.setAttribute('aria-pressed', enabled?'true':'false');
+      musicToggle.textContent = enabled?'♫':'♪';
+      const vol = Number(localStorage.getItem(MUSIC_VOL_KEY) || volSlider.value);
+      volSlider.value = vol;
+      bgMusic.volume = vol;
+      if(enabled) musicToggle.classList.add('active');
+      else musicToggle.classList.remove('active');
     }
 
-    async function botFlipSequence(i1, i2){
-      await sleep(350);
-      flipTile(i1, 'bot');
-      await sleep(700);
-      flipTile(i2, 'bot');
+    musicToggle.addEventListener('click', async ()=>{
+      const isOn = localStorage.getItem(MUSIC_KEY) !== '0';
+      if(isOn){ localStorage.setItem(MUSIC_KEY,'0'); try{ bgMusic.pause(); }catch(e){} musicToggle.setAttribute('aria-pressed','false'); musicToggle.textContent='♪'; }
+      else{ localStorage.setItem(MUSIC_KEY,'1'); try{ await bgMusic.play(); }catch(e){} musicToggle.setAttribute('aria-pressed','true'); musicToggle.textContent='♫'; }
+    });
+
+    volSlider.addEventListener('input',(e)=>{ const v=Number(e.target.value); bgMusic.volume=v; localStorage.setItem(MUSIC_VOL_KEY,String(v)); });
+    async function tryStartMusicOnUserGesture(){ if(localStorage.getItem(MUSIC_KEY)==='0') return; try{ await bgMusic.play(); }catch(e){} }
+
+    async function refreshBalanceDisplay(){
+      if(!currentUser){ balanceEl.textContent=formatN(0); return; }
+      try{
+        const uRef=doc(db,'users',currentUser.uid);
+        const uSnap=await getDoc(uRef);
+        if(uSnap.exists()){ userBalance=Number(uSnap.data().balance??uSnap.data().amount??0)||0; }
+        else{ userBalance=0; }
+      }catch(e){ console.warn('balance read failed',e); }
+      balanceEl.textContent=formatN(userBalance);
     }
-    function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-    // ******************
-    // (everything else exactly as in your original script —
-    // including checkMatch(), finishGame(), playBtn logic, auth, initEmpty, etc.)
-    // ******************
+    async function fetchPlayerStats(){
+      if(!currentUser) return;
+      const uRef=doc(db,'memoryGames',currentUser.uid);
+      const uSnap=await getDoc(uRef);
+      if(uSnap.exists()){
+        const data=uSnap.data();
+        playerMMR = data.mmr??1000;
+        winStreak = data.currentWinStreak??0;
+        maxWinStreak = data.maxWinStreak??winStreak;
+      } else { playerMMR=1000; winStreak=0; maxWinStreak=0; }
+      playerMMREl.textContent=playerMMR;
+      winStreakEl.textContent=winStreak;
+    }
 
+    function getBotMistakeRate(){
+      if(winStreak>=6) return 0.02;
+      if(winStreak>=4) return 0.04;
+      if(winStreak>=2) return 0.07;
+      return 0.12;
+    }
+
+    async function updatePlayerStats(didWin){
+      if(!currentUser) return;
+      if(didWin) winStreak++;
+      else winStreak=0;
+      playerMMR += didWin? 20:-15;
+      maxWinStreak = Math.max(maxWinStreak, winStreak);
+      await setDoc(doc(db,'memoryGames',currentUser.uid), { mmr:playerMMR, currentWinStreak:winStreak, maxWinStreak:maxWinStreak, updatedAt:serverTimestamp() }, { merge:true });
+      playerMMREl.textContent=playerMMR;
+      winStreakEl.textContent=winStreak;
+    }
+
+    function createBoard(){
+      tiles=[];
+      const tileValues=[...Array(8).keys()].flatMap(i=>[i,i]);
+      remainingPairs=tileValues.length/2;
+      tiles=tileValues.sort(()=>Math.random()-0.5).map((v,i)=>{
+        const div=document.createElement('div');
+        div.className='tile';
+        div.dataset.value=v;
+        div.addEventListener('click',()=>handleFlip(div));
+        boardEl.appendChild(div);
+        return div;
+      });
+    }
+
+    function handleFlip(tile){
+      if(lockBoard || tile.classList.contains('flipped') || tile.classList.contains('matched')) return;
+      tile.classList.add('flipped');
+      if(!firstFlip){ firstFlip=tile; return; }
+      secondFlip=tile;
+      lockBoard=true;
+      checkMatch();
+    }
+
+    function checkMatch(){
+      const isMatch=firstFlip.dataset.value===secondFlip.dataset.value;
+      if(isMatch){
+        firstFlip.classList.add('matched');
+        secondFlip.classList.add('matched');
+        playerScore++;
+        playerScoreEl.textContent=playerScore;
+        remainingPairs--;
+        log(`You matched a pair!`);
+        firstFlip=secondFlip=null;
+        lockBoard=false;
+        if(remainingPairs===0) endGame();
+      } else {
+        log(`No match.`);
+        setTimeout(()=>{
+          firstFlip.classList.remove('flipped');
+          secondFlip.classList.remove('flipped');
+          firstFlip=secondFlip=null;
+          lockBoard=false;
+        },600);
+      }
+    }
+
+    function endGame(){
+      const didWin=playerScore>botScore;
+      log(didWin?`You won! +₦${WIN_REWARD}`:'You lost.');
+      updatePlayerStats(didWin);
+      modalTitle.textContent=didWin?'Victory':'Defeat';
+      modalBody.textContent=didWin?`You earned ₦${WIN_REWARD}. Your MMR: ${playerMMR}, Win streak: ${winStreak}`:`Your MMR: ${playerMMR}, Win streak: ${winStreak}`;
+      modal.style.display='flex';
+    }
+
+    modalClose.addEventListener('click',()=>modal.style.display='none');
+
+    playBtn.addEventListener('click', async ()=>{
+      if(!currentUser) return alert('Please sign in first');
+      if(userBalance<ENTRY_FEE) return alert('Insufficient balance');
+      await runTransaction(db, async (t)=>{
+        const uRef=doc(db,'users',currentUser.uid);
+        const uSnap=await t.get(uRef);
+        const bal = uSnap.exists()? Number(uSnap.data().balance??0) : 0;
+        if(bal<ENTRY_FEE) throw 'Insufficient balance';
+        t.update(uRef,{ balance: bal-ENTRY_FEE });
+        userBalance=bal-ENTRY_FEE;
+        balanceEl.textContent=formatN(userBalance);
+      });
+      gameNote.textContent='Game started';
+      createBoard();
+      lockBoard=false;
+    });
+
+    restartBtn.addEventListener('click',()=>{
+      boardEl.innerHTML='';
+      playerScore=0;
+      botScore=0;
+      playerScoreEl.textContent='0';
+      botScoreEl.textContent='0';
+      firstFlip=secondFlip=null;
+      lockBoard=true;
+      gameNote.textContent='Press Play to start';
+    });
+
+    backBtn.addEventListener('click',()=>window.history.back());
+
+    onAuthStateChanged(auth, async user=>{
+      currentUser=user;
+      await refreshBalanceDisplay();
+      await fetchPlayerStats();
+    });
+
+    initMusicControls();
+    tryStartMusicOnUserGesture();
   </script>
 </body>
 </html>
