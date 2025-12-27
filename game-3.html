@@ -10,14 +10,7 @@
 
   <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Beni-Wealth — Memory Flip">
-  <meta property="og:description" content="Match pairs to score. Win to earn ₦50. Entry fee: ₦20.">
-  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="twitter:card" content="summary_large_image">
 
   <style>
     :root{
@@ -48,7 +41,7 @@
     }
 
     .tile{
-      aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:grid;place-items:center;font-weight:800;font-size:clamp(14px,3.8vw,22px);cursor:pointer;user-select:none;position:relative;border:2px solid rgba(255,255,255,0.03);transition:transform .12s ease, background .18s ease; -webkit-tap-highlight-color: rgba(0,0,0,0)
+      aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:grid;place-items:center;font-weight:800;font-size:clamp(14px,3.8vw,22px);cursor:pointer;user-select:none;position:relative;border:2px solid rgba(255,255,255,0.03);transition:transform .12s ease, background .18s ease
     }
     .tile:hover{transform:translateY(-4px)}
     .tile.flipped{background:linear-gradient(90deg,#fff,#fff0);color:#041219}
@@ -61,28 +54,6 @@
     .center{display:flex;align-items:center;justify-content:center}
     .modal{position:fixed;left:0;top:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);z-index:9999}
     .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:14px;border-radius:12px;min-width:260px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
-
-    .music-controls{display:flex;gap:8px;align-items:center;margin-left:6px}
-    .icon-btn{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,0.02);cursor:pointer;font-weight:800}
-    .volume{width:110px}
-
-    @media(max-width:880px){
-      .wrap{padding:12px;margin:12px}
-      header{gap:8px}
-      .logo{width:48px;height:48px}
-      .controls{flex-wrap:wrap;justify-content:flex-end}
-      .right{width:100%}
-      .board{gap:8px;grid-template-columns:repeat(4, minmax(48px, 1fr));}
-      .tile{font-size:clamp(12px,4.2vw,20px);border-radius:8px}
-      .muted-note{font-size:12px}
-      .btn{padding:10px 12px}
-    }
-
-    @media(max-width:420px){
-      .board{gap:6px;grid-template-columns:repeat(4, minmax(42px, 1fr));}
-      .tile{border-radius:6px}
-      header{align-items:flex-start}
-    }
   </style>
 </head>
 <body>
@@ -101,12 +72,6 @@
           <div class="muted">Balance</div>
           <div id="balance" style="font-weight:800">₦0.00</div>
         </div>
-
-        <div class="music-controls" title="Music controls" aria-hidden="false">
-          <div id="musicToggle" class="icon-btn" aria-pressed="false" role="button" title="Toggle music">♪</div>
-          <input id="vol" class="volume" type="range" min="0" max="1" step="0.05" value="0.45" aria-label="music volume">
-        </div>
-
         <button id="playBtn" class="btn">Play (₦20)</button>
         <button id="backBtn" class="btn ghost">Back</button>
       </div>
@@ -141,23 +106,9 @@
           <div style="font-weight:900">Game log</div>
           <div id="gamelog" class="log"><div class="muted">No activity yet</div></div>
         </div>
-
-        <div class="card" style="margin-top:12px">
-          <div style="font-weight:900">How it works</div>
-          <div class="muted-note">
-            - Click a tile to flip. Match two identical tiles to score 1 point. <br>
-            - Players alternate turns; matches give an extra turn. <br>
-            - If you win, ₦50 is credited to your balance automatically. <br>
-            - Your MMR and win streak adjust based on results.
-          </div>
-        </div>
       </div>
     </div>
   </div>
-
-  <audio id="bgMusic" loop crossorigin="anonymous">
-    <source src="music/ambient-loop.mp3" type="audio/mpeg">
-  </audio>
 
   <div id="modal" class="modal" role="dialog" aria-modal="true">
     <div class="panel">
@@ -172,7 +123,7 @@
   <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collection, runTransaction, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, runTransaction, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
@@ -204,31 +155,23 @@
     const playerMMREl = document.getElementById('playerMMR');
     const winStreakEl = document.getElementById('winStreak');
 
-    const bgMusic = document.getElementById('bgMusic');
-    const musicToggle = document.getElementById('musicToggle');
-    const volSlider = document.getElementById('vol');
-    const MUSIC_KEY = 'bw_music_enabled_v1';
-    const MUSIC_VOL_KEY = 'bw_music_vol_v1';
-
     const ENTRY_FEE = 20;
     const WIN_REWARD = 50;
 
     let currentUser = null;
     let userBalance = 0;
-    let gameIdRef = null;
     let tiles = [];
     let firstFlip = null;
     let secondFlip = null;
     let lockBoard = true;
     let playerScore = 0;
     let botScore = 0;
-    let turn = 'none';
-    let botMemory = {};
     let remainingPairs = 0;
-
     let playerMMR = 1000;
     let winStreak = 0;
     let maxWinStreak = 0;
+
+    const fruits = ['🍎','🍌','🍇','🍓','🍉','🥭','🍍','🍑'];
 
     function formatN(n){ return '₦' + Number(n||0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
     function log(msg){
@@ -239,35 +182,13 @@
       gamelog.prepend(d);
       while(gamelog.children.length>120) gamelog.removeChild(gamelog.lastChild);
     }
-    function setStatus(text){ turnIndicator.textContent=text; }
-
-    function initMusicControls(){
-      const enabled = localStorage.getItem(MUSIC_KEY) !== '0';
-      musicToggle.setAttribute('aria-pressed', enabled?'true':'false');
-      musicToggle.textContent = enabled?'♫':'♪';
-      const vol = Number(localStorage.getItem(MUSIC_VOL_KEY) || volSlider.value);
-      volSlider.value = vol;
-      bgMusic.volume = vol;
-      if(enabled) musicToggle.classList.add('active');
-      else musicToggle.classList.remove('active');
-    }
-
-    musicToggle.addEventListener('click', async ()=>{
-      const isOn = localStorage.getItem(MUSIC_KEY) !== '0';
-      if(isOn){ localStorage.setItem(MUSIC_KEY,'0'); try{ bgMusic.pause(); }catch(e){} musicToggle.setAttribute('aria-pressed','false'); musicToggle.textContent='♪'; }
-      else{ localStorage.setItem(MUSIC_KEY,'1'); try{ await bgMusic.play(); }catch(e){} musicToggle.setAttribute('aria-pressed','true'); musicToggle.textContent='♫'; }
-    });
-
-    volSlider.addEventListener('input',(e)=>{ const v=Number(e.target.value); bgMusic.volume=v; localStorage.setItem(MUSIC_VOL_KEY,String(v)); });
-    async function tryStartMusicOnUserGesture(){ if(localStorage.getItem(MUSIC_KEY)==='0') return; try{ await bgMusic.play(); }catch(e){} }
 
     async function refreshBalanceDisplay(){
       if(!currentUser){ balanceEl.textContent=formatN(0); return; }
       try{
         const uRef=doc(db,'users',currentUser.uid);
         const uSnap=await getDoc(uRef);
-        if(uSnap.exists()){ userBalance=Number(uSnap.data().balance??uSnap.data().amount??0)||0; }
-        else{ userBalance=0; }
+        userBalance = uSnap.exists() ? Number(uSnap.data().balance??0) : 0;
       }catch(e){ console.warn('balance read failed',e); }
       balanceEl.textContent=formatN(userBalance);
     }
@@ -286,13 +207,6 @@
       winStreakEl.textContent=winStreak;
     }
 
-    function getBotMistakeRate(){
-      if(winStreak>=6) return 0.02;
-      if(winStreak>=4) return 0.04;
-      if(winStreak>=2) return 0.07;
-      return 0.12;
-    }
-
     async function updatePlayerStats(didWin){
       if(!currentUser) return;
       if(didWin) winStreak++;
@@ -307,11 +221,12 @@
     function createBoard(){
       tiles=[];
       const tileValues=[...Array(8).keys()].flatMap(i=>[i,i]);
-      remainingPairs=tileValues.length/2;
-      tiles=tileValues.sort(()=>Math.random()-0.5).map((v,i)=>{
-        const div=document.createElement('div');
+      remainingPairs = tileValues.length/2;
+      tiles = tileValues.sort(()=>Math.random()-0.5).map(v=>{
+        const div = document.createElement('div');
         div.className='tile';
-        div.dataset.value=v;
+        div.dataset.value = v;
+        div.dataset.emoji = fruits[v];
         div.addEventListener('click',()=>handleFlip(div));
         boardEl.appendChild(div);
         return div;
@@ -321,41 +236,42 @@
     function handleFlip(tile){
       if(lockBoard || tile.classList.contains('flipped') || tile.classList.contains('matched')) return;
       tile.classList.add('flipped');
-      if(!firstFlip){ firstFlip=tile; return; }
-      secondFlip=tile;
-      lockBoard=true;
+      tile.textContent = tile.dataset.emoji;
+      if(!firstFlip){ firstFlip = tile; return; }
+      secondFlip = tile;
+      lockBoard = true;
       checkMatch();
     }
 
     function checkMatch(){
-      const isMatch=firstFlip.dataset.value===secondFlip.dataset.value;
+      const isMatch = firstFlip.dataset.value === secondFlip.dataset.value;
       if(isMatch){
         firstFlip.classList.add('matched');
         secondFlip.classList.add('matched');
         playerScore++;
-        playerScoreEl.textContent=playerScore;
+        playerScoreEl.textContent = playerScore;
         remainingPairs--;
         log(`You matched a pair!`);
-        firstFlip=secondFlip=null;
-        lockBoard=false;
-        if(remainingPairs===0) endGame();
+        firstFlip = secondFlip = null;
+        lockBoard = false;
+        if(remainingPairs === 0) endGame();
       } else {
         log(`No match.`);
         setTimeout(()=>{
-          firstFlip.classList.remove('flipped');
-          secondFlip.classList.remove('flipped');
-          firstFlip=secondFlip=null;
-          lockBoard=false;
-        },600);
+          firstFlip.classList.remove('flipped'); firstFlip.textContent='';
+          secondFlip.classList.remove('flipped'); secondFlip.textContent='';
+          firstFlip = secondFlip = null;
+          lockBoard = false;
+        }, 600);
       }
     }
 
     function endGame(){
-      const didWin=playerScore>botScore;
+      const didWin = playerScore>botScore;
       log(didWin?`You won! +₦${WIN_REWARD}`:'You lost.');
       updatePlayerStats(didWin);
-      modalTitle.textContent=didWin?'Victory':'Defeat';
-      modalBody.textContent=didWin?`You earned ₦${WIN_REWARD}. Your MMR: ${playerMMR}, Win streak: ${winStreak}`:`Your MMR: ${playerMMR}, Win streak: ${winStreak}`;
+      modalTitle.textContent = didWin?'Victory':'Defeat';
+      modalBody.textContent = didWin?`You earned ₦${WIN_REWARD}. Your MMR: ${playerMMR}, Win streak: ${winStreak}`:`Your MMR: ${playerMMR}, Win streak: ${winStreak}`;
       modal.style.display='flex';
     }
 
@@ -380,10 +296,8 @@
 
     restartBtn.addEventListener('click',()=>{
       boardEl.innerHTML='';
-      playerScore=0;
-      botScore=0;
-      playerScoreEl.textContent='0';
-      botScoreEl.textContent='0';
+      playerScore=0; botScore=0;
+      playerScoreEl.textContent='0'; botScoreEl.textContent='0';
       firstFlip=secondFlip=null;
       lockBoard=true;
       gameNote.textContent='Press Play to start';
@@ -396,9 +310,6 @@
       await refreshBalanceDisplay();
       await fetchPlayerStats();
     });
-
-    initMusicControls();
-    tryStartMusicOnUserGesture();
   </script>
 </body>
 </html>
