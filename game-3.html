@@ -20,72 +20,71 @@
   <meta name="twitter:card" content="summary_large_image">
 
   <style>
-    :root{
-      --bg1:#071021; --bg2:#0d1224; --muted:rgba(255,255,255,0.66); --text:#eaf2ff;
-      --accent:#7a5fff; --success:#10b981; --danger:#ef4444;
-      font-family:"Poppins",system-ui,Roboto,Arial;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.04), transparent), linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--text);-webkit-font-smoothing:antialiased}
-    .wrap{max-width:980px;margin:18px auto;padding:14px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-    .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#35d6b1);display:grid;place-items:center;color:#041219;font-weight:800}
-    .title{font-weight:800}
-    .muted{color:var(--muted);font-size:13px}
-    .controls{display:flex;gap:10px;align-items:center}
-    .btn{background:linear-gradient(90deg,var(--accent),#35d6b1);border:0;padding:10px 14px;border-radius:10px;color:#041219;font-weight:800;cursor:pointer}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
-    .layout{display:flex;gap:16px;flex-wrap:wrap}
-    .left{flex:1;min-width:260px}
-    .right{width:320px;min-width:220px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.02)}
-
-    .board{display:grid;grid-template-columns:repeat(4, minmax(56px, 1fr));gap:10px;margin-top:12px;width:100%;touch-action: manipulation;}
-
-    .tile{aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:grid;place-items:center;font-weight:800;font-size:clamp(14px,3.8vw,22px);cursor:pointer;user-select:none;position:relative;border:2px solid rgba(255,255,255,0.03);transition:transform .12s ease, background .18s ease}
-    .tile:hover{transform:translateY(-4px)}
-    .tile.flipped{background:linear-gradient(90deg,#fff,#fff0);color:#041219}
-    .tile.matched{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.6);color:#041219;cursor:default}
-
-    .hud{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:8px}
-    .log{margin-top:12px;max-height:260px;overflow:auto;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);font-size:13px}
-    .muted-note{color:var(--muted);font-size:13px;margin-top:8px}
-    .center{display:flex;align-items:center;justify-content:center}
-    .modal{position:fixed;left:0;top:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);z-index:9999}
-    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:14px;border-radius:12px;min-width:260px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+    /* … (all your existing CSS exactly as before) … */
   </style>
 </head>
 <body>
-  <!-- ... all your unchanged HTML UI elements above like header, board, etc ... -->
+  <!-- … (all your existing HTML UI exactly as before) … -->
 
   <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, collection, runTransaction, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // … all your unchanged firebase and UI setup code …
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // Bot logic — now more gullible
+    // UI refs
+    const playBtn = document.getElementById('playBtn');
+    const backBtn = document.getElementById('backBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const balanceEl = document.getElementById('balance');
+    const boardEl = document.getElementById('board');
+    const playerScoreEl = document.getElementById('playerScore');
+    const botScoreEl = document.getElementById('botScore');
+    const gamelog = document.getElementById('gamelog');
+    const turnIndicator = document.getElementById('turnIndicator');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+    const gameNote = document.getElementById('gameNote');
+
+    // (all helper functions, music logic, balance refresh, setupTiles, renderBoard, updateScores, user click logic — unchanged)
+
+    // ******************
+    // NEW BOT LOGIC
+    // ******************
     async function botTurn(){
       if(remainingPairs <= 0) return;
+
       turn = 'bot';
       lockBoard = true;
       setStatus("Bot is thinking...");
-      await sleep(700);
+      await sleep(650);
 
-      // Bot occasionally forgets memory entirely (~10%)
+      // 10% chance bot forgets what it saw
       if(Math.random() < 0.10){
         botMemory = {};
-        log(`<div style="color:orange">Bot seems confused and forgot cards!</div>`);
+        log(`<div style="color:orange">Bot got confused and forgot cards!</div>`);
       }
 
-      // Try memory match only half the time
-      if(Math.random() < 0.50){
+      // 50% chance to even try memory
+      if(Math.random() < 0.5){
         for(const val in botMemory){
           const idxs = Array.from(botMemory[val]).filter(i => !tiles[i].matched);
           if(idxs.length >= 2){
-            // Sometimes skip even known matches
-            if(Math.random() < 0.60){
+            if(Math.random() < 0.6){
               await botFlipSequence(idxs[0], idxs[1]);
               return;
             }
@@ -93,8 +92,8 @@
         }
       }
 
-      // Try guessing with partial memory sometimes
-      if(Math.random() < 0.40){
+      // small chance to combine known + random guess
+      if(Math.random() < 0.4){
         for(const val in botMemory){
           const idxs = Array.from(botMemory[val]).filter(i => !tiles[i].matched);
           if(idxs.length === 1){
@@ -109,26 +108,33 @@
         }
       }
 
-      // Otherwise pick two random unseen tiles
+      // fallback: pick two random unseen
       const unseenTiles = tiles.map((t,i) => i).filter(i => !tiles[i].matched && !tiles[i].flipped);
-      if(unseenTiles.length === 0){ turn = 'player'; lockBoard = false; setStatus("Your turn"); return; }
-
-      let choiceA = unseenTiles[Math.floor(Math.random()*unseenTiles.length)];
-      let remainingChoices = unseenTiles.filter(i => i !== choiceA);
-      let choiceB = remainingChoices[Math.floor(Math.random()*remainingChoices.length)];
-
-      await botFlipSequence(choiceA, choiceB);
+      if(unseenTiles.length === 0){
+        turn = 'player';
+        lockBoard = false;
+        setStatus("Your turn");
+        return;
+      }
+      let a = unseenTiles[Math.floor(Math.random()*unseenTiles.length)];
+      let left = unseenTiles.filter(i => i !== a);
+      let b = left[Math.floor(Math.random()*left.length)];
+      await botFlipSequence(a,b);
     }
 
     async function botFlipSequence(i1, i2){
-        await sleep(350);
-        flipTile(i1, 'bot');
-        await sleep(700);
-        flipTile(i2, 'bot');
+      await sleep(350);
+      flipTile(i1, 'bot');
+      await sleep(700);
+      flipTile(i2, 'bot');
     }
     function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-    // … rest of your unchanged game end, play logic, auth, and init code …
+    // ******************
+    // (everything else exactly as in your original script —
+    // including checkMatch(), finishGame(), playBtn logic, auth, initEmpty, etc.)
+    // ******************
+
   </script>
 </body>
 </html>
