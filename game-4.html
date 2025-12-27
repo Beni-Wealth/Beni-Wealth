@@ -23,7 +23,7 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#031022);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px}
-    
+
     .back-btn{
       align-self:flex-start;margin-bottom:8px;padding:8px 12px;border-radius:8px;
       background:var(--accent-2);color:#041219;font-weight:700;text-decoration:none;
@@ -47,12 +47,12 @@
       transform:translateY(12px);
     }
 
-    .cell{background:linear-gradient(180deg,rgba(255,255,255,0.012),transparent);border-radius:6px;display:block;padding:6px;font-size:12px;color:var(--muted);position:relative;min-height:0}
+    .cell{background:linear-gradient(180deg,rgba(255,255,255,0.012),transparent);border-radius:6px;display:block;padding:6px;font-size:12px;color:var(--muted);position:relative}
     .cell .num{position:absolute;left:6px;top:6px;font-weight:800;color:var(--muted);font-size:12px;z-index:2}
 
     .token {
       position:absolute;
-      font-size:24px; /* smaller emoji size */
+      font-size:24px;
       width:24px;height:24px;
       display:flex;place-items:center;justify-content:center;
       transform:translate(-50%,-50%);
@@ -67,13 +67,16 @@
       width:100%;
     }
     .dice {
-      font-size:48px; /* bigger dice emoji */
+      font-size:56px;
       cursor:pointer;
       user-select:none;
       display:flex;
       align-items:center;
       justify-content:center;
       transition: transform 400ms ease;
+      padding:10px;
+      background:rgba(255,255,255,0.04);
+      border-radius:12px;
     }
 
     .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#041219;font-weight:800;cursor:pointer}
@@ -87,7 +90,7 @@
 
   <a href="dashboard.html" class="back-btn">← Back to Dashboard</a>
 
-  <div class="app" role="application" aria-label="Snakes and ladders">
+  <div class="app">
     <div class="board-wrap">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="font-weight:900">Snakes & Ladders • Beni-Wealth</div>
@@ -96,12 +99,11 @@
 
       <div id="board"></div>
 
-      <!-- emoji tokens -->
       <div id="playerToken" class="token">🧍‍♂️</div>
       <div id="botToken" class="token">🤖</div>
 
       <div id="diceArea">
-        <div id="dice" class="dice">🎲</div> <!-- dice emoji -->
+        <div id="dice" class="dice">🎲</div>
       </div>
     </div>
 
@@ -129,6 +131,7 @@
       appId: "1:807950483822:web=e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
+
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
@@ -181,17 +184,17 @@
     }
 
     async function flipDice(){
-      // animate flip
       diceEl.style.transform = "rotateX(720deg) rotateY(360deg)";
       await new Promise(r=>setTimeout(r,600));
-      diceEl.style.transform = ""; // reset
+      diceEl.style.transform = "";
       return Math.floor(Math.random()*6)+1;
     }
 
     async function doRoll(){
       if(!running) return null;
       const val = await flipDice();
-      diceEl.textContent = val; // show number
+      diceEl.textContent = val;     // shows rolled number immediately
+      await new Promise(r=>setTimeout(r,400)); // pause to let user see it
       return val;
     }
 
@@ -217,6 +220,7 @@
       placeTokens();
       if(botPos >= 100){endGame('bot'); return;}
       playerTurn=true; statusEl.textContent="Your turn";
+      diceEl.textContent = "🎲"; // reset dice
     }
 
     async function playerRoll(){
@@ -233,6 +237,7 @@
       playerTurn=false;
       await new Promise(r=>setTimeout(r,300));
       await botMove();
+      diceEl.textContent = "🎲"; // reset dice
     }
 
     async function updateBalance(delta){
@@ -251,9 +256,11 @@
       if(!currentUser){alert('Sign in to play'); return;}
       await updateBalance(-50);
       running=true; playerTurn=true;
+      playerPos=1; botPos=1;
       buildBoard(); placeTokens();
       logEl.innerHTML=''; 
       statusEl.textContent='Your turn';
+      diceEl.textContent="🎲";  // reset dice
     }
 
     onAuthStateChanged(auth, u=>{currentUser=u;});
