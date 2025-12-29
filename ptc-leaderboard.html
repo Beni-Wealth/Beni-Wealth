@@ -1,35 +1,119 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Beni-Wealth — PTC Leaderboard</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-  <meta name="theme-color" content="#7a5fff" />
+  <meta name="theme-color" content="#7a5fff"/>
   <style>
-    body{font-family:'Poppins',system-ui,Arial; padding:18px; background:#0f0820; color:#eaf2ff;}
-    h1{font-size:24px;margin-bottom:12px;color:#7a5fff;}
-    table{width:100%;border-collapse:collapse;margin-top:18px;}
-    th,td{padding:10px;border-bottom:1px solid #2a2435;}
-    th{color:#35d6b1;text-align:left;}
-    .spinner{ animation:spin 1s linear infinite; border:3px solid rgba(255,255,255,0.22);border-top-color:#ffffff;border-radius:50%;width:18px;height:18px;display:inline-block;}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .center{text-align:center;margin-top:40px;color:rgba(255,255,255,0.6);}
+    body {
+      background: #0f0820;
+      color: #eaf2ff;
+      font-family: 'Poppins', system-ui, Arial;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #7a5fff;
+      margin-bottom: 10px;
+      font-size: 26px;
+      font-weight: 800;
+    }
+    #resetTimer {
+      text-align: center;
+      color: #35d6b1;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .leaderboard {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      border-collapse: collapse;
+      background: #0d0b1c;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    .leaderboard th, .leaderboard td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #221f35;
+      text-align: left;
+      font-size: 15px;
+    }
+    .leaderboard th {
+      background: #1c1931;
+      color: #35d6b1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .leaderboard tr:nth-child(even) {
+      background: #0b091a;
+    }
+    .leaderboard tr:hover {
+      background: #15123a;
+    }
+    .rank {
+      width: 60px;
+      font-weight: 700;
+    }
+    .user {
+      font-weight: 600;
+    }
+    .views {
+      font-weight: 700;
+      color: #7a5fff;
+    }
+
+    /* Top ranks highlight */
+    .first { background: #ffd70033; }
+    .second { background: #c0c0c033; }
+    .third { background: #cd7f3233; }
+    .first .rank { color: #ffd700; font-size: 18px; }
+    .second .rank { color: #c0c0c0; font-size: 17px; }
+    .third .rank { color: #cd7f32; font-size: 17px; }
+
+    .spinner {
+      display: block;
+      margin: 60px auto;
+      border: 4px solid rgba(255,255,255,0.22);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg) } }
+    .center {
+      text-align: center;
+      margin-top: 50px;
+      color: rgba(255,255,255,0.6);
+    }
   </style>
 </head>
 <body>
-  <h1>🔥 PTC Views Leaderboard</h1>
 
-  <div id="content">
-    <div class="center"><span class="spinner"></span> Loading leaderboard…</div>
-  </div>
+<h1>🔥 PTC Views Leaderboard</h1>
+<div id="resetTimer">Loading reset timer…</div>
+
+<div id="content">
+  <div class="spinner"></div>
+</div>
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  Timestamp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// FIREBASE CONFIG (same as your catalog page)
 const firebaseConfig = {
   apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
@@ -40,45 +124,88 @@ const firebaseConfig = {
   measurementId: "G-Z2XP3YN6NS"
 };
 
-if(!getApps().length) initializeApp(firebaseConfig);
+if (!getApps().length) initializeApp(firebaseConfig);
 const db = getFirestore();
-
 const contentEl = document.getElementById('content');
 
-// Fetch all ptcClicks and aggregate by user
-async function loadLeaderboard(){
-  const snap = await getDocs(collection(db,'ptcClicks'));
-  const usersMap = {};
+function maskUid(uid) {
+  // show first 6 chars only
+  return uid ? uid.slice(0, 6) + "…" : "";
+}
 
-  snap.forEach(doc=> {
+// calculate reset point for a 14-day cycle
+function getNextReset() {
+  const now = new Date();
+  const start = new Date(2025,0,1); // fixed epoch or pick your cycle start
+  const diff = now - start;
+  const cycles = Math.floor(diff / (14*24*60*60*1000));
+  const next = new Date(start.getTime() + ((cycles + 1)*14*24*60*60*1000));
+  return next;
+}
+
+function updateResetTimer() {
+  const next = getNextReset();
+  const diff = next - new Date();
+  if (diff <= 0) {
+    document.getElementById('resetTimer').textContent = "Resetting now…";
+    return;
+  }
+  const d = Math.floor(diff / (1000*60*60*24));
+  const h = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  const m = Math.floor((diff % (1000*60*60)) / (1000*60));
+  document.getElementById('resetTimer').textContent =
+    `Next reset in ${d}d ${h}h ${m}m`;
+}
+
+updateResetTimer();
+setInterval(updateResetTimer, 60000); // update once a minute
+
+async function loadLeaderboard() {
+  const now = new Date();
+  const fourteenAgo = new Date(now.getTime() - (14*24*60*60*1000));
+  const ts14 = Timestamp.fromDate(fourteenAgo);
+
+  const q = query(
+    collection(db,'ptcClicks'),
+    where('lastClickedAt','>=', ts14)
+  );
+  const snap = await getDocs(q);
+  const usersMap = {};
+  snap.forEach(doc => {
     const data = doc.data();
     const uid = data.viewerUid;
     const count = data.count || 0;
-
-    if(!usersMap[uid]) usersMap[uid] = { uid, total:0 };
+    if (!usersMap[uid]) usersMap[uid] = { uid, total: 0 };
     usersMap[uid].total += count;
   });
 
   const leaderboard = Object.values(usersMap)
-                             .sort((a,b) => b.total - a.total);
+    .sort((a,b) => b.total - a.total);
 
   renderTable(leaderboard);
 }
 
-function renderTable(list){
-  if(list.length === 0){
-    contentEl.innerHTML = `<div class="center">No leaderboard data yet.</div>`;
+function renderTable(list) {
+  if (list.length === 0) {
+    contentEl.innerHTML = `<div class="center">No leaderboard data in the last 14 days.</div>`;
     return;
   }
 
-  let html = `<table>
-    <thead><tr><th>#</th><th>User</th><th>Total PTC Clicks</th></tr></thead><tbody>`;
+  let html = `<table class="leaderboard">
+    <thead><tr>
+      <th>#</th><th>User</th><th>PTC Views</th>
+    </tr></thead><tbody>`;
 
   list.forEach((user, i) => {
-    html += `<tr>
-      <td>${i+1}</td>
-      <td>${user.uid}</td>
-      <td>${user.total}</td>
+    let cls = "";
+    if (i === 0) cls = "first";
+    else if (i === 1) cls = "second";
+    else if (i === 2) cls = "third";
+
+    html += `<tr class="${cls}">
+      <td class="rank">${i+1}</td>
+      <td class="user">${maskUid(user.uid)}</td>
+      <td class="views">${user.total}</td>
     </tr>`;
   });
 
@@ -86,12 +213,11 @@ function renderTable(list){
   contentEl.innerHTML = html;
 }
 
-// Initialize
-loadLeaderboard().catch(err=>{
+loadLeaderboard().catch(err => {
   contentEl.innerHTML = `<div class="center">Failed to load leaderboard.</div>`;
   console.error(err);
 });
-
 </script>
+
 </body>
 </html>
