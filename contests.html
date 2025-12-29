@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Games Contests — Beni-Wealth</title>
+  <title>Contests Page — Beni-Wealth</title>
 
   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
@@ -62,59 +62,69 @@
 <body>
   <div class="container">
     <a class="back-btn" href="dashboard.html">← Back to Dashboard</a>
-    <h1>Games Contests</h1>
+    <h1>Contests Page</h1>
     <div class="sub">Weekly leaderboard resets every Monday at 00:00 UTC</div>
     <div class="countdown" id="countdown">Loading countdown…</div>
 
     <div class="grid">
+      <!-- Existing Game Contest Cards -->
       <div class="card" onclick="location.href='game-4-leaderboard.html'">
         <h2>Snakes & Ladder</h2>
         <p>See who dominated this week!</p>
       </div>
-
       <div class="card" onclick="location.href='game-3-leaderboard.html'">
         <h2>Memory Flip</h2>
         <p>Match pairs and make the weekly leaderboard!</p>
       </div>
-
       <div class="card" onclick="location.href='game-2-leaderboard.html'">
         <h2>Spin The Wheel</h2>
         <p>Spin and win — check the weekly leaderboard!</p>
       </div>
+
+      <!-- New Contest Cards -->
+      <div class="card" onclick="location.href='ptc-leaderboard.html'">
+        <h2>PTC Contest</h2>
+        <p>Most PTC views this week wins!</p>
+      </div>
+
+      <div class="card" onclick="location.href='referrals-leaderboard.html'">
+        <h2>Referral Contest</h2>
+        <p>Refer more users and climb the leaderboard!</p>
+      </div>
     </div>
   </div>
 
-  <script>
-    // Countdown to next Monday 00:00 UTC
-    function updateCountdown() {
-      const now = new Date();
+<script>
+  // Countdown to next Monday 00:00 UTC
+  function updateCountdown() {
+    const now = new Date();
 
-      // find next Monday 00:00 UTC
-      const day = now.getUTCDay(); // 0=Sun,1=Mon,...6=Sat
-      const daysUntilMonday = (1 + 7 - day) % 7 || 7; // if Monday, next Monday
-      const nextMonday = new Date(Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate() + daysUntilMonday,
-        0,0,0,0
-      ));
+    // find next Monday 00:00 UTC
+    const day = now.getUTCDay(); // 0=Sun,1=Mon,...6=Sat
+    const daysUntilMonday = (1 + 7 - day) % 7 || 7;
+    const nextMonday = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + daysUntilMonday,
+      0,0,0,0
+    ));
 
-      const diff = nextMonday - now;
-      if (diff <= 0) {
-        document.getElementById('countdown').textContent = "Resetting now…";
-        return;
-      }
-
-      const hrs = Math.floor(diff / (1000*60*60));
-      const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
-      const secs = Math.floor((diff % (1000*60)) / 1000);
-
-      document.getElementById('countdown').textContent =
-        `Time until next reset: ${hrs}h ${mins}m ${secs}s`;
+    const diff = nextMonday - now;
+    if (diff <= 0) {
+      document.getElementById('countdown').textContent = "Resetting now…";
+      return;
     }
 
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
-  </script>
+    const hrs = Math.floor(diff / (1000*60*60));
+    const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
+    const secs = Math.floor((diff % (1000*60)) / 1000);
+
+    document.getElementById('countdown').textContent =
+      `Time until next reset: ${hrs}h ${mins}m ${secs}s`;
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+</script>
 </body>
 </html>
