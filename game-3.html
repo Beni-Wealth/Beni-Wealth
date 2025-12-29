@@ -3,58 +3,180 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>Beni-Wealth — Memory Flip</title>
+  <title>Beni-Wealth — Memory Flip)</title>
 
   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
 
-  <!-- Favicons -->
+  <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="theme-color" content="#2fe0b8">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Beni-Wealth — Memory Flip">
+  <meta property="og:description" content="Match pairs to score. Win to earn ₦50. Entry fee: ₦20.">
+  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="twitter:card" content="summary_large_image">
 
   <style>
     :root{
-      --bg1:#071021; --bg2:#0d1224; --text:#eaf2ff; --muted:rgba(255,255,255,0.66);
+      --bg1:#071021; --bg2:#0d1224; --muted:rgba(255,255,255,0.66); --text:#eaf2ff;
       --accent:#7a5fff; --success:#10b981; --danger:#ef4444;
       font-family:"Poppins",system-ui,Roboto,Arial;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.04), transparent), linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--text);}
+    html,body{height:100%;margin:0;background:radial-gradient(800px 400px at 10% 10%, rgba(122,95,255,0.04), transparent), linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--text);-webkit-font-smoothing:antialiased}
     .wrap{max-width:980px;margin:18px auto;padding:14px}
-    .controls, .hud{display:flex;gap:10px;align-items:center}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#35d6b1);display:grid;place-items:center;color:#041219;font-weight:800}
+    .title{font-weight:800}
+    .muted{color:var(--muted);font-size:13px}
+    .controls{display:flex;gap:10px;align-items:center}
     .btn{background:linear-gradient(90deg,var(--accent),#35d6b1);border:0;padding:10px 14px;border-radius:10px;color:#041219;font-weight:800;cursor:pointer}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
-    .board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
-    .tile{aspect-ratio:1/1;border-radius:10px;background:rgba(255,255,255,0.02);display:grid;place-items:center;font-size:clamp(14px,3.8vw,22px);cursor:pointer;border:2px solid rgba(255,255,255,0.03)}
-    .tile.flipped{background:rgba(255,255,255,0.15);color:#041219}
-    .tile.matched{background:rgba(16,185,129,0.2);border-color:rgba(16,185,129,0.6);color:#041219;cursor:default}
+    .layout{display:flex;gap:16px;flex-wrap:wrap}
+    .left{flex:1;min-width:260px}
+    .right{width:320px;min-width:220px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.02)}
+
+    /* board responsive: tiles scale by viewport width while preserving 4 columns */
+    .board{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(56px, 1fr));
+      gap:10px;margin-top:12px;width:100%;
+      touch-action: manipulation;
+    }
+
+    .tile{
+      aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:grid;place-items:center;font-weight:800;font-size:clamp(14px,3.8vw,22px);cursor:pointer;user-select:none;position:relative;border:2px solid rgba(255,255,255,0.03);transition:transform .12s ease, background .18s ease; -webkit-tap-highlight-color: rgba(0,0,0,0)
+    }
+    .tile:hover{transform:translateY(-4px)}
+    .tile.flipped{background:linear-gradient(90deg,#fff,#fff0);color:#041219}
+    .tile.matched{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.6);color:#041219;cursor:default}
+
+    .hud{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:8px}
+    .scorebox{font-weight:700}
     .log{margin-top:12px;max-height:260px;overflow:auto;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);font-size:13px}
+    .muted-note{color:var(--muted);font-size:13px;margin-top:8px}
+    .center{display:flex;align-items:center;justify-content:center}
+    .modal{position:fixed;left:0;top:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);z-index:9999}
+    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:14px;border-radius:12px;min-width:260px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+
+    /* music controls */
+    .music-controls{display:flex;gap:8px;align-items:center;margin-left:6px}
+    .icon-btn{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,0.02);cursor:pointer;font-weight:800}
+    .volume{width:110px}
+
+    /* mobile adjustments */
+    @media(max-width:880px){
+      .wrap{padding:12px;margin:12px}
+      header{gap:8px}
+      .logo{width:48px;height:48px}
+      .controls{flex-wrap:wrap;justify-content:flex-end}
+      .right{width:100%}
+      .board{gap:8px;grid-template-columns:repeat(4, minmax(48px, 1fr));}
+      .tile{font-size:clamp(12px,4.2vw,20px);border-radius:8px}
+      .muted-note{font-size:12px}
+      .btn{padding:10px 12px}
+    }
+
+    @media(max-width:420px){
+      /* Keep 4 columns but reduce spacing and increase tap area by larger border-radius */
+      .board{gap:6px;grid-template-columns:repeat(4, minmax(42px, 1fr));}
+      .tile{border-radius:6px}
+      header{align-items:flex-start}
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h2>Memory Flip — You vs Bot</h2>
+    <header>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="logo">BW</div>
+        <div>
+          <div class="title">Memory Flip — You vs Bot</div>
+          <div class="muted">Match pairs to score. Win to earn ₦50. Entry fee: ₦20.</div>
+        </div>
+      </div>
 
-    <div class="controls">
-      <div>Balance: <span id="balance">₦0.00</span></div>
-      <button id="playBtn" class="btn">Play (₦20)</button>
+      <div class="controls">
+        <div style="text-align:right">
+          <div class="muted">Balance</div>
+          <div id="balance" style="font-weight:800">₦0.00</div>
+        </div>
+
+        <!-- Music controls -->
+        <div class="music-controls" title="Music controls" aria-hidden="false">
+          <div id="musicToggle" class="icon-btn" aria-pressed="false" role="button" title="Toggle music">♪</div>
+          <input id="vol" class="volume" type="range" min="0" max="1" step="0.05" value="0.45" aria-label="music volume">
+        </div>
+
+        <button id="playBtn" class="btn">Play (₦20)</button>
+        <button id="backBtn" class="btn ghost">Back</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <div class="left">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:800">Game</div>
+            <div class="muted small" id="turnIndicator">Not playing</div>
+          </div>
+
+          <div id="boardWrap">
+            <div class="board" id="board"></div>
+          </div>
+
+          <div class="hud">
+            <div class="scorebox">You: <span id="playerScore">0</span></div>
+            <div class="scorebox">Bot: <span id="botScore">0</span></div>
+            <div><button id="restartBtn" class="btn ghost">Restart</button></div>
+          </div>
+
+          <div class="muted-note" id="gameNote">Press Play to start (₦20 will be charged).</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="card">
+          <div style="font-weight:900">Game log</div>
+          <div id="gamelog" class="log"><div class="muted">No activity yet</div></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div style="font-weight:900">How it works</div>
+          <div class="muted-note">
+            - Click a tile to flip. Match two identical tiles to score 1 point. <br>
+            - Players alternate turns; matches give an extra turn. <br>
+            - If you win, ₦50 is credited to your balance automatically.
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <div class="board" id="board"></div>
+  <!-- hidden looping background audio (replace src with your preferred track) -->
+  <audio id="bgMusic" loop crossorigin="anonymous">
+    <source src="music/ambient-loop.mp3" type="audio/mpeg">
+  </audio>
 
-    <div class="hud">
-      <div>You: <span id="playerScore">0</span></div>
-      <div>Bot: <span id="botScore">0</span></div>
-      <div>MMR: <span id="playerMMR">1000</span></div>
-      <div>Win streak: <span id="winStreak">0</span></div>
+  <!-- result modal -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true">
+    <div class="panel">
+      <div id="modalTitle" style="font-weight:900">Game over</div>
+      <div id="modalBody" class="muted-note" style="margin-top:12px"></div>
+      <div style="margin-top:12px" class="center">
+        <button id="modalClose" class="btn">Close</button>
+      </div>
     </div>
-
-    <div class="log" id="gamelog"><div style="color:var(--muted)">No activity yet</div></div>
   </div>
 
   <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, runTransaction, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, collection, runTransaction, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
@@ -62,143 +184,296 @@
       projectId: "beni-wealths",
       storageBucket: "beni-wealths.firebasestorage.app",
       messagingSenderId: "807950483822",
-      appId: "1:807950483822:web=e10fa87307e041c4d8417f",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const boardEl = document.getElementById('board');
+    // UI refs
     const playBtn = document.getElementById('playBtn');
+    const backBtn = document.getElementById('backBtn');
+    const restartBtn = document.getElementById('restartBtn');
     const balanceEl = document.getElementById('balance');
+    const boardEl = document.getElementById('board');
     const playerScoreEl = document.getElementById('playerScore');
     const botScoreEl = document.getElementById('botScore');
     const gamelog = document.getElementById('gamelog');
-    const playerMMREl = document.getElementById('playerMMR');
-    const winStreakEl = document.getElementById('winStreak');
+    const turnIndicator = document.getElementById('turnIndicator');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+    const gameNote = document.getElementById('gameNote');
 
-    const ENTRY_FEE = 20, WIN_REWARD = 50;
-    const fruits = ['🍎','🍌','🍇','🍓','🍉','🥭','🍍','🍑'];
+    // music UI
+    const bgMusic = document.getElementById('bgMusic');
+    const musicToggle = document.getElementById('musicToggle');
+    const volSlider = document.getElementById('vol');
+    const MUSIC_KEY = 'bw_music_enabled_v1';
+    const MUSIC_VOL_KEY = 'bw_music_vol_v1';
 
-    let currentUser = null, userBalance = 0;
-    let tiles = [], firstFlip = null, secondFlip = null;
-    let lockBoard = true, playerScore = 0, botScore = 0, remainingPairs = 0;
-    let turn = 'none';
-    let playerMMR = 1000, winStreak = 0, maxWinStreak = 0;
+    // constants
+    const ENTRY_FEE = 20;
+    const WIN_REWARD = 50;
 
-    function formatN(n){ return '₦'+Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+    // local game state
+    let currentUser = null;
+    let userBalance = 0;
+    let gameIdRef = null; // doc ref for this game in memoryGames
+    let tiles = []; // array of objects { id, value, flipped, matched }
+    let firstFlip = null;
+    let secondFlip = null;
+    let lockBoard = true; // until play pressed
+    let playerScore = 0;
+    let botScore = 0;
+    let turn = 'none'; // 'player' or 'bot'
+    let botMemory = {}; // value -> set of indices where seen and not matched
+    let remainingPairs = 0;
+
+    // helpers
+    function formatN(n){ return '₦' + Number(n||0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
     function log(msg){
-      const div=document.createElement('div'); div.textContent=msg;
-      if(gamelog.firstChild?.style?.color==='var(--muted)') gamelog.innerHTML='';
-      gamelog.prepend(div);
+      const d = document.createElement('div');
+      d.style.padding = '8px 0';
+      d.innerHTML = msg;
+      if(gamelog.firstChild && gamelog.firstChild.className === 'muted') gamelog.innerHTML = '';
+      gamelog.prepend(d);
+      while(gamelog.children.length > 120) gamelog.removeChild(gamelog.lastChild);
     }
-    async function refreshBalance(){
-      if(!currentUser){ balanceEl.textContent=formatN(0); return; }
-      try{
-        const uRef=doc(db,'users',currentUser.uid),snap=await getDoc(uRef);
-        userBalance = snap.exists()?Number(snap.data().balance||0):0;
-      } catch{}
-      balanceEl.textContent=formatN(userBalance);
-    }
+    function setStatus(text){ turnIndicator.textContent = text; }
 
-    async function fetchStats(){
-      if(!currentUser) return;
-      const sRef=doc(db,'memoryGames',currentUser.uid),snap=await getDoc(sRef);
-      if(snap.exists()){ const d=snap.data();
-        playerMMR=d.mmr||1000; winStreak=d.currentWinStreak||0; maxWinStreak=d.maxWinStreak||0;
-      }
-      playerMMREl.textContent=playerMMR; winStreakEl.textContent=winStreak;
-    }
-
-    function createBoard(){
-      boardEl.innerHTML=''; tiles=[];
-      firstFlip=secondFlip=null; lockBoard=true;
-      playerScore=0; botScore=0; playerScoreEl.textContent='0'; botScoreEl.textContent='0';
-      const vals=[...Array(8).keys()].flatMap(i=>[i,i]).sort(()=>Math.random()-0.5);
-      remainingPairs=vals.length/2;
-      vals.forEach(v=>{
-        const tile=document.createElement('div');
-        tile.className='tile'; tile.dataset.value=v; tile.dataset.emoji=fruits[v];
-        tile.addEventListener('click',()=>{ if(turn==='player') flipCard(tile); });
-        boardEl.appendChild(tile); tiles.push(tile);
-      });
-      lockBoard=false; turn='player';
-      log('Game started — Your turn');
-    }
-
-    function flipCard(tile){
-      if(lockBoard||tile.classList.contains('flipped')||tile.classList.contains('matched')) return;
-      tile.classList.add('flipped'); tile.textContent=tile.dataset.emoji;
-      if(!firstFlip){ firstFlip=tile; return; }
-      secondFlip=tile; lockBoard=true; setTimeout(checkMatch,300);
-    }
-
-    function nextTurn(){ turn = turn==='player'?'bot':'player'; log(turn==='player'?"Your turn":"Bot's turn"); }
-
-    function checkMatch(){
-      const match = firstFlip.dataset.value===secondFlip.dataset.value;
-      if(match){
-        firstFlip.classList.add('matched'); secondFlip.classList.add('matched');
-        if(turn==='player'){ playerScore++; playerScoreEl.textContent=playerScore; log('You matched!'); }
-        else { botScore++; botScoreEl.textContent=botScore; log('Bot matched!'); }
-        remainingPairs--;
-        firstFlip=secondFlip=null; lockBoard=false;
-        if(remainingPairs===0) return finishGame();
-        if(turn==='bot') setTimeout(botPlay,500);
+    // MUSIC: init from localStorage
+    function initMusicControls(){
+      const enabled = localStorage.getItem(MUSIC_KEY) !== '0'; // default true
+      musicToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+      musicToggle.textContent = enabled ? '♫' : '♪';
+      const vol = Number(localStorage.getItem(MUSIC_VOL_KEY) || volSlider.value);
+      volSlider.value = vol;
+      bgMusic.volume = vol;
+      if(enabled){
+        musicToggle.classList.add('active');
       } else {
-        setTimeout(()=>{
-          firstFlip.classList.remove('flipped'); firstFlip.textContent='';
-          secondFlip.classList.remove('flipped'); secondFlip.textContent='';
-          firstFlip=secondFlip=null; lockBoard=false; nextTurn();
-          if(turn==='bot') setTimeout(botPlay,600);
-        },600);
+        musicToggle.classList.remove('active');
       }
     }
 
-    function botPlay(){
-      if(turn!=='bot'||lockBoard) return;
-      lockBoard=true;
-      const unseen=tiles.filter(t=>!t.classList.contains('flipped')&&!t.classList.contains('matched'));
-      if(unseen.length===0) return;
-      const pick1=unseen[Math.floor(Math.random()*unseen.length)];
-      flipCard(pick1);
-      setTimeout(()=>{
-        const unseen2=tiles.filter(t=>!t.classList.contains('flipped')&&!t.classList.contains('matched'));
-        if(unseen2.length){
-          const pick2=unseen2[Math.floor(Math.random()*unseen2.length)];
-          flipCard(pick2);
-        }
-      },500);
-    }
-
-    async function finishGame(){
-      const didWin = playerScore>botScore;
-      log(didWin?'You won!':'Bot won!');
-      updateStats(didWin);
-    }
-
-    async function updateStats(didWin){
-      if(!currentUser) return;
-      if(didWin) winStreak++; else winStreak=0;
-      playerMMR += didWin?20:-15; maxWinStreak=Math.max(maxWinStreak,winStreak);
-      await setDoc(doc(db,'memoryGames',currentUser.uid),{ mmr:playerMMR,currentWinStreak:winStreak,maxWinStreak,updatedAt:serverTimestamp() },{merge:true});
-      playerMMREl.textContent=playerMMR; winStreakEl.textContent=winStreak;
-    }
-
-    playBtn.addEventListener('click',async()=>{
-      if(!currentUser){ alert('Sign in'); return; }
-      if(userBalance<ENTRY_FEE){ alert('Insufficient funds'); return; }
-      await runTransaction(db,async t=>{
-        const uRef=doc(db,'users',currentUser.uid),us=await t.get(uRef);
-        const bal=us.exists()?Number(us.data().balance||0):0;
-        if(bal<ENTRY_FEE) throw 'nf';
-        t.update(uRef,{ balance:bal-ENTRY_FEE }); userBalance=bal-ENTRY_FEE;
-      });
-      refreshBalance(); createBoard();
+    musicToggle.addEventListener('click', async () => {
+      const isOn = localStorage.getItem(MUSIC_KEY) !== '0';
+      if(isOn){
+        localStorage.setItem(MUSIC_KEY, '0');
+        try{ bgMusic.pause(); }catch(e){}
+        musicToggle.setAttribute('aria-pressed','false'); musicToggle.textContent = '♪';
+      } else {
+        localStorage.setItem(MUSIC_KEY, '1');
+        try{ await bgMusic.play(); }catch(e){}
+        musicToggle.setAttribute('aria-pressed','true'); musicToggle.textContent = '♫';
+      }
     });
 
-    onAuthStateChanged(auth,async user=>{ currentUser=user; refreshBalance(); fetchStats(); });
+    volSlider.addEventListener('input', (e) => {
+      const v = Number(e.target.value);
+      bgMusic.volume = v;
+      localStorage.setItem(MUSIC_VOL_KEY, String(v));
+    });
+
+    async function tryStartMusicOnUserGesture(){
+      if(localStorage.getItem(MUSIC_KEY) === '0') return;
+      try { await bgMusic.play(); } catch(e){}
+    }
+
+    // fetch & display balance (best-effort)
+    async function refreshBalanceDisplay(){
+      if(!currentUser){ balanceEl.textContent = formatN(0); return; }
+      try{
+        const uRef = doc(db, 'users', currentUser.uid);
+        const uSnap = await getDoc(uRef);
+        if(uSnap.exists()){
+          const d = uSnap.data(); userBalance = Number(d.balance ?? d.amount ?? 0) || 0;
+        } else {
+          const bRef = doc(db, 'balances', currentUser.uid);
+          const bSnap = await getDoc(bRef);
+          if(bSnap.exists()){ const d = bSnap.data(); userBalance = Number(d.balance ?? d.amount ?? 0) || 0; }
+          else userBalance = 0;
+        }
+      }catch(e){ console.warn('balance read failed', e); }
+      balanceEl.textContent = formatN(userBalance);
+    }
+
+    // create shuffled tiles with N pairs (default 10 pairs -> 20 tiles)
+    function setupTiles(pairs = 10){
+      const values = ['🍎','🍌','🍇','🍒','🍋','🍉','🍓','🍍','🍑','🥝','🥭','🍐','🌽','🥕','🥔','🥦','🍠','🍆','🍅','🥥'];
+      const use = values.slice(0,pairs);
+      const paired = [...use, ...use];
+      for(let i = paired.length -1; i>0; i--){
+        const j = Math.floor(Math.random() * (i+1));
+        [paired[i], paired[j]] = [paired[j], paired[i]];
+      }
+      tiles = paired.map((v, idx) => ({ id: idx, value: v, flipped:false, matched:false }));
+      remainingPairs = pairs;
+      firstFlip = null; secondFlip = null; lockBoard = false;
+      playerScore = 0; botScore = 0; botMemory = {};
+      renderBoard(); updateScores(); setStatus('Your turn'); turn = 'player';
+      log(`<div style="color:lightgreen">Game started — pairs: ${pairs}</div>`);
+    }
+
+    function renderBoard(){
+      boardEl.innerHTML = '';
+      tiles.forEach((t, idx) => {
+        const el = document.createElement('div');
+        el.className = 'tile' + (t.flipped ? ' flipped' : '') + (t.matched ? ' matched' : '');
+        el.dataset.index = idx;
+        el.innerHTML = t.flipped || t.matched ? `<div>${t.value}</div>` : `<div style="font-size:18px;color:var(--muted)">?</div>`;
+        el.addEventListener('click', onTileClick, {passive:true});
+        el.style.touchAction = 'manipulation';
+        boardEl.appendChild(el);
+      });
+    }
+
+    function updateScores(){ playerScoreEl.textContent = String(playerScore); botScoreEl.textContent = String(botScore); }
+
+    // tile click handler (user)
+    function onTileClick(e){
+      if(lockBoard) return;
+      if(turn !== 'player') return;
+      const idx = Number(e.currentTarget.dataset.index);
+      const tile = tiles[idx];
+      if(tile.flipped || tile.matched) return;
+      flipTile(idx, 'player');
+    }
+
+    function flipTile(idx, by){
+      const tile = tiles[idx];
+      tile.flipped = true; renderBoard();
+      if(by === 'player' || by === 'bot'){
+        if(!tile.matched){ botMemory[tile.value] = botMemory[tile.value] || new Set(); botMemory[tile.value].add(idx); }
+      }
+      if(firstFlip === null){ firstFlip = idx; return; }
+      if(secondFlip === null && idx !== firstFlip){ secondFlip = idx; lockBoard = true; checkMatch(by); }
+    }
+
+    async function checkMatch(by){
+      const a = tiles[firstFlip]; const b = tiles[secondFlip]; const isMatch = a.value === b.value;
+      if(isMatch){
+        a.matched = b.matched = true; remainingPairs--;
+        if(by === 'player') { playerScore++; log(`<div>You matched ${a.value} — +1</div>`); }
+        else { botScore++; log(`<div style="color:orange">Bot matched ${a.value} — +1</div>`); }
+        if(botMemory[a.value]){ botMemory[a.value].delete(firstFlip); botMemory[a.value].delete(secondFlip); if(botMemory[a.value].size===0) delete botMemory[a.value]; }
+        updateScores();
+        setTimeout(()=>{
+          firstFlip = null; secondFlip = null; lockBoard = false; renderBoard();
+          if(remainingPairs <= 0) finishGame();
+          else { if(by === 'player'){ setStatus("Your turn — you scored a match"); } else { setStatus("Bot's turn — bot scored a match"); botTurn(); } }
+        }, 700);
+      } else {
+        if(by === 'player') log(`<div>Wrong — ${a.value} ≠ ${b.value}</div>`); else log(`<div style="color:orange">Bot missed — ${a.value} ≠ ${b.value}</div>`);
+        setTimeout(()=>{
+          a.flipped = false; b.flipped = false; firstFlip = null; secondFlip = null; renderBoard();
+          if(by === 'player'){ turn = 'bot'; setStatus("Bot's turn"); botTurn(); } else { turn = 'player'; setStatus("Your turn"); }
+          lockBoard = false;
+        }, 700);
+      }
+    }
+
+    // BOT logic (same as before)
+    async function botTurn(){
+      if(remainingPairs <= 0) return; turn = 'bot'; lockBoard = true; setStatus("Bot is thinking..."); await sleep(600);
+
+      for(const val in botMemory){
+        const idxs = Array.from(botMemory[val]);
+        const usable = idxs.filter(i => !tiles[i].matched);
+        if(usable.length >= 2){ await botFlipSequence(usable[0], usable[1]); return; }
+      }
+
+      for(const val in botMemory){
+        const idxs = Array.from(botMemory[val]).filter(i=> !tiles[i].matched);
+        if(idxs.length === 1){
+          const knownIdx = idxs[0];
+          const candidate = tiles.map((t,i)=> i).filter(i=> !tiles[i].matched && i !== knownIdx && !tiles[i].flipped);
+          if(candidate.length>0){ const pick = candidate[Math.floor(Math.random()*candidate.length)]; await botFlipSequence(knownIdx, pick); return; }
+        }
+      }
+
+      const unseen = tiles.map((t,i)=> i).filter(i => !tiles[i].matched && !tiles[i].flipped);
+      if(unseen.length === 0){ turn = 'player'; lockBoard = false; setStatus("Your turn"); return; }
+      const notSeen = unseen.filter(i => { const v = tiles[i].value; return !botMemory[v] || botMemory[v].size === 0; });
+      let pickA, pickB;
+      if(notSeen.length >= 2){ pickA = notSeen[Math.floor(Math.random()*notSeen.length)]; const rem = notSeen.filter(i=> i !== pickA); pickB = rem[Math.floor(Math.random()*rem.length)]; }
+      else { pickA = unseen[Math.floor(Math.random()*unseen.length)]; const rem = unseen.filter(i => i !== pickA); pickB = rem[Math.floor(Math.random()*rem.length)]; }
+      await botFlipSequence(pickA, pickB);
+    }
+
+    async function botFlipSequence(i1, i2){ await sleep(350); flipTile(i1, 'bot'); await sleep(700); flipTile(i2, 'bot'); }
+    function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+    async function finishGame(){
+      lockBoard = true; setStatus('Game complete'); log(`<div style="font-weight:900">Final — You: ${playerScore} — Bot: ${botScore}</div>`);
+      const didUserWin = playerScore > botScore;
+      if(didUserWin){ setStatus('You won — crediting reward...');
+        try {
+          await runTransaction(db, async (tx)=>{
+            const uRef = doc(db, 'users', currentUser.uid); const bRef = doc(db, 'balances', currentUser.uid);
+            const uSnap = await tx.get(uRef); const bSnap = await tx.get(bRef);
+            let balance = 0; let targetRef = uRef;
+            if(uSnap.exists()){ balance = Number(uSnap.data().balance ?? uSnap.data().amount ?? 0) || 0; targetRef = uRef; }
+            else if(bSnap.exists()){ balance = Number(bSnap.data().balance ?? bSnap.data().amount ?? 0) || 0; targetRef = bRef; }
+            const newBal = balance + WIN_REWARD; tx.set(targetRef, { balance: newBal }, { merge: true });
+            if(gameIdRef){ const gRef = doc(db, 'memoryGames', gameIdRef.id); tx.set(gRef, { userId: currentUser.uid, entryFee: ENTRY_FEE, result: 'win', playerScore, botScore, completedAt: serverTimestamp() }, { merge: true }); }
+          });
+          log(`<div style="color:lightgreen">Credited ${formatN(WIN_REWARD)} to your account.</div>`);
+          await refreshBalanceDisplay();
+        } catch(err){ console.error('credit failed', err); log(`<div style="color:orange">Failed to credit reward: ${err.message || err}</div>`); }
+      } else {
+        if(gameIdRef){ try { await setDoc(doc(db, 'memoryGames', gameIdRef.id), { userId: currentUser.uid, entryFee: ENTRY_FEE, result: playerScore > botScore ? 'win' : (playerScore === botScore ? 'draw' : 'lose'), playerScore, botScore, completedAt: serverTimestamp() }, { merge: true }); } catch(e){ console.warn('update game doc failed', e); } }
+      }
+
+      modalTitle.textContent = didUserWin ? 'You won!' : (playerScore === botScore ? 'Draw' : 'You lost');
+      modalBody.innerHTML = `Final score — You: <strong>${playerScore}</strong> • Bot: <strong>${botScore}</strong>${didUserWin ? `<div style="margin-top:8px;color:lightgreen">₦${WIN_REWARD} credited to your account.</div>` : ''}`;
+      modal.style.display = 'flex'; lockBoard = true; turn = 'none';
+    }
+
+    // Play: charge entry fee and create memoryGames doc inside transaction
+    playBtn.addEventListener('click', async () => {
+      if(!currentUser){ alert('Sign in on the main site first.'); return; }
+      if(!confirm(`Start a Memory game? ₦${ENTRY_FEE} will be deducted.`)) return;
+
+      playBtn.disabled = true; gameNote.textContent = 'Charging entry fee...';
+      const gamesCol = collection(db, 'memoryGames'); const newGameRef = doc(gamesCol); gameIdRef = newGameRef;
+
+      try {
+        await runTransaction(db, async (tx) => {
+          const uRef = doc(db, 'users', currentUser.uid); const bRef = doc(db, 'balances', currentUser.uid);
+          const uSnap = await tx.get(uRef); const bSnap = await tx.get(bRef);
+          let balance = 0; let targetRef = uRef;
+          if(uSnap.exists()){ balance = Number(uSnap.data().balance ?? uSnap.data().amount ?? 0) || 0; targetRef = uRef; }
+          else if(bSnap.exists()){ balance = Number(bSnap.data().balance ?? bSnap.data().amount ?? 0) || 0; targetRef = bRef; }
+          if(balance < ENTRY_FEE) throw new Error('insufficient-funds');
+          const newBal = balance - ENTRY_FEE; tx.set(targetRef, { balance: newBal }, { merge: true });
+          tx.set(newGameRef, { userId: currentUser.uid, entryFee: ENTRY_FEE, startedAt: serverTimestamp(), status: 'started' });
+        });
+
+        await refreshBalanceDisplay(); gameNote.textContent = 'Game in progress'; setupTiles(10); tryStartMusicOnUserGesture(); playBtn.disabled = false;
+      } catch(err){ console.error('entry charge failed', err); playBtn.disabled = false; gameNote.textContent = 'Could not start game'; if(err.message && err.message.includes('insufficient-funds')) alert('Insufficient funds. Please recharge to play.'); else alert('Could not charge entry fee: ' + (err.message || err)); await refreshBalanceDisplay(); }
+    });
+
+    // restart (local)
+    restartBtn.addEventListener('click', ()=>{ if(!confirm('Restart the board? This will not refund entry fee.')) return; setupTiles(10); });
+    backBtn.addEventListener('click', ()=> { window.location.href = 'mini-games.html'; });
+    modalClose.addEventListener('click', ()=> { modal.style.display = 'none'; });
+
+    // auth
+    onAuthStateChanged(auth, async (user) => { currentUser = user; await refreshBalanceDisplay(); initMusicControls(); if(!user) { setStatus('Sign in on the main site to play'); playBtn.disabled = true; } else { setStatus('Ready — press Play to start'); playBtn.disabled = false; } });
+
+    // initialize empty 20-tile board disabled until play
+    (function initEmpty(){ boardEl.innerHTML = ''; for(let i=0;i<20;i++){ const el = document.createElement('div'); el.className='tile'; el.innerHTML = '<div style="font-size:18px;color:var(--muted)">?</div>'; boardEl.appendChild(el); } playerScore = 0; botScore = 0; updateScores(); })();
+
+    // on unload persist music volume & enabled
+    window.addEventListener('beforeunload', ()=> { localStorage.setItem(MUSIC_VOL_KEY, String(bgMusic.volume)); const enabled = musicToggle.getAttribute('aria-pressed') === 'true'; localStorage.setItem(MUSIC_KEY, enabled ? '1' : '0'); });
+
+    // attempt to set bgMusic volume from storage at runtime start
+    try { const vol = Number(localStorage.getItem(MUSIC_VOL_KEY) || volSlider.value); volSlider.value = vol; bgMusic.volume = vol; } catch(e){}
+
   </script>
 </body>
 </html>
