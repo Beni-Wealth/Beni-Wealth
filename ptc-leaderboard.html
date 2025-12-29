@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — PTC Leaderboard</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <meta name="theme-color" content="#7a5fff" />
+  <style>
+    body{font-family:'Poppins',system-ui,Arial; padding:18px; background:#0f0820; color:#eaf2ff;}
+    h1{font-size:24px;margin-bottom:12px;color:#7a5fff;}
+    table{width:100%;border-collapse:collapse;margin-top:18px;}
+    th,td{padding:10px;border-bottom:1px solid #2a2435;}
+    th{color:#35d6b1;text-align:left;}
+    .spinner{ animation:spin 1s linear infinite; border:3px solid rgba(255,255,255,0.22);border-top-color:#ffffff;border-radius:50%;width:18px;height:18px;display:inline-block;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .center{text-align:center;margin-top:40px;color:rgba(255,255,255,0.6);}
+  </style>
+</head>
+<body>
+  <h1>🔥 PTC Views Leaderboard</h1>
+
+  <div id="content">
+    <div class="center"><span class="spinner"></span> Loading leaderboard…</div>
+  </div>
+
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+// FIREBASE CONFIG (same as your catalog page)
+const firebaseConfig = {
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  authDomain: "beni-wealths.firebaseapp.com",
+  projectId: "beni-wealths",
+  storageBucket: "beni-wealths.appspot.com",
+  messagingSenderId: "807950483822",
+  appId: "1:807950483822:web=e10fa87307e041c4d8417f",
+  measurementId: "G-Z2XP3YN6NS"
+};
+
+if(!getApps().length) initializeApp(firebaseConfig);
+const db = getFirestore();
+
+const contentEl = document.getElementById('content');
+
+// Fetch all ptcClicks and aggregate by user
+async function loadLeaderboard(){
+  const snap = await getDocs(collection(db,'ptcClicks'));
+  const usersMap = {};
+
+  snap.forEach(doc=> {
+    const data = doc.data();
+    const uid = data.viewerUid;
+    const count = data.count || 0;
+
+    if(!usersMap[uid]) usersMap[uid] = { uid, total:0 };
+    usersMap[uid].total += count;
+  });
+
+  const leaderboard = Object.values(usersMap)
+                             .sort((a,b) => b.total - a.total);
+
+  renderTable(leaderboard);
+}
+
+function renderTable(list){
+  if(list.length === 0){
+    contentEl.innerHTML = `<div class="center">No leaderboard data yet.</div>`;
+    return;
+  }
+
+  let html = `<table>
+    <thead><tr><th>#</th><th>User</th><th>Total PTC Clicks</th></tr></thead><tbody>`;
+
+  list.forEach((user, i) => {
+    html += `<tr>
+      <td>${i+1}</td>
+      <td>${user.uid}</td>
+      <td>${user.total}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  contentEl.innerHTML = html;
+}
+
+// Initialize
+loadLeaderboard().catch(err=>{
+  contentEl.innerHTML = `<div class="center">Failed to load leaderboard.</div>`;
+  console.error(err);
+});
+
+</script>
+</body>
+</html>
