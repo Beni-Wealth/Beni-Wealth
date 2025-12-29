@@ -12,26 +12,20 @@
     font-family:'Poppins',system-ui,Arial;
     background:#0e0b22;
     color:#eaf2ff;
-    margin:0;padding:0;
+    margin:0; padding:0;
   }
-
   .page {
-    max-width:700px; margin: auto; padding:20px;
+    max-width:700px; margin:auto; padding:20px;
   }
   header {
-    text-align:center;
-    margin-bottom:24px;
+    text-align:center; margin-bottom:24px;
   }
   header h1 {
-    font-size:2rem;
-    color:#35d6b1;
-    margin:0;
+    font-size:2rem; color:#35d6b1; margin:0;
   }
   header p {
-    color:rgba(255,255,255,0.7);
-    font-size:14px;
+    color:rgba(255,255,255,0.7); font-size:14px;
   }
-
   .card {
     background:#131120;
     padding:18px;
@@ -40,12 +34,10 @@
     margin-bottom:24px;
     text-align:center;
   }
-
   .timer {
     font-size:22px; font-weight:700;
     color:#7a5fff; margin-bottom:16px;
   }
-
   .controls {
     display:flex; justify-content:center; gap:12px;
     margin-bottom:12px;
@@ -57,38 +49,34 @@
   }
   .controls button {
     padding:10px 18px;
-    border:none;border-radius:8px;
-    background:#35d6b1;color:#041219;
-    font-weight:700;cursor:pointer;
+    border:none; border-radius:8px;
+    background:#35d6b1; color:#041219;
+    font-weight:700; cursor:pointer;
     transition:0.2s ease;
   }
   .controls button:hover {
     background:#2bb39d;
   }
-
   #msg {
     text-align:center;
     font-size:15px;
     margin-top:12px;
     color:#ffd700;
   }
-
   #luckyNumbers {
     font-size:18px; font-weight:700;
-    text-align:center;
-    color:#35d6b1;
+    text-align:center; color:#35d6b1;
     margin-top:20px;
   }
 
-  /* Modal overlay */
+  /* Modal */
   .modal {
     display:none; position:fixed;
-    top:0;left:0; width:100%;height:100%;
+    top:0; left:0; width:100%; height:100%;
     background:rgba(0,0,0,0.8);
-    justify-content:center;align-items:center;
-    padding:20px;z-index:10;
+    justify-content:center; align-items:center;
+    padding:20px; z-index:10;
   }
-
   .modal-content {
     background:#0f0c24;
     padding:18px; border-radius:10px;
@@ -96,7 +84,6 @@
     box-shadow:0 6px 24px rgba(0,0,0,0.5);
     text-align:center;
   }
-
   .modal-content h2 {
     margin-top:0; color:#35d6b1;
   }
@@ -108,7 +95,6 @@
     border-radius:6px; margin:6px 0;
     font-size:16px;
   }
-
   .close-btn {
     display:block;
     margin-top:14px;
@@ -118,20 +104,19 @@
     font-weight:700; cursor:pointer;
   }
 
-  /* Confirmation overlay */
+  /* Confirm */
   .confirm-box {
     background:#1c1935;
-    border-radius:12px;
-    padding:18px;
+    border-radius:12px; padding:18px;
   }
   .confirm-btns {
     display:flex; gap:10px;
-    justify-content: center; margin-top:14px;
+    justify-content:center; margin-top:14px;
   }
   .confirm-btn {
     padding:10px 20px;
-    border:none;border-radius:8px;
-    font-weight:700;cursor:pointer;
+    border:none; border-radius:8px;
+    font-weight:700; cursor:pointer;
   }
   .confirm-confirm { background:#35d6b1; color:#041219; }
   .confirm-cancel { background:#7a5fff; color:#041219; }
@@ -143,11 +128,11 @@
 
   <header>
     <h1>🎟️ Raffle Draw</h1>
-    <p>Select your lucky numbers! Each ticket costs ₦50.</p>
+    <p>Select your lucky numbers! Each ticket costs ₦50. Max 100 per user.</p>
   </header>
 
   <div class="card">
-    <div id="timer" class="timer">Initializing raffle timer…</div>
+    <div id="timer" class="timer">48h 0m 0s left</div>
 
     <div class="controls">
       <input id="pickInput" type="number" min="1" max="100" placeholder="1–100"/>
@@ -170,11 +155,11 @@
   </div>
 </div>
 
-<!-- Confirmation Modal -->
+<!-- Confirm Modal -->
 <div id="confirmModal" class="modal">
   <div class="modal-content confirm-box">
-    <h2>Confirm Ticket Pick</h2>
-    <p>Are you sure you want to buy ticket number <span id="confirmNum"></span> for ₦50?</p>
+    <h2>Confirm Ticket?</h2>
+    <p>Buy ticket number <span id="confirmNum"></span> for ₦50?</p>
     <div class="confirm-btns">
       <button id="confirmYes" class="confirm-btn confirm-confirm">Yes</button>
       <button id="confirmNo" class="confirm-btn confirm-cancel">No</button>
@@ -191,7 +176,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-// Firebase init
+// Firebase
 const firebaseConfig = {
   apiKey:"AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
   authDomain:"beni-wealths.firebaseapp.com",
@@ -202,6 +187,7 @@ const firebaseConfig = {
   measurementId:"G-Z2XP3YN6NS"
 };
 if(!getApps().length) initializeApp(firebaseConfig);
+
 const db = getFirestore();
 const auth = getAuth();
 
@@ -228,114 +214,161 @@ const confirmNum = document.getElementById("confirmNum");
 const confirmYes = document.getElementById("confirmYes");
 const confirmNo = document.getElementById("confirmNo");
 
-// Auth
+// Auth state
 onAuthStateChanged(auth, user => {
   currentUser = user;
-  if(!user){
-    msgEl.textContent = "Sign in to participate!";
-    pickBtn.disabled=true;
-    viewHistoryBtn.disabled=true;
+  if(!user) {
+    msgEl.textContent = "Sign in to join the raffle!";
+    pickBtn.disabled = true;
+    viewHistoryBtn.disabled = true;
   }
 });
 
-// get active cycle
+// Initialize cycle
 async function initCycle(){
-  const now=Timestamp.now();
-  const snap=await getDocs(query(collection(db,"raffleCycles"),
-    where("endAt",">",now),
+  const now = Timestamp.now();
+  const cSnap = await getDocs(query(
+    collection(db,"raffleCycles"),
+    where("endAt", ">", now),
     where("completed","==",false),
     limit(1)
   ));
-  if(!snap.empty){
-    activeCycle = snap.docs[0];
+
+  if(!cSnap.empty) {
+    activeCycle = cSnap.docs[0];
   } else {
     const start = Timestamp.now();
-    const end = Timestamp.fromMillis(start.toMillis()+48*60*60*1000);
-    const ref = await addDoc(collection(db,"raffleCycles"),{
+    const end = Timestamp.fromMillis(start.toMillis() + 48*60*60*1000);
+    const ref = await addDoc(collection(db,"raffleCycles"), {
       startAt:start, endAt:end, luckyNumbers:[], completed:false
     });
-    activeCycle = (await getDocs(query(collection(db,"raffleCycles"),
-      where("__name__", "==", ref.id)
+    activeCycle = (await getDocs(query(
+      collection(db,"raffleCycles"),
+      where("__name__","==",ref.id)
     ))).docs[0];
   }
+
   startTimer();
   showLucky();
 }
+
 function startTimer(){
   const end = activeCycle.data().endAt.toMillis();
-  const interval = setInterval(async ()=>{
-    const diff=end-Date.now();
-    if(diff<=0){
-      clearInterval(interval);
-      timerEl.textContent="Drawing lucky numbers now…";
-      await drawLucky();
-    } else {
-      const hrs=Math.floor(diff/3600000);
-      const mins=Math.floor((diff%3600000)/60000);
-      const secs=Math.floor((diff%60000)/1000);
-      timerEl.textContent=`${hrs}h ${mins}m ${secs}s left`;
-    }
-  },1000);
+  updateTimer(end);
+
+  setInterval(() => updateTimer(end), 1000);
+}
+
+function updateTimer(end) {
+  const diff = end - Date.now();
+  if(diff <= 0) {
+    timerEl.textContent = "Raffle ended — drawing numbers…";
+    drawLucky();
+    return;
+  }
+  const hrs = Math.floor(diff/(1000*60*60));
+  const mins = Math.floor((diff%(1000*60*60))/(1000*60));
+  const secs = Math.floor((diff%(1000*60))/1000);
+  timerEl.textContent = `${hrs}h ${mins}m ${secs}s left`;
 }
 
 // Show history
-viewHistoryBtn.addEventListener("click", async ()=>{
-  picksListEl.innerHTML="Loading your picks…";
-  historyModal.style.display="flex";
+viewHistoryBtn.onclick = async ()=>{
+  picksListEl.innerHTML = "<li>Loading your picks…</li>";
+  historyModal.style.display = "flex";
   const q = query(collection(db,"rafflePicks"),
     where("userUid","==",currentUser.uid),
     where("cycleId","==",activeCycle.id)
   );
-  const s = await getDocs(q);
-  picksListEl.innerHTML="";
-  if(s.empty) {
-    picksListEl.innerHTML="<li>No picks yet</li>";
-  }
-  s.forEach(d=>{
+  const snap = await getDocs(q);
+  picksListEl.innerHTML = "";
+  if(snap.empty) picksListEl.innerHTML = "<li>No picks yet</li>";
+  snap.forEach(d=>{
     const li = document.createElement("li");
     li.textContent = "#"+d.data().pickNumber;
     picksListEl.appendChild(li);
   });
-});
+};
 closeModal.onclick = ()=> historyModal.style.display="none";
 
-// Ticket pick with confirmation
+// Pick confirmation
 pickBtn.onclick = ()=>{
-  const num=parseInt(pickInput.value);
-  if(!num||num<1||num>100){ msgEl.textContent="Pick 1–100"; return;}
-  pendingPick=num;
-  confirmNum.textContent=num;
-  confirmModal.style.display="flex";
+  const num = parseInt(pickInput.value);
+  if(!num||num<1||num>100){ msgEl.textContent="Enter 1–100"; return; }
+  pendingPick = num;
+  confirmNum.textContent = num;
+  confirmModal.style.display = "flex";
 };
-confirmNo.onclick = ()=> confirmModal.style.display="none";
+confirmNo.onclick = ()=> confirmModal.style.display = "none";
 
 confirmYes.onclick = async ()=>{
-  confirmModal.style.display="none";
+  confirmModal.style.display = "none";
   if(!currentUser) return;
-  const pickNum = pendingPick;
+
+  const num = pendingPick;
   pendingPick = null;
+
+  // Ticket limit
   const q = query(collection(db,"rafflePicks"),
     where("userUid","==",currentUser.uid),
-    where("cycleId","==",activeCycle.id)
+    where("cycleId","==", activeCycle.id)
   );
-  const snap=await getDocs(q);
-  if(snap.size>=100){ msgEl.textContent="Max 100 tickets"; return;}
+  const userSnap = await getDocs(q);
+  if(userSnap.size >= 100){
+    msgEl.textContent = "Max 100 tickets";
+    return;
+  }
+
   await addDoc(collection(db,"rafflePicks"),{
     userUid:currentUser.uid,
-    pickNumber:pickNum,
+    pickNumber:num,
     cycleId:activeCycle.id,
     createdAt:serverTimestamp()
   });
-  msgEl.textContent=`Picked #${pickNum} — Good luck!`;
+  msgEl.textContent = `Picked #${num} — Good luck!`;
 };
 
-// Draw and credit function same as before (omitted for brevity)
-// Make sure to include your raffle credit logic here
+// Draw lucky & credit logic (same as before)
+async function drawLucky() {
+  const nums = new Set();
+  while(nums.size<5) nums.add(Math.floor(Math.random()*100)+1);
+  const lucky = Array.from(nums);
+
+  await updateDoc(doc(db,"raffleCycles",activeCycle.id),{
+    luckyNumbers:lucky, completed:true
+  });
+  showLucky();
+
+  const picksSnap = await getDocs(query(collection(db,"rafflePicks"),
+    where("cycleId","==",activeCycle.id)));
+
+  const userHits = {};
+  picksSnap.forEach(doc=>{
+    const d = doc.data();
+    if(lucky.includes(d.pickNumber)){
+      userHits[d.userUid] = (userHits[d.userUid]||0)+1;
+    }
+  });
+
+  for(const uid in userHits){
+    const hits = userHits[uid];
+    const amount = hits * 500;
+    await addDoc(collection(db,"transactions"),{
+      userId:uid,
+      type:"raffle_win",
+      amount:amount,
+      note:`Won ${hits} raffle pick(s)`,
+      createdAt:serverTimestamp()
+    });
+    // Update user balance securely with backend
+  }
+  msgEl.textContent="Winners drawn!";
+}
 
 function showLucky(){
-  const d=activeCycle.data();
+  const d = activeCycle.data();
   if(d.luckyNumbers?.length){
-    luckyEl.textContent="Lucky: "+d.luckyNumbers.join(", ");
+    luckyEl.textContent="Lucky Numbers: "+d.luckyNumbers.join(", ");
   }
 }
 
