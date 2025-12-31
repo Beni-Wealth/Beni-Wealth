@@ -390,7 +390,7 @@
        <div id="contestsItem" class="menu-item" role="button" tabindex="0">
         <div class="menu-left">
           <div class="menu-icon">🏆</div>
-          <div class="menu-text"><h4>Contests</h4><p>climb the leaderboard, earn big!</p></div>
+          <div class="menu-text"><h4>Contests</h4><p>climb the leaderboard, earn big</p></div>
         </div>
         <div>›</div>
       </div>
@@ -507,6 +507,7 @@
     const tasksItem = document.getElementById('tasksItem');
     const earningsItem = document.getElementById('earningsItem');
     const referralsItem = document.getElementById('referralsItem');
+    const contestsItem = document.getElementById('contestsItem');
     const moreItem = document.getElementById('moreItem');
     const moreOverlay = document.getElementById('moreOverlay');
     const overlayBackdrop = document.getElementById('overlayBackdrop');
@@ -586,6 +587,7 @@
       const container = document.querySelector('.phone');
       container.style.transform = 'translateY(-6px)';
       setTimeout(()=> { container.style.transform = ''; window.location.href = 'referrals.html'; }, 240);
+      contestsItem.addEventListener('click', ()=> window.location.href='contests.html');
     });
 
     // MORE item: show overlay with top-level options (PTC, Blog, Games)
