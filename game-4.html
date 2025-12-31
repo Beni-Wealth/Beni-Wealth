@@ -80,7 +80,7 @@
     <div class="board-wrap" aria-live="polite">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="font-weight:900">Snakes & Ladders • Beni-Wealth</div>
-        <div class="small">Player vs Bot — fair</div>
+        <div class="small">Player vs Bot — fair, visual and dramatic</div>
       </div>
 
       <div id="board" class="grid" aria-label="game board"></div>
@@ -104,6 +104,8 @@
       </div>
 
       <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <div class="small">Bias</div>
+        <div id="biasTag" class="small muted">—</div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
           <label class="small">Sound</label><input type="checkbox" id="soundToggle" checked />
         </div>
@@ -551,8 +553,8 @@
     }
 
     function decideBias(){
-      bias = Math.random() < 0.5 ? 'botFavored' : 'playerFavored';
-      biasTag.textContent = bias === 'botFavored' ? 'Bot favored (advantage)' : 'Player favored (bot disadvantaged)';
+      bias = Math.random() < 0.5 ? 'Fair' : 'Fair';
+      biasTag.textContent = bias === 'Fair' ? '50%' : '50%';
     }
 
     function setStatus(t){ statusEl.textContent = t; }
