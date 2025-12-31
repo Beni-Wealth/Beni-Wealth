@@ -582,12 +582,13 @@
     ordersItem.addEventListener('click', ()=> window.location.href='orders.html');
     tasksItem.addEventListener('click', ()=> window.location.href='tasks.html');
     earningsItem.addEventListener('click', ()=> window.location.href='earnings.html');
+    contestsItem.addEventListener('click', ()=> window.location.href='contests.html');
     referralsItem.addEventListener('click', (e) => {
       e.preventDefault();
       const container = document.querySelector('.phone');
       container.style.transform = 'translateY(-6px)';
       setTimeout(()=> { container.style.transform = ''; window.location.href = 'referrals.html'; }, 240);
-      contestsItem.addEventListener('click', ()=> window.location.href='contests.html');
+     
     });
 
     // MORE item: show overlay with top-level options (PTC, Blog, Games)
