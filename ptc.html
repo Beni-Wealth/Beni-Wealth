@@ -118,7 +118,8 @@ const toast = document.getElementById('toast');
 const REWARD = 0.40;
 const COOLDOWN_MS = 1 * 60 * 60 * 1000;
 
-const PTCs = Array.from({length:50},(_,i)=>({
+// reduce to 36 PTCs
+const PTCs = Array.from({length:36},(_,i)=>({
   id:i+1,
   title:`PTC #${i+1}`,
   description:`Visit the page and complete a small task to earn.`,
