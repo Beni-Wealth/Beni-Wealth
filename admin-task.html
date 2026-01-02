@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
-
   <style>
     :root{
       --bg1:#0b0613; --bg2:#0f0820;
@@ -103,12 +102,11 @@
       <div><strong>Status:</strong> <span id="vStatus"></span></div>
       <img id="vProofImg" src="" alt="Proof"/>
       <div><strong>Text proof:</strong> <span id="vTextProof"></span></div>
-      <div id="vNoteWrapper" style="margin-top:8px"><strong>Note:</strong> <span id="vNote" class="muted"></span></div>
+      <div id="vNoteWrapper" style="margin-top:8px"><strong>Note:</strong> <span id="vNoteText" class="muted"></span></div>
       <div style="margin-top:12px">
         <button id="approveBtn" class="btn">Approve</button>
         <button id="rejectBtn" class="btn ghost">Reject</button>
       </div>
-      <div id="vNote" class="muted" style="margin-top:8px"></div>
     </div>
   </div>
 
@@ -145,7 +143,7 @@
     const vStatus = document.getElementById('vStatus');
     const vProofImg = document.getElementById('vProofImg');
     const vTextProof = document.getElementById('vTextProof');
-    const vNote = document.querySelector('#vNoteWrapper span');
+    const vNoteText = document.getElementById('vNoteText');
     const approveBtn = document.getElementById('approveBtn');
     const rejectBtn = document.getElementById('rejectBtn');
 
@@ -199,7 +197,7 @@
       vStatus.textContent = (d.status||'PENDING').toUpperCase();
       vProofImg.src = d.imageUrl||'';
       vTextProof.textContent = d.textProof||'-';
-      vNote.textContent = d.rejectedNote || d.note || '-';
+      vNoteText.textContent = d.rejectedNote || d.note || '-';
       viewerBackdrop.style.display = "flex";
       viewerBackdrop.dataset.selId = id;
     }
@@ -213,6 +211,7 @@
 
     vClose.addEventListener('click', ()=>{ viewerBackdrop.style.display="none"; });
 
+    // NEW: robust approve handler that ALWAYS credits payout (70% of unitPrice)
     approveBtn.addEventListener('click', async ()=>{
       const selId = viewerBackdrop.dataset.selId;
       if(!selId) return;
@@ -221,25 +220,29 @@
 
       try{
         const subRef = doc(db,'advert_submissions',selId);
+
+        // Use a transaction to atomically set approved state and credit the user
         await runTransaction(db, async tx=>{
           const subSnap = await tx.get(subRef);
           if(!subSnap.exists()) throw new Error("Submission missing");
           const data = subSnap.data()||{};
           const oldStatus = (data.status||'').toLowerCase();
-          const oldPaid = Number(data.paidAmount||0);
-          const unitPrice = Number(data.unitPrice||0);
-          const userId = data.userId||"";
+          const unitPrice = Number(data.unitPrice || 0);
+          const userId = data.userId || "";
 
-          // prevent double-approval
+          console.log('approve: sub', selId, 'unitPrice=', unitPrice, 'status=', oldStatus, 'userId=', userId);
+
           if(oldStatus === 'approved'){
             throw new Error("Submission already approved");
           }
 
-          // payout = 70% of unitPrice
+          // compute payout (70% of unitPrice)
           const payout = Math.round(unitPrice * 0.7);
+          console.log('approve: computed payout =', payout);
 
-          // delta to apply to user's balance (handles cases where a paidAmount existed before)
-          const delta = payout - oldPaid;
+          if(payout <= 0){
+            throw new Error("Computed payout is 0 — check unitPrice on submission");
+          }
 
           // update submission: approved, paidAmount set to payout, clear any previous rejected note fields
           tx.update(subRef, {
@@ -251,34 +254,38 @@
             rejectedAt: null
           });
 
-          // update/create user balance if userId present and delta != 0
-          if(userId && delta !== 0){
+          // credit the user's balance by payout (create user doc if missing)
+          if(userId){
             const userRef = doc(db,'users',userId);
             const userSnap = await tx.get(userRef);
             if(userSnap.exists()){
               const oldBal = Number(userSnap.data()?.balance || 0);
-              tx.update(userRef, { balance: oldBal + delta });
+              console.log('approve: oldBalance=', oldBal, ' newBalance=', oldBal + payout);
+              tx.update(userRef, { balance: oldBal + payout });
             } else {
-              // create user doc with balance = delta (merge in case other fields exist)
-              tx.set(userRef, { balance: delta }, { merge: true });
+              console.log('approve: user doc missing — creating with balance =', payout);
+              tx.set(userRef, { balance: payout }, { merge: true });
             }
           }
         });
+
         renderTable();
         viewerBackdrop.style.display = "none";
-      }catch(e){ console.error(e); alert("Approve failed: "+(e.message||e)); }
-      finally{ approveBtn.disabled=false; }
+        alert('Approved and credited user successfully.');
+      }catch(e){
+        console.error(e);
+        alert("Approve failed: "+(e.message||e));
+      }finally{
+        approveBtn.disabled=false;
+      }
     });
 
+    // reject handler (stores rejectedNote, rejectedBy, rejectedAt; reverses previous approved paidAmount)
     rejectBtn.addEventListener('click', async ()=>{
       const selId = viewerBackdrop.dataset.selId;
       if(!selId) return;
-      // ask admin for a rejection note (optional)
       const note = prompt("Rejection note (optional):", "");
-      if(note === null) {
-        // user cancelled the prompt -> don't proceed
-        return;
-      }
+      if(note === null) return; // cancelled
       if(!confirm("Reject this submission?")) return;
       rejectBtn.disabled=true;
       try{
@@ -321,14 +328,12 @@
       finally{ rejectBtn.disabled=false; }
     });
 
-    // refresh button simply refetches the current query by re-attaching listener (or you might prefer manual refresh)
+    // refresh button simply re-renders current list
     refreshBtn.addEventListener('click', ()=>{ renderTable(); });
 
-    // auth + snapshot listener
+    // listen for auth + submissions
     onAuthStateChanged(auth, user=>{
       authInfo.textContent = user? (user.email || user.uid) : "Not signed in";
-
-      // subscriptions: attach listener once
       const q = query(collection(db,'advert_submissions'), orderBy('createdAt','desc'));
       onSnapshot(q, snap=>{
         submissions=[];
