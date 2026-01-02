@@ -211,7 +211,7 @@
 
     vClose.addEventListener('click', ()=>{ viewerBackdrop.style.display="none"; });
 
-    // NEW: robust approve handler that ALWAYS credits payout (70% of unitPrice)
+    // Approve handler: if unitPrice missing/0, prompt admin to enter it
     approveBtn.addEventListener('click', async ()=>{
       const selId = viewerBackdrop.dataset.selId;
       if(!selId) return;
@@ -221,13 +221,12 @@
       try{
         const subRef = doc(db,'advert_submissions',selId);
 
-        // Use a transaction to atomically set approved state and credit the user
         await runTransaction(db, async tx=>{
           const subSnap = await tx.get(subRef);
           if(!subSnap.exists()) throw new Error("Submission missing");
           const data = subSnap.data()||{};
           const oldStatus = (data.status||'').toLowerCase();
-          const unitPrice = Number(data.unitPrice || 0);
+          let unitPrice = Number(data.unitPrice || 0);
           const userId = data.userId || "";
 
           console.log('approve: sub', selId, 'unitPrice=', unitPrice, 'status=', oldStatus, 'userId=', userId);
@@ -236,13 +235,16 @@
             throw new Error("Submission already approved");
           }
 
-          // compute payout (70% of unitPrice)
-          const payout = Math.round(unitPrice * 0.7);
-          console.log('approve: computed payout =', payout);
-
-          if(payout <= 0){
-            throw new Error("Computed payout is 0 — check unitPrice on submission");
+          // if unitPrice missing or zero, prompt admin to enter it (so we can compute payout)
+          if(!unitPrice || unitPrice <= 0){
+            // prompt is synchronous and must happen outside transaction reads/writes in some environments,
+            // but here we'll prompt before we do updates; to keep transaction consistent we'll prompt then re-run transaction.
+            // So throw a special error to exit transaction and handle prompt outside.
+            throw { code: 'MISSING_UNITPRICE', message: 'unitPrice missing' };
           }
+
+          const payout = Math.round(unitPrice * 0.7);
+          if(payout <= 0) throw new Error("Computed payout is 0 — check unitPrice on submission");
 
           // update submission: approved, paidAmount set to payout, clear any previous rejected note fields
           tx.update(subRef, {
@@ -267,14 +269,60 @@
               tx.set(userRef, { balance: payout }, { merge: true });
             }
           }
+        }).catch(async err=>{
+          // handle special missing unitPrice case by prompting admin and re-running transaction
+          if(err && err.code === 'MISSING_UNITPRICE'){
+            // prompt admin for unitPrice (outside transaction)
+            const manual = prompt("This submission has no unitPrice. Enter unitPrice (NGN) to compute payout, or Cancel to abort:", "");
+            if(manual === null) {
+              throw new Error("Approval cancelled — unitPrice not provided");
+            }
+            const parsed = Number(manual.toString().replace(/[, ]+/g,''));
+            if(!parsed || parsed <= 0) throw new Error("Invalid unitPrice entered");
+            // re-run transaction with provided unitPrice
+            await runTransaction(db, async tx2=>{
+              const subSnap2 = await tx2.get(subRef);
+              if(!subSnap2.exists()) throw new Error("Submission missing (2nd check)");
+              const data2 = subSnap2.data()||{};
+              const oldStatus2 = (data2.status||'').toLowerCase();
+              if(oldStatus2 === 'approved') throw new Error("Submission already approved");
+              const payout2 = Math.round(parsed * 0.7);
+              if(payout2 <= 0) throw new Error("Computed payout is 0 — check unitPrice value provided");
+
+              tx2.update(subRef, {
+                status: 'approved',
+                approvedAt: serverTimestamp(),
+                paidAmount: payout2,
+                unitPrice: parsed, // save unitPrice so future ops don't prompt again
+                rejectedNote: null,
+                rejectedBy: null,
+                rejectedAt: null
+              });
+
+              const userId2 = data2.userId || "";
+              if(userId2){
+                const userRef2 = doc(db,'users',userId2);
+                const userSnap2 = await tx2.get(userRef2);
+                if(userSnap2.exists()){
+                  const oldBal2 = Number(userSnap2.data()?.balance || 0);
+                  tx2.update(userRef2, { balance: oldBal2 + payout2 });
+                } else {
+                  tx2.set(userRef2, { balance: payout2 }, { merge: true });
+                }
+              }
+            });
+          } else {
+            // other transaction errors should bubble up
+            throw err;
+          }
         });
 
         renderTable();
         viewerBackdrop.style.display = "none";
         alert('Approved and credited user successfully.');
       }catch(e){
-        console.error(e);
-        alert("Approve failed: "+(e.message||e));
+        console.error('Approve failed:', e);
+        alert("Approve failed: "+(e.message || e));
       }finally{
         approveBtn.disabled=false;
       }
