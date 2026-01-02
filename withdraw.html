@@ -6,7 +6,7 @@
   <title>Beni-Wealth — Withdraw</title>
 
   <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet"/>
 
   <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
@@ -363,7 +363,7 @@
 
     let currentUser = null;
     let currentBalance = 0;
-    const MIN_WITHDRAWAL = 1000;
+    const MIN_WITHDRAWAL = 500; // updated to ₦500
     let userUnsub = null;
 
     function showToast(message, isError = false){
