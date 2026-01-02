@@ -44,6 +44,22 @@
     }
     .group-meta { font-weight:600; color:var(--muted); font-size:13px; margin-left:8px; }
 
+    /* collapse button */
+    .group-toggle {
+      display:inline-grid;
+      place-items:center;
+      width:30px; height:30px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:transparent;
+      color:var(--muted);
+      cursor:pointer;
+      margin-right:8px;
+    }
+
+    /* visually mark expanded groups */
+    .group-toggle[aria-expanded="true"] { transform: rotate(90deg); color:var(--accent-start); }
+
     /* overlay viewer */
     .viewer-backdrop{
       display:none;
@@ -158,23 +174,20 @@
     const rejectBtn = document.getElementById('rejectBtn');
 
     // Data structures:
-    // submissionsList = array of { id, data }
-    // advertsInfo = Map advertId -> { id, title, unitPrice, status } (fetched from advertise_tasks)
-    // submissionsByAdvert = Map advertId -> [{ id, data }, ...]
     let submissionsList = [];
     let advertsInfo = new Map();
     let submissionsByAdvert = new Map();
+    // track expanded advert groups (by advertId)
+    const expandedGroups = new Set();
 
     function fmtDate(v){
       try{ if(!v) return '-'; if(typeof v.toDate==='function') return v.toDate().toLocaleString(); return new Date(v).toLocaleString(); }
       catch{return '-';}
     }
 
-    // Rebuild advertsInfo for all advertIds found in submissions
     async function loadAdvertsFor(submissions){
       advertsInfo.clear();
       const ids = Array.from(new Set(submissions.map(s => s.data?.advertId).filter(Boolean)));
-      // fetch each advert doc (advertise_tasks collection)
       await Promise.all(ids.map(async (aid) => {
         try{
           const adDoc = await getDoc(doc(db,'advertise_tasks',aid));
@@ -191,7 +204,6 @@
       }));
     }
 
-    // Build submissionsByAdvert map from submissionsList and advertsInfo
     function groupSubmissions(){
       submissionsByAdvert.clear();
       submissionsList.forEach(s => {
@@ -201,14 +213,16 @@
       });
     }
 
-    // Render grouped table rows into tbody.
-    // Filter text applies to advert id/title/userId/submission id
+    function getGroupRows(aid){
+      // selects submission rows for an advert (safe even for special characters)
+      return Array.from(tbody.querySelectorAll('tr[data-group]')).filter(r => r.dataset.group === aid);
+    }
+
     function renderTable(){
       const filter = (qInput.value||'').trim().toLowerCase();
       let total = 0;
       let rows = '';
 
-      // iterate advertsInfo keys; also include any advert ids present in submissions but missing from advertsInfo
       const advertIds = Array.from(new Set([...advertsInfo.keys(), ...submissionsByAdvert.keys()]));
       if(advertIds.length === 0){
         tbody.innerHTML = '<tr><td colspan="9" class="muted">No submissions</td></tr>';
@@ -219,7 +233,6 @@
       advertIds.forEach(aid => {
         const advert = advertsInfo.get(aid) || { id: aid, title: `Advert (${aid.slice(0,8)})`, unitPrice: 0 };
         const subs = submissionsByAdvert.get(aid) || [];
-        // apply filter: show advert group if advert id/title matches OR any submission in it matches userId/sub id
         const advertMatches = aid.toLowerCase().includes(filter) || (advert.title||'').toLowerCase().includes(filter);
         const filteredSubs = subs.filter(s=>{
           if(!filter) return true;
@@ -232,18 +245,24 @@
         if(filteredSubs.length === 0) return;
 
         total += filteredSubs.length;
-        // group header row (spans entire table)
+
+        // group header with collapse button; collapsed by default
+        const isExpanded = expandedGroups.has(aid);
+        const chevron = `<button class="group-toggle" data-aid="${aid}" aria-expanded="${isExpanded? 'true':'false'}" title="${isExpanded? 'Collapse':'Expand'}">▶</button>`;
         rows += `<tr class="group-header"><td colspan="9">
-          ${advert.title} <span class="group-meta">(${aid})</span>
+          ${chevron} ${advert.title}
+          <span class="group-meta">(${aid})</span>
           <span class="group-meta"> • Unit Price: ₦${Number(advert.unitPrice||0).toLocaleString()}</span>
           <span class="group-meta"> • ${filteredSubs.length} submission${filteredSubs.length===1?'':'s'}</span>
         </td></tr>`;
 
-        // submission rows
+        // submission rows — include data-group attribute
         filteredSubs.forEach(s=>{
           const d = s.data || {};
           const status = (d.status||'pending').toLowerCase();
-          rows += `<tr data-id="${s.id}" data-advert="${aid}">
+          // submission rows are hidden when group is collapsed (display set inline)
+          const displayStyle = isExpanded ? '' : 'style="display:none"';
+          rows += `<tr class="submission-row" data-id="${s.id}" data-group="${aid}" ${displayStyle}>
             <td>${s.id}</td>
             <td>${d.userId||''}</td>
             <td>₦${Number(d.paidAmount||0).toLocaleString()}</td>
@@ -270,9 +289,30 @@
         if(!tr) return;
         openViewer(tr.dataset.id);
       }));
+
+      // attach group-toggle handlers
+      document.querySelectorAll('.group-toggle').forEach(btn=>{
+        btn.addEventListener('click', (ev)=>{
+          const aid = btn.dataset.aid;
+          const currentlyExpanded = expandedGroups.has(aid);
+          if(currentlyExpanded){
+            // collapse
+            expandedGroups.delete(aid);
+            btn.setAttribute('aria-expanded','false');
+            btn.title = 'Expand';
+            // hide all rows for this group
+            getGroupRows(aid).forEach(r => r.style.display = 'none');
+          } else {
+            // expand
+            expandedGroups.add(aid);
+            btn.setAttribute('aria-expanded','true');
+            btn.title = 'Collapse';
+            getGroupRows(aid).forEach(r => r.style.display = '');
+          }
+        });
+      });
     }
 
-    // Open viewer for a submission id (find in submissionsList)
     function openViewer(id){
       const sel = submissionsList.find(x=>x.id===id);
       if(!sel) return;
@@ -290,7 +330,6 @@
       viewerBackdrop.dataset.selId = id;
     }
 
-    // close on clicking outside viewer
     viewerBackdrop.addEventListener('click', e=>{
       if(e.target===viewerBackdrop){
         viewerBackdrop.style.display="none";
@@ -298,7 +337,7 @@
     });
     vClose.addEventListener('click', ()=>{ viewerBackdrop.style.display="none"; });
 
-    // Approve / reject logic (kept similar to previous robust logic)
+    // Approve / Reject (unchanged logic, integrated with grouped UI)
     approveBtn.addEventListener('click', async ()=>{
       const selId = viewerBackdrop.dataset.selId;
       if(!selId) return;
@@ -324,13 +363,10 @@
 
           const userId = data.userId || "";
 
-          console.log('approve: sub', selId, 'unitPrice=', unitPrice, 'status=', oldStatus, 'userId=', userId);
-
           if(oldStatus === 'approved'){
             throw new Error("Submission already approved");
           }
 
-          // if unitPrice missing or zero, prompt admin to enter it
           if(!unitPrice || unitPrice <= 0){
             throw { code: 'MISSING_UNITPRICE', message: 'unitPrice missing' };
           }
@@ -338,7 +374,6 @@
           const payout = Math.round(unitPrice * 0.7);
           if(payout <= 0) throw new Error("Computed payout is 0 — check unitPrice on submission");
 
-          // update submission: approved, paidAmount set to payout, clear any previous rejected note fields
           tx.update(subRef, {
             status: 'approved',
             approvedAt: serverTimestamp(),
@@ -349,30 +384,24 @@
             rejectedAt: null
           });
 
-          // credit the user's balance by payout (create user doc if missing)
           if(userId){
             const userRef = doc(db,'users',userId);
             const userSnap = await tx.get(userRef);
             if(userSnap.exists()){
               const oldBal = Number(userSnap.data()?.balance || 0);
-              console.log('approve: oldBalance=', oldBal, ' newBalance=', oldBal + payout);
               tx.update(userRef, { balance: oldBal + payout });
             } else {
-              console.log('approve: user doc missing — creating with balance =', payout);
               tx.set(userRef, { balance: payout }, { merge: true });
             }
           }
         }).catch(async err=>{
-          // handle special missing unitPrice case by prompting admin and re-running transaction
           if(err && err.code === 'MISSING_UNITPRICE'){
-            // prompt admin for unitPrice (outside transaction)
             const manual = prompt("This submission has no unitPrice. Enter unitPrice (NGN) to compute payout, or Cancel to abort:", "");
             if(manual === null) {
               throw new Error("Approval cancelled — unitPrice not provided");
             }
             const parsed = Number(manual.toString().replace(/[, ]+/g,''));
             if(!parsed || parsed <= 0) throw new Error("Invalid unitPrice entered");
-            // re-run transaction with provided unitPrice
             await runTransaction(db, async tx2=>{
               const subSnap2 = await tx2.get(subRef);
               if(!subSnap2.exists()) throw new Error("Submission missing (2nd check)");
@@ -386,7 +415,7 @@
                 status: 'approved',
                 approvedAt: serverTimestamp(),
                 paidAmount: payout2,
-                unitPrice: parsed, // save unitPrice so future ops don't prompt again
+                unitPrice: parsed,
                 rejectedNote: null,
                 rejectedBy: null,
                 rejectedAt: null
@@ -405,13 +434,12 @@
               }
             });
           } else {
-            // other transaction errors should bubble up
             throw err;
           }
         });
 
-        // after successful approval, update local lists and UI
-        await refreshLocalSnapshot(); // refresh local caches
+        // refresh local lists
+        await refreshLocalSnapshot();
         renderTable();
         viewerBackdrop.style.display = "none";
         alert('Approved and credited user successfully.');
@@ -423,7 +451,6 @@
       }
     });
 
-    // reject handler (stores rejectedNote, rejectedBy, rejectedAt; reverses previous approved paidAmount)
     rejectBtn.addEventListener('click', async ()=>{
       const selId = viewerBackdrop.dataset.selId;
       if(!selId) return;
@@ -442,7 +469,6 @@
           const userId=data.userId||"";
           const adminId = (auth.currentUser && (auth.currentUser.email || auth.currentUser.uid)) || 'admin';
 
-          // set the submission to rejected, clear approvedAt, set paidAmount to 0 and add rejection metadata
           tx.update(subRef, {
             status: 'rejected',
             approvedAt: null,
@@ -452,12 +478,10 @@
             rejectedAt: serverTimestamp()
           });
 
-          // if it was previously approved and had a paid amount, remove that credited amount
           if(userId && oldStatus === 'approved' && oldPaid > 0){
             const userRef = doc(db,'users',userId);
             const userSnap = await tx.get(userRef);
             if(!userSnap.exists()){
-              // create user with zero balance to keep ledger consistent
               tx.set(userRef, { balance: 0 }, { merge: true });
             } else {
               const oldBal = Number(userSnap.data()?.balance || 0);
@@ -466,7 +490,6 @@
           }
         });
 
-        // refresh local snapshot and UI
         await refreshLocalSnapshot();
         renderTable();
         viewerBackdrop.style.display = "none";
@@ -475,17 +498,11 @@
       finally{ rejectBtn.disabled=false; }
     });
 
-    // refresh button simply re-renders current list
     refreshBtn.addEventListener('click', async ()=>{ await refreshLocalSnapshot(); renderTable(); });
 
-    // Keep the local state fresh by fetching advert_submissions snapshot and loading advert docs
     async function refreshLocalSnapshot(){
       try{
-        const q = query(collection(db,'advert_submissions'), orderBy('createdAt','desc'));
-        // use onSnapshot for live UI; but for explicit refresh we use get via onSnapshot replacement pattern:
-        // We'll fetch current snapshot by attaching a temporary onSnapshot and immediately removing it.
-        // Simpler: reuse onSnapshot listener below which keeps submissionsList up-to-date.
-        // This helper will trigger rebuild from current submissionsList and adverts
+        // submissionsList is kept live by the onSnapshot listener below; this method refreshes adverts and groups
         await loadAdvertsFor(submissionsList);
         groupSubmissions();
       }catch(err){
@@ -493,14 +510,13 @@
       }
     }
 
-    // snapshot listener for advert_submissions -> keep submissionsList up-to-date
+    // on auth -> attach snapshot to advert_submissions
     onAuthStateChanged(auth, user=>{
       authInfo.textContent = user? (user.email || user.uid) : "Not signed in";
       const q = query(collection(db,'advert_submissions'), orderBy('createdAt','desc'));
       onSnapshot(q, async snap=>{
         submissionsList = [];
         snap.forEach(d=>submissionsList.push({id:d.id,data:d.data()}));
-        // load adverts for current submissions then group and render
         await loadAdvertsFor(submissionsList);
         groupSubmissions();
         renderTable();
@@ -510,7 +526,6 @@
       });
     });
 
-    // quick search filtering as user types
     qInput.addEventListener('input', ()=> renderTable());
   </script>
 </body>
