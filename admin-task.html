@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
+
   <style>
     :root{
       --bg1:#0b0613; --bg2:#0f0820;
@@ -36,31 +37,6 @@
     .pill.approved{background:#bff0d9;color:#043f20}
     .pill.rejected{background:#ffdede;color:#6b0b0b}
 
-    /* group header row */
-    .group-header td{
-      background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      font-weight:800;
-      border-bottom:1px solid rgba(255,255,255,0.04);
-    }
-    .group-meta { font-weight:600; color:var(--muted); font-size:13px; margin-left:8px; }
-
-    /* collapse button */
-    .group-toggle {
-      display:inline-grid;
-      place-items:center;
-      width:30px; height:30px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,0.04);
-      background:transparent;
-      color:var(--muted);
-      cursor:pointer;
-      margin-right:8px;
-    }
-
-    /* visually mark expanded groups */
-    .group-toggle[aria-expanded="true"] { transform: rotate(90deg); color:var(--accent-start); }
-
-    /* overlay viewer */
     .viewer-backdrop{
       display:none;
       position:fixed;
@@ -79,11 +55,9 @@
       padding:18px;
       position:relative;
     }
-
-    /* image proof size */
     #vProofImg{
       max-width: 100%;
-      max-height: 300px;     /* limit height */
+      max-height: 300px;
       object-fit: contain;
       display:block;
       margin-top:12px;
@@ -91,6 +65,7 @@
     }
   </style>
 </head>
+
 <body>
   <main class="wrap">
     <header>
@@ -100,7 +75,7 @@
 
     <section class="card">
       <div class="controls">
-        <input id="q" class="search" placeholder="Filter advert id / advert title / userId" />
+        <input id="q" class="search" placeholder="Filter advert id / userId / textProof" />
         <button id="refreshBtn" class="btn ghost">Refresh</button>
         <div style="margin-left:auto" id="count" class="muted">—</div>
       </div>
@@ -108,7 +83,7 @@
       <div class="card">
         <table>
           <thead>
-            <tr><th>Advert / Submission</th><th>UserId</th><th>Amount</th><th>Created</th><th>Approved</th><th>Proof</th><th>Text</th><th>Status</th><th></th></tr>
+            <tr><th>ID</th><th>UserId</th><th>Amount</th><th>Created</th><th>Approved</th><th>Proof</th><th>Text</th><th>Status</th><th></th></tr>
           </thead>
           <tbody id="tbody"><tr><td colspan="9" class="muted">Loading submissions…</td></tr></tbody>
         </table>
@@ -116,7 +91,6 @@
     </section>
   </main>
 
-  <!-- viewer -->
   <div id="viewerBackdrop" class="viewer-backdrop">
     <div class="viewer">
       <button id="vClose" class="btn ghost" style="position:absolute;top:12px;right:12px;">Close</button>
@@ -128,7 +102,7 @@
       <div><strong>Status:</strong> <span id="vStatus"></span></div>
       <img id="vProofImg" src="" alt="Proof"/>
       <div><strong>Text proof:</strong> <span id="vTextProof"></span></div>
-      <div id="vNoteWrapper" style="margin-top:8px"><strong>Note:</strong> <span id="vNoteText" class="muted"></span></div>
+      <div style="margin-top:8px"><strong>Note:</strong> <span id="vNoteText" class="muted"></span></div>
       <div style="margin-top:12px">
         <button id="approveBtn" class="btn">Approve</button>
         <button id="rejectBtn" class="btn ghost">Reject</button>
@@ -137,184 +111,243 @@
   </div>
 
   <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import {
-  getFirestore, collection, query, where, getDocs, doc,
-  runTransaction, serverTimestamp, onSnapshot
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import {
+      getFirestore, collection, query, orderBy, onSnapshot,
+      runTransaction, doc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
-  authDomain: "beni-wealths.firebaseapp.com",
-  projectId: "beni-wealths",
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+    };
+    if (!getApps().length) initializeApp(firebaseConfig);
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+    const auth = getAuth();
+    const db = getFirestore();
 
-let currentUser = null;
-const advertsSection = document.getElementById("advertsSection");
+    const authInfo = document.getElementById('authInfo');
+    const tbody = document.getElementById('tbody');
+    const qInput = document.getElementById('q');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const countEl = document.getElementById('count');
 
-/* ---------------- AUTH ---------------- */
-onAuthStateChanged(auth, user => {
-  if (!user) location.href = "login.html";
-  currentUser = user;
-  loadAdverts();
-});
+    const viewerBackdrop = document.getElementById('viewerBackdrop');
+    const vClose = document.getElementById('vClose');
+    const vUser = document.getElementById('vUser');
+    const vUid = document.getElementById('vUid');
+    const vAmount = document.getElementById('vAmount');
+    const vCreated = document.getElementById('vCreated');
+    const vApproved = document.getElementById('vApproved');
+    const vStatus = document.getElementById('vStatus');
+    const vProofImg = document.getElementById('vProofImg');
+    const vTextProof = document.getElementById('vTextProof');
+    const vNoteText = document.getElementById('vNoteText');
+    const approveBtn = document.getElementById('approveBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
 
-/* ---------------- HELPERS ---------------- */
-const partial = s => s ? s.slice(0, 8) + "…" : "";
-const money = n => `₦${Number(n || 0).toLocaleString()}`;
+    let submissionsList = [];
 
-/* ---------------- LOAD ADVERTS ---------------- */
-async function loadAdverts() {
-  const snap = await getDocs(collection(db, "advertise_tasks"));
-  advertsSection.innerHTML = "";
-
-  snap.forEach(adDoc => {
-    const ad = adDoc.data();
-    if (ad.owner !== currentUser.uid) return;
-
-    const wrap = document.createElement("div");
-    wrap.style.border = "1px solid rgba(255,255,255,.08)";
-    wrap.style.borderRadius = "12px";
-    wrap.style.marginBottom = "14px";
-    wrap.style.padding = "14px";
-
-    wrap.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <strong>${ad.title}</strong>
-          <div class="muted">Unit Price: ${money(ad.unitPrice)}</div>
-        </div>
-        <button class="btn ghost toggle" data-id="${adDoc.id}">View Submissions</button>
-      </div>
-      <div class="subs" style="display:none;margin-top:14px"></div>
-    `;
-
-    advertsSection.appendChild(wrap);
-  });
-}
-
-/* ---------------- CLICK HANDLER ---------------- */
-document.body.addEventListener("click", async e => {
-
-  /* TOGGLE SUBMISSIONS */
-  if (e.target.classList.contains("toggle")) {
-    const adId = e.target.dataset.id;
-    const container = e.target.closest("div").nextElementSibling;
-
-    if (container.style.display === "block") {
-      container.style.display = "none";
-      e.target.textContent = "View Submissions";
-      return;
+    function fmtDate(v){
+      try{ if(!v) return '-'; if(typeof v.toDate==='function') return v.toDate().toLocaleString(); return new Date(v).toLocaleString(); }
+      catch{return '-';}
     }
 
-    e.target.textContent = "Hide Submissions";
-    container.style.display = "block";
-    container.innerHTML = "Loading…";
+    function renderTable(){
+      const filter = (qInput.value||'').trim().toLowerCase();
+      let total = 0;
+      let rows = '';
 
-    const snap = await getDocs(
-      query(collection(db, "advert_submissions"), where("advertId", "==", adId))
-    );
+      if(submissionsList.length === 0){
+        tbody.innerHTML = '<tr><td colspan="9" class="muted">No submissions</td></tr>';
+        countEl.textContent = '0 submissions';
+        return;
+      }
 
-    if (snap.empty) {
-      container.innerHTML = "<div class='muted'>No submissions</div>";
-      return;
+      submissionsList.forEach(s=>{
+        const d = s.data || {};
+        if(filter && !(
+           s.id.toLowerCase().includes(filter) ||
+           (d.userId||"").toLowerCase().includes(filter) ||
+           (d.textProof||"").toLowerCase().includes(filter)
+        )) return;
+
+        total++;
+        const status = (d.status||'pending').toLowerCase();
+
+        rows += `<tr data-id="${s.id}">
+          <td>${s.id}</td><td>${d.userId||''}</td>
+          <td>₦${Number(d.paidAmount||0).toLocaleString()}</td>
+          <td>${fmtDate(d.createdAt)}</td><td>${fmtDate(d.approvedAt)}</td>
+          <td>${d.imageUrl?'Yes':''}</td><td>${d.textProof||'-'}</td>
+          <td><span class="pill ${status}">${status.toUpperCase()}</span></td>
+          <td><button class="btn ghost viewBtn">Details</button></td>
+        </tr>`;
+      });
+
+      tbody.innerHTML = total ? rows : '<tr><td colspan="9" class="muted">No results</td></tr>';
+      countEl.textContent = `${total} submission${total===1?'':'s'}`;
+
+      document.querySelectorAll('.viewBtn').forEach(b=>b.addEventListener('click', e=>{
+        const tr = e.target.closest('tr');
+        if(!tr) return;
+        openViewer(tr.dataset.id);
+      }));
     }
 
-    let html = `<table><tr><th>User</th><th>Status</th><th>Action</th></tr>`;
-    snap.forEach(s => {
-      const d = s.data();
-      html += `
-        <tr>
-          <td>${partial(d.userId)}</td>
-          <td>${d.status}</td>
-          <td>
-            <button class="approve btn ghost" data-id="${s.id}">Approve</button>
-            <button class="reject btn ghost" data-id="${s.id}">Reject</button>
-          </td>
-        </tr>
-      `;
+    function openViewer(id){
+      const sel = submissionsList.find(x=>x.id===id);
+      if(!sel) return;
+      const d = sel.data||{};
+      vUser.textContent = d.userId||'-';
+      vUid.textContent = d.userId||'-';
+      vAmount.textContent = "₦"+Number(d.paidAmount||0).toLocaleString();
+      vCreated.textContent = fmtDate(d.createdAt);
+      vApproved.textContent = fmtDate(d.approvedAt);
+      vStatus.textContent = (d.status||'PENDING').toUpperCase();
+      vProofImg.src = d.imageUrl||''; 
+      vTextProof.textContent = d.textProof||'-';
+      vNoteText.textContent = d.rejectedNote || '-';
+      viewerBackdrop.style.display = "flex";
+      viewerBackdrop.dataset.selId = id;
+    }
+
+    viewerBackdrop.addEventListener('click', e=>{
+      if(e.target===viewerBackdrop) viewerBackdrop.style.display="none";
     });
-    html += "</table>";
-    container.innerHTML = html;
-  }
+    vClose.addEventListener('click', ()=> viewerBackdrop.style.display="none");
 
-  /* ---------------- APPROVE ---------------- */
-  if (e.target.classList.contains("approve")) {
-    const sid = e.target.dataset.id;
+    approveBtn.addEventListener('click', async ()=>{
+      const selId = viewerBackdrop.dataset.selId;
+      if(!selId) return;
+      if(!confirm("Approve and credit user?")) return;
+      approveBtn.disabled=true;
 
-    try {
-      await runTransaction(db, async tx => {
+      try {
+        await runTransaction(db, async tx => {
+          const subRef = doc(db, 'advert_submissions', selId);
+          const subSnap = await tx.get(subRef);
+          if(!subSnap.exists()) throw new Error("Submission missing");
+          const data = subSnap.data()||{};
+          if((data.status||"").toLowerCase()==="approved") throw new Error("Already approved");
 
-        /* READS */
-        const subRef = doc(db, "advert_submissions", sid);
-        const subSnap = await tx.get(subRef);
-        if (!subSnap.exists()) throw "Submission missing";
+          let unitPrice = Number(data.unitPrice||0);
+          if(!unitPrice && data.advertId){
+            const adRef = doc(db,'advertise_tasks',data.advertId);
+            const adSnap = await tx.get(adRef);
+            if(adSnap.exists()) unitPrice = Number(adSnap.data()?.unitPrice||0);
+          }
+          if(!unitPrice) throw Object.assign(new Error("Missing unitPrice"),{code:'MISSING_UNITPRICE'});
 
-        const s = subSnap.data();
-        if (s.status === "approved") throw "Already approved";
+          const payout = Math.round(unitPrice*0.7);
+          if(payout<=0) throw new Error("Invalid payout");
 
-        const price = Number(s.unitPrice || 0);
-        if (price <= 0) throw "Invalid unit price";
+          tx.update(subRef,{
+            status:'approved',approvedAt:serverTimestamp(),
+            paidAmount:payout,unitPrice:unitPrice,rejectedNote:null
+          });
 
-        const payout = Math.round(price * 0.7);
-        if (payout <= 0) throw "Computed payout is 0";
-
-        const userRef = doc(db, "users", s.userId);
-        const userSnap = await tx.get(userRef);
-
-        /* WRITES */
-        tx.update(subRef, {
-          status: "approved",
-          approvedAt: serverTimestamp(),
-          paidAmount: payout
+          if(data.userId){
+            const userRef = doc(db,'users',data.userId);
+            const userSnap = await tx.get(userRef);
+            const oldBal = userSnap.exists()?Number(userSnap.data()?.balance||0):0;
+            tx.set(userRef,{balance:oldBal+payout},{merge:true});
+          }
         });
 
-        const bal = Number(userSnap.exists() ? userSnap.data().balance : 0);
-        tx.set(userRef, { balance: bal + payout }, { merge: true });
-      });
+        alert("Approved and credited user.");
+        viewerBackdrop.style.display="none";
+      } catch(err) {
+        if(err.code==='MISSING_UNITPRICE'){
+          const manual = prompt("Enter unitPrice (NGN)","");
+          if(manual){
+            const parsed = Number(manual.replace(/[, ]/g,''));
+            if(parsed>0){
+              await runTransaction(db, async tx2=>{
+                const subRef2 = doc(db,'advert_submissions',selId);
+                const subSnap2 = await tx2.get(subRef2);
+                if(!subSnap2.exists()) throw new Error("Submission missing");
+                const d2=subSnap2.data()||{};
+                const payout2=Math.round(parsed*0.7);
+                tx2.update(subRef2,{
+                  status:'approved',approvedAt:serverTimestamp(),
+                  paidAmount:payout2,unitPrice:parsed,rejectedNote:null
+                });
+                if(d2.userId){
+                  const uRef2=doc(db,'users',d2.userId);
+                  const uSnap2=await tx2.get(uRef2);
+                  const old2=uSnap2.exists()?Number(uSnap2.data()?.balance||0):0;
+                  tx2.set(uRef2,{balance:old2+payout2},{merge:true});
+                }
+              });
+              alert("Approved with manual unitPrice.");
+              viewerBackdrop.style.display="none";
+            }
+          }
+        } else alert("Approve failed: "+err.message);
+      }
 
-      alert("Approved & credited");
-      loadAdverts();
-    } catch (err) {
-      alert("Approve failed: " + err);
-    }
-  }
+      approveBtn.disabled=false;
+    });
 
-  /* ---------------- REJECT ---------------- */
-  if (e.target.classList.contains("reject")) {
-    const sid = e.target.dataset.id;
-    const note = prompt("Rejection note (optional):", "");
+    rejectBtn.addEventListener('click', async ()=>{
+      const selId = viewerBackdrop.dataset.selId;
+      if(!selId) return;
+      const note = prompt("Rejection note (optional):","");
+      if(note===null) return;
+      if(!confirm("Reject this submission?")) return;
+      rejectBtn.disabled=true;
 
-    try {
-      await runTransaction(db, async tx => {
+      try {
+        await runTransaction(db, async tx=>{
+          const subRef = doc(db,'advert_submissions',selId);
+          const subSnap = await tx.get(subRef);
+          if(!subSnap.exists()) throw new Error("Submission missing");
+          const data=subSnap.data()||{};
+          const oldPaid=Number(data.paidAmount||0);
 
-        /* READS */
-        const subRef = doc(db, "advert_submissions", sid);
-        const subSnap = await tx.get(subRef);
-        if (!subSnap.exists()) throw "Submission missing";
+          tx.update(subRef,{
+            status:'rejected',approvedAt:null,paidAmount:0,
+            rejectedNote:note||null,
+            rejectedBy:auth.currentUser?.email||auth.currentUser?.uid||'admin',
+            rejectedAt:serverTimestamp()
+          });
 
-        const s = subSnap.data();
-
-        /* WRITES */
-        tx.update(subRef, {
-          status: "rejected",
-          rejectedAt: serverTimestamp(),
-          rejectionNote: note || null
+          if(data.userId && oldPaid>0){
+            const userRef = doc(db,'users',data.userId);
+            const userSnap = await tx.get(userRef);
+            const oldBal = userSnap.exists()?Number(userSnap.data()?.balance||0):0;
+            tx.set(userRef,{balance:oldBal-oldPaid},{merge:true});
+          }
         });
-      });
 
-      alert("Rejected");
-      loadAdverts();
-    } catch (err) {
-      alert("Reject failed: " + err);
-    }
-  }
-});
-</script>
+        alert("Submission rejected.");
+        viewerBackdrop.style.display="none";
+      } catch(e){
+        alert("Reject failed: "+e.message);
+      }
+
+      rejectBtn.disabled=false;
+    });
+
+    refreshBtn.addEventListener('click', renderTable);
+
+    onAuthStateChanged(auth, user=>{
+      authInfo.textContent = user? (user.email||user.uid) : "Not signed in";
+      const q = query(collection(db,'advert_submissions'),orderBy('createdAt','desc'));
+      onSnapshot(q, snap=>{
+        submissionsList = [];
+        snap.forEach(d=>submissionsList.push({id:d.id,data:d.data()}));
+        renderTable();
+      }, err=>{
+        tbody.innerHTML = `<tr><td colspan="9" class="muted">Failed to load: ${err.message}</td></tr>`;
+      });
+    });
+
+    qInput.addEventListener('input', renderTable);
+
+  </script>
 </body>
 </html>
