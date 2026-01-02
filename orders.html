@@ -27,10 +27,43 @@
     #overlayViewer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.9);z-index:1000}
     #overlayViewer img{max-width:90%;max-height:90%;border-radius:10px}
     .disabled{opacity:.6;pointer-events:none}
-  </style>
 
+    /* TOAST NOTIFICATIONS */
+    #toastContainer {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      min-width: 240px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #fff;
+      opacity: 0;
+      animation: fadein 0.3s forwards;
+    }
+    .toast.success { background-color: #28a745; }
+    .toast.error   { background-color: #dc3545; }
+    .toast.info    { background-color: #007bff; }
+
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
+
 <body>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer"></div>
 
   <header>
     <a class="btn ghost" id="backBtn">← Back</a>
@@ -47,7 +80,7 @@
   <div id="advertsSection" style="padding:22px"></div>
 
   <!-- SUBMISSIONS VIEW (FULL PAGE) -->
-  <div id="subsSection" style="padding:22px;display:none"></div>
+  <div id="subsSection" style="padding:22px;display:none" data-advert=""></div>
 
   <!-- IMAGE OVERLAY -->
   <div id="overlayViewer"><img id="viewerImage"/></div>
@@ -65,9 +98,10 @@ const firebaseConfig = {
   authDomain: "beni-wealths.firebaseapp.com",
   projectId: "beni-wealths",
 };
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+initializeApp(firebaseConfig);
+
+const db = getFirestore();
+const auth = getAuth();
 
 let currentUser = null;
 const adverts = new Map();
@@ -81,12 +115,22 @@ const overlayViewer = document.getElementById("overlayViewer");
 const viewerImage = document.getElementById("viewerImage");
 const backBtn = document.getElementById("backBtn");
 
-function partial(str){ return str ? str.slice(0,8)+"..." : ""; }
-function niceTime(ts){
-  try{ return ts.toDate().toLocaleString(); }catch(e){ return "-"; }
+function showToast(message, type="info", duration=3000) {
+  const container = document.getElementById("toastContainer");
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    setTimeout(() => container.removeChild(toast), 300);
+  }, duration);
 }
 
-// render adverts with pending badge
+function partial(str){ return str ? str.slice(0,8)+"..." : ""; }
+function niceTime(ts){ try{ return ts.toDate().toLocaleString(); }catch{ return "-"; } }
+
 function renderAdverts(filter=""){
   advertsSection.innerHTML = "";
   const lower = filter.toLowerCase();
@@ -106,7 +150,6 @@ function renderAdverts(filter=""){
   if(!found) advertsSection.innerHTML = "<div class='muted'>No adverts found</div>";
 }
 
-// fetch user's adverts and pending counts
 function attachAdvertListener(uid){
   onSnapshot(collection(db,"advertise_tasks"),snap=>{
     adverts.clear();
@@ -120,7 +163,6 @@ function attachAdvertListener(uid){
   });
 }
 
-// count pending submissions per advert
 async function updatePendingCounts(){
   Object.keys(pendingCounts).forEach(k=>delete pendingCounts[k]);
   const allSubs = await getDocs(collection(db,"advert_submissions"));
@@ -133,29 +175,23 @@ async function updatePendingCounts(){
   renderAdverts(searchInput.value);
 }
 
-// show submissions list
 async function showSubmissions(adId){
   const advert = adverts.get(adId);
   subsSection.style.display = "block";
   advertsSection.style.display = "none";
+  subsSection.dataset.advert = adId;
   subsSection.innerHTML = `
     <button class="btn ghost" id="backToAdverts">← Back to Adverts</button>
     <h2>${advert.data.title} <span class="muted">(${partial(adId)})</span></h2>
     <div class="muted">Unit Price: ₦${advert.data.unitPrice||0}</div>
     <div id="subsTableArea">Loading submissions…</div>
   `;
-  document.getElementById("backToAdverts").onclick=()=>{
-    subsSection.style.display="none";
-    advertsSection.style.display="block";
-  };
+  document.getElementById("backToAdverts").onclick=()=>{subsSection.style.display="none";advertsSection.style.display="block";};
 
   const snap = await getDocs(query(collection(db,"advert_submissions"),where("advertId","==",adId)));
-  if(snap.empty){
-    document.getElementById("subsTableArea").innerHTML = "<div class='muted'>No submissions</div>";
-    return;
-  }
+  if(snap.empty){ document.getElementById("subsTableArea").innerHTML=`<div class='muted'>No submissions</div>`; return; }
 
-  let table = `<table><thead><tr><th>Sub ID</th><th>User</th><th>Submitted</th><th>Text Proof</th><th>Image</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+  let table = `<table data-advert="${adId}"><thead><tr><th>Sub ID</th><th>User</th><th>Submitted</th><th>Text Proof</th><th>Image</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
   snap.forEach(s=>{
     const d=s.data(), sid=s.id;
     table+=`
@@ -167,8 +203,8 @@ async function showSubmissions(adId){
         <td>${d.imageUrl?`<img src="${d.imageUrl}" class="thumb-img" data-src="${d.imageUrl}">`:"<span class='muted'>No image</span>"}</td>
         <td>${d.status||""}</td>
         <td>
-          <button class="approve-btn btn ghost" ${d.status!=="pending"?"disabled":""} 
-            data-sid="${sid}" data-uid="${d.userId}" data-plan="${d.userPlan||''}" data-price="${advert.data.unitPrice||0}">Approve</button>
+          <button class="approve-btn btn ghost" ${d.status!=="pending"?"disabled":""}
+            data-sid="${sid}" data-uid="${d.userId}" data-price="${advert.data.unitPrice||0}">Approve</button>
           <button class="reject-btn btn ghost" ${d.status!=="pending"?"disabled":""} data-sid="${sid}">Reject</button>
         </td>
       </tr>`;
@@ -177,6 +213,7 @@ async function showSubmissions(adId){
   document.getElementById("subsTableArea").innerHTML = table;
 }
 
+// AUTH
 onAuthStateChanged(auth,user=>{
   if(!user) location.href="login.html";
   currentUser = user;
@@ -186,8 +223,8 @@ onAuthStateChanged(auth,user=>{
 searchInput.oninput=()=> renderAdverts(searchInput.value);
 refreshBtn.onclick=()=> updatePendingCounts();
 
-// events
-document.body.addEventListener("click",async e=>{
+// EVENTS
+document.body.addEventListener("click", async e => {
 
   if(e.target.matches(".viewSubsBtn")){
     showSubmissions(e.target.dataset.id);
@@ -201,41 +238,60 @@ document.body.addEventListener("click",async e=>{
   if(e.target.matches(".approve-btn")){
     const sid = e.target.dataset.sid;
     const uid = e.target.dataset.uid;
-    const plan = e.target.dataset.plan.toLowerCase();
     const price = Number(e.target.dataset.price||0);
 
     try{
-      await runTransaction(db,async tx=>{
+      await runTransaction(db, async tx => {
         const subRef = doc(db,"advert_submissions",sid);
         const subSnap = await tx.get(subRef);
-        if(!subSnap.exists() || subSnap.data().status!=="pending") throw "Cannot approve";
 
-        const payout = Math.round(price * (plan==="bronze"?0.6:0.8));
-        tx.update(subRef,{status:"approved",approvedAt:serverTimestamp(),paidAmount:payout});
+        if(!subSnap.exists() || subSnap.data().status!=="pending") {
+          throw new Error("Cannot approve this submission");
+        }
 
         const userRef = doc(db,"users",uid);
         const userSnap = await tx.get(userRef);
-        const balance = Number(userSnap.data().balance||0);
-        tx.update(userRef,{balance:balance+payout});
+
+        const payout = Math.round(price * 0.7);
+
+        tx.update(subRef,{
+          status:"approved",
+          approvedAt:serverTimestamp(),
+          paidAmount:payout
+        });
+
+        const oldBal = userSnap.exists()? Number(userSnap.data().balance||0):0;
+        tx.update(userRef,{balance: oldBal + payout});
       });
 
-      alert("Approved and credited!");
+      showToast("Approved & credited","success");
       updatePendingCounts();
-      showSubmissions(e.target.closest("table").dataset.advert);
+      showSubmissions(subsSection.dataset.advert);
 
-    }catch(err){ alert("Error: "+err); }
+    } catch(err){
+      showToast("Error: " + err.message,"error");
+    }
   }
 
   if(e.target.matches(".reject-btn")){
     const sid = e.target.dataset.sid;
+
     try{
-      await runTransaction(db,async tx=>{
-        tx.update(doc(db,"advert_submissions",sid),{status:"rejected"});
+      await runTransaction(db, async tx=>{
+        const subRef = doc(db,"advert_submissions",sid);
+        const subSnap = await tx.get(subRef);
+
+        if(!subSnap.exists()) throw new Error("Cannot reject");
+        tx.update(subRef,{status:"rejected"});
       });
-      alert("Rejected");
+
+      showToast("Rejected","info");
       updatePendingCounts();
-      showSubmissions(e.target.closest("table").dataset.advert);
-    }catch(err){ alert("Error: "+err); }
+      showSubmissions(subsSection.dataset.advert);
+
+    } catch(err){
+      showToast("Error: "+err.message,"error");
+    }
   }
 });
 
