@@ -7,42 +7,92 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="theme-color" content="#2fe0b8">
+
   <style>
-    :root{--bg1:#0b0613;--bg2:#0f0820;--muted:rgba(255,255,255,0.64);--text:#eaf2ff;--accent-start:#2fe0b8;--accent-end:#7a5fff;--card:rgba(255,255,255,0.02)}
+    :root{
+      --bg1:#0b0613; --bg2:#0f0820;
+      --muted: rgba(255,255,255,0.64);
+      --text: #eaf2ff;
+      --accent-start:#2fe0b8; --accent-end:#7a5fff;
+      --card: rgba(255,255,255,0.02);
+    }
+    *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text)}
     .wrap{max-width:1100px;margin:20px auto;padding:20px}
+    .controls{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    .search{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.01);color:var(--text)}
     .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent-start),var(--accent-end));color:#041219}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
     .muted{color:var(--muted);font-size:13px}
-    table{width:100%;border-collapse:collapse}
+    table{width:100%;border-collapse:collapse;min-width:900px}
     thead th{background:rgba(255,255,255,0.08);padding:12px;text-align:left;font-weight:700}
+    tbody td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.02)}
     .pill{padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
     .pill.pending{background:#fff7d9;color:#6a4f00}
     .pill.approved{background:#bff0d9;color:#043f20}
     .pill.rejected{background:#ffdede;color:#6b0b0b}
-    .viewer-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center}
-    .viewer{background:rgba(255,255,255,0.02);padding:18px;border-radius:12px;position:relative;max-width:900px;width:90%}
-    #vProofImg{max-width:100%;max-height:300px;object-fit:contain;border-radius:8px;margin-top:12px}
+
+    /* Toast Container */
+    #toastContainer {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      min-width: 240px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #fff;
+      opacity: 0;
+      animation: fadein 0.3s forwards;
+    }
+    .toast.success { background-color: #28a745; }
+    .toast.error   { background-color: #dc3545; }
+    .toast.info    { background-color: #007bff; }
+
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
+  <div id="toastContainer"></div>
+
   <main class="wrap">
-    <header><div class="title">Beni-Wealth Admin</div><div id="authInfo" class="muted">Checking auth…</div></header>
-    <div class="controls">
-      <input id="q" class="search" placeholder="Filter by userId / submissionId / textProof" />
-      <button id="refreshBtn" class="btn ghost">Refresh</button>
-      <div id="count" class="muted">—</div>
-    </div>
-    <table>
-      <thead>
-        <tr><th>ID</th><th>User</th><th>Amount</th><th>Created</th><th>Approved</th><th>Proof</th><th>Text</th><th>Status</th><th></th></tr>
-      </thead>
-      <tbody id="tbody"><tr><td colspan="9" class="muted">Loading…</td></tr></tbody>
-    </table>
+    <header>
+      <div class="title">Beni-Wealth — Admin: Advert Submissions</div>
+      <div class="muted" id="authInfo">Checking auth…</div>
+    </header>
+
+    <section class="card">
+      <div class="controls">
+        <input id="q" class="search" placeholder="Filter by userId / submissionId / textProof" />
+        <button id="refreshBtn" class="btn ghost">Refresh</button>
+        <div id="count" class="muted">—</div>
+      </div>
+
+      <div class="card">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>User</th><th>Amount</th><th>Created</th><th>Approved</th><th>Proof</th><th>Text</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="tbody"><tr><td colspan="9" class="muted">Loading submissions…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
-  <div id="viewerBackdrop" class="viewer-backdrop">
-    <div class="viewer">
+  <!-- Viewer -->
+  <div id="viewerBackdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;z-index:9999;">
+    <div style="background:rgba(255,255,255,0.02);padding:18px;border-radius:12px;position:relative;max-width:900px;width:90%;">
       <button id="vClose" class="btn ghost" style="position:absolute;top:12px;right:12px;">Close</button>
       <div><strong>ID:</strong> <span id="vId"></span></div>
       <div><strong>User:</strong> <span id="vUser"></span></div>
@@ -50,7 +100,7 @@
       <div><strong>Created:</strong> <span id="vCreated"></span></div>
       <div><strong>Approved at:</strong> <span id="vApproved"></span></div>
       <div><strong>Status:</strong> <span id="vStatus"></span></div>
-      <img id="vProofImg" alt="Proof"/>
+      <img id="vProofImg" src="" style="width:100%;max-height:300px;object-fit:contain;margin-top:12px;border-radius:8px;" alt="Proof"/>
       <div><strong>Text proof:</strong> <span id="vTextProof"></span></div>
       <div><strong>Note:</strong> <span id="vNoteText" class="muted"></span></div>
       <button id="approveBtn" class="btn">Approve</button>
@@ -76,89 +126,96 @@
     const auth = getAuth();
     const db = getFirestore();
 
-    const authInfo = document.getElementById('authInfo');
-    const tbody = document.getElementById('tbody');
-    const qInput = document.getElementById('q');
-    const countEl = document.getElementById('count');
-
     let submissionsList = [];
 
-    function fmtDate(v){ return v && typeof v.toDate==='function' ? v.toDate().toLocaleString() : '-'; }
+    const toastContainer = document.getElementById("toastContainer");
+    function showToast(message, type="info", duration=3000) {
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      toastContainer.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toastContainer.removeChild(toast), 300);
+      }, duration);
+    }
 
+    const tbody = document.getElementById("tbody");
     function renderTable(){
-      const filter = (qInput.value||'').toLowerCase();
-      let rows = '', count = 0;
+      const filter = (document.getElementById("q").value||"").toLowerCase();
+      let html = "", count = 0;
       submissionsList.forEach(s => {
         const d = s.data||{};
-        if(filter && !(s.id.toLowerCase().includes(filter) ||
-                       (d.userId||'').toLowerCase().includes(filter) ||
-                       (d.textProof||'').toLowerCase().includes(filter))) return;
+        if(filter && !(
+           s.id.toLowerCase().includes(filter) ||
+           (d.userId||"").toLowerCase().includes(filter) ||
+           (d.textProof||"").toLowerCase().includes(filter)
+        )) return;
         count++;
-        const status = (d.status||'pending').toLowerCase();
-        rows += `<tr data-id="${s.id}">
-          <td>${s.id}</td><td>${d.userId||''}</td>
-          <td>₦${Number(d.paidAmount||0).toLocaleString()}</td>
-          <td>${fmtDate(d.createdAt)}</td><td>${fmtDate(d.approvedAt)}</td>
-          <td>${d.imageUrl?'Yes':''}</td><td>${d.textProof||'-'}</td>
+        const status = (d.status||"pending").toLowerCase();
+        html += `<tr data-id="${s.id}">
+          <td>${s.id}</td><td>${d.userId||""}</td><td>₦${Number(d.paidAmount||0).toLocaleString()}</td>
+          <td>${d.createdAt?.toDate?.().toLocaleString()||"-"}</td>
+          <td>${d.approvedAt?.toDate?.().toLocaleString()||"-"}</td>
+          <td>${d.imageUrl?"Yes":""}</td><td>${d.textProof||"-"}</td>
           <td><span class="pill ${status}">${status.toUpperCase()}</span></td>
           <td><button class="btn ghost viewBtn">Details</button></td>
         </tr>`;
       });
-      tbody.innerHTML = rows || `<tr><td colspan="9" class="muted">No results</td></tr>`;
-      countEl.textContent = `${count} submission${count==1?'':'s'}`;
-
-      document.querySelectorAll('.viewBtn').forEach(b =>
-        b.addEventListener('click', e => openViewer(e.target.closest('tr').dataset.id))
+      tbody.innerHTML = html || `<tr><td colspan="9" class="muted">No results</td></tr>`;
+      document.querySelectorAll(".viewBtn").forEach(b =>
+        b.addEventListener("click", e => openViewer(e.target.closest("tr").dataset.id))
       );
+      document.getElementById("count").textContent = `${count} submission${count===1?"":"s"}`;
     }
 
     function openViewer(id){
       const sel = submissionsList.find(x=>x.id===id);
       if(!sel) return;
-      const d=sel.data||{};
-      document.getElementById('vId').textContent = id;
-      document.getElementById('vUser').textContent = d.userId||'-';
-      document.getElementById('vAmount').textContent = "₦"+Number(d.paidAmount||0).toLocaleString();
-      document.getElementById('vCreated').textContent = fmtDate(d.createdAt);
-      document.getElementById('vApproved').textContent = fmtDate(d.approvedAt);
-      document.getElementById('vStatus').textContent = (d.status||'PENDING').toUpperCase();
-      document.getElementById('vProofImg').src = d.imageUrl||'';
-      document.getElementById('vTextProof').textContent = d.textProof||'-';
-      document.getElementById('vNoteText').textContent = d.rejectedNote||'-';
-      document.getElementById('viewerBackdrop').style.display = 'flex';
+      const d = sel.data||{};
+      document.getElementById("vId").textContent = id;
+      document.getElementById("vUser").textContent = d.userId||"-";
+      document.getElementById("vAmount").textContent = "₦"+Number(d.paidAmount||0).toLocaleString();
+      document.getElementById("vCreated").textContent = d.createdAt?.toDate?.().toLocaleString()||"-";
+      document.getElementById("vApproved").textContent = d.approvedAt?.toDate?.().toLocaleString()||"-";
+      document.getElementById("vStatus").textContent = (d.status||"PENDING").toUpperCase();
+      document.getElementById("vProofImg").src = d.imageUrl||"";
+      document.getElementById("vTextProof").textContent = d.textProof||"-";
+      document.getElementById("vNoteText").textContent = d.rejectedNote||"-";
+      document.getElementById("viewerBackdrop").dataset.selId = id;
+      document.getElementById("viewerBackdrop").style.display = "flex";
     }
 
-    document.getElementById('vClose').addEventListener('click', ()=>{document.getElementById('viewerBackdrop').style.display='none';});
+    document.getElementById("vClose").addEventListener("click", ()=> {
+      document.getElementById("viewerBackdrop").style.display = "none";
+    });
 
-    // APPROVE — all reads come *before* writes
-    document.getElementById('approveBtn').addEventListener('click', async()=>{
-      const id = document.getElementById('viewerBackdrop').dataset.selId;
-      if(!id || !confirm("Approve and credit user?")) return;
-
+    document.getElementById("approveBtn").addEventListener("click", async ()=>{
+      const selId = document.getElementById("viewerBackdrop").dataset.selId;
+      if(!selId) return showToast("No submission selected","error");
+      if(!confirm("Approve and credit user?")) return;
       try {
         await runTransaction(db, async tx => {
-          const subRef = doc(db,'advert_submissions',id);
+          const subRef = doc(db,"advert_submissions",selId);
           const subSnap = await tx.get(subRef);
           if(!subSnap.exists()) throw new Error("Submission missing");
           const subData = subSnap.data()||{};
           if((subData.status||"").toLowerCase()==="approved") throw new Error("Already approved");
 
-          const advertRef = subData.advertId ? doc(db,'advertise_tasks',subData.advertId) : null;
+          const advertRef = subData.advertId ? doc(db,"advertise_tasks",subData.advertId) : null;
           const adSnap = advertRef ? await tx.get(advertRef) : null;
-
-          const userRef = subData.userId ? doc(db,'users',subData.userId) : null;
+          const userRef = subData.userId ? doc(db,"users",subData.userId) : null;
           const userSnap = userRef ? await tx.get(userRef) : null;
 
-          // AFTER ALL READS — NOW WRITES
           const unitPrice = Number(subData.unitPrice || adSnap?.data()?.unitPrice || 0);
           if(!unitPrice) throw new Error("Missing unitPrice");
           const payout = Math.round(unitPrice * 0.7);
 
-          tx.update(subRef, {
-            status:'approved',
+          tx.update(subRef,{
+            status:"approved",
             approvedAt:serverTimestamp(),
             paidAmount:payout,
-            unitPrice: unitPrice,
+            unitPrice:unitPrice,
             rejectedNote:null
           });
 
@@ -167,35 +224,35 @@
             tx.set(userRef,{balance:oldBal+payout},{merge:true});
           }
         });
-        alert("Approved successfully.");
-        document.getElementById('viewerBackdrop').style.display='none';
-      } catch(e){ alert("Approve failed: "+e.message); }
+        showToast("Approved successfully","success");
+        document.getElementById("viewerBackdrop").style.display="none";
+      } catch(e){
+        showToast("Approve failed: "+e.message,"error");
+      }
     });
 
-    // REJECT — all reads then writes
-    document.getElementById('rejectBtn').addEventListener('click', async()=>{
-      const id = document.getElementById('viewerBackdrop').dataset.selId;
+    document.getElementById("rejectBtn").addEventListener("click", async ()=>{
+      const selId = document.getElementById("viewerBackdrop").dataset.selId;
       const note = prompt("Rejection note (optional):","");
-      if(note===null || !confirm("Reject this submission?")) return;
-
+      if(note===null) return;
+      if(!confirm("Reject this submission?")) return;
       try {
         await runTransaction(db, async tx=>{
-          const subRef = doc(db,'advert_submissions',id);
+          const subRef = doc(db,"advert_submissions",selId);
           const subSnap = await tx.get(subRef);
           if(!subSnap.exists()) throw new Error("Submission missing");
           const subData = subSnap.data()||{};
 
-          const userRef = subData.userId ? doc(db,'users',subData.userId) : null;
+          const userRef = subData.userId ? doc(db,"users",subData.userId) : null;
           const userSnap = userRef ? await tx.get(userRef) : null;
-
-          // all reads finished — now writes
           const oldPaid = Number(subData.paidAmount||0);
+
           tx.update(subRef,{
-            status:'rejected',
-            paidAmount:0,
+            status:"rejected",
             approvedAt:null,
+            paidAmount:0,
             rejectedNote:note||null,
-            rejectedBy:auth.currentUser?.email||auth.currentUser?.uid||'admin',
+            rejectedBy:auth.currentUser?.email||auth.currentUser?.uid||"admin",
             rejectedAt:serverTimestamp()
           });
 
@@ -204,13 +261,15 @@
             tx.set(userRef,{balance:oldBal-oldPaid},{merge:true});
           }
         });
-        alert("Rejected.");
-        document.getElementById('viewerBackdrop').style.display='none';
-      } catch(e){ alert("Reject failed: "+e.message); }
+        showToast("Rejected submission","info");
+        document.getElementById("viewerBackdrop").style.display="none";
+      } catch(e){
+        showToast("Reject failed: "+e.message,"error");
+      }
     });
 
     onAuthStateChanged(auth,user=>{
-      authInfo.textContent = user? user.email||user.uid : "Not signed in";
+      document.getElementById('authInfo').textContent = user?user.email||user.uid:"Not signed in";
       const q = query(collection(db,'advert_submissions'),orderBy('createdAt','desc'));
       onSnapshot(q,snap=>{
         submissionsList = [];
@@ -219,8 +278,7 @@
       });
     });
 
-    document.getElementById('q').addEventListener('input', renderTable);
+    document.getElementById("q").addEventListener("input", renderTable);
   </script>
-
 </body>
 </html>
