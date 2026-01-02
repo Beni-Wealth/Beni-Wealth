@@ -56,7 +56,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore, collection, query, where, onSnapshot, getDocs, doc,
-  runTransaction, serverTimestamp, orderBy, getDoc
+  runTransaction, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
@@ -108,7 +108,6 @@ function renderAdverts(filter=""){
 
 // fetch user's adverts and pending counts
 function attachAdvertListener(uid){
-  // listen for adverts and filter to owner
   onSnapshot(collection(db,"advertise_tasks"),snap=>{
     adverts.clear();
     snap.forEach(docSnap=>{
@@ -118,39 +117,31 @@ function attachAdvertListener(uid){
       }
     });
     updatePendingCounts();
-  }, err=>{
-    console.error('advert listener error', err);
-    advertsSection.innerHTML = `<div class="muted">Failed to load adverts: ${err.message || err}</div>`;
   });
 }
 
 // count pending submissions per advert
 async function updatePendingCounts(){
-  // reset
   Object.keys(pendingCounts).forEach(k=>delete pendingCounts[k]);
-  try{
-    const allSubs = await getDocs(collection(db,"advert_submissions"));
-    allSubs.forEach(s => {
-      const d = s.data();
-      if(adverts.has(d.advertId) && d.status === "pending"){
-        pendingCounts[d.advertId] = (pendingCounts[d.advertId]||0) + 1;
-      }
-    });
-  }catch(err){
-    console.error('updatePendingCounts error', err);
-  }
+  const allSubs = await getDocs(collection(db,"advert_submissions"));
+  allSubs.forEach(s => {
+    const d = s.data();
+    if(adverts.has(d.advertId) && d.status === "pending"){
+      pendingCounts[d.advertId] = (pendingCounts[d.advertId]||0) + 1;
+    }
+  });
   renderAdverts(searchInput.value);
 }
 
-// show submissions list (newest first)
+// show submissions list
 async function showSubmissions(adId){
-  const advertRaw = adverts.get(adId);
-  let advert = advertRaw;
+  const advert = adverts.get(adId);
   subsSection.style.display = "block";
   advertsSection.style.display = "none";
   subsSection.innerHTML = `
     <button class="btn ghost" id="backToAdverts">← Back to Adverts</button>
-    <div id="subsHeader"><h2>Loading advert…</h2></div>
+    <h2>${advert.data.title} <span class="muted">(${partial(adId)})</span></h2>
+    <div class="muted">Unit Price: ₦${advert.data.unitPrice||0}</div>
     <div id="subsTableArea">Loading submissions…</div>
   `;
   document.getElementById("backToAdverts").onclick=()=>{
@@ -158,70 +149,32 @@ async function showSubmissions(adId){
     advertsSection.style.display="block";
   };
 
-  // if advert not present in adverts map, fetch it directly
-  if(!advert){
-    try{
-      const adDoc = await getDoc(doc(db,'advertise_tasks',adId));
-      if(!adDoc.exists()){
-        document.getElementById("subsTableArea").innerHTML = "<div class='muted'>Advert not found</div>";
-        return;
-      }
-      advert = { id: adDoc.id, data: adDoc.data() };
-      adverts.set(adId, advert); // cache it
-    }catch(err){
-      console.error('failed to load advert doc', err);
-      document.getElementById("subsTableArea").innerHTML = `<div class='muted'>Failed to load advert: ${err.message||err}</div>`;
-      return;
-    }
+  const snap = await getDocs(query(collection(db,"advert_submissions"),where("advertId","==",adId)));
+  if(snap.empty){
+    document.getElementById("subsTableArea").innerHTML = "<div class='muted'>No submissions</div>";
+    return;
   }
 
-  // update header now that we have advert
-  const headerHtml = `<h2>${advert.data.title} <span class="muted">(${partial(adId)})</span></h2>
-    <div class="muted">Unit Price: ₦${advert.data.unitPrice||0}</div>`;
-  document.getElementById("subsHeader").innerHTML = headerHtml;
-
-  // fetch submissions
-  try{
-    // NOTE: orderBy on createdAt may require a composite index if you also use where; if you
-    // see an error mentioning "create index", follow the link in the console to create it.
-    const q = query(
-      collection(db,"advert_submissions"),
-      where("advertId","==",adId),
-      orderBy("createdAt","desc")
-    );
-    const snap = await getDocs(q);
-
-    if(snap.empty){
-      document.getElementById("subsTableArea").innerHTML = "<div class='muted'>No submissions</div>";
-      return;
-    }
-
-    // build table and attach data-advert for future reference
-    let table = `<table data-advert="${adId}"><thead><tr><th>Sub ID</th><th>User</th><th>Submitted</th><th>Text Proof</th><th>Image</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
-    snap.forEach(s=>{
-      const d=s.data(), sid=s.id;
-      table+=`
-        <tr>
-          <td>${partial(sid)}</td>
-          <td>${partial(d.userId)}</td>
-          <td>${niceTime(d.createdAt)}</td>
-          <td>${d.textProof||"<span class='muted'>No text</span>"}</td>
-          <td>${d.imageUrl?`<img src="${d.imageUrl}" class="thumb-img" data-src="${d.imageUrl}">`:"<span class='muted'>No image</span>"}</td>
-          <td>${d.status||""}</td>
-          <td>
-            <button class="approve-btn btn ghost" ${d.status!=="pending"?"disabled":""}
-              data-sid="${sid}" data-uid="${d.userId}" data-plan="${d.userPlan||''}" data-price="${advert.data.unitPrice||0}">Approve</button>
-            <button class="reject-btn btn ghost" ${d.status!=="pending"?"disabled":""} data-sid="${sid}">Reject</button>
-          </td>
-        </tr>`;
-    });
-    table += "</tbody></table>";
-    document.getElementById("subsTableArea").innerHTML = table;
-  }catch(err){
-    console.error('Failed to load submissions:', err);
-    document.getElementById("subsTableArea").innerHTML = `<div class='muted'>Failed to load submissions: ${err.message || err}</div>`;
-    // if error mentions index creation, guide devs via console link
-  }
+  let table = `<table><thead><tr><th>Sub ID</th><th>User</th><th>Submitted</th><th>Text Proof</th><th>Image</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+  snap.forEach(s=>{
+    const d=s.data(), sid=s.id;
+    table+=`
+      <tr>
+        <td>${partial(sid)}</td>
+        <td>${partial(d.userId)}</td>
+        <td>${niceTime(d.createdAt)}</td>
+        <td>${d.textProof||"<span class='muted'>No text</span>"}</td>
+        <td>${d.imageUrl?`<img src="${d.imageUrl}" class="thumb-img" data-src="${d.imageUrl}">`:"<span class='muted'>No image</span>"}</td>
+        <td>${d.status||""}</td>
+        <td>
+          <button class="approve-btn btn ghost" ${d.status!=="pending"?"disabled":""} 
+            data-sid="${sid}" data-uid="${d.userId}" data-plan="${d.userPlan||''}" data-price="${advert.data.unitPrice||0}">Approve</button>
+          <button class="reject-btn btn ghost" ${d.status!=="pending"?"disabled":""} data-sid="${sid}">Reject</button>
+        </td>
+      </tr>`;
+  });
+  table += "</tbody></table>";
+  document.getElementById("subsTableArea").innerHTML = table;
 }
 
 onAuthStateChanged(auth,user=>{
@@ -248,8 +201,7 @@ document.body.addEventListener("click",async e=>{
   if(e.target.matches(".approve-btn")){
     const sid = e.target.dataset.sid;
     const uid = e.target.dataset.uid;
-    // plan unused here; using 70% payout for consistency
-    // const plan = e.target.dataset.plan.toLowerCase();
+    const plan = e.target.dataset.plan.toLowerCase();
     const price = Number(e.target.dataset.price||0);
 
     try{
@@ -258,52 +210,32 @@ document.body.addEventListener("click",async e=>{
         const subSnap = await tx.get(subRef);
         if(!subSnap.exists() || subSnap.data().status!=="pending") throw "Cannot approve";
 
-        // payout: 70% of unit price
-        const payout = Math.round(price * 0.7);
-        console.log('Approving submission', sid, 'price=', price, 'payout=', payout);
-
+        const payout = Math.round(price * (plan==="bronze"?0.6:0.8));
         tx.update(subRef,{status:"approved",approvedAt:serverTimestamp(),paidAmount:payout});
 
-        if(uid){
-          const userRef = doc(db,"users",uid);
-          const userSnap = await tx.get(userRef);
-          const balance = Number(userSnap.data().balance||0);
-          tx.update(userRef,{balance:balance+payout});
-        }
+        const userRef = doc(db,"users",uid);
+        const userSnap = await tx.get(userRef);
+        const balance = Number(userSnap.data().balance||0);
+        tx.update(userRef,{balance:balance+payout});
       });
+
       alert("Approved and credited!");
       updatePendingCounts();
-      // re-show submissions for the advert (table has data-advert attribute)
-      const table = e.target.closest("table");
-      if(table && table.dataset && table.dataset.advert){
-        showSubmissions(table.dataset.advert);
-      }
-    }catch(err){
-      console.error('approve error', err);
-      alert("Error: "+(err.message||err));
-    }
+      showSubmissions(e.target.closest("table").dataset.advert);
+
+    }catch(err){ alert("Error: "+err); }
   }
 
   if(e.target.matches(".reject-btn")){
     const sid = e.target.dataset.sid;
     try{
       await runTransaction(db,async tx=>{
-        const subRef = doc(db,"advert_submissions",sid);
-        const subSnap = await tx.get(subRef);
-        if(!subSnap.exists()) throw "Missing submission";
-        // set rejected and clear paidAmount
-        tx.update(subRef,{status:"rejected", paidAmount: 0, approvedAt: null});
+        tx.update(doc(db,"advert_submissions",sid),{status:"rejected"});
       });
       alert("Rejected");
       updatePendingCounts();
-      const table = e.target.closest("table");
-      if(table && table.dataset && table.dataset.advert){
-        showSubmissions(table.dataset.advert);
-      }
-    }catch(err){
-      console.error('reject error', err);
-      alert("Error: "+(err.message||err));
-    }
+      showSubmissions(e.target.closest("table").dataset.advert);
+    }catch(err){ alert("Error: "+err); }
   }
 });
 
