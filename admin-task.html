@@ -103,6 +103,7 @@
       <div><strong>Status:</strong> <span id="vStatus"></span></div>
       <img id="vProofImg" src="" alt="Proof"/>
       <div><strong>Text proof:</strong> <span id="vTextProof"></span></div>
+      <div id="vNoteWrapper" style="margin-top:8px"><strong>Note:</strong> <span id="vNote" class="muted"></span></div>
       <div style="margin-top:12px">
         <button id="approveBtn" class="btn">Approve</button>
         <button id="rejectBtn" class="btn ghost">Reject</button>
@@ -144,6 +145,7 @@
     const vStatus = document.getElementById('vStatus');
     const vProofImg = document.getElementById('vProofImg');
     const vTextProof = document.getElementById('vTextProof');
+    const vNote = document.querySelector('#vNoteWrapper span');
     const approveBtn = document.getElementById('approveBtn');
     const rejectBtn = document.getElementById('rejectBtn');
 
@@ -176,7 +178,7 @@
           <td>${fmtDate(d.createdAt)}</td>
           <td>${fmtDate(d.approvedAt)}</td>
           <td>${d.imageUrl? 'Yes':''}</td>
-          <td>${d.textProof||'-'}</td>
+          <td>${(d.textProof||'-')}</td>
           <td><span class="pill ${status}">${status.toUpperCase()}</span></td>
           <td><button class="btn ghost viewBtn">Details</button></td>
         </tr>`;
@@ -197,6 +199,7 @@
       vStatus.textContent = (d.status||'PENDING').toUpperCase();
       vProofImg.src = d.imageUrl||'';
       vTextProof.textContent = d.textProof||'-';
+      vNote.textContent = d.rejectedNote || d.note || '-';
       viewerBackdrop.style.display = "flex";
       viewerBackdrop.dataset.selId = id;
     }
@@ -215,25 +218,54 @@
       if(!selId) return;
       if(!confirm("Approve and credit user?")) return;
       approveBtn.disabled=true;
+
       try{
         const subRef = doc(db,'advert_submissions',selId);
         await runTransaction(db, async tx=>{
           const subSnap = await tx.get(subRef);
           if(!subSnap.exists()) throw new Error("Submission missing");
           const data = subSnap.data()||{};
+          const oldStatus = (data.status||'').toLowerCase();
+          const oldPaid = Number(data.paidAmount||0);
+          const unitPrice = Number(data.unitPrice||0);
           const userId = data.userId||"";
-          const oldAmt = Number(data.paidAmount||0);
-          const plan = (data.userPlan||"").toLowerCase();
-          const newAmt = Math.round(Number(data.unitPrice||0)*(plan==="bronze"?0.6:0.8));
-          let oldBal = 0;
-          if(userId){
-            const userSnap = await tx.get(doc(db,'users',userId));
-            oldBal = Number(userSnap.data()?.balance||0);
+
+          // prevent double-approval
+          if(oldStatus === 'approved'){
+            throw new Error("Submission already approved");
           }
-          tx.update(subRef,{status:'approved',approvedAt:serverTimestamp(),paidAmount:newAmt});
-          if(userId) tx.update(doc(db,'users',userId),{balance:oldBal - oldAmt + newAmt});
+
+          // payout = 70% of unitPrice
+          const payout = Math.round(unitPrice * 0.7);
+
+          // delta to apply to user's balance (handles cases where a paidAmount existed before)
+          const delta = payout - oldPaid;
+
+          // update submission: approved, paidAmount set to payout, clear any previous rejected note fields
+          tx.update(subRef, {
+            status: 'approved',
+            approvedAt: serverTimestamp(),
+            paidAmount: payout,
+            rejectedNote: null,
+            rejectedBy: null,
+            rejectedAt: null
+          });
+
+          // update/create user balance if userId present and delta != 0
+          if(userId && delta !== 0){
+            const userRef = doc(db,'users',userId);
+            const userSnap = await tx.get(userRef);
+            if(userSnap.exists()){
+              const oldBal = Number(userSnap.data()?.balance || 0);
+              tx.update(userRef, { balance: oldBal + delta });
+            } else {
+              // create user doc with balance = delta (merge in case other fields exist)
+              tx.set(userRef, { balance: delta }, { merge: true });
+            }
+          }
         });
         renderTable();
+        viewerBackdrop.style.display = "none";
       }catch(e){ console.error(e); alert("Approve failed: "+(e.message||e)); }
       finally{ approveBtn.disabled=false; }
     });
@@ -241,37 +273,75 @@
     rejectBtn.addEventListener('click', async ()=>{
       const selId = viewerBackdrop.dataset.selId;
       if(!selId) return;
+      // ask admin for a rejection note (optional)
+      const note = prompt("Rejection note (optional):", "");
+      if(note === null) {
+        // user cancelled the prompt -> don't proceed
+        return;
+      }
       if(!confirm("Reject this submission?")) return;
       rejectBtn.disabled=true;
       try{
         const subRef = doc(db,'advert_submissions',selId);
         await runTransaction(db, async tx=>{
           const subSnap = await tx.get(subRef);
-          if(!subSnap.exists()) throw new Error("Missing");
+          if(!subSnap.exists()) throw new Error("Submission missing");
           const data=subSnap.data()||{};
-          const userId=data.userId||"";
           const oldStatus=(data.status||"").toLowerCase();
-          const oldAmt=Number(data.paidAmount||0);
-          let oldBal=0;
-          if(userId){
-            const userSnap=await tx.get(doc(db,'users',userId));
-            oldBal=Number(userSnap.data()?.balance||0);
-          }
-          tx.update(subRef,{status:'rejected',approvedAt:null});
-          if(userId && oldStatus==="approved" && oldAmt>0){
-            tx.update(doc(db,'users',userId),{balance:oldBal-oldAmt});
+          const oldPaid=Number(data.paidAmount||0);
+          const userId=data.userId||"";
+          const adminId = (auth.currentUser && (auth.currentUser.email || auth.currentUser.uid)) || 'admin';
+
+          // set the submission to rejected, clear approvedAt, set paidAmount to 0 and add rejection metadata
+          tx.update(subRef, {
+            status: 'rejected',
+            approvedAt: null,
+            paidAmount: 0,
+            rejectedNote: note || null,
+            rejectedBy: adminId,
+            rejectedAt: serverTimestamp()
+          });
+
+          // if it was previously approved and had a paid amount, remove that credited amount
+          if(userId && oldStatus === 'approved' && oldPaid > 0){
+            const userRef = doc(db,'users',userId);
+            const userSnap = await tx.get(userRef);
+            if(!userSnap.exists()){
+              // create user with zero balance to keep ledger consistent
+              tx.set(userRef, { balance: 0 }, { merge: true });
+            } else {
+              const oldBal = Number(userSnap.data()?.balance || 0);
+              tx.update(userRef, { balance: oldBal - oldPaid });
+            }
           }
         });
         renderTable();
+        viewerBackdrop.style.display = "none";
       }catch(e){ console.error(e); alert("Reject failed: "+(e.message||e)); }
       finally{ rejectBtn.disabled=false; }
     });
 
+    // refresh button simply refetches the current query by re-attaching listener (or you might prefer manual refresh)
+    refreshBtn.addEventListener('click', ()=>{ renderTable(); });
+
+    // auth + snapshot listener
     onAuthStateChanged(auth, user=>{
-      authInfo.textContent = user? user.email||user.uid:"Not signed in";
+      authInfo.textContent = user? (user.email || user.uid) : "Not signed in";
+
+      // subscriptions: attach listener once
       const q = query(collection(db,'advert_submissions'), orderBy('createdAt','desc'));
-      onSnapshot(q, snap=>{ submissions=[]; snap.forEach(d=>submissions.push({id:d.id,data:d.data()})); renderTable(); });
+      onSnapshot(q, snap=>{
+        submissions=[];
+        snap.forEach(d=>submissions.push({id:d.id,data:d.data()}));
+        renderTable();
+      }, err => {
+        console.error("Snapshot error:", err);
+        tbody.innerHTML = `<tr><td colspan="9" class="muted">Failed to load submissions: ${err.message||err}</td></tr>`;
+      });
     });
+
+    // quick search filtering as user types
+    qInput.addEventListener('input', ()=>renderTable());
   </script>
 </body>
 </html>
