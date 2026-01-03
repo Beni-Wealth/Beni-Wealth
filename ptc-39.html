@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Beni-Wealth — PTC</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <meta name="theme-color" content="#2fe0b8" />
+  <style>
+    :root{
+      --bg: #041018;
+      --text: #eaf2ff;
+      --muted: #9fb3c9;
+      --accent: #2fe0b8;
+      --accent-2: #ff8a00;
+      font-family: 'Poppins', system-ui, Arial, sans-serif;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+    header.topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:linear-gradient(90deg,rgba(255,255,255,0.02),rgba(255,255,255,0.00));box-shadow:0 6px 20px rgba(0,0,0,0.25)}
+    .brand{font-weight:800;font-size:18px}
+    .subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+    .top-right{display:flex;gap:12px;align-items:center}
+    .top-timer{background:rgba(255,255,255,0.04);padding:8px 10px;border-radius:10px;font-weight:700;min-width:88px;text-align:center}
+    .user-badge{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:10px;font-size:13px;color:var(--muted)}
+    .balance-badge{background:linear-gradient(90deg,var(--accent),#2ea6ff);padding:8px 10px;border-radius:999px;font-weight:800;color:#022;min-width:96px;text-align:center}
+    main.main{height:calc(100vh - 64px);display:flex;flex-direction:column}
+    .iframe-wrap{position:relative;flex:1;display:flex;align-items:stretch}
+    iframe#articleFrame{border:0;width:100%;height:100vh;display:block}
+    /* congrats overlay (centered panel) */
+    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(rgba(2,6,23,0.45), rgba(2,6,23,0.45));backdrop-filter: blur(4px);padding:20px;z-index:50}
+    .panel{max-width:420px;width:100%;background:linear-gradient(180deg,#051826,#092433);border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 20px 60px rgba(2,6,23,0.7);text-align:center}
+    .panel .muted{color:var(--muted);font-size:13px}
+    .ok-btn{background:linear-gradient(90deg,var(--accent),#2ea6ff);border:0;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer}
+    .secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+    .status-line{margin-top:10px;color:var(--muted);min-height:20px}
+    .tx-line{margin-top:8px;color:#bfeedc;font-size:13px}
+    .toast{background:#082; color:#e6ffe6; padding:8px 12px;border-radius:8px;margin-top:8px;box-shadow:0 8px 20px rgba(0,0,0,0.5)}
+    #toastRoot{pointer-events:none}
+    @media (max-width:640px){
+      .panel{padding:14px}
+      .brand{font-size:16px}
+      .subtitle{display:none}
+      .balance-badge{min-width:72px;font-size:13px}
+      .top-timer{min-width:64px}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar" role="banner">
+    <div>
+      <div class="brand">Beni-Wealth</div>
+      <div class="subtitle">Read • Earn • Claim</div>
+    </div>
+    <div class="top-right" aria-live="polite">
+      <div id="topTimer" class="top-timer">Wait: 10s</div>
+      <div id="userBadge" class="user-badge">Not signed in</div>
+      <div id="balanceBadge" class="balance-badge">₦0.00</div>
+    </div>
+  </header>
+
+  <main class="main" role="main" aria-live="polite">
+    <div class="iframe-wrap" id="iframeWrap">
+      <iframe id="articleFrame"
+              src="https://www.dirtynaija.ng/articles/farewell-plans-allwell-ademola-s-final-resting-arrangements-unveiled"
+              title="Article"
+              sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+              loading="lazy"></iframe>
+
+      <!-- REUSED overlay: now a simple congratulation message with an OK button -->
+      <div id="congratsOverlay" class="overlay" aria-hidden="true" style="display:none;">
+        <div class="panel" role="dialog" aria-modal="true" aria-label="Congratulations">
+          <div style="font-weight:900;font-size:18px">Congratulations!</div>
+          <div class="muted" style="margin-top:8px">You have successfully received <strong>₦0.4</strong>.</div>
+          <div style="margin-top:16px">
+            <button id="okBtn" class="ok-btn" aria-label="Okay">Okay</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <div id="toastRoot" aria-live="polite" style="position:fixed;right:20px;bottom:20px;z-index:9999;pointer-events:none"></div>
+
+  <script type="module">
+    /* ======= CONFIG ======= */
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    const ARTICLE_URL = "https://www.dirtynaija.ng/articles/farewell-plans-allwell-ademola-s-final-resting-arrangements-unveiled";
+    const COUNTDOWN_SECONDS = 10; // initial read timer before showing overlay
+
+    /* ======= APP INIT ======= */
+    const app = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    /* ======= UI ======= */
+    const topTimer = document.getElementById('topTimer');
+    const userBadge = document.getElementById('userBadge');
+    const balanceBadge = document.getElementById('balanceBadge');
+    const congratsOverlay = document.getElementById('congratsOverlay');
+    const okBtn = document.getElementById('okBtn');
+    const toastRoot = document.getElementById('toastRoot');
+
+    function toast(msg, ms=3500){
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = msg;
+      t.style.pointerEvents = 'auto';
+      toastRoot.appendChild(t);
+      setTimeout(()=> { t.remove(); }, ms);
+    }
+
+    /* ======= Balance Helpers (display only) ======= */
+    let currentBalance = 0;
+    function setBalance(amount){
+      currentBalance = Number(amount) || 0;
+      balanceBadge.textContent = `₦${currentBalance.toFixed(2)}`;
+    }
+
+    /* ======= Overlay helpers ======= */
+    function showCongratsOverlay(){
+      congratsOverlay.style.display = 'flex';
+      congratsOverlay.setAttribute('aria-hidden','false');
+      okBtn.focus();
+    }
+    function hideCongratsOverlay(){
+      congratsOverlay.style.display = 'none';
+      congratsOverlay.setAttribute('aria-hidden','true');
+    }
+
+    /* ======= Countdown (pre-overlay) ======= */
+    let secondsLeft = COUNTDOWN_SECONDS;
+    let countdownTimer = null;
+    function startCountdown(n = COUNTDOWN_SECONDS){
+      clearInterval(countdownTimer);
+      secondsLeft = n;
+      updateTopTimer(secondsLeft);
+      countdownTimer = setInterval(()=>{
+        secondsLeft--;
+        updateTopTimer(secondsLeft);
+        if (secondsLeft <= 0){
+          clearInterval(countdownTimer);
+          updateTopTimer(0);
+          // instead of crediting, simply show congratulations overlay
+          showCongratsOverlay();
+        }
+      }, 1000);
+    }
+    function updateTopTimer(sec){
+      if (sec <= 0){ topTimer.textContent = 'Ready'; return; }
+      topTimer.textContent = `Wait: ${sec}s`;
+    }
+    startCountdown(COUNTDOWN_SECONDS);
+
+    /* ======= Auth & balance read (display-only) ======= */
+    onAuthStateChanged(auth, async (u) => {
+      if (!u) {
+        userBadge.textContent = 'Not signed in';
+        setBalance(0);
+        return;
+      }
+      const name = u.displayName || (u.email ? u.email.split('@')[0] : u.uid.slice(0,6));
+      userBadge.textContent = `Signed in • ${name}`;
+
+      // Load balance to display only (no writes will be performed)
+      try {
+        const userDocRef = doc(db, 'users', u.uid);
+        const snap = await getDoc(userDocRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          const srvBalance = Number(data?.balance ?? 0);
+          setBalance(srvBalance);
+        } else {
+          setBalance(0);
+        }
+      } catch (err) {
+        console.warn('could not fetch user doc (rules/network). continuing', err);
+      }
+    });
+
+    /* ======= UI events ======= */
+    okBtn.addEventListener('click', ()=> {
+      hideCongratsOverlay();
+      toast('Thanks! go earn more.');
+      // do NOT credit or call server — informational only
+    });
+
+    // also allow Escape key to close overlay
+    window.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape') hideCongratsOverlay(); });
+
+    // initial UI
+    setBalance(0);
+    console.log('Read & Claim (informational overlay) loaded.');
+  </script>
+</body>
+</html>
