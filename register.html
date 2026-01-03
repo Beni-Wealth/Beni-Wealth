@@ -6,7 +6,7 @@
   <title>Beni-Wealth — Register</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,600,700&display=swap" rel="stylesheet">
 
-   <!-- Poppins -->
+  <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
   <!-- Favicons & Social preview -->
@@ -20,7 +20,7 @@
   <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
-  
+
   <style>
     :root{
       --bg-1:#0b0613;
@@ -57,15 +57,35 @@
     }
     @keyframes enter { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform:none } }
 
-    .logo {
-      display:flex;
-      gap:12px;
-      align-items:center;
-      margin-bottom:8px;
+    /* Centered Logo */
+    .logo-centered {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 14px;
     }
-    .logo img{ width:56px; height:56px; border-radius:12px; object-fit:cover; box-shadow:0 8px 28px rgba(122,95,255,0.12) }
-    h1 { margin:0; font-size:20px; }
-    p.lead{ margin:8px 0 18px; color:var(--muted); font-size:14px }
+    .logo-centered img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 8px 28px rgba(122,95,255,0.12);
+    }
+
+    .title-center,
+    .lead-center {
+      text-align: center;
+      margin: 0 auto;
+    }
+    .title-center {
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+    .lead-center {
+      margin-top: 4px;
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
 
     form { display:flex; flex-direction:column; gap:12px; }
     label{ font-size:13px; color:var(--muted); }
@@ -86,7 +106,6 @@
     input::placeholder{ color: rgba(233,240,255,0.28) }
     input:focus{ box-shadow: 0 6px 20px rgba(47,224,184,0.06); border-color: rgba(127,90,255,0.14) }
 
-    /* disabled style for the referral input */
     input[disabled]{
       background: rgba(255,255,255,0.01);
       color: rgba(233,240,255,0.6);
@@ -133,33 +152,34 @@
 
     @media (max-width:420px){
       .card{ padding:18px; }
-      .logo img{ width:48px; height:48px }
-      .row { grid-template-columns: 1fr; } /* stack on small screens */
+      .logo-centered img{ width:64px; height:64px }
+      .row { grid-template-columns: 1fr; }
       input[type="text"], input[type="email"], input[type="password"] { height:46px; }
     }
   </style>
 </head>
 <body>
   <main class="card" role="main" aria-labelledby="registerTitle">
-    <div class="logo">
+
+    <!-- Centered Logo -->
+    <div class="logo-centered">
       <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
-      <div>
-        <h1 id="registerTitle">Create your Beni-Wealth account</h1>
-        <p class="lead">Quick signup — receive notifications and earn instantly.</p>
-      </div>
     </div>
+
+    <h1 id="registerTitle" class="title-center">Create your Beni-Wealth account</h1>
+    <p class="lead lead-center">Quick signup — receive notifications and earn instantly.</p>
 
     <form id="registerForm" novalidate>
       <input id="fullName" name="fullName" type="text" placeholder="Full name" required autocomplete="name" />
       <input id="username" name="username" type="text" placeholder="Username" required autocomplete="username" />
+
       <div>
-        <!-- referral is DISABLED (fully uneditable) -->
         <input id="referral" name="referral" type="text" placeholder="Referral code (optional)" disabled />
         <div id="refNote" class="ref-note" aria-live="polite" style="display:none"></div>
       </div>
 
       <input id="email" name="email" type="email" placeholder="Email address" required autocomplete="email" />
-      <div class="row" aria-hidden="false">
+      <div class="row">
         <div><input id="password" name="password" type="password" placeholder="Password (min 6)" minlength="6" required autocomplete="new-password" /></div>
         <div><input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirm password" minlength="6" required autocomplete="new-password" /></div>
       </div>
@@ -183,7 +203,6 @@
     import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, fetchSignInMethodsForEmail, updateProfile } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
     import { getFirestore, doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
-    // --- config
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -194,12 +213,10 @@
       measurementId: "G-Z2XP3YN6NS"
     };
 
-    // --- init
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // --- DOM
     const form = document.getElementById('registerForm');
     const submitBtn = document.getElementById('submitBtn');
     const spinner = document.getElementById('spinner');
@@ -209,16 +226,13 @@
     const refNote = document.getElementById('refNote');
     const usernameInput = document.getElementById('username');
 
-    function showError(msg){
-      errorText.textContent = msg || '';
-    }
+    function showError(msg){ errorText.textContent = msg || ''; }
     function setLoading(isLoading){
       submitBtn.disabled = isLoading;
       spinner.classList.toggle('show', isLoading);
       btnText.textContent = isLoading ? 'Please wait…' : 'Register';
     }
 
-    // helper: check username uniqueness
     async function isUsernameTaken(name){
       try{
         if(!name) return true;
@@ -227,12 +241,10 @@
         return !snap.empty;
       }catch(e){
         console.error('username check failed', e);
-        // if check fails, assume not taken to avoid blocking registration
         return false;
       }
     }
 
-    // sanitize referral: allow letters, numbers, hyphen, underscore, max 40 chars
     function sanitizeReferral(raw){
       if(!raw) return null;
       const t = String(raw).trim();
@@ -241,32 +253,27 @@
       return cleaned || null;
     }
 
-    // read referral from URL (supports ref=, referral=, r=)
     (function prefillReferralFromURL(){
       try{
         const sp = new URLSearchParams(window.location.search);
         const candidate = sp.get('ref') || sp.get('referral') || sp.get('r') || sp.get('refcode');
         const sanitized = sanitizeReferral(candidate);
         if(sanitized){
-          // populate but keep field disabled (fully uneditable)
           referralInput.value = sanitized;
           refNote.style.display = 'block';
           refNote.textContent = `Referral code applied: ${sanitized}`;
         } else {
-          // no referral in URL — still keep field disabled (fully uneditable)
           referralInput.value = '';
           refNote.style.display = 'block';
           refNote.textContent = 'Referral code (not provided)';
         }
       }catch(e){
-        console.warn('prefill referral failed', e);
         referralInput.value = '';
         refNote.style.display = 'block';
         refNote.textContent = 'Referral code (not provided)';
       }
     })();
 
-    // prevent any user edits/paste events programmatically as an extra guard (even though input is disabled)
     referralInput.addEventListener('keydown', (e) => e.preventDefault());
     referralInput.addEventListener('paste', (e) => e.preventDefault());
     referralInput.addEventListener('input', (e) => { referralInput.value = referralInput.value; });
@@ -278,14 +285,12 @@
 
       const fullName = document.getElementById('fullName').value.trim();
       const username = usernameInput.value.trim();
-      // read referral value from the input (disabled inputs are still readable via JS)
       const rawReferral = referralInput.value ? String(referralInput.value).trim() : '';
       const referral = sanitizeReferral(rawReferral);
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const confirm = document.getElementById('confirmPassword').value;
 
-      // basic validation
       if(!fullName || !username || !email || !password || !confirm){
         showError('Please fill all required fields.');
         setLoading(false);
@@ -302,33 +307,25 @@
         return;
       }
 
-      // prevent self-referral (if somehow referral equals username)
       const willIgnoreReferral = referral && referral.toLowerCase() === username.toLowerCase();
 
       try{
-        // check if email already used
         const methods = await fetchSignInMethodsForEmail(auth, email);
         if(methods && methods.length > 0){
           throw new Error('Email already in use.');
         }
-
-        // check username uniqueness
         const taken = await isUsernameTaken(username);
         if(taken){
           throw new Error('Username is already taken. Choose another.');
         }
 
-        // create user
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         const user = cred.user;
 
-        // update displayName (optional)
         try{ await updateProfile(user, { displayName: username }); } catch(upErr){ console.warn('updateProfile failed', upErr); }
 
-        // send email verification
         try{ await sendEmailVerification(user); } catch(verr){ console.warn('sendEmailVerification failed', verr); }
 
-        // prepare user doc payload. include multiple referral field names to maximize compatibility with other parts of the app.
         const referralValue = (referral && !willIgnoreReferral) ? referral : null;
 
         const payload = {
@@ -338,17 +335,14 @@
           balance: 0,
           plan: 'basic',
           createdAt: serverTimestamp(),
-          // referral fields
           referral: referralValue,
           referrer: referralValue,
           referredBy: referralValue,
           referralCode: referralValue || username
         };
 
-        // write user doc users/{uid}
         await setDoc(doc(db, 'users', user.uid), payload);
 
-        // success
         setLoading(false);
         alert('Account created — verification email sent (check your inbox). Redirecting to login.');
         window.location.href = 'login.html';
