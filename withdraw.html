@@ -279,8 +279,8 @@
 
         <label>
           <div class="field-label">Amount (₦)</div>
-          <input id="amount" required type="number" min="500" step="1" placeholder="1000" />
-          <div class="note">Minimum withdrawal amount is ₦500.</div>
+          <input id="amount" required type="number" min="200" step="1" placeholder="200" />
+          <div class="note">Minimum withdrawal amount is ₦200.</div>
         </label>
 
         <div class="form-row">
@@ -363,7 +363,7 @@
 
     let currentUser = null;
     let currentBalance = 0;
-    const MIN_WITHDRAWAL = 500; // updated to ₦500
+    const MIN_WITHDRAWAL = 200; // updated to ₦200
     let userUnsub = null;
 
     function showToast(message, isError = false){
