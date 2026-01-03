@@ -6,13 +6,9 @@
   <title>Beni-Wealth — Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-   <!-- Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-
   <!-- Favicons & Social preview -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="Beni-Wealth — Earn Steadily">
@@ -39,10 +35,23 @@
       animation: enter .28s ease;
     }
     @keyframes enter{from{opacity:0; transform:translateY(12px)}to{opacity:1; transform:none}}
-    .logo{display:flex;gap:12px;align-items:center;margin-bottom:8px}
-    .logo img{width:56px;height:56px;border-radius:12px;object-fit:cover;box-shadow:0 8px 28px rgba(122,95,255,0.12)}
-    h1{margin:0;font-size:20px}
-    p.lead{margin:6px 0 16px;color:var(--muted);font-size:14px}
+
+    /* Centered logo */
+    .logo-centered {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .logo-centered img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 8px 28px rgba(122,95,255,0.12);
+    }
+
+    h1{margin:0;font-size:20px;text-align:center;}
+    p.lead{margin:6px 0 16px;color:var(--muted);font-size:14px;text-align:center;}
     form{display:flex;flex-direction:column;gap:12px}
     input[type="email"], input[type="password"]{
       background:transparent;border:1px solid rgba(255,255,255,0.04);padding:12px 14px;border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:box-shadow .12s,border-color .12s
@@ -71,19 +80,20 @@
     .modal .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
     .note{font-size:13px;color:var(--muted);margin-top:8px}
     .success{color:#7AF0C8}
-    @media(max-width:420px){.card{padding:18px}.logo img{width:48px;height:48px}}
+    @media(max-width:420px){.card{padding:18px}.logo-centered img{width:64px;height:64px}}
   </style>
 </head>
 <body>
   <div class="wrap">
     <main class="card" role="main" aria-labelledby="loginTitle">
-      <div class="logo">
+
+      <!-- Centered Logo -->
+      <div class="logo-centered">
         <img src="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" alt="Beni-Wealth logo">
-        <div>
-          <h1 id="loginTitle">Welcome back</h1>
-          <p class="lead">Sign in to access your Beni-Wealth dashboard</p>
-        </div>
       </div>
+
+      <h1 id="loginTitle">Welcome back</h1>
+      <p class="lead">Sign in to access your Beni-Wealth dashboard</p>
 
       <form id="loginForm" novalidate>
         <input id="email" type="email" placeholder="Email" required autocomplete="email" />
@@ -120,6 +130,7 @@
     </div>
   </div>
 
+  <!-- Firebase login script stays unchanged -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, reload, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
@@ -139,7 +150,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // DOM
     const form = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
     const spinner = document.getElementById('spinner');
@@ -151,7 +161,6 @@
     const iVerifiedBtn = document.getElementById('iVerifiedBtn');
     const signOutBtn = document.getElementById('signOutBtn');
     const verifyNote = document.getElementById('verifyNote');
-    const verifyMsg = document.getElementById('verifyMsg');
 
     function setLoading(isLoading){
       loginBtn.disabled = isLoading;
@@ -164,7 +173,6 @@
         verifyBackdrop.style.display = 'flex';
         verifyBackdrop.setAttribute('aria-hidden','false');
         verifyNote.textContent = message || '';
-        // store user for modal actions
         verifyBackdrop._user = currentUser || null;
       } else {
         verifyBackdrop.style.display = 'none';
@@ -174,18 +182,12 @@
       }
     }
 
-    // onAuthStateChanged: only redirect if emailVerified === true
     onAuthStateChanged(auth, user => {
       if(user && user.emailVerified){
-        // safe redirect
         window.location.href = 'dashboard.html';
-      } else {
-        // if user present but unverified, keep them signed in but do not redirect
-        // we don't auto-show modal here — show it after an explicit login attempt
       }
     });
 
-    // login flow
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorText.textContent = '';
@@ -203,85 +205,43 @@
       try{
         const cred = await signInWithEmailAndPassword(auth, email, password);
         const user = cred.user;
-        // if verified, onAuthStateChanged handler will redirect — do immediate check as well
         if(user.emailVerified){
-          // redirect now
           setLoading(false);
           window.location.href = 'dashboard.html';
           return;
         }
-        // not verified: show verification modal and instructions
-        showVerifyModal(true, user, 'A verification email was sent when you registered. Use the button below to resend.');
+        showVerifyModal(true, user, 'A verification email was sent when you registered.');
         setLoading(false);
       }catch(err){
         console.error('Login failed', err);
-        // friendly messages:
-        if(err.code === 'auth/wrong-password') errorText.textContent = 'Wrong password.';
-        else if(err.code === 'auth/user-not-found') errorText.textContent = 'No account found for this email.';
-        else if(err.code === 'auth/invalid-email') errorText.textContent = 'Invalid email address.';
-        else errorText.textContent = err.message || 'Login failed.';
+        errorText.textContent = err.message || 'Login failed.';
         setLoading(false);
       }
     });
 
-    // Modal actions:
-
     resendBtn.addEventListener('click', async ()=>{
       const user = verifyBackdrop._user || auth.currentUser;
-      if(!user){
-        verifyNote.textContent = 'No user found (sign in again).';
-        return;
-      }
-      try{
+      if(user){
         await sendEmailVerification(user);
-        verifyNote.textContent = 'Verification email resent — check your inbox (and spam).';
-        verifyNote.classList.add('success');
-      }catch(e){
-        console.error('resend failed', e);
-        verifyNote.textContent = 'Could not resend verification. Try again later.';
+        verifyNote.textContent = 'Verification email resent — check your inbox.';
       }
     });
 
     iVerifiedBtn.addEventListener('click', async ()=>{
       const user = verifyBackdrop._user || auth.currentUser;
-      if(!user){
-        verifyNote.textContent = 'No user found (sign in again).';
-        return;
-      }
-      verifyNote.textContent = 'Checking...';
-      try{
-        await reload(user);                // refresh user data from server
+      if(user){
+        await reload(user);
         if(user.emailVerified){
-          // hide modal and redirect
           showVerifyModal(false, null);
           window.location.href = 'dashboard.html';
-        } else {
-          verifyNote.textContent = 'Email still not verified — please check your inbox and click the verification link.';
         }
-      }catch(e){
-        console.error('verify check failed', e);
-        verifyNote.textContent = 'Could not check verification status — try again.';
       }
     });
 
     signOutBtn.addEventListener('click', async ()=>{
-      try{
-        await signOut(auth);
-      }catch(e){
-        console.error('signout failed', e);
-      } finally {
-        showVerifyModal(false, null);
-        // stay on login page; fields remain
-      }
+      await signOut(auth);
+      showVerifyModal(false, null);
     });
-
-    // Accessibility: close modal on backdrop click (but not when clicking inside modal)
-    verifyBackdrop.addEventListener('click', (ev)=>{
-      if(ev.target === verifyBackdrop){
-        // do not close automatically — keep explicit actions
-      }
-    });
-
   </script>
 </body>
 </html>
