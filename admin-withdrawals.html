@@ -72,8 +72,8 @@
 
     <section id="adminUI" class="hidden">
       <!-- controls -->
-      <div class="glass rounded-xl p-4 mb-6 grid md:grid-cols-4 gap-4 items-center">
-        <div class="flex items-center gap-3 col-span-2">
+      <div class="glass rounded-xl p-4 mb-6 grid md:grid-cols-3 gap-4 items-center">
+        <div class="flex items-center gap-3">
           <input id="searchInput" type="search" placeholder="Search by account name, account number, uid or withdrawal id" class="w-full md:w-96 rounded-lg bg-white/5 px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
           <button id="refreshBtn" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white">Refresh</button>
         </div>
@@ -89,32 +89,77 @@
           </select>
         </div>
 
-        <!-- NEW TOTAL WITHDRAWN CARD -->
         <div class="text-right">
-          <div id="approvedTotalWithdrawn" class="text-sm text-slate-300">Loading total withdrawn…</div>
+          <div id="stats" class="text-sm text-slate-300">Loading stats…</div>
         </div>
       </div>
 
       <!-- list -->
       <div id="listWrap" class="grid gap-4">
-        <!-- items inserted here dynamically -->
+        <!-- items inserted here -->
       </div>
     </section>
 
     <footer class="mt-8 text-center text-xs text-slate-400">© Beni-Wealth</footer>
   </main>
 
-  <!-- details modal (no change) -->
+  <!-- details modal -->
   <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-6" aria-hidden="true" role="dialog" aria-modal="true">
     <div id="modalBackdrop" class="absolute inset-0 bg-black/60"></div>
-    <div id="modalCard" class="relative glass rounded-xl shadow-2xl w-full max-w-3xl p-6 z-10 modal-wrap">
-      <!-- modal content omitted for brevity — unchanged from your original -->
+
+    <div id="modalCard" class="relative glass rounded-xl shadow-2xl w-full max-w-3xl p-6 z-10 modal-wrap" role="document" aria-labelledby="modalTitle">
+      <!-- X close button (top-right) -->
+      <button id="xClose" class="close-x" aria-label="Close modal">&times;</button>
+
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h3 id="modalTitle" class="text-lg font-semibold">Withdrawal details</h3>
+          <p id="modalSubtitle" class="text-sm text-slate-300 mt-1"></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="modalStatus" class="text-sm px-3 py-1 rounded-full bg-white/6"></span>
+          <button id="closeModal" class="px-2 py-1 rounded-md hover:bg-white/6">Close</button>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <dl class="text-sm text-slate-300 space-y-3">
+            <div><dt class="font-medium text-slate-200">Withdrawal ID</dt><dd id="m_id" class="truncate-2"></dd></div>
+            <div><dt class="font-medium text-slate-200">Requested by (UID)</dt><dd id="m_uid"></dd></div>
+            <div><dt class="font-medium text-slate-200">Account name</dt><dd id="m_name"></dd></div>
+            <div><dt class="font-medium text-slate-200">Account number</dt><dd id="m_account"></dd></div>
+            <div><dt class="font-medium text-slate-200">Bank</dt><dd id="m_bank"></dd></div>
+            <div><dt class="font-medium text-slate-200">Amount</dt><dd id="m_amount"></dd></div>
+          </dl>
+        </div>
+
+        <div>
+          <dl class="text-sm text-slate-300 space-y-3">
+            <div><dt class="font-medium text-slate-200">Status history</dt><dd id="m_history" class="text-xs text-slate-400"></dd></div>
+            <div><dt class="font-medium text-slate-200">Requested at</dt><dd id="m_created"></dd></div>
+            <div><dt class="font-medium text-slate-200">Processed by</dt><dd id="m_processedBy"></dd></div>
+            <div><dt class="font-medium text-slate-200">Processed at</dt><dd id="m_processedAt"></dd></div>
+            <div><dt class="font-medium text-slate-200">Meta</dt><dd id="m_meta" class="text-xs text-slate-400"></dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap gap-3">
+        <button id="approveBtn" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 rounded-lg">Approve</button>
+        <button id="refundBtn" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-lg">Refund (return funds)</button>
+        <button id="rejectBtn" class="px-4 py-2 bg-rose-500 hover:bg-rose-400 rounded-lg">Reject</button>
+        <div class="ml-auto text-sm text-slate-400 self-center">Only admins can perform these actions</div>
+      </div>
+      <div id="modalMsg" class="mt-3 text-sm text-rose-400"></div>
     </div>
   </div>
+
+  <!-- toast -->
   <div id="toast" class="fixed right-6 bottom-6 z-60 hidden"></div>
 
-  <!-- updated script -->
   <script type="module">
+    // ---------- FIREBASE SETUP ----------
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import {
       getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc,
@@ -136,24 +181,55 @@
     const db = getFirestore();
     const auth = getAuth();
 
+    // ---------- admin access control ----------
     const ALLOWED_ADMINS = [
       'beniwealth70@gmail.com',
       'owanaomubo76@gmail.com'
     ];
 
-    const adminEmailBadge = document.getElementById('adminEmailBadge');
+    // UI elements
     const notAllowed = document.getElementById('notAllowed');
     const adminUI = document.getElementById('adminUI');
+    const adminEmailBadge = document.getElementById('adminEmailBadge');
+    const signOutBtn = document.getElementById('signOutBtn');
+
+    const listWrap = document.getElementById('listWrap');
+    const stats = document.getElementById('stats');
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     const refreshBtn = document.getElementById('refreshBtn');
-    const approvedTotalWithdrawn = document.getElementById('approvedTotalWithdrawn');
 
-    const listWrap = document.getElementById('listWrap');
+    const detailModal = document.getElementById('detailModal');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalCard = document.getElementById('modalCard');
+    const closeModal = document.getElementById('closeModal');
+    const xClose = document.getElementById('xClose');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSubtitle = document.getElementById('modalSubtitle');
+    const modalStatus = document.getElementById('modalStatus');
+    const modalMsg = document.getElementById('modalMsg');
+
+    const m_id = document.getElementById('m_id');
+    const m_uid = document.getElementById('m_uid');
+    const m_name = document.getElementById('m_name');
+    const m_account = document.getElementById('m_account');
+    const m_bank = document.getElementById('m_bank');
+    const m_amount = document.getElementById('m_amount');
+    const m_history = document.getElementById('m_history');
+    const m_created = document.getElementById('m_created');
+    const m_processedBy = document.getElementById('m_processedBy');
+    const m_processedAt = document.getElementById('m_processedAt');
+    const m_meta = document.getElementById('m_meta');
+
+    const approveBtn = document.getElementById('approveBtn');
+    const refundBtn = document.getElementById('refundBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
+
     const toast = document.getElementById('toast');
+
     let currentUser = null;
     let snapshotUnsub = null;
-    let cachedItems = [];
+    let cachedItems = []; // array of { id, data }
 
     function showToast(msg, success = true) {
       toast.textContent = msg;
@@ -162,75 +238,334 @@
       setTimeout(()=> { toast.style.display = 'none'; }, 3500);
     }
 
-    function formatCurrency(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
-
-    function updateStats(){
-      let counts = {};
-      let totalApprovedAmount = 0;
-
-      cachedItems.forEach(it => {
-        const s = it.data.status || 'pending';
-        counts[s] = (counts[s]||0) + 1;
-        if(s === 'approved') totalApprovedAmount += Number(it.data.amount || 0);
-      });
-
-      approvedTotalWithdrawn.innerHTML = `Total Withdrawn (Approved): <strong>${formatCurrency(totalApprovedAmount)}</strong>`;
+    function fmtTS(ts) {
+      if(!ts) return '-';
+      try {
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleString();
+      } catch (e) { return String(ts); }
     }
 
-    function startListening(){
-      if(snapshotUnsub) snapshotUnsub();
-
-      const q = query(collection(db, 'withdrawal'), orderBy('createdAt', 'desc'));
-      snapshotUnsub = onSnapshot(q, (snap) => {
-        cachedItems = [];
-        snap.forEach(d => cachedItems.push({ id: d.id, data:d.data() }));
-        renderList();
-        updateStats();
-      });
+    function resetModal() {
+      modalMsg.textContent = '';
     }
 
-    onAuthStateChanged(auth, user => {
+    function showModal() {
+      detailModal.classList.remove('hidden');
+      detailModal.style.display = 'flex';
+      modalCard.classList.add('modal-show');
+      detailModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideModal() {
+      modalCard.classList.remove('modal-show');
+      // small timeout to allow scale fade-out before hiding the overlay
+      setTimeout(() => {
+        detailModal.classList.add('hidden');
+        detailModal.style.display = 'none';
+        detailModal.setAttribute('aria-hidden', 'true');
+      }, 120);
+    }
+
+    // --- auth & access control ---
+    onAuthStateChanged(auth, (user) => {
       currentUser = user;
-      if(user && ALLOWED_ADMINS.includes(user.email)){
+      if(user && ALLOWED_ADMINS.includes(user.email)) {
         adminEmailBadge.textContent = `Signed in as ${user.email}`;
         adminUI.classList.remove('hidden');
         notAllowed.classList.add('hidden');
+        // start listening
         startListening();
       } else {
+        adminEmailBadge.textContent = user ? `Signed in as ${user.email}` : '';
         adminUI.classList.add('hidden');
         notAllowed.classList.remove('hidden');
+        // stop listening if any
+        if(snapshotUnsub) { snapshotUnsub(); snapshotUnsub = null; }
+        // if user not allowed and not null, show message about who can access
+        if(user) {
+          notAllowed.innerHTML = `
+            <h2 class="text-lg font-medium text-rose-400">Access denied</h2>
+            <p class="text-sm text-slate-300 mt-2">The signed-in account (${user.email}) does not have administrator access.</p>
+            <p class="text-sm text-slate-300 mt-1">Allowed admin emails: <strong>${ALLOWED_ADMINS.join(', ')}</strong>.</p>
+          `;
+        } else {
+          notAllowed.innerHTML = `
+            <h2 class="text-lg font-medium text-amber-400">Sign in required</h2>
+            <p class="text-sm text-slate-300 mt-2">Please sign in with an administrator account to view and manage withdrawals.</p>
+          `;
+        }
       }
     });
 
-    refreshBtn.addEventListener('click', () => startListening());
-    statusFilter.addEventListener('change', () => { renderList(); updateStats(); });
-    searchInput.addEventListener('input', () => renderList());
+    signOutBtn.addEventListener('click', async () => {
+      await signOut(auth);
+      showToast('Signed out', true);
+    });
 
+    // --- live listener ---
+    function startListening(){
+      // cleanup
+      if(snapshotUnsub) snapshotUnsub();
+
+      const col = collection(db, 'withdrawal');
+      const q = query(col, orderBy('createdAt', 'desc'));
+      snapshotUnsub = onSnapshot(q, (snap) => {
+        cachedItems = [];
+        snap.forEach(docSnap => {
+          cachedItems.push({ id: docSnap.id, data: docSnap.data() });
+        });
+        renderList();
+        updateStats();
+      }, (err) => {
+        console.error('listener err', err);
+        showToast('Failed to load withdrawals', false);
+      });
+    }
+
+    // --- rendering list ---
     function renderList(){
-      const qT = (searchInput.value||'').trim().toLowerCase();
-      const stat = statusFilter.value;
+      const queryText = (searchInput.value || '').trim().toLowerCase();
+      const status = statusFilter.value;
+
       const items = cachedItems.filter(it => {
         const d = it.data;
-        if(stat !== 'all' && (d.status||'pending') !== stat) return false;
-        const text = [it.id,d.requestedBy,d.accountName,d.accountNumber,d.bank,String(d.amount)].join(' ').toLowerCase();
-        return !qT || text.includes(qT);
+        // status filter
+        if(status !== 'all' && String((d.status || 'pending')) !== status) return false;
+        // search filter across some fields
+        if(!queryText) return true;
+        const fields = [
+          it.id,
+          d.requestedBy || '',
+          (d.accountName||''),
+          (d.accountNumber||''),
+          (d.bank||''),
+          String(d.amount||'')
+        ].join(' ').toLowerCase();
+        return fields.includes(queryText);
       });
 
+      // render
       listWrap.innerHTML = items.map(it => {
         const d = it.data;
-        const created = d.createdAt ? d.createdAt.toDate().toLocaleString() : '-';
-        return `
-          <div class="glass rounded-xl p-4 flex items-center justify-between gap-3">
+        const created = d.createdAt ? (d.createdAt.toDate ? d.createdAt.toDate().toLocaleString() : String(d.createdAt)) : '-';
+        const statusBadge = (s) => {
+          const map = {
+            pending: 'bg-yellow-500 text-black',
+            approved: 'bg-emerald-500 text-white',
+            rejected: 'bg-rose-500 text-white',
+            refunded: 'bg-slate-500 text-white'
+          };
+          return `<span class="inline-block px-3 py-1 rounded-full text-xs ${map[s] || 'bg-white/6'}">${(s||'pending')}</span>`;
+        };
+
+        const snippet = `
+          <div class="glass rounded-xl p-4 flex items-center justify-between gap-3 hover:shadow-lg transition">
             <div class="min-w-0">
-              <div class="text-sm font-medium text-slate-200">${d.accountName||'-'}</div>
-              <div class="text-xs text-slate-400">${d.accountNumber||'-'} • ${d.bank||'-'}</div>
-              <div class="text-xs text-slate-400">${created}</div>
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-lg bg-white/6 flex items-center justify-center text-lg font-semibold">${(d.accountName||'U').charAt(0).toUpperCase()}</div>
+                <div class="min-w-0">
+                  <div class="text-sm font-medium text-slate-200 truncate">${d.accountName || '—'}</div>
+                  <div class="text-xs text-slate-400 truncate-2">${d.accountNumber || '—'} • ${d.bank || '—'}</div>
+                </div>
+              </div>
+              <div class="text-xs text-slate-400 mt-2">${created} • ID: <span class="font-mono">${it.id}</span></div>
             </div>
-            <div class="text-sm font-semibold">${formatCurrency(d.amount)}</div>
+
+            <div class="flex flex-col items-end gap-2">
+              <div class="text-sm font-semibold">${formatCurrency(d.amount)}</div>
+              <div>${statusBadge(d.status || 'pending')}</div>
+              <div>
+                <button data-id="${it.id}" class="openBtn px-3 py-1 rounded-md bg-white/6 hover:bg-white/8 text-xs">View</button>
+              </div>
+            </div>
           </div>
         `;
-      }).join('') || `<div class="text-center text-slate-400 py-8">No matches</div>`;
+        return snippet;
+      }).join('') || `<div class="text-center text-slate-400 py-8">No withdrawals match your filters.</div>`;
     }
+
+    function updateStats(){
+      const total = cachedItems.length;
+      const counts = cachedItems.reduce((acc, it) => {
+        const s = it.data.status || 'pending';
+        acc[s] = (acc[s]||0) + 1;
+        return acc;
+      }, {});
+      stats.innerHTML = `Total: <strong>${total}</strong> • Pending: <strong>${counts.pending||0}</strong> • Approved: <strong>${counts.approved||0}</strong> • Refunded: <strong>${counts.refunded||0}</strong> • Rejected: <strong>${counts.rejected||0}</strong>`;
+    }
+
+    // --- helpers ---
+    function formatCurrency(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
+
+    // delegate view button clicks
+    listWrap.addEventListener('click', (e) => {
+      const b = e.target.closest('.openBtn');
+      if(!b) return;
+      const id = b.dataset.id;
+      openDetails(id);
+    });
+
+    // open details
+    async function openDetails(id){
+      resetModal();
+      const found = cachedItems.find(x => x.id === id);
+      if(!found) { showToast('Item not found', false); return; }
+      const d = found.data;
+
+      modalTitle.textContent = `Withdrawal — ${id}`;
+      modalSubtitle.textContent = `${d.accountName || '—'} • ${d.accountNumber || '—'}`;
+      modalStatus.textContent = (d.status || 'pending').toUpperCase();
+      modalStatus.className = 'text-sm px-3 py-1 rounded-full ' +
+        ((d.status === 'pending') ? 'bg-yellow-500 text-black' : (d.status === 'approved') ? 'bg-emerald-500 text-white' : (d.status === 'rejected') ? 'bg-rose-500 text-white' : 'bg-slate-500 text-white');
+
+      m_id.textContent = id;
+      m_uid.textContent = d.requestedBy || d.userId || '—';
+      m_name.textContent = d.accountName || '-';
+      m_account.textContent = d.accountNumber || '-';
+      m_bank.textContent = d.bank || '-';
+      m_amount.textContent = formatCurrency(d.amount);
+      m_history.textContent = (d.history ? JSON.stringify(d.history) : '—');
+      m_created.textContent = fmtTS(d.createdAt);
+      m_processedBy.textContent = d.processedBy ? (d.processedBy.email || d.processedBy) : '-';
+      m_processedAt.textContent = fmtTS(d.processedAt);
+      m_meta.textContent = d.meta ? JSON.stringify(d.meta) : '-';
+
+      // enable/disable action buttons depending on status & admin
+      const isPending = !d.status || d.status === 'pending';
+      approveBtn.disabled = !isPending;
+      refundBtn.disabled = !isPending;
+      rejectBtn.disabled = !isPending;
+
+      // show modal with animation
+      showModal();
+    }
+
+    // close modal handlers
+    closeModal.addEventListener('click', hideModal);
+    modalBackdrop.addEventListener('click', hideModal);
+    xClose.addEventListener('click', hideModal);
+
+    // also close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape' && detailModal && !detailModal.classList.contains('hidden')) {
+        hideModal();
+      }
+    });
+
+    // actions
+    approveBtn.addEventListener('click', async () => {
+      if(!confirm('Approve this withdrawal? This will mark the request as approved.')) return;
+      const id = m_id.textContent;
+      await changeStatus(id, 'approved', { note: 'Approved by admin' });
+    });
+
+    rejectBtn.addEventListener('click', async () => {
+      const reason = prompt('Optional reason for rejection (leave empty for none):');
+      await changeStatus(m_id.textContent, 'rejected', { reason: reason || null });
+    });
+
+    refundBtn.addEventListener('click', async () => {
+      if(!confirm('Refund this withdrawal and return funds to the user?')) return;
+      await refundAndReturn(m_id.textContent);
+    });
+
+    // status-only change (approve/reject)
+    async function changeStatus(docId, newStatus, meta = {}) {
+      if(!currentUser || !ALLOWED_ADMINS.includes(currentUser.email)) {
+        showToast('Not authorized', false); return;
+      }
+      const wRef = doc(db, 'withdrawal', docId);
+      try {
+        await updateDoc(wRef, {
+          status: newStatus,
+          processedBy: { uid: currentUser.uid, email: currentUser.email },
+          processedAt: serverTimestamp(),
+          meta: meta
+        });
+        showToast(`Marked ${newStatus}`);
+        hideModal();
+      } catch (err) {
+        console.error('status change err', err);
+        showToast('Failed to update status', false);
+      }
+    }
+
+    // refund: add amount back to user's balance inside transaction
+    async function refundAndReturn(docId) {
+      if(!currentUser || !ALLOWED_ADMINS.includes(currentUser.email)) {
+        showToast('Not authorized', false); return;
+      }
+      const wRef = doc(db, 'withdrawal', docId);
+
+      try {
+        await runTransaction(db, async (tx) => {
+          const wSnap = await tx.get(wRef);
+          if(!wSnap.exists()) throw new Error('Withdrawal not found');
+          const w = wSnap.data();
+          const curStatus = w.status || 'pending';
+          if(curStatus !== 'pending') throw new Error('Withdrawal not pending (cannot refund)');
+
+          const userId = w.requestedBy || w.userId;
+          if(!userId) throw new Error('No user id on withdrawal');
+
+          const userRef = doc(db, 'users', String(userId));
+          const uSnap = await tx.get(userRef);
+          if(!uSnap.exists()) throw new Error('User not found');
+
+          const amount = Number(w.amount || 0);
+          const prevBal = Number(uSnap.data().balance || 0);
+          const newBal = prevBal + amount;
+
+          // update user balance
+          tx.update(userRef, { balance: newBal });
+
+          // update withdrawal doc
+          tx.update(wRef, {
+            status: 'refunded',
+            processedBy: { uid: currentUser.uid, email: currentUser.email },
+            processedAt: serverTimestamp(),
+            meta: { refundedToBalance: true, ...(w.meta || {}) }
+          });
+
+          // add transaction record (credit)
+          const txCol = collection(db, 'transactions');
+          const txDocRef = doc(txCol);
+          tx.set(txDocRef, {
+            userId: userId,
+            type: 'credit',
+            source: 'withdrawal_refund',
+            amount: amount,
+            balanceAfter: newBal,
+            createdAt: serverTimestamp(),
+            meta: { withdrawalId: docId }
+          });
+        });
+
+        showToast('Refund complete — funds returned to user balance');
+        hideModal();
+      } catch (err) {
+        console.error('refund err', err);
+        showToast('Refund failed: ' + (err.message || ''), false);
+      }
+    }
+
+    // search / filters
+    statusFilter.addEventListener('change', renderList);
+    searchInput.addEventListener('input', throttle(renderList, 250));
+    refreshBtn.addEventListener('click', () => { if(snapshotUnsub) { snapshotUnsub(); snapshotUnsub = null; startListening(); } });
+
+    // utility throttle
+    function throttle(fn, wait) {
+      let t = null;
+      return (...args) => {
+        if(t) clearTimeout(t);
+        t = setTimeout(()=> { fn(...args); t = null; }, wait);
+      };
+    }
+
+    // initial no-op render
+    renderList();
 
   </script>
 
