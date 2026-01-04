@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Blog View Farm — Beni-Wealth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #0b1220; color: #eef2fa; }
+    .card { background: #071826; padding: 24px; border-radius: 12px; border:1px solid rgba(255,255,255,0.08); }
+    input, button { font-family: inherit; }
+  </style>
+</head>
+<body class="p-6">
+  <main class="max-w-xl mx-auto space-y-6">
+    <h1 class="text-2xl font-semibold text-center">Blog View Generator</h1>
+
+    <div class="card space-y-4">
+      <label class="block">Blog ID
+        <input id="blogId" type="text" class="w-full p-2 rounded bg-[#0b1228]" placeholder="Enter blog ID">
+      </label>
+
+      <label class="block">Number of Views
+        <input id="viewCount" type="number" class="w-full p-2 rounded bg-[#0b1228]" placeholder="e.g., 100">
+      </label>
+
+      <label class="flex items-center gap-2">
+        <input id="simulateDocs" type="checkbox" checked>
+        <span class="text-sm text-[#ccc]">Create individual view docs (slower)</span>
+      </label>
+
+      <button id="runBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded text-white font-medium">
+        Generate Views
+      </button>
+
+      <div id="resultArea" class="text-sm"></div>
+    </div>
+  </main>
+
+<script type="module">
+
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc, setDoc, increment, collection } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  authDomain: "beni-wealths.firebaseapp.com",
+  projectId: "beni-wealths",
+  storageBucket: "beni-wealths.appspot.com",
+  messagingSenderId: "807950483822",
+  appId: "1:807950483822:web=e10fa87307e041c4d8417f",
+  measurementId: "G-Z2XP3YN6NS"
+};
+if (!getApps().length) initializeApp(firebaseConfig);
+
+const db = getFirestore();
+const auth = getAuth();
+
+const blogIdInput = document.getElementById("blogId");
+const viewCountInput = document.getElementById("viewCount");
+const runBtn = document.getElementById("runBtn");
+const resultArea = document.getElementById("resultArea");
+const simulateCheckbox = document.getElementById("simulateDocs");
+
+// optional: require login to run
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider).catch(console.error);
+  }
+});
+
+runBtn.onclick = async () => {
+  const blogId = blogIdInput.value.trim();
+  const count = Number(viewCountInput.value);
+  const simulateDocs = simulateCheckbox.checked;
+
+  if (!blogId) { resultArea.textContent = "Enter a blog ID."; return; }
+  if (!count || count < 1) { resultArea.textContent = "Enter a valid view count."; return; }
+
+  resultArea.textContent = "Processing… please wait";
+
+  try {
+    const blogRef = doc(db, "blogs", blogId);
+    const blogSnap = await getDoc(blogRef);
+
+    if (!blogSnap.exists()) {
+      resultArea.textContent = "Blog not found!";
+      return;
+    }
+
+    const blogData = blogSnap.data();
+    const authorId = blogData.userId;
+
+    // update total view count
+    const viewCountRef = doc(db, "blogViewsCount", blogId);
+    await updateDoc(viewCountRef, { count: increment(count) })
+      .catch(async () => { await setDoc(viewCountRef, { count }); });
+
+    // credit author balance
+    if (authorId) {
+      const userRef = doc(db, "users", authorId);
+      await updateDoc(userRef, { blogBalance: increment(count) })
+        .catch(async () => { await setDoc(userRef, { blogBalance: count }, { merge: true }); });
+    }
+
+    // simulate detailed view docs
+    if (simulateDocs) {
+      const viewsCol = collection(db, "blogViews");
+      for (let i = 0; i < count; i++) {
+        const viewId = `${blogId}_sim_${Date.now()}_${Math.random().toString(36).substr(2,5)}`;
+        await setDoc(doc(viewsCol, viewId), {
+          blogId,
+          userId: authorId || null,
+          lastRewardedAt: new Date()
+        });
+      }
+    }
+
+    resultArea.textContent = `Done! Added ${count} views to blog ${blogId}.`;
+
+  } catch (error) {
+    console.error(error);
+    resultArea.textContent = "Error: " + error.message;
+  }
+};
+
+</script>
+</body>
+</html>
