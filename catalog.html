@@ -79,8 +79,16 @@
     <div class="status" id="status">Prices are one-time payments. Your balance will be debited immediately on a successful purchase.</div>
   </div>
 
-  <!-- bottom nav (unchanged) -->
-  <!-- Firebase script (with updated plan prices below) -->
+  <!-- bottom nav (smaller) -->
+  <div class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-btn" id="navHome"><div class="icon-wrap">🏠</div><span>Home</span></div>
+    <div class="nav-btn" id="navConvert"><div class="icon-wrap">🔗</div><span>shortlinks</span></div>
+    <div class="nav-center"><div class="center-btn" id="navCenter">➕</div></div>
+    <div class="nav-btn" id="navNews"><div class="icon-wrap">💬</div><span>News</span></div>
+    <div class="nav-btn" id="navAssets"><div class="icon-wrap">👤</div><span>Assets</span></div>
+  </div>
+
+  <!-- Firebase (modular v9) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
@@ -88,29 +96,255 @@
       getFirestore, doc, getDoc, runTransaction, collection, addDoc
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+    // === Beni-Wealth Firebase config ===
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
       projectId: "beni-wealths",
       storageBucket: "beni-wealths.firebasestorage.app",
       messagingSenderId: "807950483822",
-      appId: "1:807950483822:web=e10fa87307e041c4d8417f",
+      appId: "1:807950483822:web:e10fa87307e041c4d8417f",
       measurementId: "G-Z2XP3YN6NS"
     };
+
+    // Initialize Firebase app explicitly and bind auth + firestore to it
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Plan definitions (Bronze & Silver; publisher plans added separately)
     const PLANS = [
-      { id: 'Bronze', price: 1500, points: ['No withdrawal charge','Priority activation','Earn 60% of higher potential than free users','Referral earnings: ₦500 - ₦1,000 per referral','Withdrawal processed within 24hrs'] },
-      { id: 'Silver', price: 3000, points: ['No withdrawal charge','Higher priority activation','Earn 90% of potential than a free user','Referral earnings: ₦700 - ₦1,400 per referral','Withdrawal processed within 24hrs'] }
-    ];
-    const PUBLISHER_PLANS = [
-      { id: 'Gold', price: 10000, points: ['Can publish up to 5 blogs per day','Earn up to ₦5,000 per week','Withdrawal processed within 24 hrs','Priority customer service'], category: 'Publisher' },
-      { id: 'Platinum', price: 20000, points: ['Can publish up to 10 blogs per day','Earn up to ₦10,000 per week','Withdrawal processed within 24 hrs','Priority customer service'], category: 'Publisher' }
+      {
+        id: 'Bronze',
+        price: 1500,
+        points: [
+          'No withdrawal charge',
+          'Priority activation',
+          'Earn 60% potential earning than those on free plan',
+          'Referral earnings: ₦500 - ₦1,000 per referral',
+          'Withdrawal processed within 24hrs'
+        ]
+      },
+      {
+        id: 'Silver',
+        price: 3000,
+        points: [
+          'No withdrawal charge',
+          'Higher priority activation',
+          'Earn 80% potential earning than those on free plan',
+          'Referral earnings: ₦700 - ₦1,400 per referral',
+          'Withdrawal processed within 24hrs'
+        ]
+      }
     ];
 
-    // rest of script exactly as in your original page…
+    // Publisher plans (separate category)
+    const PUBLISHER_PLANS = [
+      {
+        id: 'Gold',
+        price: 10000,
+        points: [
+          'Can publish up to 5 blogs per day',
+          'Earn up to ₦5,000 per week',
+          'Withdrawal processed within 24 hrs',
+          'Priority customer service'
+        ],
+        category: 'Publisher'
+      },
+      {
+        id: 'Platinum',
+        price: 20000,
+        points: [
+          'Can publish up to 10 blogs per day',
+          'Earn up to ₦10,000 per week',
+          'Withdrawal processed within 24 hrs',
+          'Priority customer service'
+        ],
+        category: 'Publisher'
+      }
+    ];
+
+    const plansGrid = document.getElementById('plansGrid');
+    const userInfo = document.getElementById('userInfo');
+    const statusEl = document.getElementById('status');
+
+    let currentUser = null;
+    let currentUid = null;
+
+    function formatN(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
+    function toast(msg){ const t = document.createElement('div'); t.className='toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(()=>{ t.style.transition='opacity .24s'; t.style.opacity='0'; setTimeout(()=>t.remove(),260); }, 3000); }
+
+    function renderPlans() {
+      plansGrid.innerHTML = '';
+
+      // render regular plans
+      PLANS.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'plan';
+        div.innerHTML = `
+          <h3>${p.id}</h3>
+          <div class="price">Price: <strong>${formatN(p.price)}</strong></div>
+          <div class="earn">Validity: <strong>365 days</strong></div>
+          <ul class="points">${p.points.map(pt=>`<li>${pt}</li>`).join('')}</ul>
+          <div class="buy">
+            <button class="btn primary" data-plan="${p.id}" data-price="${p.price}">Buy ${p.id}</button>
+            <button class="btn ghost" data-plan-info="${p.id}">Details</button>
+          </div>
+        `;
+        plansGrid.appendChild(div);
+      });
+
+      // add a visual divider for publisher plans if present
+      if(PUBLISHER_PLANS && PUBLISHER_PLANS.length){
+        const head = document.createElement('div');
+        head.className = 'section-head';
+        head.textContent = 'Publisher Plans — for content creators';
+        plansGrid.appendChild(head);
+
+        PUBLISHER_PLANS.forEach(p => {
+          const div = document.createElement('div');
+          div.className = 'plan';
+          div.innerHTML = `
+            <h3>${p.id}</h3>
+            <div class="category">${p.category || 'Publisher'}</div>
+            <div class="price">Price: <strong>${formatN(p.price)}</strong></div>
+            <div class="earn">Validity: <strong>365 days</strong></div>
+            <ul class="points">${p.points.map(pt=>`<li>${pt}</li>`).join('')}</ul>
+            <div class="buy">
+              <button class="btn primary" data-plan="${p.id}" data-price="${p.price}">Buy ${p.id}</button>
+              <button class="btn ghost" data-plan-info="${p.id}">Details</button>
+            </div>
+          `;
+          plansGrid.appendChild(div);
+        });
+      }
+
+      // attach handlers to all buy/details buttons
+      document.querySelectorAll('.plan .buy .primary').forEach(b => b.addEventListener('click', onBuyClick));
+      document.querySelectorAll('.plan .buy .ghost').forEach(b => {
+        b.addEventListener('click', (e) => {
+          const plan = e.currentTarget.getAttribute('data-plan-info');
+          const p = PLANS.concat(PUBLISHER_PLANS).find(x=>x.id===plan);
+          if(!p) return alert('Plan not found');
+          alert(`${p.id}\nPrice: ${formatN(p.price)}\nValidity: 365 days\n\nFeatures:\n- ${p.points.join('\n- ')}`);
+        });
+      });
+    }
+
+    async function onBuyClick(e){
+      const plan = e.currentTarget.getAttribute('data-plan');
+      const price = Number(e.currentTarget.getAttribute('data-price') || 0);
+      if(!currentUid){
+        const go = confirm('You are not signed in. Would you like to sign in now?');
+        if(go) window.location.href = 'login.html';
+        return;
+      }
+
+      const ok = confirm(`Buy ${plan} for ${formatN(price)}? This will debit your account immediately and activate ${plan} for 365 days.`);
+      if(!ok) return;
+
+      disablePlanButtons(true, plan);
+
+      try{
+        const userRef = doc(db, 'users', currentUid);
+        const now = new Date();
+        const expiry = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 365 days
+
+        // Transactionally deduct balance and set plan with expiry
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(userRef);
+          const data = snap.exists ? snap.data() : {};
+          const bal = Number(data.balance || 0);
+
+          if(bal < price) throw new Error(`Insufficient balance: ${formatN(bal)} available, ${formatN(price)} required.`);
+
+          const newBal = bal - price;
+          const updates = {
+            balance: newBal,
+            plan: plan,
+            planPurchasedAt: now.toISOString(),
+            planExpiryAt: expiry.toISOString()
+          };
+          tx.set(userRef, updates, { merge: true });
+        });
+
+        // write transaction record
+        await addDoc(collection(db, 'users', currentUid, 'transactions'), {
+          source: `Plan purchase — ${plan}`,
+          amount: -price,
+          date: new Date().toISOString()
+        });
+
+        toast(`Plan ${plan} purchased — ${formatN(price)} debited`);
+        await refreshUserUI();
+      }catch(err){
+        console.error('Purchase failed', err);
+        alert(err && err.message ? err.message : 'Purchase failed');
+      }finally{
+        disablePlanButtons(false);
+      }
+    }
+
+    function disablePlanButtons(disable, exceptPlan){
+      document.querySelectorAll('.plan .buy .primary').forEach(b => {
+        if(exceptPlan && b.getAttribute('data-plan') === exceptPlan && disable===true){
+          b.disabled = true; b.textContent = 'Processing...';
+        } else {
+          b.disabled = disable;
+          const p = b.getAttribute('data-plan');
+          b.textContent = disable ? 'Please wait...' : `Buy ${p}`;
+        }
+      });
+    }
+
+    async function refreshUserUI(){
+      if(!currentUid) {
+        userInfo.textContent = 'Not signed in';
+        statusEl.textContent = 'Prices are one-time payments. Sign in to purchase.';
+        return;
+      }
+      try{
+        const userRef = doc(db, 'users', currentUid);
+        const snap = await getDoc(userRef);
+        const data = snap.exists ? snap.data() : {};
+        const bal = Number(data.balance || 0);
+        const plan = data.plan || 'Basic';
+        const expiry = data.planExpiryAt ? new Date(data.planExpiryAt).toLocaleDateString() : '—';
+
+        userInfo.textContent = userInfoText(data, currentUid);
+        statusEl.textContent = `Plan: ${plan} — Balance: ${formatN(bal)} — Valid until: ${expiry}`;
+      }catch(e){ console.warn('refreshUserUI failed', e); toast('Failed to fetch user data. See console.'); }
+    }
+
+    function userInfoText(data, uid){
+      const name = data.displayName || data.username || (auth.currentUser && auth.currentUser.email) || (uid ? uid.slice(0,6)+'...' : 'Guest');
+      const plan = data.plan || 'Basic';
+      const bal = Number(data.balance || 0);
+      return `${name} • Plan: ${plan} • ${formatN(bal)}`;
+    }
+
+    // auth listener — attach after render so page shows even if auth hangs
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      currentUid = user ? user.uid : null;
+      if(user) userInfo.textContent = 'Signed in — loading...';
+      else { userInfo.textContent = 'Not signed in'; statusEl.textContent = 'Prices are one-time payments. Sign in to purchase.'; }
+      await refreshUserUI();
+    });
+
+    // bottom nav handlers
+    document.getElementById('navHome').addEventListener('click', ()=> window.location.href='catalog.html');
+    document.getElementById('navConvert').addEventListener('click', ()=> window.location.href='convert.html');
+    document.getElementById('navCenter').addEventListener('click', ()=> window.location.href='center.html');
+    document.getElementById('navNews').addEventListener('click', ()=> window.location.href='news.html');
+    document.getElementById('navAssets').addEventListener('click', ()=> window.location.href='dashboard.html');
+
+    // init
+    renderPlans();
+    refreshUserUI();
+
+    // expose debug helpers
+    window._bwPlans = { PLANS, PUBLISHER_PLANS, refreshUserUI };
   </script>
 </body>
 </html>
