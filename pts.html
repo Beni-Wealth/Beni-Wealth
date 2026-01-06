@@ -9,12 +9,12 @@
   <style>
     :root{
       --bg:#0b0613; --panel:#0f0820; --muted:rgba(255,255,255,0.62);
-      --card:#0f1120; --accent1:#7a5fff; --accent2:#35d6b1;
-      --text:#eaf2ff; --gap:14px; --radius:12px;
+      --card:#0f1120; --accent1:#7a5fff; --accent2:#35d6b1; --text:#eaf2ff;
+      --gap:14px; --radius:12px;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:'Poppins',system-ui,Arial;}
-    body{background:linear-gradient(180deg,var(--bg),var(--panel)); color:var(--text); padding:18px;}
+    body{background:linear-gradient(180deg,var(--bg),var(--panel));color:var(--text);padding:18px;}
     .wrap{max-width:1100px;margin:0 auto;}
     header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
     .search{padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);}
@@ -22,7 +22,7 @@
     .signinBtn{padding:8px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;}
     .grid{display:grid;grid-template-columns:1fr;gap:var(--gap);}
     @media(min-width:600px){ .grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }}
-    .card{background:var(--card);padding:14px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px;}
+    .card{background:var(--card);padding:14px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:8px;}
     .badge{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);}
     .btn{padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:800;font-size:14px;}
     .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;}
@@ -55,7 +55,7 @@
 
 <div id="toast" class="toast"></div>
 
-<!-- IFRAME VIEWER OVERLAY -->
+<!-- IFRAME OVERLAY -->
 <div id="ptcViewerOverlay" style="display:none;position:fixed;inset:0;background:#000000cc;z-index:9999;align-items:center;justify-content:center;flex-direction:column;">
   <div style="position:absolute;top:12px;left:12px;display:flex;gap:10px;align-items:center;color:#fff;font-size:16px;font-weight:700;">
     <div id="viewerTimer">Wait: 10s</div>
@@ -121,45 +121,52 @@ function showToast(msg,ms=3000){
 
 let currentUser=null;
 const provider=new GoogleAuthProvider();
-signinBtn.addEventListener('click',async()=>{ try{ await signInWithPopup(auth,provider); }catch{ showToast('Sign in failed'); }});
+signinBtn.addEventListener('click',async()=>{ try{ await signInWithPopup(auth,provider);}catch{showToast('Sign in failed');}});
 onAuthStateChanged(auth,user=>{
   currentUser=user;
-  signinBtn.textContent = user?'Signed in':'Sign in';
-  signinBtn.disabled = !!user;
+  signinBtn.textContent=user?'Signed in':'Sign in';
+  signinBtn.disabled=!!user;
   filterAndRender();
 });
 
-// Check cooldown
+// cooldown in ms left
 async function getCooldown(ptc){
-  if(!currentUser) return 0; 
+  if(!currentUser) return 0;
   try{
-    const snap = await getDoc(doc(db,'ptcClicks',`${ptc.id}_${currentUser.uid}`));
+    const snap=await getDoc(doc(db,'ptcClicks',`${ptc.id}_${currentUser.uid}`));
     if(!snap.exists()||!snap.data().lastClickedAt) return 0;
-    const last = snap.data().lastClickedAt.toDate().getTime();
+    const last=snap.data().lastClickedAt.toDate().getTime();
     const diff=Date.now()-last;
     return diff < COOLDOWN_MS ? (COOLDOWN_MS-diff) : 0;
   }catch{return 0;}
 }
 
+async function getViewCount(ptcId){
+  try{
+    const snap=await getDoc(doc(db,'ptcViews',String(ptcId)));
+    return snap.exists()?snap.data().count||0:0;
+  }catch{return 0;}
+}
+
 async function incrementViewCount(ptcId){
-  const ref = doc(db,'ptcViews',String(ptcId));
-  try{ await updateDoc(ref,{count:increment(1),updatedAt:serverTimestamp()}); }
-  catch{ await setDoc(ref,{count:1,updatedAt:serverTimestamp()});}
+  const ref=doc(db,'ptcViews',String(ptcId));
+  try{await updateDoc(ref,{count:increment(1),updatedAt:serverTimestamp()});}
+  catch{await setDoc(ref,{count:1,updatedAt:serverTimestamp()});}
 }
 
 async function creditPTC(ptc){
-  const uid = currentUser.uid;
-  const clickRef = doc(db,'ptcClicks',`${ptc.id}_${uid}`);
+  const uid=currentUser.uid;
+  const clickRef=doc(db,'ptcClicks',`${ptc.id}_${uid}`);
   const now=serverTimestamp();
 
-  const snap = await getDoc(clickRef);
+  const snap=await getDoc(clickRef);
   if(snap.exists()){
     await updateDoc(clickRef,{lastClickedAt:now,count:increment(1)});
-  } else {
+  }else{
     await setDoc(clickRef,{ptcId:ptc.id,viewerUid:uid,lastClickedAt:now,count:1});
   }
 
-  await addDoc(collection(db,'transactions'),{userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,note:`PTC click reward`,createdAt:now});
+  await addDoc(collection(db,'transactions'),{userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,note:`PTC reward`,createdAt:now});
   await updateDoc(doc(db,'users',uid),{balance:increment(REWARD)});
   await incrementViewCount(ptc.id);
 
@@ -172,7 +179,7 @@ let viewerTimerInterval=null;
 async function handleOpen(ptc){
   if(!currentUser){ showToast('Sign in to earn'); return; }
 
-  const cd = await getCooldown(ptc);
+  const cd=await getCooldown(ptc);
   if(cd>0){
     const mins=Math.ceil(cd/60000);
     showToast(`Try again in ${mins} minute(s)`);
@@ -190,15 +197,15 @@ async function handleOpen(ptc){
   timerEl.textContent=`Wait: ${seconds}s`;
   clearInterval(viewerTimerInterval);
 
-  viewerTimerInterval = setInterval(async()=>{
+  viewerTimerInterval=setInterval(async()=>{
     seconds--;
     timerEl.textContent=`Wait: ${seconds}s`;
-
     if(seconds<=0){
       clearInterval(viewerTimerInterval);
       await creditPTC(ptc);
-      document.getElementById('ptcViewerOverlay').style.display='none';
+      overlay.style.display='none';
       iframe.src='';
+      filterAndRender(); // to update visited status & views
     }
   },1000);
 }
@@ -209,23 +216,25 @@ document.getElementById('viewerCloseBtn').addEventListener('click',()=>{
   document.getElementById('ptcIframe').src='';
 });
 
-document.getElementById('closeEarned').addEventListener('click',()=>{ document.getElementById('earnedPopup').style.display='none'; });
+document.getElementById('closeEarned').addEventListener('click',()=>{document.getElementById('earnedPopup').style.display='none';});
 
-function makeCard(ptc,visited){
+function makeCard(ptc,visited,views){
   const item=document.createElement('div'); item.className='card';
+  const idx=String(ptc.id).padStart(3,'0');
 
-  const idx = String(ptc.id).padStart(3,'0');
   item.innerHTML=`
     <h3 style="margin:0;color:var(--accent1)">#${idx}</h3>
     <div style="font-size:13px;color:var(--muted)">Reward: ₦${REWARD.toFixed(2)}</div>
+    <div style="font-size:13px;color:var(--muted)">Views: ${views}</div>
   `;
 
-  if(visited){ const b=document.createElement('div');b.className='badge';b.textContent='Visited';item.appendChild(b);}
+  if(visited){const b=document.createElement('div');b.className='badge';b.textContent='Visited';item.appendChild(b);}
 
   const actions=document.createElement('div');actions.style.display='flex';actions.style.gap='8px';actions.style.marginTop='auto';
   const openBtn=document.createElement('button');openBtn.className='btn primary';openBtn.textContent='Open';openBtn.onclick=()=>handleOpen(ptc);
-  const detailBtn=document.createElement('button');detailBtn.className='btn ghost';detailBtn.textContent='Details';detailBtn.onclick=()=>alert(`#${idx}\nReward: ₦${REWARD.toFixed(2)}`);
-  actions.append(openBtn,detailBtn); item.appendChild(actions);
+  const detBtn=document.createElement('button');detBtn.className='btn ghost';detBtn.textContent='Details';detBtn.onclick=()=>alert(`#${idx}\nReward: ₦${REWARD.toFixed(2)}\nViews: ${views}`);
+  actions.append(openBtn,detBtn);
+  item.appendChild(actions);
 
   return item;
 }
@@ -236,20 +245,23 @@ async function filterAndRender(){
   GRID.innerHTML='';
 
   for(const ptc of PTCs){
-    const idx = String(ptc.id).padStart(3,'0');
+    const idx=String(ptc.id).padStart(3,'0');
     if(q && !(`#${idx}`).toLowerCase().includes(q)) continue;
-    const cd = await getCooldown(ptc);
-    const visited = cd===0 ? false : true;
+
+    const cd=await getCooldown(ptc);
+    const visited=(cd>0);
     if(f==='fresh' && visited) continue;
     if(f==='visited' && !visited) continue;
-    GRID.appendChild(makeCard(ptc,visited));
+
+    const vcount=await getViewCount(ptc.id);
+    GRID.appendChild(makeCard(ptc,visited,vcount));
   }
 }
 
 searchInput.addEventListener('input',filterAndRender);
 filterSelect.addEventListener('change',filterAndRender);
 filterAndRender();
-
 </script>
+
 </body>
 </html>
