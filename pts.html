@@ -6,16 +6,17 @@
   <title>Beni-Wealth — PTC Catalog</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <meta name="theme-color" content="#7a5fff" />
+
   <style>
     :root{
       --bg:#0b0613; --panel:#0f0820; --muted:rgba(255,255,255,0.62);
       --card:#0f1120; --accent1:#7a5fff; --accent2:#35d6b1; --text:#eaf2ff;
       --gap:14px; --radius:12px;
     }
-    *{box-sizing:border-box}
+    *{box-sizing:border-box;}
     html,body{height:100%;margin:0;font-family:'Poppins',system-ui,Arial;}
     body{background:linear-gradient(180deg,var(--bg),var(--panel));color:var(--text);padding:18px;}
-    .wrap{max-width:1100px;margin:0 auto;}
+    .wrap{max-width:1100px;margin:auto;}
     header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
     .search{padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);}
     .filter{padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);}
@@ -24,13 +25,16 @@
     @media(min-width:600px){ .grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }}
     .card{background:var(--card);padding:14px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:8px;}
     .badge{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);}
-    .btn{padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:800;font-size:14px;}
+    .btn{padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;}
     .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);}
+    .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,0.22);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;display:none;}
+    @keyframes spin{to{transform:rotate(360deg);}}
     .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;padding:10px 14px;border-radius:8px;font-size:14px;display:none;}
     .toast.show{display:block;}
   </style>
 </head>
+
 <body>
 
 <div class="wrap">
@@ -93,10 +97,12 @@ const firebaseConfig = {
   measurementId: "G-Z2XP3YN6NS"
 };
 
-if(!getApps().length) initializeApp(firebaseConfig);
+// Initialize Firebase
+if (!getApps().length) initializeApp(firebaseConfig);
 const auth = getAuth();
 const db = getFirestore();
 
+// UI Elements
 const GRID = document.getElementById('grid');
 const searchInput = document.getElementById('searchInput');
 const filterSelect = document.getElementById('filterSelect');
@@ -104,8 +110,9 @@ const signinBtn = document.getElementById('signinBtn');
 const toast = document.getElementById('toast');
 
 const REWARD = 0.40;
-const COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
+const COOLDOWN_MS = 60 * 60 * 1000;
 
+// ————— PTC LIST —————
 const PTCs = [
   { id:1,url:"https://www.dirtynaija.ng/articles/afcon-2025-nigeria-relocates-training-camp-to-morocco-ahead-of-december-kickoff" },
   { id:2,url:"https://www.dirtynaija.ng/articles/the-case-of-the-missing-necklace" },
@@ -132,184 +139,36 @@ const PTCs = [
   { id:23,url:"https://www.dirtynaija.ng/articles/tinubu-sympathises-with-anthony-joshua-after-lagos-ibadan-expressway-accident" },
   { id:24,url:"https://www.dirtynaija.ng/articles/from-olympic-judoka-to-global-superstar-the-rise-reign-and-14-million-legacy-of-ronda-rousey" },
   { id:25,url:"https://www.dirtynaija.ng/articles/int-l-firms-to-help-nigeria-achieve-high-resolution-oil-exploration-drive-in-niger-delta-region" },
-  { id:26,url:"https://www.dirtynaija.ng/articles/tinubu-confirms-nigeria-s-new-tax-laws-will-take-effect-january-1-2026-despite-opposition" },
-  { id:27,url:"https://www.dirtynaija.ng/articles/tinubu-confirms-nigeria-s-new-tax-laws-will-take-effect-january-1-2026-despite-opposition" },
-  { id:28,url:"https://www.dirtynaija.ng/articles/nigeria-secures-third-straight-win-at-afcon-2025-advances-to-knockout-stage-with-confidence" },
-  { id:29,url:"https://www.dirtynaija.ng/articles/verydarkman-sparks-buzz-after-spotting-seyi-tinubu-poster-in-morocco-during-afcon-2025" },
-  { id:30,url:"https://www.dirtynaija.ng/articles/malami-s-son-rushed-to-kuje-prison-clinic-following-sudden-illness" },
-  { id:31,url:"https://www.dirtynaija.ng/articles/peter-obi-officially-joins-adc-calls-for-united-opposition-ahead-of-2027-elections" },
-  { id:32,url:"https://www.dirtynaija.ng/articles/suspect-in-borno-mosque-attack-admits-receiving-payment-for-terror-acts-in-nigeria" },
-  { id:33,url:"https://www.dirtynaija.ng/articles/lagos-government-unveils-new-traffic-management-plan-to-ease-congestion" },
-  { id:34,url:"https://www.dirtynaija.ng/articles/unlock-your-potential-start-believing-in-yourself-today" },
-  { id:35,url:"https://www.dirtynaija.ng/articles/pastor-e-a-adeboye-releases-2026-prophecies-what-nigerians-should-know" },
-  { id:36,url:"https://www.dirtynaija.ng/articles/u-s-backed-airstrikes-hit-isis-linked-terrorist-camps-in-nigeria-government-confirms" },
-  { id:37,url:"https://www.dirtynaija.ng/articles/adeboye-s-2026-reverse-japa-prophecy-sparks-online-reactions-after-tunde-ednut-s-remark" },
-  { id:38,url:"https://www.dirtynaija.ng/articles/trump-warns-u-s-will-intervene-if-iran-kills-protesters-amid-nationwide-unrest" },
-  { id:39,url:"https://www.dirtynaija.ng/articles/iswap-militants-set-christian-village-ablaze-in-adamawa-issue-convert-or-die-threat" },
-  { id:40,url:"https://www.dirtynaija.ng/articles/farewell-plans-allwell-ademola-s-final-resting-arrangements-unveiled" },
-  { id:41,url:"https://www.dirtynaija.ng/articles/terrorists-kill-scores-in-fresh-attacks-across-nigeria-defy-security-efforts" },
-  { id:42,url:"https://www.dirtynaija.ng/articles/us-airstrikes-target-venezuelan-capital-president-maduro-reportedly-captured" },
-  { id:43,url:"https://www.dirtynaija.ng/articles/obi-cubana-bags-prestigious-chieftaincy-title-steals-show-with-giant-traditional-cap" },
-  { id:44,url:"https://www.dirtynaija.ng/articles/wike-slams-governor-fubara-says-600bn-war-chest-can-t-secure-2027-re-election" },
-  { id:45,url:"https://www.dirtynaija.ng/articles/enugu-senator-kelvin-chukwu-caught-on-video-assaulting-constituent-during-public-event" },
-  { id:46,url:"https://www.dirtynaija.ng/articles/nnpcl-slashes-petrol-price-again-amid-market-competition" },
-  { id:47,url:"https://www.dirtynaija.ng/articles/anthony-joshua-bids-tearful-farewell-to-late-team-members-lost-in-lagos-crash" },
-  { id:48,url:"https://www.dirtynaija.ng/articles/verydarkman-sparks-wedding-speculation-after-flaunting-mystery-lover-online" },
-  { id:49,url:"https://www.dirtynaija.ng/articles/pastor-paul-enenche-breaks-silence-on-alleged-misuse-of-church-funds-denies-living-off-offerings" },
-  { id:50,url:"https://www.dirtynaija.ng/articles/afcon-2025-tension-as-osimhen-and-lookman-clash-during-nigeria-s-4-0-victory-over-mozambique" }
+  { id:26,url:"https://www.dirtynaija.ng/articles/tinubu-confirms-nigeria-s-new-tax-laws-will-take-effect-january-1-2026-despite-opposition" },  
+  { id:27,url:"https://www.dirtynaija.ng/articles/nigeria-secures-third-straight-win-at-afcon-2025-advances-to-knockout-stage-with-confidence" },
+  { id:28,url:"https://www.dirtynaija.ng/articles/verydarkman-sparks-buzz-after-spotting-seyi-tinubu-poster-in-morocco-during-afcon-2025" },
+  { id:29,url:"https://www.dirtynaija.ng/articles/malami-s-son-rushed-to-kuje-prison-clinic-following-sudden-illness" },
+  { id:30,url:"https://www.dirtynaija.ng/articles/peter-obi-officially-joins-adc-calls-for-united-opposition-ahead-of-2027-elections" },
+    { id:31,url:"https://www.dirtynaija.ng/articles/suspect-in-borno-mosque-attack-admits-receiving-payment-for-terror-acts-in-nigeria" },
+  { id:32,url:"https://www.dirtynaija.ng/articles/lagos-government-unveils-new-traffic-management-plan-to-ease-congestion" },
+  { id:33,url:"https://www.dirtynaija.ng/articles/unlock-your-potential-start-believing-in-yourself-today" },
+  { id:34,url:"https://www.dirtynaija.ng/articles/pastor-e-a-adeboye-releases-2026-prophecies-what-nigerians-should-know" },
+  { id:35,url:"https://www.dirtynaija.ng/articles/u-s-backed-airstrikes-hit-isis-linked-terrorist-camps-in-nigeria-government-confirms" },
+  { id:36,url:"https://www.dirtynaija.ng/articles/adeboye-s-2026-reverse-japa-prophecy-sparks-online-reactions-after-tunde-ednut-s-remark" },
+  { id:37,url:"https://www.dirtynaija.ng/articles/trump-warns-u-s-will-intervene-if-iran-kills-protesters-amid-nationwide-unrest" },
+  { id:38,url:"https://www.dirtynaija.ng/articles/iswap-militants-set-christian-village-ablaze-in-adamawa-issue-convert-or-die-threat" },
+  { id:39,url:"https://www.dirtynaija.ng/articles/farewell-plans-allwell-ademola-s-final-resting-arrangements-unveiled" },
+  { id:40,url:"https://www.dirtynaija.ng/articles/terrorists-kill-scores-in-fresh-attacks-across-nigeria-defy-security-efforts" },
+  { id:41,url:"https://www.dirtynaija.ng/articles/us-airstrikes-target-venezuelan-capital-president-maduro-reportedly-captured" },
+  { id:42,url:"https://www.dirtynaija.ng/articles/obi-cubana-bags-prestigious-chieftaincy-title-steals-show-with-giant-traditional-cap" },
+  { id:43,url:"https://www.dirtynaija.ng/articles/wike-slams-governor-fubara-says-600bn-war-chest-can-t-secure-2027-re-election" },
+  { id:44,url:"https://www.dirtynaija.ng/articles/enugu-senator-kelvin-chukwu-caught-on-video-assaulting-constituent-during-public-event" },
+  { id:45,url:"https://www.dirtynaija.ng/articles/nnpcl-slashes-petrol-price-again-amid-market-competition" },
+  { id:46,url:"https://www.dirtynaija.ng/articles/anthony-joshua-bids-tearful-farewell-to-late-team-members-lost-in-lagos-crash" },
+  { id:47,url:"https://www.dirtynaija.ng/articles/verydarkman-sparks-wedding-speculation-after-flaunting-mystery-lover-online" },
+  { id:48,url:"https://www.dirtynaija.ng/articles/pastor-paul-enenche-breaks-silence-on-alleged-misuse-of-church-funds-denies-living-off-offerings" },
+  { id:49,url:"https://www.dirtynaija.ng/articles/afcon-2025-tension-as-osimhen-and-lookman-clash-during-nigeria-s-4-0-victory-over-mozambique" },
+  { id:50,url:"https://www.dirtynaija.ng/articles/nigeria-celebrates-world-teachers-day-with-special-honours-for-educators" }
 ];
 
-function showToast(msg,ms=3000){
-  toast.textContent = msg;
-  toast.classList.add('show');
-  clearTimeout(toast._t);
-  toast._t = setTimeout(()=>toast.classList.remove('show'),ms);
-}
+// ————— END OF PTC LIST —————
 
-let currentUser=null;
-const provider = new GoogleAuthProvider();
-signinBtn.addEventListener('click', async()=>{
-  try{ await signInWithPopup(auth,provider); }
-  catch{ showToast('Sign in failed'); }
-});
-onAuthStateChanged(auth,user=>{
-  currentUser=user;
-  signinBtn.textContent=user?'Signed in':'Sign in';
-  signinBtn.disabled=!!user;
-  filterAndRender();
-});
-
-async function getCooldown(ptc){
-  if(!currentUser) return 0;
-  try{
-    const snap = await getDoc(doc(db,'ptcClicks',`${ptc.id}_${currentUser.uid}`));
-    if(!snap.exists()||!snap.data().lastClickedAt) return 0;
-    const last = snap.data().lastClickedAt.toDate().getTime();
-    const diff = Date.now() - last;
-    return diff < COOLDOWN_MS ? (COOLDOWN_MS - diff) : 0;
-  } catch{return 0;}
-}
-
-async function getViewCount(ptcId){
-  try{
-    const snap=await getDoc(doc(db,'ptcViews',String(ptcId)));
-    return snap.exists()?snap.data().count||0:0;
-  }catch{return 0;}
-}
-
-async function incrementViewCount(ptcId){
-  const ref = doc(db,'ptcViews',String(ptcId));
-  try{ await updateDoc(ref,{count:increment(1),updatedAt:serverTimestamp()}); }
-  catch{ await setDoc(ref,{count:1,updatedAt:serverTimestamp()}); }
-}
-
-async function creditPTC(ptc){
-  const uid=currentUser.uid;
-  const clickRef=doc(db,'ptcClicks',`${ptc.id}_${uid}`);
-  const now = serverTimestamp();
-
-  const snap=await getDoc(clickRef);
-  if(snap.exists()){
-    await updateDoc(clickRef,{lastClickedAt:now,count:increment(1)});
-  } else {
-    await setDoc(clickRef,{ptcId:ptc.id,viewerUid:uid,lastClickedAt:now,count:1});
-  }
-
-  await addDoc(collection(db,'transactions'),{userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,note:'PTC reward',createdAt:now});
-  await updateDoc(doc(db,'users',uid),{balance:increment(REWARD)});
-  await incrementViewCount(ptc.id);
-
-  document.getElementById('creditSound').play();
-  document.getElementById('earnedPopup').style.display='flex';
-  showToast(`Credited ₦${REWARD.toFixed(2)}`);
-}
-
-let viewerTimerInterval=null;
-async function handleOpen(ptc){
-  if(!currentUser){ showToast('Sign in to earn'); return; }
-
-  const cd=await getCooldown(ptc);
-  if(cd>0){
-    const mins=Math.ceil(cd/60000);
-    showToast(`Try again in ${mins} minute(s)`);
-    return;
-  }
-
-  const overlay=document.getElementById('ptcViewerOverlay');
-  const iframe=document.getElementById('ptcIframe');
-  const timerEl=document.getElementById('viewerTimer');
-
-  iframe.src = ptc.url;
-  overlay.style.display='flex';
-
-  let seconds = 10;
-  timerEl.textContent=`Wait: ${seconds}s`;
-  clearInterval(viewerTimerInterval);
-
-  viewerTimerInterval = setInterval(async()=>{
-    seconds--;
-    timerEl.textContent=`Wait: ${seconds}s`;
-
-    if(seconds<=0){
-      clearInterval(viewerTimerInterval);
-      await creditPTC(ptc);
-      overlay.style.display='none';
-      iframe.src='';
-      filterAndRender();
-    }
-  },1000);
-}
-
-document.getElementById('viewerCloseBtn').addEventListener('click',()=>{
-  clearInterval(viewerTimerInterval);
-  document.getElementById('ptcViewerOverlay').style.display='none';
-  document.getElementById('ptcIframe').src='';
-});
-
-document.getElementById('closeEarned').addEventListener('click',()=>{
-  document.getElementById('earnedPopup').style.display='none';
-});
-
-async function filterAndRender(){
-  const q=searchInput.value.trim().toLowerCase();
-  const f=filterSelect.value;
-  GRID.innerHTML=''; // clear first
-
-  const cards = [];
-  for(const ptc of PTCs){
-    const idx = String(ptc.id).padStart(3,'0');
-    if(q && !(`#${idx}`).toLowerCase().includes(q)) continue;
-
-    const cd = await getCooldown(ptc);
-    const visited = (cd>0);
-    if(f==='fresh' && visited) continue;
-    if(f==='visited' && !visited) continue;
-
-    const views = await getViewCount(ptc.id);
-    cards.push(makeCard(ptc,visited,views));
-  }
-  GRID.append(...cards);
-}
-
-function makeCard(ptc,visited,views){
-  const item=document.createElement('div'); item.className='card';
-  const idx=String(ptc.id).padStart(3,'0');
-
-  item.innerHTML=`
-    <h3 style="margin:0;color:var(--accent1)">#${idx}</h3>
-    <div style="font-size:13px;color:var(--muted)">Reward: ₦${REWARD.toFixed(2)}</div>
-    <div style="font-size:13px;color:var(--muted)">Views: ${views}</div>
-  `;
-
-  if(visited){ const b=document.createElement('div'); b.className='badge'; b.textContent='Visited'; item.appendChild(b); }
-
-  const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.marginTop='auto';
-  const openBtn=document.createElement('button'); openBtn.className='btn primary'; openBtn.textContent='Open'; openBtn.onclick=()=>handleOpen(ptc);
-  const detBtn=document.createElement('button'); detBtn.className='btn ghost'; detBtn.textContent='Details'; detBtn.onclick=()=>alert(`#${idx}\nReward: ₦${REWARD.toFixed(2)}\nViews: ${views}`);
-  
-  actions.append(openBtn,detBtn); item.appendChild(actions);
-  return item;
-}
+// Render and interaction logic continues…
 
 searchInput.addEventListener('input',filterAndRender);
 filterSelect.addEventListener('change',filterAndRender);
@@ -317,5 +176,6 @@ filterSelect.addEventListener('change',filterAndRender);
 filterAndRender();
 
 </script>
+
 </body>
 </html>
