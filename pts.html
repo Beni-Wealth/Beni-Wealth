@@ -8,38 +8,70 @@
   <meta name="theme-color" content="#7a5fff" />
   <style>
     :root{
-      --bg:#0b0613; --panel:#0f0820; --muted:rgba(255,255,255,0.62);
-      --card:#0f1120; --accent1:#7a5fff; --accent2:#35d6b1; --text:#eaf2ff;
-      --gap:14px; --radius:12px;
+      --bg:#0b0613;
+      --panel:#0f0820;
+      --muted:rgba(255,255,255,0.62);
+      --card:#0f1120;
+      --accent1:#7a5fff;
+      --accent2:#35d6b1;
+      --text:#eaf2ff;
+      --gap:14px;
+      --radius:12px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:'Poppins',system-ui,Arial;}
-    body{background:linear-gradient(180deg,var(--bg),var(--panel));color:var(--text);padding:18px;}
-    .wrap{max-width:1100px;margin:0 auto;}
-    header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
-    .search{padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);}
-    .filter{padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);}
-    .signinBtn{padding:8px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;}
-    .grid{display:grid;grid-template-columns:1fr;gap:var(--gap);}
-    @media(min-width:600px){ .grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }}
-    .card{background:var(--card);padding:14px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:8px;}
-    .badge{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);}
-    .btn{padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:800;font-size:14px;}
-    .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;}
+    html,body{height:100%;margin:0}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:'Poppins',system-ui,Arial;
+      background:linear-gradient(180deg,var(--bg),var(--panel));
+      color:var(--text);
+      padding:18px;
+    }
+
+    .wrap{ max-width:1100px; margin:0 auto; }
+    header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap }
+    .brand { display:flex; flex-direction:column; gap:4px; }
+    h1{margin:0;font-size:20px}
+    .hint{color:var(--muted);font-size:13px;margin-top:2px}
+
+    .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .search{ padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--text);min-width:200px;font-size:14px; outline:none; }
+    .search::placeholder{color:rgba(255,255,255,0.32)}
+    .filter{ padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--muted);font-size:14px; }
+    .signinBtn{ padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219; }
+
+    .grid{ display:grid; grid-template-columns:1fr; gap:var(--gap); }
+    @media(min-width:600px){ .grid{ grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); } }
+
+    .card{ background:var(--card); padding:14px; border-radius:var(--radius); border:1px solid rgba(255,255,255,0.03); display:flex; flex-direction:column; gap:10px;}
+    .card h3{margin:0;font-size:16px;color:var(--accent1);font-weight:700}
+    .meta{color:var(--muted);font-size:13px;margin-top:4px}
+    .reward{font-weight:800;font-size:16px;margin-top:6px;color:var(--text)}
+    .views-count{font-size:13px;color:var(--muted);}
+
+    .actions{margin-top:auto;display:flex;gap:8px;align-items:center}
+    .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+    .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;flex:1;min-width:0}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);}
-    .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;padding:10px 14px;border-radius:8px;font-size:14px;display:none;}
-    .toast.show{display:block;}
+    .badge{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);display:inline-block;margin-top:4px;}
+    
+    .spinner{ width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.22); border-top-color:#ffffff; animation:spin 0.9s linear infinite; display:none;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .toast{ position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:#fff; padding:10px 14px; border-radius:8px; font-size:14px; display:none; }
+    .toast.show{ display:block; }
   </style>
 </head>
 <body>
 
 <div class="wrap">
   <header>
-    <div>
-      <h1 style="margin:0;font-size:20px;">PTC Catalog</h1>
-      <div style="color:var(--muted);font-size:13px;">Tap a card to open the PTC</div>
+    <div class="brand">
+      <h1>PTC Catalog</h1>
+      <div class="hint">Tap a card to open the PTC page</div>
     </div>
-    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+    <div class="controls">
       <input id="searchInput" class="search" placeholder="Search PTC…">
       <select id="filterSelect" class="filter">
         <option value="all">All</option>
@@ -54,26 +86,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-
-<!-- IFRAME OVERLAY -->
-<div id="ptcViewerOverlay" style="display:none;position:fixed;inset:0;background:#000000cc;z-index:9999;align-items:center;justify-content:center;flex-direction:column;">
-  <div style="position:absolute;top:12px;left:12px;display:flex;gap:10px;align-items:center;color:#fff;font-size:16px;font-weight:700;">
-    <div id="viewerTimer">Wait: 10s</div>
-    <button id="viewerCloseBtn" style="padding:6px;border:none;border-radius:6px;background:#ff4455;color:#fff;cursor:pointer;">Close</button>
-  </div>
-  <iframe id="ptcIframe" style="width:100%;height:100%;border:none;" sandbox="allow-scripts allow-forms allow-popups allow-same-origin"></iframe>
-</div>
-
-<!-- EARNED POPUP -->
-<div id="earnedPopup" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:10000;">
-  <div style="background:#0f1120;padding:20px;border-radius:12px;text-align:center;color:#fff;width:280px;">
-    <div style="font-size:20px;font-weight:800;color:var(--accent1)">Earned!</div>
-    <div style="margin-top:10px;color:var(--muted)">You've received your reward</div>
-    <button id="closeEarned" style="margin-top:16px;padding:10px 14px;border:none;border-radius:8px;background:var(--accent2);color:#041219;font-weight:700;cursor:pointer;">OK</button>
-  </div>
-</div>
-
-<audio id="creditSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8bc9094c02.mp3?filename=success-notification-1-6297.mp3"></audio>
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -104,60 +116,14 @@ const signinBtn = document.getElementById('signinBtn');
 const toast = document.getElementById('toast');
 
 const REWARD = 0.40;
-const COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
+const COOLDOWN_MS = 1 * 60 * 60 * 1000;
 
-const PTCs = [
-  { id:1,url:"https://www.dirtynaija.ng/articles/afcon-2025-nigeria-relocates-training-camp-to-morocco-ahead-of-december-kickoff" },
-  { id:2,url:"https://www.dirtynaija.ng/articles/the-case-of-the-missing-necklace" },
-  { id:3,url:"https://www.dirtynaija.ng/articles/the-call-that-mattered" },
-  { id:4,url:"https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters" },
-  { id:5,url:"https://www.dirtynaija.ng/articles/the-bench-under-the-tree" },
-  { id:6,url:"https://www.dirtynaija.ng/articles/fuel-tanker-explosion-on-benin-auchi-road-several-feared-dead" },
-  { id:7,url:"https://www.dirtynaija.ng/articles/building-wealth-online-through-consistency-and-smart-effort" },
-  { id:8,url:"https://www.dirtynaija.ng/articles/vdm-releases-audio-said-to-be-from-pastor-chris-okafor-s-daughter-generates-online-discussion" },
-  { id:9,url:"https://www.dirtynaija.ng/articles/unsealed-secrets-shocking-new-revelations-from-the-epstein-files" },
-  { id:10,url:"https://www.dirtynaija.ng/articles/primate-ayodele-s-afcon-prophecy-sparks-debate-after-lookman-s-heroics" },
-  { id:11,url:"https://www.dirtynaija.ng/articles/nigeria-emerges-as-west-africa-s-cheapest-petrol-market-at-739-per-litre" },
-  { id:12,url:"https://www.dirtynaija.ng/articles/dollar-to-naira-exchange-rate-update-december-26-2025" },
-  { id:13,url:"https://www.dirtynaija.ng/articles/nigeria-vs-tunisia-showdown-afcon-2025-clash-set-to-shape-group-c-fate" },
-  { id:14,url:"https://www.dirtynaija.ng/articles/trump-warns-terror-groups-in-nigeria-signals-possible-further-u-s-action" },
-  { id:15,url:"https://www.dirtynaija.ng/articles/tragic-farewell-actress-allwell-ademola-dies-after-emotional-final-video" },
-  { id:16,url:"https://www.dirtynaija.ng/articles/wike-announces-return-to-politics-in-january-2026-igniting-fresh-tensions-in-rivers-state" },
-  { id:17,url:"https://www.dirtynaija.ng/articles/pastor-chris-okafor-s-ex-wife-breaks-silence-alleges-deception-to-protect-public-image" },
-  { id:18,url:"https://www.dirtynaija.ng/articles/nigeria-loses-prominent-political-figures-in-2025-a-year-of-national-mourning" },
-  { id:19,url:"https://www.dirtynaija.ng/articles/anthony-joshua-survives-fatal-car-crash-in-nigeria" },
-  { id:20,url:"https://www.dirtynaija.ng/articles/nollywood-filmmaker-jade-osiberu-welcomes-first-child-celebrates-motherhood-at-40" },
-  { id:21,url:"https://www.dirtynaija.ng/articles/makinde-challenges-fayose-over-50bn-allegation-demands-concrete-proof" },
-  { id:22,url:"https://www.dirtynaija.ng/articles/businesstinubu-approves-1-42bn-debt-write-off-for-nnpc-clears-legacy-obligations-to-federation-account" },
-  { id:23,url:"https://www.dirtynaija.ng/articles/tinubu-sympathises-with-anthony-joshua-after-lagos-ibadan-expressway-accident" },
-  { id:24,url:"https://www.dirtynaija.ng/articles/from-olympic-judoka-to-global-superstar-the-rise-reign-and-14-million-legacy-of-ronda-rousey" },
-  { id:25,url:"https://www.dirtynaija.ng/articles/int-l-firms-to-help-nigeria-achieve-high-resolution-oil-exploration-drive-in-niger-delta-region" },
-  { id:26,url:"https://www.dirtynaija.ng/articles/tinubu-confirms-nigeria-s-new-tax-laws-will-take-effect-january-1-2026-despite-opposition" },
-  { id:27,url:"https://www.dirtynaija.ng/articles/tinubu-confirms-nigeria-s-new-tax-laws-will-take-effect-january-1-2026-despite-opposition" },
-  { id:28,url:"https://www.dirtynaija.ng/articles/nigeria-secures-third-straight-win-at-afcon-2025-advances-to-knockout-stage-with-confidence" },
-  { id:29,url:"https://www.dirtynaija.ng/articles/verydarkman-sparks-buzz-after-spotting-seyi-tinubu-poster-in-morocco-during-afcon-2025" },
-  { id:30,url:"https://www.dirtynaija.ng/articles/malami-s-son-rushed-to-kuje-prison-clinic-following-sudden-illness" },
-  { id:31,url:"https://www.dirtynaija.ng/articles/peter-obi-officially-joins-adc-calls-for-united-opposition-ahead-of-2027-elections" },
-  { id:32,url:"https://www.dirtynaija.ng/articles/suspect-in-borno-mosque-attack-admits-receiving-payment-for-terror-acts-in-nigeria" },
-  { id:33,url:"https://www.dirtynaija.ng/articles/lagos-government-unveils-new-traffic-management-plan-to-ease-congestion" },
-  { id:34,url:"https://www.dirtynaija.ng/articles/unlock-your-potential-start-believing-in-yourself-today" },
-  { id:35,url:"https://www.dirtynaija.ng/articles/pastor-e-a-adeboye-releases-2026-prophecies-what-nigerians-should-know" },
-  { id:36,url:"https://www.dirtynaija.ng/articles/u-s-backed-airstrikes-hit-isis-linked-terrorist-camps-in-nigeria-government-confirms" },
-  { id:37,url:"https://www.dirtynaija.ng/articles/adeboye-s-2026-reverse-japa-prophecy-sparks-online-reactions-after-tunde-ednut-s-remark" },
-  { id:38,url:"https://www.dirtynaija.ng/articles/trump-warns-u-s-will-intervene-if-iran-kills-protesters-amid-nationwide-unrest" },
-  { id:39,url:"https://www.dirtynaija.ng/articles/iswap-militants-set-christian-village-ablaze-in-adamawa-issue-convert-or-die-threat" },
-  { id:40,url:"https://www.dirtynaija.ng/articles/farewell-plans-allwell-ademola-s-final-resting-arrangements-unveiled" },
-  { id:41,url:"https://www.dirtynaija.ng/articles/terrorists-kill-scores-in-fresh-attacks-across-nigeria-defy-security-efforts" },
-  { id:42,url:"https://www.dirtynaija.ng/articles/us-airstrikes-target-venezuelan-capital-president-maduro-reportedly-captured" },
-  { id:43,url:"https://www.dirtynaija.ng/articles/obi-cubana-bags-prestigious-chieftaincy-title-steals-show-with-giant-traditional-cap" },
-  { id:44,url:"https://www.dirtynaija.ng/articles/wike-slams-governor-fubara-says-600bn-war-chest-can-t-secure-2027-re-election" },
-  { id:45,url:"https://www.dirtynaija.ng/articles/enugu-senator-kelvin-chukwu-caught-on-video-assaulting-constituent-during-public-event" },
-  { id:46,url:"https://www.dirtynaija.ng/articles/nnpcl-slashes-petrol-price-again-amid-market-competition" },
-  { id:47,url:"https://www.dirtynaija.ng/articles/anthony-joshua-bids-tearful-farewell-to-late-team-members-lost-in-lagos-crash" },
-  { id:48,url:"https://www.dirtynaija.ng/articles/verydarkman-sparks-wedding-speculation-after-flaunting-mystery-lover-online" },
-  { id:49,url:"https://www.dirtynaija.ng/articles/pastor-paul-enenche-breaks-silence-on-alleged-misuse-of-church-funds-denies-living-off-offerings" },
-  { id:50,url:"https://www.dirtynaija.ng/articles/afcon-2025-tension-as-osimhen-and-lookman-clash-during-nigeria-s-4-0-victory-over-mozambique" }
-];
+const PTCs = Array.from({length:50},(_,i)=>({
+  id:i+1,
+  title:`PTC #${i+1}`,
+  description:`Visit the page and complete a small task to earn.`,
+  reward:REWARD.toFixed(2)
+}));
 
 function showToast(msg,ms=3000){
   toast.textContent = msg;
@@ -166,9 +132,9 @@ function showToast(msg,ms=3000){
   toast._t = setTimeout(()=>toast.classList.remove('show'),ms);
 }
 
-let currentUser=null;
+let currentUser = null;
 const provider = new GoogleAuthProvider();
-signinBtn.addEventListener('click', async()=>{
+signinBtn.addEventListener('click',async ()=>{
   try{ await signInWithPopup(auth,provider); }
   catch{ showToast('Sign in failed'); }
 });
@@ -179,143 +145,111 @@ onAuthStateChanged(auth,user=>{
   filterAndRender();
 });
 
-async function getCooldown(ptc){
-  if(!currentUser) return 0;
+// returns true if within cooldown
+async function isVisited(ptc){
+  if(!currentUser) return false;
   try{
     const snap = await getDoc(doc(db,'ptcClicks',`${ptc.id}_${currentUser.uid}`));
-    if(!snap.exists()||!snap.data().lastClickedAt) return 0;
+    if(!snap.exists() || !snap.data().lastClickedAt) return false;
     const last = snap.data().lastClickedAt.toDate().getTime();
-    const diff = Date.now() - last;
-    return diff < COOLDOWN_MS ? (COOLDOWN_MS - diff) : 0;
-  } catch{return 0;}
-}
-
-async function getViewCount(ptcId){
-  try{
-    const snap=await getDoc(doc(db,'ptcViews',String(ptcId)));
-    return snap.exists()?snap.data().count||0:0;
-  }catch{return 0;}
+    return (Date.now() - last) < COOLDOWN_MS;
+  }catch(e){
+    console.error('visited check',e);
+    return false;
+  }
 }
 
 async function incrementViewCount(ptcId){
   const ref = doc(db,'ptcViews',String(ptcId));
-  try{ await updateDoc(ref,{count:increment(1),updatedAt:serverTimestamp()}); }
-  catch{ await setDoc(ref,{count:1,updatedAt:serverTimestamp()}); }
+  try{ await updateDoc(ref,{count:increment(1),updatedAt:serverTimestamp()});}
+  catch{ await setDoc(ref,{count:1,updatedAt:serverTimestamp()});}
 }
 
-async function creditPTC(ptc){
-  const uid=currentUser.uid;
-  const clickRef=doc(db,'ptcClicks',`${ptc.id}_${uid}`);
-  const now = serverTimestamp();
-
-  const snap=await getDoc(clickRef);
-  if(snap.exists()){
-    await updateDoc(clickRef,{lastClickedAt:now,count:increment(1)});
-  } else {
-    await setDoc(clickRef,{ptcId:ptc.id,viewerUid:uid,lastClickedAt:now,count:1});
-  }
-
-  await addDoc(collection(db,'transactions'),{userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,note:'PTC reward',createdAt:now});
-  await updateDoc(doc(db,'users',uid),{balance:increment(REWARD)});
-  await incrementViewCount(ptc.id);
-
-  document.getElementById('creditSound').play();
-  document.getElementById('earnedPopup').style.display='flex';
-  showToast(`Credited ₦${REWARD.toFixed(2)}`);
-}
-
-let viewerTimerInterval=null;
-async function handleOpen(ptc){
+async function handleOpen(ptc,btn,spinner){
   if(!currentUser){ showToast('Sign in to earn'); return; }
+  btn.disabled=true; spinner.style.display='inline-block';
 
-  const cd=await getCooldown(ptc);
-  if(cd>0){
-    const mins=Math.ceil(cd/60000);
-    showToast(`Try again in ${mins} minute(s)`);
+  const uid = currentUser.uid;
+  const clickRef = doc(db,'ptcClicks',`${ptc.id}_${uid}`);
+  const snap = await getDoc(clickRef);
+
+  let lastMs=null;
+  if(snap.exists() && snap.data().lastClickedAt) lastMs=snap.data().lastClickedAt.toDate().getTime();
+  if(lastMs && (Date.now()-lastMs)<COOLDOWN_MS){
+    const mins=Math.ceil((COOLDOWN_MS-(Date.now()-lastMs))/60000);
+    showToast(`Try again in ${mins} min(s)`);
+    btn.disabled=false; spinner.style.display='none';
     return;
   }
 
-  const overlay=document.getElementById('ptcViewerOverlay');
-  const iframe=document.getElementById('ptcIframe');
-  const timerEl=document.getElementById('viewerTimer');
+  if(snap.exists()){
+    await updateDoc(clickRef,{lastClickedAt:serverTimestamp(),count:increment(1)});
+  } else {
+    await setDoc(clickRef,{ptcId:ptc.id,viewerUid:uid,lastClickedAt:serverTimestamp(),count:1});
+  }
 
-  iframe.src = ptc.url;
-  overlay.style.display='flex';
+  await addDoc(collection(db,'transactions'),{userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,note:`PTC click reward`,createdAt:serverTimestamp()});
+  await updateDoc(doc(db,'users',uid),{balance:increment(REWARD)});
 
-  let seconds = 10;
-  timerEl.textContent=`Wait: ${seconds}s`;
-  clearInterval(viewerTimerInterval);
+  await incrementViewCount(ptc.id);
+  showToast(`Credited ₦${REWARD.toFixed(2)}`);
 
-  viewerTimerInterval = setInterval(async()=>{
-    seconds--;
-    timerEl.textContent=`Wait: ${seconds}s`;
-
-    if(seconds<=0){
-      clearInterval(viewerTimerInterval);
-      await creditPTC(ptc);
-      overlay.style.display='none';
-      iframe.src='';
-      filterAndRender();
-    }
-  },1000);
+  btn.disabled=false; spinner.style.display='none';
+  window.open(`ptc-${ptc.id}.html`,'_blank');
 }
 
-document.getElementById('viewerCloseBtn').addEventListener('click',()=>{
-  clearInterval(viewerTimerInterval);
-  document.getElementById('ptcViewerOverlay').style.display='none';
-  document.getElementById('ptcIframe').src='';
-});
+function makeCard(ptc, visitedState){
+  const item = document.createElement('div'); item.className='card';
+  const h3=document.createElement('h3'); h3.textContent=ptc.title;
+  const meta=document.createElement('div'); meta.className='meta'; meta.textContent=ptc.description;
+  const rew=document.createElement('div'); rew.className='reward'; rew.textContent=`Reward: ₦${ptc.reward}`;
+  const viewsEl=document.createElement('div'); viewsEl.className='views-count'; viewsEl.textContent='Views: …';
 
-document.getElementById('closeEarned').addEventListener('click',()=>{
-  document.getElementById('earnedPopup').style.display='none';
-});
+  (async()=>{
+    try{const vdoc=await getDoc(doc(db,'ptcViews',String(ptc.id))); viewsEl.textContent='Views: '+(vdoc.exists()?vdoc.data().count||0:0);}catch{viewsEl.textContent='Views: 0';}
+  })();
+
+  if(visitedState) {
+    const b=document.createElement('div'); b.className='badge'; b.textContent='Visited'; item.appendChild(b);
+  }
+
+  const actions=document.createElement('div'); actions.className='actions';
+  const btnOpen=document.createElement('button'); btnOpen.className='btn primary';
+  btnOpen.innerHTML=`<span class="btn-text">Open</span><span class="spinner"></span>`;
+  const spinnerEl=btnOpen.querySelector('.spinner');
+
+  btnOpen.addEventListener('click',()=>handleOpen(ptc,btnOpen,spinnerEl));
+
+  const btnDetails=document.createElement('button'); btnDetails.className='btn ghost'; btnDetails.textContent='Details';
+  btnDetails.addEventListener('click',()=>alert(`${ptc.title}\nReward: ₦${ptc.reward}`));
+
+  actions.append(btnOpen,btnDetails);
+  item.append(h3,meta,rew,viewsEl,actions);
+  return item;
+}
 
 async function filterAndRender(){
   const q=searchInput.value.trim().toLowerCase();
   const f=filterSelect.value;
-  GRID.innerHTML=''; // clear first
+  GRID.innerHTML='';
 
-  const cards = [];
   for(const ptc of PTCs){
-    const idx = String(ptc.id).padStart(3,'0');
-    if(q && !(`#${idx}`).toLowerCase().includes(q)) continue;
+    const text=(ptc.title+' '+ptc.description).toLowerCase();
+    if(q&&!text.includes(q)) continue;
 
-    const cd = await getCooldown(ptc);
-    const visited = (cd>0);
+    const visited = await isVisited(ptc);
     if(f==='fresh' && visited) continue;
     if(f==='visited' && !visited) continue;
 
-    const views = await getViewCount(ptc.id);
-    cards.push(makeCard(ptc,visited,views));
+    GRID.appendChild(makeCard(ptc,visited));
   }
-  GRID.append(...cards);
-}
-
-function makeCard(ptc,visited,views){
-  const item=document.createElement('div'); item.className='card';
-  const idx=String(ptc.id).padStart(3,'0');
-
-  item.innerHTML=`
-    <h3 style="margin:0;color:var(--accent1)">#${idx}</h3>
-    <div style="font-size:13px;color:var(--muted)">Reward: ₦${REWARD.toFixed(2)}</div>
-    <div style="font-size:13px;color:var(--muted)">Views: ${views}</div>
-  `;
-
-  if(visited){ const b=document.createElement('div'); b.className='badge'; b.textContent='Visited'; item.appendChild(b); }
-
-  const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.marginTop='auto';
-  const openBtn=document.createElement('button'); openBtn.className='btn primary'; openBtn.textContent='Open'; openBtn.onclick=()=>handleOpen(ptc);
-  const detBtn=document.createElement('button'); detBtn.className='btn ghost'; detBtn.textContent='Details'; detBtn.onclick=()=>alert(`#${idx}\nReward: ₦${REWARD.toFixed(2)}\nViews: ${views}`);
-  
-  actions.append(openBtn,detBtn); item.appendChild(actions);
-  return item;
 }
 
 searchInput.addEventListener('input',filterAndRender);
 filterSelect.addEventListener('change',filterAndRender);
 
 filterAndRender();
-
 </script>
+
 </body>
 </html>
