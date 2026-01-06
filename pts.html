@@ -8,70 +8,37 @@
   <meta name="theme-color" content="#7a5fff" />
   <style>
     :root{
-      --bg:#0b0613;
-      --panel:#0f0820;
-      --muted:rgba(255,255,255,0.62);
-      --card:#0f1120;
-      --accent1:#7a5fff;
-      --accent2:#35d6b1;
-      --text:#eaf2ff;
-      --gap:14px;
-      --radius:12px;
+      --bg:#0b0613; --panel:#0f0820; --muted:rgba(255,255,255,0.62); --card:#0f1120;
+      --accent1:#7a5fff; --accent2:#35d6b1; --text:#eaf2ff; --gap:14px; --radius:12px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0}
-    body{
-      margin:0;
-      min-height:100vh;
-      font-family:'Poppins',system-ui,Arial;
-      background:linear-gradient(180deg,var(--bg),var(--panel));
-      color:var(--text);
-      padding:18px;
-    }
-
-    .wrap{ max-width:1100px; margin:0 auto; }
-    header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap }
-    .brand { display:flex; flex-direction:column; gap:4px; }
-    h1{margin:0;font-size:20px}
-    .hint{color:var(--muted);font-size:13px;margin-top:2px}
-
-    .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .search{ padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--text);min-width:200px;font-size:14px; outline:none; }
-    .search::placeholder{color:rgba(255,255,255,0.32)}
-    .filter{ padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04); background:transparent;color:var(--muted);font-size:14px; }
-    .signinBtn{ padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219; }
-
-    .grid{ display:grid; grid-template-columns:1fr; gap:var(--gap); }
-    @media(min-width:600px){ .grid{ grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); } }
-
-    .card{ background:var(--card); padding:14px; border-radius:var(--radius); border:1px solid rgba(255,255,255,0.03); display:flex; flex-direction:column; gap:10px;}
-    .card h3{margin:0;font-size:16px;color:var(--accent1);font-weight:700}
-    .meta{color:var(--muted);font-size:13px;margin-top:4px}
-    .reward{font-weight:800;font-size:16px;margin-top:6px;color:var(--text)}
-    .views-count{font-size:13px;color:var(--muted);}
-
-    .actions{margin-top:auto;display:flex;gap:8px;align-items:center}
-    .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-    .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;flex:1;min-width:0}
+    html,body{height:100%;margin:0;font-family:'Poppins',system-ui,Arial;}
+    body{background:linear-gradient(180deg,var(--bg),var(--panel)); color:var(--text); padding:18px;}
+    .wrap{max-width:1100px;margin:0 auto;}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+    .search{padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);min-width:200px;}
+    .filter{padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);}
+    .signinBtn{padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;}
+    .grid{display:grid;grid-template-columns:1fr;gap:var(--gap);}
+    @media(min-width:600px){ .grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); } }
+    .card{background:var(--card);padding:14px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px;}
+    .badge{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);}
+    .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:800;font-size:14px;}
+    .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041219;flex:1;}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);}
-    .badge{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);display:inline-block;margin-top:4px;}
-    
-    .spinner{ width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.22); border-top-color:#ffffff; animation:spin 0.9s linear infinite; display:none;}
-    @keyframes spin{to{transform:rotate(360deg)}}
-
-    .toast{ position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:#fff; padding:10px 14px; border-radius:8px; font-size:14px; display:none; }
-    .toast.show{ display:block; }
+    .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;padding:10px 14px;border-radius:8px;font-size:14px;display:none;}
+    .toast.show{display:block;}
   </style>
 </head>
 <body>
 
 <div class="wrap">
   <header>
-    <div class="brand">
-      <h1>PTC Catalog</h1>
-      <div class="hint">Tap a card to open the PTC page</div>
+    <div>
+      <h1 style="margin:0;font-size:20px;">PTC Catalog</h1>
+      <div style="color:var(--muted);font-size:13px;">Tap a card to open the PTC</div>
     </div>
-    <div class="controls">
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
       <input id="searchInput" class="search" placeholder="Search PTC…">
       <select id="filterSelect" class="filter">
         <option value="all">All</option>
@@ -86,6 +53,15 @@
 </div>
 
 <div id="toast" class="toast"></div>
+
+<!-- IFRAME VIEWER OVERLAY -->
+<div id="ptcViewerOverlay" style="display:none;position:fixed;inset:0;background:#000000cc;z-index:9999;align-items:center;justify-content:center;flex-direction:column;">
+  <div style="position:absolute;top:12px;left:12px;display:flex;gap:10px;align-items:center;color:#fff;font-size:16px;font-weight:700;">
+    <div id="viewerTimer">Wait: 10s</div>
+    <button id="viewerCloseBtn" style="padding:6px 10px;border:none;border-radius:6px;background:#ff4455;color:#fff;cursor:pointer;">Close</button>
+  </div>
+  <iframe id="ptcIframe" style="width:100%;height:100%;border:none;" sandbox="allow-scripts allow-forms allow-popups allow-same-origin"></iframe>
+</div>
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -118,27 +94,24 @@ const toast = document.getElementById('toast');
 const REWARD = 0.40;
 const COOLDOWN_MS = 1 * 60 * 60 * 1000;
 
-// reduce to 41 PTCs
-const PTCs = Array.from({length:41},(_,i)=>({
-  id:i+1,
-  title:`PTC #${i+1}`,
-  description:`Visit the page and complete a small task to earn.`,
-  reward:REWARD.toFixed(2)
-}));
+// ADD URLs for the 5 initial PTCs
+const PTCs = [
+  { id:1,title:"AFCON Camp Update",description:"Tap to read",reward:"0.40",url:"https://www.dirtynaija.ng/articles/afcon-2025-nigeria-relocates-training-camp-to-morocco-ahead-of-december-kickoff" },
+  { id:2,title:"The Missing Necklace",description:"Tap to read",reward:"0.40",url:"https://www.dirtynaija.ng/articles/the-case-of-the-missing-necklace" },
+  { id:3,title:"The Call That Mattered",description:"Tap to read",reward:"0.40",url:"https://www.dirtynaija.ng/articles/the-call-that-mattered" },
+  { id:4,title:"Charger Hunters Story",description:"Tap to read",reward:"0.40",url:"https://www.dirtynaija.ng/articles/how-1-battery-turns-siblings-into-expert-charger-hunters" },
+  { id:5,title:"Bench Under The Tree",description:"Tap to read",reward:"0.40",url:"https://www.dirtynaija.ng/articles/the-bench-under-the-tree" }
+];
 
 function showToast(msg,ms=3000){
-  toast.textContent = msg;
-  toast.classList.add('show');
+  toast.textContent = msg; toast.classList.add('show');
   clearTimeout(toast._t);
   toast._t = setTimeout(()=>toast.classList.remove('show'),ms);
 }
 
 let currentUser = null;
 const provider = new GoogleAuthProvider();
-signinBtn.addEventListener('click',async ()=>{
-  try{ await signInWithPopup(auth,provider); }
-  catch{ showToast('Sign in failed'); }
-});
+signinBtn.addEventListener('click',async ()=>{ try{ await signInWithPopup(auth,provider);}catch{showToast('Sign in failed');} });
 onAuthStateChanged(auth,user=>{
   currentUser=user;
   signinBtn.textContent=user?'Signed in':'Sign in';
@@ -146,97 +119,117 @@ onAuthStateChanged(auth,user=>{
   filterAndRender();
 });
 
-// returns true if within cooldown
+// check cooldown
 async function isVisited(ptc){
   if(!currentUser) return false;
   try{
     const snap = await getDoc(doc(db,'ptcClicks',`${ptc.id}_${currentUser.uid}`));
     if(!snap.exists() || !snap.data().lastClickedAt) return false;
     const last = snap.data().lastClickedAt.toDate().getTime();
-    return (Date.now() - last) < COOLDOWN_MS;
-  }catch(e){
-    console.error('visited check',e);
-    return false;
-  }
+    return (Date.now()-last)<COOLDOWN_MS;
+  }catch{return false;}
 }
 
 async function incrementViewCount(ptcId){
   const ref = doc(db,'ptcViews',String(ptcId));
-  try{ await updateDoc(ref,{count:increment(1),updatedAt:serverTimestamp()});}
+  try{ await updateDoc(ref,{count:increment(1),updatedAt:serverTimestamp()}); }
   catch{ await setDoc(ref,{count:1,updatedAt:serverTimestamp()});}
 }
 
-async function handleOpen(ptc,btn,spinner){
-  if(!currentUser){ showToast('Sign in to earn'); return; }
-  btn.disabled=true; spinner.style.display='inline-block';
-
+// CREDIT only after iframe timer ends
+async function creditPTC(ptc){
   const uid = currentUser.uid;
   const clickRef = doc(db,'ptcClicks',`${ptc.id}_${uid}`);
   const snap = await getDoc(clickRef);
 
-  let lastMs=null;
-  if(snap.exists() && snap.data().lastClickedAt) lastMs=snap.data().lastClickedAt.toDate().getTime();
-  if(lastMs && (Date.now()-lastMs)<COOLDOWN_MS){
-    const mins=Math.ceil((COOLDOWN_MS-(Date.now()-lastMs))/60000);
-    showToast(`Try again in ${mins} min(s)`);
-    btn.disabled=false; spinner.style.display='none';
-    return;
-  }
-
+  const now = serverTimestamp();
   if(snap.exists()){
-    await updateDoc(clickRef,{lastClickedAt:serverTimestamp(),count:increment(1)});
-  } else {
-    await setDoc(clickRef,{ptcId:ptc.id,viewerUid:uid,lastClickedAt:serverTimestamp(),count:1});
+    await updateDoc(clickRef,{lastClickedAt:now,count:increment(1)});
+  }else{
+    await setDoc(clickRef,{ptcId:ptc.id,viewerUid:uid,lastClickedAt:now,count:1});
   }
 
-  await addDoc(collection(db,'transactions'),{userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,note:`PTC click reward`,createdAt:serverTimestamp()});
+  await addDoc(collection(db,'transactions'),{userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,note:`PTC click reward`,createdAt:now});
   await updateDoc(doc(db,'users',uid),{balance:increment(REWARD)});
-
   await incrementViewCount(ptc.id);
-  showToast(`Credited ₦${REWARD.toFixed(2)}`);
 
-  btn.disabled=false; spinner.style.display='none';
-  window.open(`ptc-${ptc.id}.html`,'_blank');
+  showToast(`Credited ₦${REWARD.toFixed(2)}`);
 }
 
-function makeCard(ptc, visitedState){
-  const item = document.createElement('div'); item.className='card';
-  const h3=document.createElement('h3'); h3.textContent=ptc.title;
-  const meta=document.createElement('div'); meta.className='meta'; meta.textContent=ptc.description;
-  const rew=document.createElement('div'); rew.className='reward'; rew.textContent=`Reward: ₦${ptc.reward}`;
-  const viewsEl=document.createElement('div'); viewsEl.className='views-count'; viewsEl.textContent='Views: …';
+let viewerTimerInterval = null;
+function handleOpen(ptc){
+  if(!currentUser){ showToast('Sign in to earn'); return; }
+
+  const overlay = document.getElementById('ptcViewerOverlay');
+  const iframe = document.getElementById('ptcIframe');
+  const timerEl = document.getElementById('viewerTimer');
+
+  iframe.src = ptc.url;
+  overlay.style.display = 'flex';
+
+  let secondsLeft = 10;
+  timerEl.textContent = `Wait: ${secondsLeft}s`;
+  clearInterval(viewerTimerInterval);
+
+  viewerTimerInterval = setInterval(async ()=>{
+    secondsLeft--;
+    timerEl.textContent = `Wait: ${secondsLeft}s`;
+
+    if(secondsLeft<=0){
+      clearInterval(viewerTimerInterval);
+      timerEl.textContent = `Done! Crediting...`;
+      await creditPTC(ptc);
+    }
+  },1000);
+}
+
+document.getElementById('viewerCloseBtn').addEventListener('click',()=>{
+  clearInterval(viewerTimerInterval);
+  document.getElementById('ptcViewerOverlay').style.display='none';
+  document.getElementById('ptcIframe').src='';
+});
+
+function makeCard(ptc,visited){
+  const item=document.createElement('div'); item.className='card';
+  item.innerHTML=`
+    <h3 style="margin:0;color:var(--accent1)">${ptc.title}</h3>
+    <div style="color:var(--muted);font-size:13px">${ptc.description}</div>
+    <div style="font-weight:800;font-size:16px;color:var(--text)">Reward: ₦${ptc.reward}</div>
+    <div class="views-count" style="font-size:13px;color:var(--muted)">Views: …</div>
+  `;
+
+  if(visited){ const b=document.createElement('div'); b.className='badge';b.textContent='Visited';item.appendChild(b);}
+
+  const actions=document.createElement('div');actions.style.display='flex';actions.style.gap='8px';actions.style.marginTop='auto';
+
+  const openBtn=document.createElement('button');openBtn.className='btn primary';openBtn.textContent='Open';
+  openBtn.onclick=()=>handleOpen(ptc);
+
+  const detailBtn=document.createElement('button');detailBtn.className='btn ghost';detailBtn.textContent='Details';
+  detailBtn.onclick=()=>alert(`${ptc.title}\nReward: ₦${ptc.reward}`);
+
+  actions.append(openBtn,detailBtn);
+  item.appendChild(actions);
 
   (async()=>{
-    try{const vdoc=await getDoc(doc(db,'ptcViews',String(ptc.id))); viewsEl.textContent='Views: '+(vdoc.exists()?vdoc.data().count||0:0);}catch{viewsEl.textContent='Views: 0';}
+    try{
+      const vdoc = await getDoc(doc(db,'ptcViews',String(ptc.id)));
+      const cc = vdoc.exists()?vdoc.data().count||0:0;
+      item.querySelector('.views-count').textContent='Views: '+cc;
+    }catch{ item.querySelector('.views-count').textContent='Views: 0'; }
   })();
 
-  if(visitedState) {
-    const b=document.createElement('div'); b.className='badge'; b.textContent='Visited'; item.appendChild(b);
-  }
-
-  const actions=document.createElement('div'); actions.className='actions';
-  const btnOpen=document.createElement('button'); btnOpen.className='btn primary';
-  btnOpen.innerHTML=`<span class="btn-text">Open</span><span class="spinner"></span>`;
-  const spinnerEl=btnOpen.querySelector('.spinner');
-
-  btnOpen.addEventListener('click',()=>handleOpen(ptc,btnOpen,spinnerEl));
-
-  const btnDetails=document.createElement('button'); btnDetails.className='btn ghost'; btnDetails.textContent='Details';
-  btnDetails.addEventListener('click',()=>alert(`${ptc.title}\nReward: ₦${ptc.reward}`));
-
-  actions.append(btnOpen,btnDetails);
-  item.append(h3,meta,rew,viewsEl,actions);
   return item;
 }
 
 async function filterAndRender(){
-  const q=searchInput.value.trim().toLowerCase();
-  const f=filterSelect.value;
+  const q = searchInput.value.trim().toLowerCase();
+  const f = filterSelect.value;
   GRID.innerHTML='';
 
   for(const ptc of PTCs){
-    const text=(ptc.title+' '+ptc.description).toLowerCase();
-    if(q&&!text.includes(q)) continue;
+    const txt=(ptc.title+' '+ptc.description).toLowerCase();
+    if(q && !txt.includes(q)) continue;
 
     const visited = await isVisited(ptc);
     if(f==='fresh' && visited) continue;
@@ -248,7 +241,6 @@ async function filterAndRender(){
 
 searchInput.addEventListener('input',filterAndRender);
 filterSelect.addEventListener('change',filterAndRender);
-
 filterAndRender();
 </script>
 
