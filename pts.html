@@ -114,17 +114,24 @@ const PTCs = [
   { id:5,url:"https://www.dirtynaija.ng/articles/the-bench-under-the-tree" },
   { id:6,url:"https://www.dirtynaija.ng/articles/fuel-tanker-explosion-on-benin-auchi-road-several-feared-dead" },
   { id:7,url:"https://www.dirtynaija.ng/articles/building-wealth-online-through-consistency-and-smart-effort" },
+  { id:8,url:"https://www.dirtynaija.ng/articles/vdm-releases-audio-said-to-be-from-pastor-chris-okafor-s-daughter-generates-online-discussion" },
+  { id:9,url:"https://www.dirtynaija.ng/articles/unsealed-secrets-shocking-new-revelations-from-the-epstein-files" },
   
 ];
 
 function showToast(msg,ms=3000){
-  toast.textContent = msg; toast.classList.add('show');
-  clearTimeout(toast._t); toast._t = setTimeout(()=>toast.classList.remove('show'),ms);
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>toast.classList.remove('show'),ms);
 }
 
 let currentUser=null;
-const provider=new GoogleAuthProvider();
-signinBtn.addEventListener('click',async()=>{ try{ await signInWithPopup(auth,provider);}catch{showToast('Sign in failed');}});
+const provider = new GoogleAuthProvider();
+signinBtn.addEventListener('click', async()=>{
+  try{ await signInWithPopup(auth,provider); }
+  catch{ showToast('Sign in failed'); }
+});
 onAuthStateChanged(auth,user=>{
   currentUser=user;
   signinBtn.textContent=user?'Signed in':'Sign in';
@@ -132,16 +139,15 @@ onAuthStateChanged(auth,user=>{
   filterAndRender();
 });
 
-// cooldown in ms left
 async function getCooldown(ptc){
   if(!currentUser) return 0;
   try{
-    const snap=await getDoc(doc(db,'ptcClicks',`${ptc.id}_${currentUser.uid}`));
+    const snap = await getDoc(doc(db,'ptcClicks',`${ptc.id}_${currentUser.uid}`));
     if(!snap.exists()||!snap.data().lastClickedAt) return 0;
-    const last=snap.data().lastClickedAt.toDate().getTime();
-    const diff=Date.now()-last;
-    return diff < COOLDOWN_MS ? (COOLDOWN_MS-diff) : 0;
-  }catch{return 0;}
+    const last = snap.data().lastClickedAt.toDate().getTime();
+    const diff = Date.now() - last;
+    return diff < COOLDOWN_MS ? (COOLDOWN_MS - diff) : 0;
+  } catch{return 0;}
 }
 
 async function getViewCount(ptcId){
@@ -152,24 +158,24 @@ async function getViewCount(ptcId){
 }
 
 async function incrementViewCount(ptcId){
-  const ref=doc(db,'ptcViews',String(ptcId));
-  try{await updateDoc(ref,{count:increment(1),updatedAt:serverTimestamp()});}
-  catch{await setDoc(ref,{count:1,updatedAt:serverTimestamp()});}
+  const ref = doc(db,'ptcViews',String(ptcId));
+  try{ await updateDoc(ref,{count:increment(1),updatedAt:serverTimestamp()}); }
+  catch{ await setDoc(ref,{count:1,updatedAt:serverTimestamp()}); }
 }
 
 async function creditPTC(ptc){
   const uid=currentUser.uid;
   const clickRef=doc(db,'ptcClicks',`${ptc.id}_${uid}`);
-  const now=serverTimestamp();
+  const now = serverTimestamp();
 
   const snap=await getDoc(clickRef);
   if(snap.exists()){
     await updateDoc(clickRef,{lastClickedAt:now,count:increment(1)});
-  }else{
+  } else {
     await setDoc(clickRef,{ptcId:ptc.id,viewerUid:uid,lastClickedAt:now,count:1});
   }
 
-  await addDoc(collection(db,'transactions'),{userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,note:`PTC reward`,createdAt:now});
+  await addDoc(collection(db,'transactions'),{userId:uid,type:'ptc_click',source:`ptc_${ptc.id}`,amount:REWARD,note:'PTC reward',createdAt:now});
   await updateDoc(doc(db,'users',uid),{balance:increment(REWARD)});
   await incrementViewCount(ptc.id);
 
@@ -193,22 +199,23 @@ async function handleOpen(ptc){
   const iframe=document.getElementById('ptcIframe');
   const timerEl=document.getElementById('viewerTimer');
 
-  iframe.src=ptc.url;
+  iframe.src = ptc.url;
   overlay.style.display='flex';
 
-  let seconds=10;
+  let seconds = 10;
   timerEl.textContent=`Wait: ${seconds}s`;
   clearInterval(viewerTimerInterval);
 
-  viewerTimerInterval=setInterval(async()=>{
+  viewerTimerInterval = setInterval(async()=>{
     seconds--;
     timerEl.textContent=`Wait: ${seconds}s`;
+
     if(seconds<=0){
       clearInterval(viewerTimerInterval);
       await creditPTC(ptc);
       overlay.style.display='none';
       iframe.src='';
-      filterAndRender(); // to update visited status & views
+      filterAndRender();
     }
   },1000);
 }
@@ -219,7 +226,30 @@ document.getElementById('viewerCloseBtn').addEventListener('click',()=>{
   document.getElementById('ptcIframe').src='';
 });
 
-document.getElementById('closeEarned').addEventListener('click',()=>{document.getElementById('earnedPopup').style.display='none';});
+document.getElementById('closeEarned').addEventListener('click',()=>{
+  document.getElementById('earnedPopup').style.display='none';
+});
+
+async function filterAndRender(){
+  const q=searchInput.value.trim().toLowerCase();
+  const f=filterSelect.value;
+  GRID.innerHTML=''; // clear first
+
+  const cards = [];
+  for(const ptc of PTCs){
+    const idx = String(ptc.id).padStart(3,'0');
+    if(q && !(`#${idx}`).toLowerCase().includes(q)) continue;
+
+    const cd = await getCooldown(ptc);
+    const visited = (cd>0);
+    if(f==='fresh' && visited) continue;
+    if(f==='visited' && !visited) continue;
+
+    const views = await getViewCount(ptc.id);
+    cards.push(makeCard(ptc,visited,views));
+  }
+  GRID.append(...cards);
+}
 
 function makeCard(ptc,visited,views){
   const item=document.createElement('div'); item.className='card';
@@ -231,40 +261,21 @@ function makeCard(ptc,visited,views){
     <div style="font-size:13px;color:var(--muted)">Views: ${views}</div>
   `;
 
-  if(visited){const b=document.createElement('div');b.className='badge';b.textContent='Visited';item.appendChild(b);}
+  if(visited){ const b=document.createElement('div'); b.className='badge'; b.textContent='Visited'; item.appendChild(b); }
 
-  const actions=document.createElement('div');actions.style.display='flex';actions.style.gap='8px';actions.style.marginTop='auto';
-  const openBtn=document.createElement('button');openBtn.className='btn primary';openBtn.textContent='Open';openBtn.onclick=()=>handleOpen(ptc);
-  const detBtn=document.createElement('button');detBtn.className='btn ghost';detBtn.textContent='Details';detBtn.onclick=()=>alert(`#${idx}\nReward: ₦${REWARD.toFixed(2)}\nViews: ${views}`);
-  actions.append(openBtn,detBtn);
-  item.appendChild(actions);
-
+  const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.marginTop='auto';
+  const openBtn=document.createElement('button'); openBtn.className='btn primary'; openBtn.textContent='Open'; openBtn.onclick=()=>handleOpen(ptc);
+  const detBtn=document.createElement('button'); detBtn.className='btn ghost'; detBtn.textContent='Details'; detBtn.onclick=()=>alert(`#${idx}\nReward: ₦${REWARD.toFixed(2)}\nViews: ${views}`);
+  
+  actions.append(openBtn,detBtn); item.appendChild(actions);
   return item;
-}
-
-async function filterAndRender(){
-  const q=searchInput.value.trim().toLowerCase();
-  const f=filterSelect.value;
-  GRID.innerHTML='';
-
-  for(const ptc of PTCs){
-    const idx=String(ptc.id).padStart(3,'0');
-    if(q && !(`#${idx}`).toLowerCase().includes(q)) continue;
-
-    const cd=await getCooldown(ptc);
-    const visited=(cd>0);
-    if(f==='fresh' && visited) continue;
-    if(f==='visited' && !visited) continue;
-
-    const vcount=await getViewCount(ptc.id);
-    GRID.appendChild(makeCard(ptc,visited,vcount));
-  }
 }
 
 searchInput.addEventListener('input',filterAndRender);
 filterSelect.addEventListener('change',filterAndRender);
-filterAndRender();
-</script>
 
+filterAndRender();
+
+</script>
 </body>
 </html>
