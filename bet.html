@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Stake</title>
+
+  <!-- favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <meta name="theme-color" content="#2fe0b8"/>
+  
+  <style>
+    :root {
+      --bg:#041018; --text:#eaf2ff; --muted:#9fb3c9;
+      --accent:#2fe0b8; --accent2:#35d6b1; --card:#0f1120; --radius:12px;
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:'Poppins',system-ui,Arial;background:var(--bg);color:var(--text);padding:20px;}
+    .container{max-width:480px;margin:0 auto;}
+    h2{text-align:center;color:var(--accent);margin-bottom:10px;}
+    .balance{font-size:20px;font-weight:700;text-align:center;margin-bottom:20px;color:var(--accent2);}
+    .card{background:var(--card);padding:16px;border-radius:var(--radius);margin-bottom:20px;border:1px solid rgba(255,255,255,0.08);}
+    .card label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px;}
+    .card select,input{width:100%;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.07);color:var(--text);margin-bottom:12px;}
+    .btn{width:100%;padding:12px;font-size:16px;font-weight:700;border:none;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#041219;cursor:pointer;}
+    .history{margin-top:30px;}
+    .history h3{margin:0 0 12px 0;color:var(--accent);}
+    .stake-item{background:rgba(255,255,255,0.04);padding:12px;border-radius:10px;margin-bottom:10px;}
+    .stake-item div{font-size:14px;margin:2px 0;}
+    .status-won{color:#00b300;font-weight:700;}
+    .status-lost{color:#ff4d4d;font-weight:700;}
+    .loading{text-align:center;color:var(--muted);margin-top:10px;}
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Rewardly Stake</h2>
+  <div class="balance" id="userBalance">Balance: ₦0.00</div>
+
+  <div class="card" id="stakeCard">
+    <div id="noMatches" class="loading">Loading available matches...</div>
+
+    <label>Match</label>
+    <select id="matchSelect"></select>
+
+    <label>Choose Outcome</label>
+    <select id="outcomeSelect"></select>
+
+    <label>Stake Amount (min ₦100)</label>
+    <input type="number" id="stakeAmount" placeholder="Enter amount">
+
+    <button class="btn" id="submitStake">Submit Stake</button>
+    <div id="stakeMsg" class="loading"></div>
+  </div>
+
+  <div class="history">
+    <h3>Your Stake History</h3>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getFirestore, collection, addDoc, serverTimestamp, query,
+  where, getDocs, orderBy, updateDoc, doc, increment
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  authDomain: "beni-wealths.firebaseapp.com",
+  projectId: "beni-wealths",
+  storageBucket: "beni-wealths.appspot.com",
+  messagingSenderId: "807950483822",
+  appId: "1:807950483822:web=e10fa87307e041c4d8417f",
+  measurementId: "G-Z2XP3YN6NS"
+};
+
+if (!getApps().length) initializeApp(firebaseConfig);
+
+const auth = getAuth();
+const db = getFirestore();
+
+const userBalanceEl = document.getElementById('userBalance');
+const matchSelect = document.getElementById('matchSelect');
+const outcomeSelect = document.getElementById('outcomeSelect');
+const noMatchesEl = document.getElementById('noMatches');
+const stakeMsg = document.getElementById('stakeMsg');
+const historyListEl = document.getElementById('historyList');
+
+let currentUser = null;
+let matches = [];
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    userBalanceEl.textContent = "Balance: Sign in to see balance";
+    return;
+  }
+  currentUser = user;
+  await loadBalance();
+  await loadMatches();
+  await loadHistory();
+});
+
+async function loadBalance() {
+  const userDoc = await getDocs(query(collection(db,'users'),where('__name__','==',currentUser.uid)));
+  if (!userDoc.empty) {
+    const data = userDoc.docs[0].data();
+    userBalanceEl.textContent = `Balance: ₦${Number(data.balance||0).toLocaleString('en-NG',{minimumFractionDigits:2})}`;
+  }
+}
+
+async function loadMatches() {
+  const q = query(collection(db,'matches'), where('active','==',true));
+  const snapshot = await getDocs(q);
+
+  matches = snapshot.docs.map(s => ({ id:s.id,...s.data() }) );
+  matchSelect.innerHTML = "";
+  outcomeSelect.innerHTML = "";
+
+  if (!matches.length) {
+    noMatchesEl.textContent = "No available stakes at the moment.";
+    matchSelect.style.display = 'none';
+    outcomeSelect.style.display = 'none';
+    document.getElementById('submitStake').disabled = true;
+    return;
+  }
+
+  noMatchesEl.style.display = 'none';
+  matchSelect.style.display = '';
+  document.getElementById('submitStake').disabled = false;
+
+  matches.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.title;
+    matchSelect.appendChild(opt);
+  });
+  updateOutcomeOptions();
+}
+
+function updateOutcomeOptions() {
+  const selectedMatch = matches.find(m => m.id === matchSelect.value);
+  outcomeSelect.innerHTML = "";
+  if (!selectedMatch) return;
+  selectedMatch.options.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o;
+    opt.textContent = o;
+    outcomeSelect.appendChild(opt);
+  });
+}
+
+matchSelect.addEventListener('change',updateOutcomeOptions);
+
+document.getElementById('submitStake').addEventListener('click', async () => {
+  stakeMsg.textContent = "Processing...";
+  const matchId = matchSelect.value;
+  const choice = outcomeSelect.value;
+  const amount = Number(document.getElementById('stakeAmount').value);
+
+  if (!matchId || !choice || !amount || amount < 100) {
+    stakeMsg.textContent = "Fill all fields correctly (min ₦100).";
+    return;
+  }
+
+  // Debit balance
+  await updateDoc(doc(db,'users', currentUser.uid), { balance: increment(-amount) });
+
+  await addDoc(collection(db,'stakes'), {
+    userId: currentUser.uid,
+    matchId,
+    title: matches.find(m=>m.id===matchId).title,
+    choice,
+    amount,
+    status:"pending",
+    wonAmount:0,
+    credited:false,
+    createdAt:serverTimestamp()
+  });
+
+  stakeMsg.textContent = "Stake submitted!";
+  await loadBalance();
+  await loadHistory();
+});
+
+async function loadHistory() {
+  historyListEl.innerHTML = "<div class='loading'>Loading...</div>";
+
+  const q = query(collection(db,'stakes'),
+                  where('userId','==',currentUser.uid),
+                  orderBy('createdAt','desc'));
+
+  const snapshot = await getDocs(q);
+  historyListEl.innerHTML = "";
+
+  for (const docSnap of snapshot.docs) {
+    const data = docSnap.data();
+    const stakeDiv = document.createElement('div');
+    stakeDiv.className = "stake-item";
+
+    if (data.status==="won" && !data.credited) {
+      const winAmt = data.amount*2;
+      await updateDoc(doc(db,'users',currentUser.uid),{ balance:increment(winAmt) });
+      await updateDoc(doc(db,'stakes',docSnap.id),{ credited:true, wonAmount:winAmt });
+      await loadBalance();
+      data.wonAmount = winAmt;
+    }
+
+    const statusClass = data.status==="won"?"status-won":
+                        data.status==="lost"?"status-lost":"status-pending";
+
+    stakeDiv.innerHTML = `
+      <div><strong>Match:</strong> ${data.title}</div>
+      <div><strong>Choice:</strong> ${data.choice}</div>
+      <div><strong>Amount:</strong> ₦${data.amount}</div>
+      <div><strong>Status:</strong> <span class="${statusClass}">${data.status}</span></div>
+      <div><strong>Won:</strong> ₦${data.wonAmount||0}</div>
+    `;
+    historyListEl.appendChild(stakeDiv);
+  }
+  if (!historyListEl.innerHTML) historyListEl.textContent = "No stake history yet.";
+}
+
+</script>
+</body>
+</html>
