@@ -21,7 +21,7 @@
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
-    /* — YOUR ORIGINAL CSS (unchanged) — */
+    /* — BEGIN ORIGINAL UNCHANGED CSS — */
     :root{
       --bg-1:#0b0613; --bg-2:#0f0820; --panel:rgba(255,255,255,0.03);
       --muted:rgba(255,255,255,0.62); --text:#eaf2ff;
@@ -37,7 +37,6 @@
     -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
     padding:20px;display:flex;justify-content:center;}
 
-    /* phone container centered on viewport */
     .phone{width:100%;max-width:var(--container-w);min-height:600px;border-radius:18px;
     padding:18px 18px 100px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
     box-shadow:0 18px 60px rgba(0,0,0,0.6);overflow:auto;position:relative;margin:20px auto;}
@@ -119,7 +118,7 @@
     .overlay-option{display:block;padding:12px;text-align:center;border-radius:10px;
     text-decoration:none;font-weight:800;}
     .overlay-option.primary{background:linear-gradient(90deg,#7a5fff,#35d6b1);color:#041219;}
-
+    /* — END ORIGINAL CSS — */
   </style>
 </head>
 
@@ -225,7 +224,7 @@
   <script type="module">
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
@@ -242,37 +241,20 @@
     const auth = getAuth();
     const db = getFirestore();
 
-    function openMoreOverlay(){document.getElementById('moreOverlay').classList.add('open');document.body.style.overflow='hidden';}
-    function closeMoreOverlay(){document.getElementById('moreOverlay').classList.remove('open');document.body.style.overflow='';}
-
-    document.getElementById('moreItem').addEventListener('click', openMoreOverlay);
-    document.getElementById('overlayClose').addEventListener('click', closeMoreOverlay);
-    document.getElementById('overlayBackdrop').addEventListener('click', closeMoreOverlay);
-    window.addEventListener('keydown',(e)=>{if(e.key==='Escape') closeMoreOverlay();});
-
-    document.getElementById('logoutBtn').addEventListener('click', async()=>{
-      await signOut(auth);
-      window.location.href='index.html';
-    });
-
-    onAuthStateChanged(auth, async(user)=>{
-      if(!user)return;
-      const uRef=doc(db,'users',user.uid);
+    onAuthStateChanged(auth,(user)=>{
+      if(!user) return;
+      const uRef = doc(db,'users',user.uid);
       onSnapshot(uRef,(snap)=>{
         if(snap.exists()){
-          const d=snap.data();
-          document.getElementById('balance').textContent='₦'+(d.balance||0).toLocaleString('en-NG',{minimumFractionDigits:2});
-          document.getElementById('greeting').textContent='Hi, '+(d.username||user.displayName||'User');
-          document.getElementById('avatar').textContent=(d.username||user.displayName||'U')[0].toUpperCase();
+          const d = snap.data();
+          document.getElementById('balance').textContent = `₦${(d.balance||0).toLocaleString('en-NG',{minimumFractionDigits:2})}`;
+          document.getElementById('approx').textContent = `≈ ₦${(d.balance||0).toLocaleString('en-NG',{minimumFractionDigits:2})}`;
+          document.getElementById('uidline').textContent = `UID: ${user.uid.slice(0,6)}`;
+          document.getElementById('greeting').textContent = `Hi, ${d.username||user.displayName||'User'}`;
+          document.getElementById('avatar').textContent = (d.username||user.displayName||'U')[0].toUpperCase();
         }
       });
     });
-
-    document.getElementById('navHome').addEventListener('click',()=>window.location.href='catalog.html');
-    document.getElementById('navConvert').addEventListener('click',()=>window.location.href='convert.html');
-    document.getElementById('navCenter').addEventListener('click',()=>window.location.href='center.html');
-    document.getElementById('navNews').addEventListener('click',()=>window.location.href='news.html');
-    document.getElementById('navAssets').addEventListener('click',()=>window.location.href='dashboard.html');
   </script>
 
 </body>
