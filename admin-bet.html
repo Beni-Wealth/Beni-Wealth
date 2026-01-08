@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Beni-Wealth — Admin Stakes</title>
+
+  <link rel="icon" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg:#041018; --text:#eaf2ff; --muted:#9fb3c9;
+      --accent:#2fe0b8; --accent2:#35d6b1; --card:#0f1120; --radius:12px;
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;padding:20px;font-family:'Poppins',system-ui,Arial;background:var(--bg);color:var(--text);}
+    .container{max-width:600px;margin:auto;}
+    h2{text-align:center;color:var(--accent);margin-bottom:12px;}
+    .card{background:var(--card);padding:16px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.1);margin-bottom:20px;}
+    .card label{display:block;color:var(--muted);margin-top:10px;}
+    .card input, .card textarea, .card select{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:none;background:rgba(255,255,255,0.07);color:var(--text);}
+    button{padding:12px;font-weight:700;border:none;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#041219;cursor:pointer;margin-top:12px;width:100%;}
+    .match-item{background:rgba(255,255,255,0.05);padding:10px;border-radius:10px;margin-bottom:10px;}
+    .match-item div{font-size:14px;}
+    .btn-small{padding:6px 10px;font-size:13px;cursor:pointer;border-radius:8px;margin-right:6px;}
+    .btn-edit{background:#2fa8ff;color:#041219;}
+    .btn-toggle{background:#ff8a00;color:#041219;}
+    .btn-result{background:#4caf50;color:#041219;}
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Admin — Manage Stakes</h2>
+
+  <div class="card">
+    <label>Match Title</label>
+    <input type="text" id="matchTitle" placeholder="e.g. Nigeria vs Ghana">
+
+    <label>Options (comma-separated)</label>
+    <input type="text" id="matchOptions" placeholder="E.g. Home, Draw, Away">
+
+    <label>Active</label>
+    <select id="matchActive">
+      <option value="true">Active</option>
+      <option value="false">Inactive</option>
+    </select>
+
+    <button id="saveMatchBtn">Save Match</button>
+    <div id="adminMsg" style="color:var(--muted);margin-top:8px;font-size:14px;"></div>
+  </div>
+
+  <h3 style="color:var(--accent2)">Existing Matches</h3>
+  <div id="matchesList"></div>
+</div>
+
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getFirestore, collection, addDoc, serverTimestamp, getDocs,
+  doc, updateDoc, orderBy, query
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  authDomain: "beni-wealths.firebaseapp.com",
+  projectId: "beni-wealths",
+  storageBucket: "beni-wealths.appspot.com",
+  messagingSenderId: "807950483822",
+  appId: "1:807950483822:web=e10fa87307e041c4d8417f",
+  measurementId: "G-Z2XP3YN6NS"
+};
+
+if (!getApps().length) initializeApp(firebaseConfig);
+
+const auth = getAuth();
+const db = getFirestore();
+
+const matchTitle = document.getElementById('matchTitle');
+const matchOptions = document.getElementById('matchOptions');
+const matchActive = document.getElementById('matchActive');
+const saveMatchBtn = document.getElementById('saveMatchBtn');
+const adminMsg = document.getElementById('adminMsg');
+const matchesList = document.getElementById('matchesList');
+
+let currentUser = null;
+
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    adminMsg.textContent = "Sign in as admin to manage stakes.";
+    return;
+  }
+  currentUser = user;
+  loadMatches();
+});
+
+// Save new match
+saveMatchBtn.addEventListener('click', async () => {
+  const title = matchTitle.value.trim();
+  const opts = matchOptions.value.trim();
+  const active = matchActive.value === 'true';
+
+  if (!title || !opts) {
+    adminMsg.textContent = "Title and options are required.";
+    return;
+  }
+
+  const optionsArray = opts.split(',').map(o=>o.trim()).filter(o=>o);
+
+  try {
+    await addDoc(collection(db, 'matches'), {
+      title,
+      options: optionsArray,
+      active,
+      winner: "",      // no winner initially
+      createdAt: serverTimestamp()
+    });
+    adminMsg.textContent = "Match saved successfully!";
+    matchTitle.value = '';
+    matchOptions.value = '';
+    loadMatches();
+  } catch(err) {
+    console.error(err);
+    adminMsg.textContent = "Error saving match.";
+  }
+});
+
+// Load matches list
+async function loadMatches() {
+  matchesList.innerHTML = "Loading…";
+  const q = query(collection(db, 'matches'), orderBy('createdAt','desc'));
+  const docs = await getDocs(q);
+  matchesList.innerHTML = '';
+
+  if (docs.empty) {
+    matchesList.textContent = "No matches found.";
+    return;
+  }
+
+  docs.forEach(docSnap => {
+    const data = docSnap.data();
+    const id = docSnap.id;
+    const div = document.createElement('div');
+    div.className = 'match-item';
+
+    // Show winner if exists
+    const winnerText = data.winner ? ` • Winner: ${data.winner}` : '';
+
+    div.innerHTML = `
+      <div><strong>${data.title}</strong>${winnerText}</div>
+      <div>Options: ${data.options.join(', ')}</div>
+      <div>Status: ${data.active ? 'Active' : 'Inactive'}</div>
+      <button class="btn-small btn-edit" data-id="${id}">Edit</button>
+      <button class="btn-small btn-toggle" data-id="${id}" data-active="${data.active}">${data.active ? 'Deactivate' : 'Activate'}</button>
+      <button class="btn-small btn-result" data-id="${id}">Set Result</button>
+    `;
+    matchesList.appendChild(div);
+  });
+
+  document.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.onclick = () => editMatch(btn.dataset.id);
+  });
+  document.querySelectorAll('.btn-toggle').forEach(btn => {
+    btn.onclick = () => toggleActive(btn.dataset.id, btn.dataset.active==='true');
+  });
+  document.querySelectorAll('.btn-result').forEach(btn => {
+    btn.onclick = () => promptWinner(btn.dataset.id);
+  });
+}
+
+// Edit match
+async function editMatch(id) {
+  const snap = await getDocs(query(collection(db, 'matches'), where('__name__','==',id)));
+  if (!snap.empty) {
+    const data = snap.docs[0].data();
+    matchTitle.value = data.title;
+    matchOptions.value = data.options.join(', ');
+    matchActive.value = data.active ? 'true' : 'false';
+
+    adminMsg.textContent = "Editing match — save to update.";
+    saveMatchBtn.textContent = "Update Match";
+    saveMatchBtn.onclick = async () => {
+      const docRef = doc(db, 'matches', id);
+      await updateDoc(docRef, {
+        title: matchTitle.value.trim(),
+        options: matchOptions.value.split(',').map(o=>o.trim()),
+        active: matchActive.value==='true'
+      });
+      adminMsg.textContent = "Match updated!";
+      saveMatchBtn.textContent = "Save Match";
+      loadMatches();
+    }
+  }
+}
+
+// Toggle active
+async function toggleActive(id, currentlyActive) {
+  const docRef = doc(db, 'matches', id);
+  await updateDoc(docRef, { active: !currentlyActive });
+  loadMatches();
+}
+
+// Prompt winner
+function promptWinner(matchId) {
+  const winner = prompt("Enter the winning option EXACT as one of the options:");
+  if (!winner) return;
+
+  const docRef = doc(db, 'matches', matchId);
+  updateDoc(docRef, { winner })
+    .then(()=>loadMatches())
+    .catch(err=>alert("Error setting winner:"+err));
+}
+</script>
+</body>
+</html>
