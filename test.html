@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Dashboard</title>
+
+  <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- Favicons & Social preview -->
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
+  <meta property="og:description" content="Complete simple micro-tasks, complete ptcs and blogs, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
+  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#2fe0b8">
+
+  <style>
+    /* (All previous CSS remains unchanged — omitted here for brevity) */
+  </style>
+</head>
+<body>
+  <div class="phone" role="main" aria-live="polite">
+
+    <!-- (Top, asset card, and main content unchanged) -->
+
+    <nav class="menu" aria-label="Main menu">
+      <div id="ordersItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">📄</div>
+          <div class="menu-text"><h4>My Orders</h4><p>orders overview</p></div>
+        </div>
+        <div>›</div>
+      </div>
+
+      <div id="tasksItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">🔎</div>
+          <div class="menu-text"><h4>Available tasks</h4><p>market & promotions</p></div>
+        </div>
+        <div>›</div>
+      </div>
+
+      <div id="earningsItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">📈</div>
+          <div class="menu-text"><h4>Earnings Report</h4><p>performance</p></div>
+        </div>
+        <div>›</div>
+      </div>
+
+      <div id="referralsItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">👥</div>
+          <div class="menu-text"><h4>Referrals</h4><p>friends who joined through you</p></div>
+        </div>
+        <div>›</div>
+      </div>
+
+      <div id="contestsItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">🏆</div>
+          <div class="menu-text"><h4>Contests</h4><p>climb the leaderboard, earn big</p></div>
+        </div>
+        <div>›</div>
+      </div>
+
+      <!-- More menu -->
+      <div id="moreItem" class="menu-item" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="moreOverlay">
+        <div class="menu-left">
+          <div class="menu-icon">⋯</div>
+          <div class="menu-text"><h4>More</h4><p>extra options & links</p></div>
+        </div>
+        <div>›</div>
+      </div>
+    </nav>
+
+    <!-- More overlay -->
+    <div id="moreOverlay" class="overlay" aria-hidden="true">
+      <div class="overlay-backdrop" id="overlayBackdrop"></div>
+      <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+        <button id="overlayClose" class="overlay-close" aria-label="Close">✕</button>
+        <h3 id="overlayTitle">More options</h3>
+        <div class="overlay-options">
+          <a href="ptc.html" class="overlay-option primary" id="optPtc">PTC</a>
+          <a href="bet.html" class="overlay-option primary" id="optStake">Stake</a>
+          <a href="mini-games.html" class="overlay-option primary" id="optGames">Games</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- (Logout, bottom-nav, and other elements unchanged) -->
+
+  </div>
+
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import {
+      getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // FIREBASE config — same as yours
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web=e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    if(!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // (All other JavaScript unchanged up to More overlay handlers)
+
+    // MORE item: show overlay with options (PTC, Stake, Games)
+    function openMoreOverlay(){
+      const moreOverlay = document.getElementById('moreOverlay');
+      moreOverlay.classList.add('open');
+      moreOverlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeMoreOverlay(){
+      const moreOverlay = document.getElementById('moreOverlay');
+      moreOverlay.classList.remove('open');
+      moreOverlay.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('moreItem').addEventListener('click', ()=> openMoreOverlay());
+    document.getElementById('overlayClose').addEventListener('click', ()=> closeMoreOverlay());
+    document.getElementById('overlayBackdrop').addEventListener('click', ()=> closeMoreOverlay());
+    window.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeMoreOverlay(); });
+
+    // LOGOUT handler
+    document.getElementById('logoutBtn').addEventListener('click', async()=>{
+      try { await signOut(auth); window.location.href='index.html'; }
+      catch(e){ console.error('logout failed',e); showToast('Logout failed'); }
+    });
+
+    // (Remaining existing JS continues unchanged: user snapshot, balance display, nav buttons, etc.)
+  </script>
+
+</body>
+</html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beni-Wealth — Dashboard</title>
+
+  <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- Favicons & Social preview -->
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Beni-Wealth — Earn Steadily">
+  <meta property="og:description" content="Complete simple micro-tasks, complete ptcs and blogs, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
+  <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#2fe0b8">
+
+  <style>
+    /* (All previous CSS remains unchanged — omitted here for brevity) */
+  </style>
+</head>
+<body>
+  <div class="phone" role="main" aria-live="polite">
+
+    <!-- (Top, asset card, and main content unchanged) -->
+
+    <nav class="menu" aria-label="Main menu">
+      <div id="ordersItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">📄</div>
+          <div class="menu-text"><h4>My Orders</h4><p>orders overview</p></div>
+        </div>
+        <div>›</div>
+      </div>
+
+      <div id="tasksItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">🔎</div>
+          <div class="menu-text"><h4>Available tasks</h4><p>market & promotions</p></div>
+        </div>
+        <div>›</div>
+      </div>
+
+      <div id="earningsItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">📈</div>
+          <div class="menu-text"><h4>Earnings Report</h4><p>performance</p></div>
+        </div>
+        <div>›</div>
+      </div>
+
+      <div id="referralsItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">👥</div>
+          <div class="menu-text"><h4>Referrals</h4><p>friends who joined through you</p></div>
+        </div>
+        <div>›</div>
+      </div>
+
+      <div id="contestsItem" class="menu-item" role="button" tabindex="0">
+        <div class="menu-left">
+          <div class="menu-icon">🏆</div>
+          <div class="menu-text"><h4>Contests</h4><p>climb the leaderboard, earn big</p></div>
+        </div>
+        <div>›</div>
+      </div>
+
+      <!-- More menu -->
+      <div id="moreItem" class="menu-item" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="moreOverlay">
+        <div class="menu-left">
+          <div class="menu-icon">⋯</div>
+          <div class="menu-text"><h4>More</h4><p>extra options & links</p></div>
+        </div>
+        <div>›</div>
+      </div>
+    </nav>
+
+    <!-- More overlay -->
+    <div id="moreOverlay" class="overlay" aria-hidden="true">
+      <div class="overlay-backdrop" id="overlayBackdrop"></div>
+      <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+        <button id="overlayClose" class="overlay-close" aria-label="Close">✕</button>
+        <h3 id="overlayTitle">More options</h3>
+        <div class="overlay-options">
+          <a href="ptc.html" class="overlay-option primary" id="optPtc">PTC</a>
+          <a href="bet.html" class="overlay-option primary" id="optStake">Stake</a>
+          <a href="mini-games.html" class="overlay-option primary" id="optGames">Games</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- (Logout, bottom-nav, and other elements unchanged) -->
+
+  </div>
+
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import {
+      getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // FIREBASE config — same as yours
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+      authDomain: "beni-wealths.firebaseapp.com",
+      projectId: "beni-wealths",
+      storageBucket: "beni-wealths.firebasestorage.app",
+      messagingSenderId: "807950483822",
+      appId: "1:807950483822:web=e10fa87307e041c4d8417f",
+      measurementId: "G-Z2XP3YN6NS"
+    };
+
+    if(!getApps().length) initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // (All other JavaScript unchanged up to More overlay handlers)
+
+    // MORE item: show overlay with options (PTC, Stake, Games)
+    function openMoreOverlay(){
+      const moreOverlay = document.getElementById('moreOverlay');
+      moreOverlay.classList.add('open');
+      moreOverlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeMoreOverlay(){
+      const moreOverlay = document.getElementById('moreOverlay');
+      moreOverlay.classList.remove('open');
+      moreOverlay.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('moreItem').addEventListener('click', ()=> openMoreOverlay());
+    document.getElementById('overlayClose').addEventListener('click', ()=> closeMoreOverlay());
+    document.getElementById('overlayBackdrop').addEventListener('click', ()=> closeMoreOverlay());
+    window.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeMoreOverlay(); });
+
+    // LOGOUT handler
+    document.getElementById('logoutBtn').addEventListener('click', async()=>{
+      try { await signOut(auth); window.location.href='index.html'; }
+      catch(e){ console.error('logout failed',e); showToast('Logout failed'); }
+    });
+
+    // (Remaining existing JS continues unchanged: user snapshot, balance display, nav buttons, etc.)
+  </script>
+
+</body>
+</html>
