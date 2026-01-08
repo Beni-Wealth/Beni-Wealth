@@ -6,15 +6,22 @@
   <title>Beni-Wealth — Stake</title>
 
   <!-- favicon -->
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+  <link rel="icon" type="image/png" sizes="32x32"
+    href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-  <meta name="theme-color" content="#2fe0b8"/>
-  
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+    rel="stylesheet" />
+  <meta name="theme-color" content="#2fe0b8" />
+
   <style>
     :root {
-      --bg:#041018; --text:#eaf2ff; --muted:#9fb3c9;
-      --accent:#2fe0b8; --accent2:#35d6b1; --card:#0f1120; --radius:12px;
+      --bg:#041018;
+      --text:#eaf2ff;
+      --muted:#9fb3c9;
+      --accent:#2fe0b8;
+      --accent2:#35d6b1;
+      --card:#0f1120;
+      --radius:12px;
     }
     *{box-sizing:border-box;}
     body{margin:0;font-family:'Poppins',system-ui,Arial;background:var(--bg);color:var(--text);padding:20px;}
@@ -31,13 +38,14 @@
     .stake-item div{font-size:14px;margin:2px 0;}
     .status-won{color:#00b300;font-weight:700;}
     .status-lost{color:#ff4d4d;font-weight:700;}
+    .status-pending{color:var(--muted);font-weight:700;}
     .loading{text-align:center;color:var(--muted);margin-top:10px;}
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>Rewardly Stake</h2>
+  <h2>Beni-Wealth Stake</h2>
   <div class="balance" id="userBalance">Balance: ₦0.00</div>
 
   <div class="card" id="stakeCard">
@@ -118,7 +126,7 @@ async function loadMatches() {
   const q = query(collection(db,'matches'), where('active','==',true));
   const snapshot = await getDocs(q);
 
-  matches = snapshot.docs.map(s => ({ id:s.id,...s.data() }) );
+  matches = snapshot.docs.map(s => ({ id:s.id,...s.data() }));
   matchSelect.innerHTML = "";
   outcomeSelect.innerHTML = "";
 
@@ -144,8 +152,8 @@ async function loadMatches() {
 }
 
 function updateOutcomeOptions() {
-  const selectedMatch = matches.find(m => m.id === matchSelect.value);
   outcomeSelect.innerHTML = "";
+  const selectedMatch = matches.find(m => m.id === matchSelect.value);
   if (!selectedMatch) return;
   selectedMatch.options.forEach(o => {
     const opt = document.createElement('option');
@@ -177,10 +185,10 @@ document.getElementById('submitStake').addEventListener('click', async () => {
     title: matches.find(m=>m.id===matchId).title,
     choice,
     amount,
-    status:"pending",
-    wonAmount:0,
-    credited:false,
-    createdAt:serverTimestamp()
+    status: "pending",
+    wonAmount: 0,
+    credited: false,
+    createdAt: serverTimestamp()
   });
 
   stakeMsg.textContent = "Stake submitted!";
@@ -196,36 +204,63 @@ async function loadHistory() {
                   orderBy('createdAt','desc'));
 
   const snapshot = await getDocs(q);
-  historyListEl.innerHTML = "";
+  historyListEl.innerHTML = ""; // clear loading
+
+  if (snapshot.empty) {
+    historyListEl.textContent = "No stake history yet.";
+    return;
+  }
 
   for (const docSnap of snapshot.docs) {
     const data = docSnap.data();
     const stakeDiv = document.createElement('div');
     stakeDiv.className = "stake-item";
 
-    if (data.status==="won" && !data.credited) {
-      const winAmt = data.amount*2;
-      await updateDoc(doc(db,'users',currentUser.uid),{ balance:increment(winAmt) });
-      await updateDoc(doc(db,'stakes',docSnap.id),{ credited:true, wonAmount:winAmt });
-      await loadBalance();
-      data.wonAmount = winAmt;
+    let statusText = "pending";
+    let wonAmount = 0;
+
+    // Get match result
+    const matchSnap = await getDocs(query(collection(db,'matches'),
+                                      where('__name__','==',data.matchId)));
+    const matchData = !matchSnap.empty ? matchSnap.docs[0].data() : null;
+
+    if (matchData && matchData.winner) {
+      if (data.choice === matchData.winner) {
+        statusText = "won";
+        if (!data.credited) {
+          const winAmt = data.amount * 2;
+          await updateDoc(doc(db,'users',currentUser.uid), { balance: increment(winAmt) });
+          await updateDoc(doc(db,'stakes',docSnap.id), {
+            status: "won", credited: true, wonAmount: winAmt
+          });
+          data.credited = true;
+          data.wonAmount = winAmt;
+        }
+      } else {
+        statusText = "lost";
+        if (!data.credited) {
+          await updateDoc(doc(db,'stakes',docSnap.id), {
+            status: "lost", credited: true, wonAmount: 0
+          });
+        }
+      }
     }
 
-    const statusClass = data.status==="won"?"status-won":
-                        data.status==="lost"?"status-lost":"status-pending";
+    wonAmount = data.wonAmount || 0;
+    const statusClass = statusText==="won"?"status-won":
+                        statusText==="lost"?"status-lost":"status-pending";
 
     stakeDiv.innerHTML = `
       <div><strong>Match:</strong> ${data.title}</div>
       <div><strong>Choice:</strong> ${data.choice}</div>
       <div><strong>Amount:</strong> ₦${data.amount}</div>
-      <div><strong>Status:</strong> <span class="${statusClass}">${data.status}</span></div>
-      <div><strong>Won:</strong> ₦${data.wonAmount||0}</div>
+      <div><strong>Status:</strong> <span class="${statusClass}">${statusText}</span></div>
+      <div><strong>Won:</strong> ₦${wonAmount.toLocaleString('en-NG',{minimumFractionDigits:2})}</div>
     `;
     historyListEl.appendChild(stakeDiv);
   }
-  if (!historyListEl.innerHTML) historyListEl.textContent = "No stake history yet.";
 }
-
 </script>
+
 </body>
 </html>
