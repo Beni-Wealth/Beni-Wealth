@@ -27,6 +27,7 @@
     .card label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px;}
     .card select,input{width:100%;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.07);color:var(--text);margin-bottom:12px;}
     .btn{width:100%;padding:12px;font-size:16px;font-weight:700;border:none;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#041219;cursor:pointer;}
+    .btn:disabled{opacity:0.6;cursor:not-allowed;}
     .btn-history{margin-top:10px;text-align:center;font-size:14px;color:var(--accent2);cursor:pointer;text-decoration:underline;}
     .loading{text-align:center;color:var(--muted);margin-top:10px;}
   </style>
@@ -49,7 +50,7 @@
     <label>Stake Amount (min ₦100)</label>
     <input type="number" id="stakeAmount" placeholder="Enter amount">
 
-    <button class="btn" id="submitStake">Submit Stake</button>
+    <button class="btn" id="submitStake" disabled>Submit Stake</button>
     <div id="stakeMsg" class="loading"></div>
   </div>
 
@@ -62,16 +63,8 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
-  getFirestore,
-  collection,
-  addDoc,
-  serverTimestamp,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-  doc,
-  increment
+  getFirestore, collection, addDoc, serverTimestamp, query,
+  where, getDocs, updateDoc, doc, increment
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -96,13 +89,16 @@ const noMatchesEl = document.getElementById('noMatches');
 const stakeMsg = document.getElementById('stakeMsg');
 const submitStakeBtn = document.getElementById('submitStake');
 const goHistoryBtn = document.getElementById('goHistory');
+const stakeAmountInput = document.getElementById('stakeAmount');
 
 let currentUser = null;
 let matches = [];
+let currentBalance = 0;
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     userBalanceEl.textContent = "Balance: Sign in to see balance";
+    submitStakeBtn.disabled = true;
     return;
   }
   currentUser = user;
@@ -110,19 +106,23 @@ onAuthStateChanged(auth, async (user) => {
   await loadMatches();
 });
 
+// Load user balance
 async function loadBalance() {
   try {
     const uQ = query(collection(db,'users'), where('__name__','==',currentUser.uid));
     const uSnap = await getDocs(uQ);
     if (!uSnap.empty) {
       const d = uSnap.docs[0].data();
-      userBalanceEl.textContent = `Balance: ₦${Number(d.balance||0).toLocaleString('en-NG',{minimumFractionDigits:2})}`;
+      currentBalance = Number(d.balance || 0);
+      userBalanceEl.textContent = `Balance: ₦${currentBalance.toLocaleString('en-NG',{minimumFractionDigits:2})}`;
     }
   } catch (e) {
     console.error("Balance error:", e);
   }
+  checkStakeButton();
 }
 
+// Load active matches
 async function loadMatches() {
   try {
     const mQ = query(collection(db,'matches'), where('active','==',true));
@@ -157,6 +157,7 @@ async function loadMatches() {
   }
 }
 
+// Populate outcome dropdown
 function updateOutcomeOptions() {
   outcomeSelect.innerHTML = "";
   const sel = matches.find(m => m.id === matchSelect.value);
@@ -171,12 +172,29 @@ function updateOutcomeOptions() {
 
 matchSelect.addEventListener('change', updateOutcomeOptions);
 
+// Enable/disable submit button based on amount & balance
+stakeAmountInput.addEventListener('input', checkStakeButton);
+function checkStakeButton() {
+  const amount = Number(stakeAmountInput.value);
+  if (!currentUser || !amount || amount < 100 || amount > currentBalance) {
+    submitStakeBtn.disabled = true;
+  } else {
+    submitStakeBtn.disabled = false;
+  }
+}
+
 submitStakeBtn.addEventListener('click', async () => {
-  stakeMsg.textContent = "Processing...";
+  stakeMsg.textContent = "";
   const matchId = matchSelect.value;
   const choice = outcomeSelect.value;
-  const amount = Number(document.getElementById('stakeAmount').value);
+  const amount = Number(stakeAmountInput.value);
 
+  // Double-check balance before placing
+  if (amount > currentBalance) {
+    stakeMsg.textContent = "Insufficient balance!";
+    submitStakeBtn.disabled = true;
+    return;
+  }
   if (!matchId || !choice || !amount || amount < 100) {
     stakeMsg.textContent = "Fill all fields correctly (min ₦100).";
     return;
@@ -187,7 +205,7 @@ submitStakeBtn.addEventListener('click', async () => {
     await addDoc(collection(db,'stakes'), {
       userId: currentUser.uid,
       matchId,
-      title: matches.find(m => m.id === matchId)?.title || "",
+      title: matches.find(m=>m.id===matchId)?.title || "",
       choice,
       amount,
       status: "pending",
@@ -196,7 +214,9 @@ submitStakeBtn.addEventListener('click', async () => {
       createdAt: serverTimestamp()
     });
     stakeMsg.textContent = "Stake submitted!";
-    await loadBalance();
+    await loadBalance(); // refresh balance
+    stakeAmountInput.value = ""; // clear field
+    checkStakeButton(); // re-check button state
   } catch (e) {
     console.error("Stake submission error:", e);
     stakeMsg.textContent = "Error submitting stake";
