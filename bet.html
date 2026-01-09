@@ -99,6 +99,7 @@ const outcomeSelect = document.getElementById('outcomeSelect');
 const noMatchesEl = document.getElementById('noMatches');
 const stakeMsg = document.getElementById('stakeMsg');
 const historyListEl = document.getElementById('historyList');
+const submitStakeBtn = document.getElementById('submitStake');
 
 let currentUser = null;
 let matches = [];
@@ -116,7 +117,7 @@ onAuthStateChanged(auth, async (user) => {
 
 async function loadBalance() {
   try {
-    const userDoc = await getDocs(query(collection(db,'users'),where('__name__','==',currentUser.uid)));
+    const userDoc = await getDocs(query(collection(db,'users'), where('__name__','==',currentUser.uid)));
     if (!userDoc.empty) {
       const data = userDoc.docs[0].data();
       userBalanceEl.textContent = `Balance: ₦${Number(data.balance||0).toLocaleString('en-NG',{minimumFractionDigits:2})}`;
@@ -131,7 +132,7 @@ async function loadMatches() {
     const q = query(collection(db,'matches'), where('active','==',true));
     const snapshot = await getDocs(q);
 
-    matches = snapshot.docs.map(s => ({ id:s.id,...s.data() }));
+    matches = snapshot.docs.map(s => ({ id:s.id, ...s.data() }));
     matchSelect.innerHTML = "";
     outcomeSelect.innerHTML = "";
 
@@ -139,13 +140,13 @@ async function loadMatches() {
       noMatchesEl.textContent = "No available stakes at the moment.";
       matchSelect.style.display = 'none';
       outcomeSelect.style.display = 'none';
-      submitStake.disabled = true;
+      submitStakeBtn.disabled = true;
       return;
     }
 
     noMatchesEl.style.display = 'none';
     matchSelect.style.display = '';
-    submitStake.disabled = false;
+    submitStakeBtn.disabled = false;
 
     matches.forEach(m => {
       const opt = document.createElement('option');
@@ -172,9 +173,9 @@ function updateOutcomeOptions() {
   });
 }
 
-matchSelect.addEventListener('change',updateOutcomeOptions);
+matchSelect.addEventListener('change', updateOutcomeOptions);
 
-document.getElementById('submitStake').addEventListener('click', async () => {
+submitStakeBtn.addEventListener('click', async () => {
   stakeMsg.textContent = "Processing...";
   const matchId = matchSelect.value;
   const choice = outcomeSelect.value;
@@ -190,7 +191,7 @@ document.getElementById('submitStake').addEventListener('click', async () => {
     await addDoc(collection(db,'stakes'), {
       userId: currentUser.uid,
       matchId,
-      title: matches.find(m=>m.id===matchId)?.title || "",
+      title: matches.find(m => m.id === matchId)?.title || "",
       choice,
       amount,
       status: "pending",
@@ -215,19 +216,19 @@ async function loadHistory() {
   historyListEl.appendChild(loadingEl);
 
   try {
-    const q = query(collection(db,'stakes'),
-                    where('userId','==',currentUser.uid),
-                    orderBy('createdAt','desc'));
-    const snapshot = await getDocs(q);
+    const qHist = query(collection(db,'stakes'),
+                     where('userId','==',currentUser.uid),
+                     orderBy('createdAt','desc'));
+    const snap = await getDocs(qHist);
 
     historyListEl.innerHTML = ""; // clear loading
 
-    if (snapshot.empty) {
+    if (snap.empty) {
       historyListEl.textContent = "No stake history yet.";
       return;
     }
 
-    for (const docSnap of snapshot.docs) {
+    for (const docSnap of snap.docs) {
       const data = docSnap.data();
       const stakeDiv = document.createElement('div');
       stakeDiv.className = "stake-item";
@@ -235,8 +236,7 @@ async function loadHistory() {
       let statusText = "pending";
       let wonAmount = 0;
 
-      const matchSnap = await getDocs(query(collection(db,'matches'),
-                                        where('__name__','==',data.matchId)));
+      const matchSnap = await getDocs(query(collection(db,'matches'), where('__name__','==',data.matchId)));
       const matchData = !matchSnap.empty ? matchSnap.docs[0].data() : null;
 
       if (matchData && matchData.winner) {
@@ -262,8 +262,8 @@ async function loadHistory() {
       }
 
       wonAmount = data.wonAmount || 0;
-      const statusClass = statusText==="won"?"status-won":
-                          statusText==="lost"?"status-lost":"status-pending";
+      const statusClass = statusText==="won"? "status-won":
+                          statusText==="lost"? "status-lost": "status-pending";
 
       stakeDiv.innerHTML = `
         <div><strong>Match:</strong> ${data.title}</div>
@@ -274,7 +274,7 @@ async function loadHistory() {
       `;
       historyListEl.appendChild(stakeDiv);
     }
-  } catch(e) {
+  } catch (e) {
     console.error("History load error:", e);
     historyListEl.innerHTML = "Error loading history.";
   }
