@@ -9,109 +9,45 @@
   href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
       rel="stylesheet"/>
-<meta name="theme-color" content="#2e99f8"/>
+<meta name="theme-color" content="#2fe0b8"/>
 
 <style>
 :root {
-  /* Dark blue background theme */
-  --bg: #090A1A;        /* Very dark navy for page background */
-  --card-bg: #0C1D44;   /* Dark blue panel cards */
-  --text: #EAF2FF;      /* Light text */
-  --muted: #9FB3C9;     /* Muted text for labels/errors */
-  --accent: #2E99F8;    /* Bright blue accent */
-  --accent2: #4A74FF;   /* Secondary blue gradient accent */
-  --border: rgba(255,255,255,0.08);
-  --radius: 12px;
+  --bg:#041018; --text:#eaf2ff; --muted:#9fb3c9;
+  --accent:#2fe0b8; --accent2:#35d6b1; --card:#0f1120; --radius:12px;
 }
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  padding: 20px;
-  font-family: 'Poppins', Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-h2 {
-  text-align: center;
-  color: var(--accent);
-  margin-bottom: 10px;
-}
-
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Poppins',Arial;background:var(--bg);color:var(--text);padding:20px;}
+.container{max-width:600px;margin:0 auto;}
+h2{text-align:center;color:var(--accent);margin-bottom:10px;}
 .btn-refresh {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  font-weight: 700;
-  border: none;
-  border-radius: var(--radius);
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  color: #041219;
-  cursor: pointer;
-  margin-bottom: 20px;
+  width:100%;padding:12px;font-size:16px;font-weight:700;border:none;border-radius:10px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));color:#041219;cursor:pointer;
+  margin-bottom:20px;
 }
-
-.history-list { list-style: none; padding: 0; margin: 0; }
-
+.history-list { list-style:none;padding:0;margin:0;}
 .history-item {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  padding: 14px;
-  border-radius: var(--radius);
-  margin-bottom: 12px;
+  background:var(--card);border:1px solid rgba(255,255,255,0.08);
+  padding:14px;border-radius:var(--radius);margin-bottom:12px;
 }
-
-.history-item h3 {
-  margin: 0 0 6px;
-  font-size: 16px;
-  color: var(--accent2);
-}
-
-.history-item p {
-  margin: 4px 0;
-  font-size: 14px;
-  color: var(--text);
-}
-
-.loading, .empty-msg {
-  text-align: center;
-  color: var(--muted);
-  margin-top: 20px;
-}
-
+.history-item h3 { margin:0 0 6px;font-size:16px;color:var(--accent2); }
+.history-item p { margin:4px 0;font-size:14px;color:var(--text); }
+.loading, .empty-msg { text-align:center;color:var(--muted);margin-top:20px; }
 .btn-back {
-  display: block;
-  text-align: center;
-  color: var(--accent2);
-  margin-top: 20px;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 14px;
+  display:block;text-align:center;color:var(--accent2);margin-top:20px;
+  text-decoration:underline;cursor:pointer;font-size:14px;
 }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>Bet History</h2>
-
-  <!-- Refresh button -->
-  <button class="btn-refresh" id="refreshBtn">Refresh</button>
-
-  <!-- History will be inserted here -->
-  <div id="historyContainer">
-    <div class="loading" id="loadingMsg">Loading your history...</div>
-  </div>
-
-  <!-- Back to stake page link -->
-  <div class="btn-back" id="goBack">Back to Stake</div>
+<h2>Bet History</h2>
+<button class="btn-refresh" id="refreshBtn">Refresh</button>
+<div id="historyContainer">
+  <div class="loading" id="loadingMsg">Loading your history...</div>
+</div>
+<div class="btn-back" id="goBack">Back to Stake</div>
 </div>
 
 <script type="module">
@@ -123,7 +59,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
   projectId: "beni-wealths",
   storageBucket: "beni-wealths.appspot.com",
@@ -157,11 +93,13 @@ async function loadHistory() {
   loadingMsg.style.display = 'block';
   historyContainer.innerHTML = "";
   try {
+    // Attempt ordered query (preferred)
     const hQuery = query(
       collection(db,'stakes'),
       where('userId','==',currentUser.uid),
       orderBy('createdAt','desc')
     );
+
     const hSnap = await getDocs(hQuery);
 
     loadingMsg.style.display = 'none';
@@ -175,7 +113,28 @@ async function loadHistory() {
 
   } catch (err) {
     console.error("History load error:", err);
-    historyContainer.innerHTML = `<div class="empty-msg">Unable to load history.</div>`;
+
+    // If error is due to missing index, fallback to un-ordered query
+    try {
+      const fallbackQuery = query(
+        collection(db,'stakes'),
+        where('userId','==',currentUser.uid)
+      );
+      const fallbackSnap = await getDocs(fallbackQuery);
+
+      loadingMsg.style.display = 'none';
+
+      if (fallbackSnap.empty) {
+        historyContainer.innerHTML = `<div class="empty-msg">No bets found.</div>`;
+        return;
+      }
+
+      renderHistory(fallbackSnap.docs);
+
+    } catch (fallbackErr) {
+      console.error("Fallback history error:", fallbackErr);
+      historyContainer.innerHTML = `<div class="empty-msg">Unable to load history.</div>`;
+    }
   }
 }
 
@@ -205,6 +164,7 @@ function renderHistory(docs) {
 
 refreshBtn.addEventListener('click', loadHistory);
 goBack.addEventListener('click', () => window.location.href = "bet.html");
+
 </script>
 
 </body>
