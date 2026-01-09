@@ -27,13 +27,7 @@
     .card label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px;}
     .card select,input{width:100%;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.07);color:var(--text);margin-bottom:12px;}
     .btn{width:100%;padding:12px;font-size:16px;font-weight:700;border:none;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#041219;cursor:pointer;}
-    .history{margin-top:30px;}
-    .history h3{margin:0 0 12px 0;color:var(--accent);}
-    .stake-item{background:rgba(255,255,255,0.04);padding:12px;border-radius:10px;margin-bottom:10px;}
-    .stake-item div{font-size:14px;margin:2px 0;}
-    .status-won{color:#00b300;font-weight:700;}
-    .status-lost{color:#ff4d4d;font-weight:700;}
-    .status-pending{color:var(--muted);font-weight:700;}
+    .btn-history{margin-top:10px;text-align:center;font-size:14px;color:var(--accent2);cursor:pointer;text-decoration:underline;}
     .loading{text-align:center;color:var(--muted);margin-top:10px;}
   </style>
 </head>
@@ -59,10 +53,9 @@
     <div id="stakeMsg" class="loading"></div>
   </div>
 
-  <div class="history">
-    <h3>Your Stake History</h3>
-    <div id="historyList"></div>
-  </div>
+  <!-- History Redirect Button -->
+  <div class="btn-history" id="goHistory">View History</div>
+
 </div>
 
 <script type="module">
@@ -76,11 +69,9 @@ import {
   query,
   where,
   getDocs,
-  orderBy,
   updateDoc,
   doc,
-  increment,
-  documentId
+  increment
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -103,8 +94,8 @@ const matchSelect = document.getElementById('matchSelect');
 const outcomeSelect = document.getElementById('outcomeSelect');
 const noMatchesEl = document.getElementById('noMatches');
 const stakeMsg = document.getElementById('stakeMsg');
-const historyListEl = document.getElementById('historyList');
 const submitStakeBtn = document.getElementById('submitStake');
+const goHistoryBtn = document.getElementById('goHistory');
 
 let currentUser = null;
 let matches = [];
@@ -117,7 +108,6 @@ onAuthStateChanged(auth, async (user) => {
   currentUser = user;
   await loadBalance();
   await loadMatches();
-  await loadHistory();
 });
 
 async function loadBalance() {
@@ -197,7 +187,7 @@ submitStakeBtn.addEventListener('click', async () => {
     await addDoc(collection(db,'stakes'), {
       userId: currentUser.uid,
       matchId,
-      title: matches.find(m=>m.id===matchId)?.title || "",
+      title: matches.find(m => m.id === matchId)?.title || "",
       choice,
       amount,
       status: "pending",
@@ -207,81 +197,17 @@ submitStakeBtn.addEventListener('click', async () => {
     });
     stakeMsg.textContent = "Stake submitted!";
     await loadBalance();
-    await loadHistory();
   } catch (e) {
     console.error("Stake submission error:", e);
     stakeMsg.textContent = "Error submitting stake";
   }
 });
 
-async function loadHistory() {
-  historyListEl.innerHTML = "";
-  const loading = document.createElement('div');
-  loading.className = "loading";
-  loading.textContent = "Loading...";
-  historyListEl.appendChild(loading);
+// Redirect to history page
+goHistoryBtn.addEventListener('click', () => {
+  window.location.href = "bet-history.html";
+});
 
-  try {
-    const hQ = query(collection(db,'stakes'),
-                     where('userId','==',currentUser.uid),
-                     orderBy('createdAt','desc'));
-    const hSnap = await getDocs(hQ);
-
-    historyListEl.innerHTML = ""; // clear loading
-
-    if (hSnap.empty) {
-      historyListEl.textContent = "No stake history yet.";
-      return;
-    }
-
-    for (const sDoc of hSnap.docs) {
-      const data = sDoc.data();
-      const div = document.createElement('div');
-      div.className = "stake-item";
-
-      let statusText = "pending";
-      let wonAmt = 0;
-
-      // fetch match result
-      const rQ = query(collection(db,'matches'), where(documentId(),'==',data.matchId));
-      const rSnap = await getDocs(rQ);
-      const matchData = (!rSnap.empty ? rSnap.docs[0].data() : null);
-
-      if (matchData && matchData.winner) {
-        if (data.choice === matchData.winner) {
-          statusText = "won";
-          if (!data.credited) {
-            const creditAmt = data.amount * 2;
-            await updateDoc(doc(db,'users',currentUser.uid), { balance: increment(creditAmt) });
-            await updateDoc(doc(db,'stakes',sDoc.id), { status:"won", credited:true, wonAmount:creditAmt });
-            data.credited=true; data.wonAmount=creditAmt;
-          }
-        } else {
-          statusText = "lost";
-          if (!data.credited) {
-            await updateDoc(doc(db,'stakes',sDoc.id), { status:"lost", credited:true, wonAmount:0 });
-          }
-        }
-      }
-
-      wonAmt = data.wonAmount || 0;
-      const statusClass = statusText==="won"? "status-won":
-                          statusText==="lost"? "status-lost": "status-pending";
-
-      div.innerHTML = `
-        <div><strong>Match:</strong> ${data.title}</div>
-        <div><strong>Choice:</strong> ${data.choice}</div>
-        <div><strong>Amount:</strong> ₦${data.amount}</div>
-        <div><strong>Status:</strong> <span class="${statusClass}">${statusText}</span></div>
-        <div><strong>Won:</strong> ₦${wonAmt.toLocaleString('en-NG',{minimumFractionDigits:2})}</div>
-      `;
-      historyListEl.appendChild(div);
-    }
-  } catch (err) {
-    console.error("History load error:", err);
-    historyListEl.innerHTML = "Error loading history.";
-  }
-}
 </script>
 
 </body>
