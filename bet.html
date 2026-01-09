@@ -1,41 +1,115 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Beni-Wealth — Stake</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Beni-Wealth — Stake</title>
 
-  <!-- favicon -->
-  <link rel="icon" type="image/png" sizes="32x32"
-    href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+<!-- favicon -->
+<link rel="icon" type="image/png" sizes="32x32"
+  href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
-        rel="stylesheet"/>
-  <meta name="theme-color" content="#2fe0b8"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"/>
+<meta name="theme-color" content="#2fe0b8"/>
 
-  <style>
-    :root {
-      --bg:#041018; --text:#eaf2ff; --muted:#9fb3c9;
-      --accent:#2fe0b8; --accent2:#35d6b1; --card:#0f1120; --radius:12px;
-    }
-    *{box-sizing:border-box;}
-    body{margin:0;font-family:'Poppins',Arial;background:var(--bg);color:var(--text);padding:20px;}
-    .container{max-width:480px;margin:0 auto;}
-    h2{text-align:center;color:var(--accent);margin-bottom:10px;}
-    .balance{font-size:20px;font-weight:700;text-align:center;margin-bottom:20px;color:var(--accent2);}
-    .card{background:var(--card);padding:16px;border-radius:var(--radius);margin-bottom:20px;border:1px solid rgba(255,255,255,0.08);}
-    .card label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px;}
-    .card select,input{width:100%;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.07);color:var(--text);margin-bottom:12px;}
-    .btn{width:100%;padding:12px;font-size:16px;font-weight:700;border:none;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#041219;cursor:pointer;}
-    .btn:disabled{opacity:0.6;cursor:not-allowed;}
-    .btn-history{margin-top:10px;text-align:center;font-size:14px;color:var(--accent2);cursor:pointer;text-decoration:underline;}
-    .loading{text-align:center;color:var(--muted);margin-top:10px;}
-  </style>
+<style>
+  :root {
+    --bg-1: #0b0613;
+    --bg-2: #0f0820;
+    --panel: rgba(255,255,255,0.02);
+    --text: #eaf2ff;
+    --muted: rgba(255,255,255,0.6);
+    --accent-a: #4a6eff;
+    --accent-b: #2e99f8;
+    --card-bg: rgba(255,255,255,0.04);
+    --radius: 12px;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:20px;
+    font-family:'Poppins',Arial;
+    background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
+    color:var(--text);
+  }
+  .container{max-width:480px;margin:0 auto;}
+
+  h2{
+    text-align:center;
+    color:var(--accent-a);
+    margin-bottom:12px;
+  }
+
+  .balance{
+    text-align:center;
+    font-size:20px;
+    font-weight:700;
+    margin-bottom:20px;
+    color:var(--accent-b);
+  }
+
+  .card{
+    background:var(--card-bg);
+    padding:16px;
+    border-radius:var(--radius);
+    margin-bottom:20px;
+    border:1px solid rgba(255,255,255,0.05);
+  }
+  .card label{
+    display:block;
+    font-size:14px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .card select,input{
+    width:100%;
+    padding:10px;
+    border-radius:10px;
+    border:none;
+    background:rgba(255,255,255,0.07);
+    color:var(--text);
+    margin-bottom:12px;
+  }
+
+  .btn{
+    width:100%;
+    padding:12px;
+    font-size:16px;
+    font-weight:700;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(90deg,var(--accent-a),var(--accent-b));
+    color:#041219;
+    cursor:pointer;
+  }
+  .btn:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+  }
+
+  .btn-history{
+    margin-top:10px;
+    text-align:center;
+    font-size:14px;
+    color:var(--accent-b);
+    cursor:pointer;
+    text-decoration:underline;
+  }
+
+  .loading{
+    text-align:center;
+    color:var(--muted);
+    margin-top:10px;
+  }
+</style>
 </head>
 <body>
 
 <div class="container">
   <h2>Beni-Wealth Stake</h2>
+
   <div class="balance" id="userBalance">Balance: ₦0.00</div>
 
   <div class="card" id="stakeCard">
@@ -54,9 +128,7 @@
     <div id="stakeMsg" class="loading"></div>
   </div>
 
-  <!-- History Redirect Button -->
   <div class="btn-history" id="goHistory">View History</div>
-
 </div>
 
 <script type="module">
@@ -157,7 +229,6 @@ async function loadMatches() {
   }
 }
 
-// Populate outcome dropdown
 function updateOutcomeOptions() {
   outcomeSelect.innerHTML = "";
   const sel = matches.find(m => m.id === matchSelect.value);
@@ -170,17 +241,10 @@ function updateOutcomeOptions() {
   });
 }
 
-matchSelect.addEventListener('change', updateOutcomeOptions);
-
-// Enable/disable submit button based on amount & balance
 stakeAmountInput.addEventListener('input', checkStakeButton);
 function checkStakeButton() {
   const amount = Number(stakeAmountInput.value);
-  if (!currentUser || !amount || amount < 100 || amount > currentBalance) {
-    submitStakeBtn.disabled = true;
-  } else {
-    submitStakeBtn.disabled = false;
-  }
+  submitStakeBtn.disabled = (!currentUser || !amount || amount < 100 || amount > currentBalance);
 }
 
 submitStakeBtn.addEventListener('click', async () => {
@@ -189,17 +253,14 @@ submitStakeBtn.addEventListener('click', async () => {
   const choice = outcomeSelect.value;
   const amount = Number(stakeAmountInput.value);
 
-  // Double-check balance before placing
   if (amount > currentBalance) {
     stakeMsg.textContent = "Insufficient balance!";
-    submitStakeBtn.disabled = true;
     return;
   }
   if (!matchId || !choice || !amount || amount < 100) {
     stakeMsg.textContent = "Fill all fields correctly (min ₦100).";
     return;
   }
-
   try {
     await updateDoc(doc(db,'users',currentUser.uid), { balance: increment(-amount) });
     await addDoc(collection(db,'stakes'), {
@@ -214,21 +275,16 @@ submitStakeBtn.addEventListener('click', async () => {
       createdAt: serverTimestamp()
     });
     stakeMsg.textContent = "Stake submitted!";
-    await loadBalance(); // refresh balance
-    stakeAmountInput.value = ""; // clear field
-    checkStakeButton(); // re-check button state
+    await loadBalance();
+    stakeAmountInput.value = "";
+    checkStakeButton();
   } catch (e) {
     console.error("Stake submission error:", e);
     stakeMsg.textContent = "Error submitting stake";
   }
 });
 
-// Redirect to history page
-goHistoryBtn.addEventListener('click', () => {
-  window.location.href = "bet-history.html";
-});
-
+goHistoryBtn.addEventListener('click', () => window.location.href = "bet-history.html");
 </script>
-
 </body>
 </html>
