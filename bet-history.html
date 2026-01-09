@@ -1,55 +1,53 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Beni-Wealth — Bet History</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Beni-Wealth — Bet History</title>
 
-  <!-- favicon -->
-  <link rel="icon" type="image/png" sizes="32x32"
-    href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"/>
+<meta name="theme-color" content="#2fe0b8"/>
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
-        rel="stylesheet"/>
-  <meta name="theme-color" content="#2fe0b8"/>
-
-  <style>
-    :root {
-      --bg:#041018; --text:#eaf2ff; --muted:#9fb3c9;
-      --accent:#2fe0b8; --accent2:#35d6b1; --card:#0f1120; --radius:12px;
-    }
-    *{box-sizing:border-box;}
-    body{margin:0;font-family:'Poppins',Arial;background:var(--bg);color:var(--text);padding:20px;}
-    .container{max-width:600px;margin:0 auto;}
-    h2{text-align:center;color:var(--accent);margin-bottom:10px;}
-    .btn-refresh {
-      width:100%;padding:12px;font-size:16px;font-weight:700;border:none;border-radius:10px;
-      background:linear-gradient(90deg,var(--accent),var(--accent2));color:#041219;cursor:pointer;
-      margin-bottom:20px;
-    }
-    .history-list { list-style:none;padding:0;margin:0;}
-    .history-item {
-      background:var(--card);border:1px solid rgba(255,255,255,0.08);
-      padding:14px;border-radius:var(--radius);margin-bottom:12px;
-    }
-    .history-item h3 { margin:0 0 6px;font-size:16px;color:var(--accent2); }
-    .history-item p { margin:4px 0;font-size:14px;color:var(--text); }
-    .loading, .empty-msg { text-align:center;color:var(--muted);margin-top:20px; }
-    .btn-back {
-      display:block;text-align:center;color:var(--accent2);margin-top:20px;
-      text-decoration:underline;cursor:pointer;font-size:14px;
-    }
-  </style>
+<style>
+:root {
+  --bg:#041018; --text:#eaf2ff; --muted:#9fb3c9;
+  --accent:#2fe0b8; --accent2:#35d6b1; --card:#0f1120; --radius:12px;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Poppins',Arial;background:var(--bg);color:var(--text);padding:20px;}
+.container{max-width:600px;margin:0 auto;}
+h2{text-align:center;color:var(--accent);margin-bottom:10px;}
+.btn-refresh {
+  width:100%;padding:12px;font-size:16px;font-weight:700;border:none;border-radius:10px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));color:#041219;cursor:pointer;
+  margin-bottom:20px;
+}
+.history-list { list-style:none;padding:0;margin:0;}
+.history-item {
+  background:var(--card);border:1px solid rgba(255,255,255,0.08);
+  padding:14px;border-radius:var(--radius);margin-bottom:12px;
+}
+.history-item h3 { margin:0 0 6px;font-size:16px;color:var(--accent2); }
+.history-item p { margin:4px 0;font-size:14px;color:var(--text); }
+.loading, .empty-msg { text-align:center;color:var(--muted);margin-top:20px; }
+.btn-back {
+  display:block;text-align:center;color:var(--accent2);margin-top:20px;
+  text-decoration:underline;cursor:pointer;font-size:14px;
+}
+</style>
 </head>
 <body>
 
 <div class="container">
-  <h2>Bet History</h2>
-  <button class="btn-refresh" id="refreshBtn">Refresh</button>
-  <div id="historyContainer">
-    <div class="loading" id="loadingMsg">Loading your history...</div>
-  </div>
-  <div class="btn-back" id="goBack">Back to Stake</div>
+<h2>Bet History</h2>
+<button class="btn-refresh" id="refreshBtn">Refresh</button>
+<div id="historyContainer">
+  <div class="loading" id="loadingMsg">Loading your history...</div>
+</div>
+<div class="btn-back" id="goBack">Back to Stake</div>
 </div>
 
 <script type="module">
@@ -82,26 +80,26 @@ const goBack = document.getElementById('goBack');
 
 let currentUser = null;
 
-// Auth & load history
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    window.location.href = "signin.html"; // redirect if not signed in
+    window.location.href = "signin.html";
     return;
   }
   currentUser = user;
   await loadHistory();
 });
 
-// Load history function
 async function loadHistory() {
   loadingMsg.style.display = 'block';
-  historyContainer.innerHTML = '';
+  historyContainer.innerHTML = "";
   try {
+    // Attempt ordered query (preferred)
     const hQuery = query(
       collection(db,'stakes'),
       where('userId','==',currentUser.uid),
       orderBy('createdAt','desc')
     );
+
     const hSnap = await getDocs(hQuery);
 
     loadingMsg.style.display = 'none';
@@ -111,39 +109,61 @@ async function loadHistory() {
       return;
     }
 
-    const list = document.createElement('ul');
-    list.className = 'history-list';
+    renderHistory(hSnap.docs);
 
-    hSnap.docs.forEach(docSnap => {
-      const d = docSnap.data();
-      const item = document.createElement('li');
-      item.className = 'history-item';
+  } catch (err) {
+    console.error("History load error:", err);
 
-      item.innerHTML = `
-        <h3>${d.title || "Match"}</h3>
-        <p><strong>Choice:</strong> ${d.choice || "-"}</p>
-        <p><strong>Amount:</strong> ₦${(d.amount || 0).toLocaleString('en-NG',{minimumFractionDigits:2})}</p>
-        <p><strong>Status:</strong> ${d.status || "pending"}</p>
-        <p><strong>Won:</strong> ₦${(d.wonAmount || 0).toLocaleString('en-NG',{minimumFractionDigits:2})}</p>
-      `;
-      list.appendChild(item);
-    });
+    // If error is due to missing index, fallback to un-ordered query
+    try {
+      const fallbackQuery = query(
+        collection(db,'stakes'),
+        where('userId','==',currentUser.uid)
+      );
+      const fallbackSnap = await getDocs(fallbackQuery);
 
-    historyContainer.appendChild(list);
+      loadingMsg.style.display = 'none';
 
-  } catch (e) {
-    console.error("History load error:", e);
-    historyContainer.innerHTML = `<div class="empty-msg">Error loading history.</div>`;
+      if (fallbackSnap.empty) {
+        historyContainer.innerHTML = `<div class="empty-msg">No bets found.</div>`;
+        return;
+      }
+
+      renderHistory(fallbackSnap.docs);
+
+    } catch (fallbackErr) {
+      console.error("Fallback history error:", fallbackErr);
+      historyContainer.innerHTML = `<div class="empty-msg">Unable to load history.</div>`;
+    }
   }
 }
 
-// Refresh
-refreshBtn.addEventListener('click', loadHistory);
+function renderHistory(docs) {
+  const list = document.createElement('ul');
+  list.className = 'history-list';
 
-// Back to stake page
-goBack.addEventListener('click', () => {
-  window.location.href = "stake.html";
-});
+  docs.forEach(docSnap => {
+    const d = docSnap.data();
+    const item = document.createElement('li');
+    item.className = 'history-item';
+
+    item.innerHTML = `
+      <h3>${d.title || "Match"}</h3>
+      <p><strong>Choice:</strong> ${d.choice || "-"}</p>
+      <p><strong>Amount:</strong> ₦${(d.amount || 0).toLocaleString('en-NG',{minimumFractionDigits:2})}</p>
+      <p><strong>Status:</strong> ${d.status || "-"}</p>
+      <p><strong>Won:</strong> ₦${(d.wonAmount || 0).toLocaleString('en-NG',{minimumFractionDigits:2})}</p>
+      <p><strong>Credited:</strong> ${d.credited ? "Yes" : "No"}</p>
+      <p><strong>Date:</strong> ${d.createdAt?.toDate?.().toLocaleString() || "-" }</p>
+    `;
+    list.appendChild(item);
+  });
+
+  historyContainer.appendChild(list);
+}
+
+refreshBtn.addEventListener('click', loadHistory);
+goBack.addEventListener('click', () => window.location.href = "stake.html");
 
 </script>
 
