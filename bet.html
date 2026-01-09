@@ -24,7 +24,7 @@
       --radius:12px;
     }
     *{box-sizing:border-box;}
-    html,body{margin:0;font-family:'Poppins',Arial;background:var(--bg);color:var(--text);padding:20px;}
+    body{margin:0;font-family:'Poppins',system-ui,Arial;background:var(--bg);color:var(--text);padding:20px;}
     .container{max-width:480px;margin:0 auto;}
     h2{text-align:center;color:var(--accent);margin-bottom:10px;}
     .balance{font-size:20px;font-weight:700;text-align:center;margin-bottom:20px;color:var(--accent2);}
@@ -74,17 +74,8 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
-  getFirestore,
-  collection,
-  addDoc,
-  serverTimestamp,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  updateDoc,
-  doc,
-  increment
+  getFirestore, collection, addDoc, serverTimestamp, query,
+  where, getDocs, orderBy, updateDoc, doc, increment
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -126,27 +117,26 @@ onAuthStateChanged(auth, async (user) => {
 
 async function loadBalance() {
   try {
-    const uQ = query(collection(db,'users'), where('__name__','==',currentUser.uid));
-    const uSnap = await getDocs(uQ);
-    if (!uSnap.empty) {
-      const d = uSnap.docs[0].data();
-      userBalanceEl.textContent = `Balance: ₦${Number(d.balance||0).toLocaleString('en-NG',{minimumFractionDigits:2})}`;
+    const userDoc = await getDocs(query(collection(db,'users'), where('__name__','==',currentUser.uid)));
+    if (!userDoc.empty) {
+      const data = userDoc.docs[0].data();
+      userBalanceEl.textContent = `Balance: ₦${Number(data.balance||0).toLocaleString('en-NG',{minimumFractionDigits:2})}`;
     }
   } catch (e) {
-    console.error("Balance error:", e);
+    console.error("Balance load error:", e);
   }
 }
 
 async function loadMatches() {
   try {
-    const mQ = query(collection(db,'matches'), where('active','==',true));
-    const mSnap = await getDocs(mQ);
+    const q = query(collection(db,'matches'), where('active','==',true));
+    const snapshot = await getDocs(q);
 
-    matches = mSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    matches = snapshot.docs.map(s => ({ id:s.id, ...s.data() }));
     matchSelect.innerHTML = "";
     outcomeSelect.innerHTML = "";
 
-    if (matches.length === 0) {
+    if (!matches.length) {
       noMatchesEl.textContent = "No available stakes at the moment.";
       matchSelect.style.display = 'none';
       outcomeSelect.style.display = 'none';
@@ -159,10 +149,10 @@ async function loadMatches() {
     submitStakeBtn.disabled = false;
 
     matches.forEach(m => {
-      const o = document.createElement('option');
-      o.value = m.id;
-      o.textContent = m.title;
-      matchSelect.appendChild(o);
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.title;
+      matchSelect.appendChild(opt);
     });
     updateOutcomeOptions();
   } catch (e) {
@@ -173,13 +163,13 @@ async function loadMatches() {
 
 function updateOutcomeOptions() {
   outcomeSelect.innerHTML = "";
-  const sel = matches.find(m => m.id === matchSelect.value);
-  if (!sel) return;
-  (sel.options || []).forEach(optVal => {
-    const o = document.createElement('option');
-    o.value = optVal;
-    o.textContent = optVal;
-    outcomeSelect.appendChild(o);
+  const selectedMatch = matches.find(m => m.id === matchSelect.value);
+  if (!selectedMatch) return;
+  (selectedMatch.options || []).forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o;
+    opt.textContent = o;
+    outcomeSelect.appendChild(opt);
   });
 }
 
@@ -197,92 +187,95 @@ submitStakeBtn.addEventListener('click', async () => {
   }
 
   try {
-    await updateDoc(doc(db,'users',currentUser.uid), { balance: increment(-amount) });
+    await updateDoc(doc(db,'users', currentUser.uid), { balance: increment(-amount) });
     await addDoc(collection(db,'stakes'), {
       userId: currentUser.uid,
       matchId,
-      title: matches.find(m=>m.id===matchId)?.title || "",
+      title: matches.find(m => m.id === matchId)?.title || "",
       choice,
       amount,
       status: "pending",
-      wonAmount:0,
-      credited:false,
+      wonAmount: 0,
+      credited: false,
       createdAt: serverTimestamp()
     });
     stakeMsg.textContent = "Stake submitted!";
     await loadBalance();
     await loadHistory();
   } catch (e) {
-    console.error("Stake submission error:", e);
+    console.error("Stake error:", e);
     stakeMsg.textContent = "Error submitting stake";
   }
 });
 
 async function loadHistory() {
   historyListEl.innerHTML = "";
-  const loading = document.createElement('div');
-  loading.className = "loading";
-  loading.textContent = "Loading...";
-  historyListEl.appendChild(loading);
+  const loadingEl = document.createElement('div');
+  loadingEl.className = "loading";
+  loadingEl.textContent = "Loading...";
+  historyListEl.appendChild(loadingEl);
 
   try {
-    const hQ = query(collection(db,'stakes'),
+    const qHist = query(collection(db,'stakes'),
                      where('userId','==',currentUser.uid),
                      orderBy('createdAt','desc'));
-    const hSnap = await getDocs(hQ);
+    const snap = await getDocs(qHist);
 
     historyListEl.innerHTML = ""; // clear loading
 
-    if (hSnap.empty) {
+    if (snap.empty) {
       historyListEl.textContent = "No stake history yet.";
       return;
     }
 
-    for (const sDoc of hSnap.docs) {
-      const data = sDoc.data();
-      const div = document.createElement('div');
-      div.className = "stake-item";
+    for (const docSnap of snap.docs) {
+      const data = docSnap.data();
+      const stakeDiv = document.createElement('div');
+      stakeDiv.className = "stake-item";
 
       let statusText = "pending";
-      let wonAmt = 0;
+      let wonAmount = 0;
 
-      // fetch match result
-      const rQ = query(collection(db,'matches'), where('__name__','==',data.matchId));
-      const rSnap = await getDocs(rQ);
-      const mdata = (!rSnap.empty ? rSnap.docs[0].data() : null);
+      const matchSnap = await getDocs(query(collection(db,'matches'), where('__name__','==',data.matchId)));
+      const matchData = !matchSnap.empty ? matchSnap.docs[0].data() : null;
 
-      if (mdata && mdata.winner) {
-        if (data.choice === mdata.winner) {
+      if (matchData && matchData.winner) {
+        if (data.choice === matchData.winner) {
           statusText = "won";
           if (!data.credited) {
-            const creditAmt = data.amount * 2;
-            await updateDoc(doc(db,'users',currentUser.uid), { balance: increment(creditAmt) });
-            await updateDoc(doc(db,'stakes',sDoc.id), { status:"won", credited:true, wonAmount:creditAmt });
-            data.credited=true; data.wonAmount=creditAmt;
+            const winAmt = data.amount * 2;
+            await updateDoc(doc(db,'users',currentUser.uid), { balance: increment(winAmt) });
+            await updateDoc(doc(db,'stakes',docSnap.id), {
+              status: "won", credited: true, wonAmount: winAmt
+            });
+            data.credited = true;
+            data.wonAmount = winAmt;
           }
         } else {
           statusText = "lost";
           if (!data.credited) {
-            await updateDoc(doc(db,'stakes',sDoc.id), { status:"lost", credited:true, wonAmount:0 });
+            await updateDoc(doc(db,'stakes',docSnap.id), {
+              status: "lost", credited: true, wonAmount: 0
+            });
           }
         }
       }
 
-      wonAmt = data.wonAmount || 0;
+      wonAmount = data.wonAmount || 0;
       const statusClass = statusText==="won"? "status-won":
                           statusText==="lost"? "status-lost": "status-pending";
 
-      div.innerHTML = `
+      stakeDiv.innerHTML = `
         <div><strong>Match:</strong> ${data.title}</div>
         <div><strong>Choice:</strong> ${data.choice}</div>
         <div><strong>Amount:</strong> ₦${data.amount}</div>
         <div><strong>Status:</strong> <span class="${statusClass}">${statusText}</span></div>
-        <div><strong>Won:</strong> ₦${wonAmt.toLocaleString('en-NG',{minimumFractionDigits:2})}</div>
+        <div><strong>Won:</strong> ₦${wonAmount.toLocaleString('en-NG',{minimumFractionDigits:2})}</div>
       `;
-      historyListEl.appendChild(div);
+      historyListEl.appendChild(stakeDiv);
     }
-  } catch (err) {
-    console.error("History load error:", err);
+  } catch (e) {
+    console.error("History load error:", e);
     historyListEl.innerHTML = "Error loading history.";
   }
 }
