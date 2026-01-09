@@ -115,47 +115,56 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 async function loadBalance() {
-  const userDoc = await getDocs(query(collection(db,'users'),where('__name__','==',currentUser.uid)));
-  if (!userDoc.empty) {
-    const data = userDoc.docs[0].data();
-    userBalanceEl.textContent = `Balance: ₦${Number(data.balance||0).toLocaleString('en-NG',{minimumFractionDigits:2})}`;
+  try {
+    const userDoc = await getDocs(query(collection(db,'users'),where('__name__','==',currentUser.uid)));
+    if (!userDoc.empty) {
+      const data = userDoc.docs[0].data();
+      userBalanceEl.textContent = `Balance: ₦${Number(data.balance||0).toLocaleString('en-NG',{minimumFractionDigits:2})}`;
+    }
+  } catch (e) {
+    console.error("Balance load error:", e);
   }
 }
 
 async function loadMatches() {
-  const q = query(collection(db,'matches'), where('active','==',true));
-  const snapshot = await getDocs(q);
+  try {
+    const q = query(collection(db,'matches'), where('active','==',true));
+    const snapshot = await getDocs(q);
 
-  matches = snapshot.docs.map(s => ({ id:s.id,...s.data() }));
-  matchSelect.innerHTML = "";
-  outcomeSelect.innerHTML = "";
+    matches = snapshot.docs.map(s => ({ id:s.id,...s.data() }));
+    matchSelect.innerHTML = "";
+    outcomeSelect.innerHTML = "";
 
-  if (!matches.length) {
-    noMatchesEl.textContent = "No available stakes at the moment.";
-    matchSelect.style.display = 'none';
-    outcomeSelect.style.display = 'none';
-    document.getElementById('submitStake').disabled = true;
-    return;
+    if (!matches.length) {
+      noMatchesEl.textContent = "No available stakes at the moment.";
+      matchSelect.style.display = 'none';
+      outcomeSelect.style.display = 'none';
+      submitStake.disabled = true;
+      return;
+    }
+
+    noMatchesEl.style.display = 'none';
+    matchSelect.style.display = '';
+    submitStake.disabled = false;
+
+    matches.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.title;
+      matchSelect.appendChild(opt);
+    });
+    updateOutcomeOptions();
+  } catch (e) {
+    console.error("Matches load error:", e);
+    noMatchesEl.textContent = "Error loading matches";
   }
-
-  noMatchesEl.style.display = 'none';
-  matchSelect.style.display = '';
-  document.getElementById('submitStake').disabled = false;
-
-  matches.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m.id;
-    opt.textContent = m.title;
-    matchSelect.appendChild(opt);
-  });
-  updateOutcomeOptions();
 }
 
 function updateOutcomeOptions() {
   outcomeSelect.innerHTML = "";
   const selectedMatch = matches.find(m => m.id === matchSelect.value);
   if (!selectedMatch) return;
-  selectedMatch.options.forEach(o => {
+  (selectedMatch.options || []).forEach(o => {
     const opt = document.createElement('option');
     opt.value = o;
     opt.textContent = o;
@@ -176,88 +185,98 @@ document.getElementById('submitStake').addEventListener('click', async () => {
     return;
   }
 
-  // Debit balance
-  await updateDoc(doc(db,'users', currentUser.uid), { balance: increment(-amount) });
-
-  await addDoc(collection(db,'stakes'), {
-    userId: currentUser.uid,
-    matchId,
-    title: matches.find(m=>m.id===matchId).title,
-    choice,
-    amount,
-    status: "pending",
-    wonAmount: 0,
-    credited: false,
-    createdAt: serverTimestamp()
-  });
-
-  stakeMsg.textContent = "Stake submitted!";
-  await loadBalance();
-  await loadHistory();
+  try {
+    await updateDoc(doc(db,'users', currentUser.uid), { balance: increment(-amount) });
+    await addDoc(collection(db,'stakes'), {
+      userId: currentUser.uid,
+      matchId,
+      title: matches.find(m=>m.id===matchId)?.title || "",
+      choice,
+      amount,
+      status: "pending",
+      wonAmount: 0,
+      credited: false,
+      createdAt: serverTimestamp()
+    });
+    stakeMsg.textContent = "Stake submitted!";
+    await loadBalance();
+    await loadHistory();
+  } catch (e) {
+    console.error("Stake error:", e);
+    stakeMsg.textContent = "Error submitting stake";
+  }
 });
 
 async function loadHistory() {
-  historyListEl.innerHTML = "<div class='loading'>Loading...</div>";
+  historyListEl.innerHTML = "";
+  const loadingEl = document.createElement('div');
+  loadingEl.className = "loading";
+  loadingEl.textContent = "Loading...";
+  historyListEl.appendChild(loadingEl);
 
-  const q = query(collection(db,'stakes'),
-                  where('userId','==',currentUser.uid),
-                  orderBy('createdAt','desc'));
+  try {
+    const q = query(collection(db,'stakes'),
+                    where('userId','==',currentUser.uid),
+                    orderBy('createdAt','desc'));
+    const snapshot = await getDocs(q);
 
-  const snapshot = await getDocs(q);
-  historyListEl.innerHTML = ""; // clear loading
+    historyListEl.innerHTML = ""; // clear loading
 
-  if (snapshot.empty) {
-    historyListEl.textContent = "No stake history yet.";
-    return;
-  }
-
-  for (const docSnap of snapshot.docs) {
-    const data = docSnap.data();
-    const stakeDiv = document.createElement('div');
-    stakeDiv.className = "stake-item";
-
-    let statusText = "pending";
-    let wonAmount = 0;
-
-    // Get match result
-    const matchSnap = await getDocs(query(collection(db,'matches'),
-                                      where('__name__','==',data.matchId)));
-    const matchData = !matchSnap.empty ? matchSnap.docs[0].data() : null;
-
-    if (matchData && matchData.winner) {
-      if (data.choice === matchData.winner) {
-        statusText = "won";
-        if (!data.credited) {
-          const winAmt = data.amount * 2;
-          await updateDoc(doc(db,'users',currentUser.uid), { balance: increment(winAmt) });
-          await updateDoc(doc(db,'stakes',docSnap.id), {
-            status: "won", credited: true, wonAmount: winAmt
-          });
-          data.credited = true;
-          data.wonAmount = winAmt;
-        }
-      } else {
-        statusText = "lost";
-        if (!data.credited) {
-          await updateDoc(doc(db,'stakes',docSnap.id), {
-            status: "lost", credited: true, wonAmount: 0
-          });
-        }
-      }
+    if (snapshot.empty) {
+      historyListEl.textContent = "No stake history yet.";
+      return;
     }
 
-    wonAmount = data.wonAmount || 0;
-    const statusClass = statusText==="won"?"status-won":
-                        statusText==="lost"?"status-lost":"status-pending";
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+      const stakeDiv = document.createElement('div');
+      stakeDiv.className = "stake-item";
 
-    stakeDiv.innerHTML = `
-      <div><strong>Match:</strong> ${data.title}</div>
-      <div><strong>Choice:</strong> ${data.choice}</div>
-      <div><strong>Amount:</strong> ₦${data.amount}</div>
-      <div><strong>Status:</strong> <span class="${statusClass}">${statusText}</span></div>
-      <div><strong>Won:</strong> ₦${wonAmount.toLocaleString('en-NG',{minimumFractionDigits:2})}</div>
-    `;
-    historyListEl.appendChild(stakeDiv);
+      let statusText = "pending";
+      let wonAmount = 0;
+
+      const matchSnap = await getDocs(query(collection(db,'matches'),
+                                        where('__name__','==',data.matchId)));
+      const matchData = !matchSnap.empty ? matchSnap.docs[0].data() : null;
+
+      if (matchData && matchData.winner) {
+        if (data.choice === matchData.winner) {
+          statusText = "won";
+          if (!data.credited) {
+            const winAmt = data.amount * 2;
+            await updateDoc(doc(db,'users',currentUser.uid), { balance: increment(winAmt) });
+            await updateDoc(doc(db,'stakes',docSnap.id), {
+              status: "won", credited: true, wonAmount: winAmt
+            });
+            data.credited = true;
+            data.wonAmount = winAmt;
+          }
+        } else {
+          statusText = "lost";
+          if (!data.credited) {
+            await updateDoc(doc(db,'stakes',docSnap.id), {
+              status: "lost", credited: true, wonAmount: 0
+            });
+          }
+        }
+      }
+
+      wonAmount = data.wonAmount || 0;
+      const statusClass = statusText==="won"?"status-won":
+                          statusText==="lost"?"status-lost":"status-pending";
+
+      stakeDiv.innerHTML = `
+        <div><strong>Match:</strong> ${data.title}</div>
+        <div><strong>Choice:</strong> ${data.choice}</div>
+        <div><strong>Amount:</strong> ₦${data.amount}</div>
+        <div><strong>Status:</strong> <span class="${statusClass}">${statusText}</span></div>
+        <div><strong>Won:</strong> ₦${wonAmount.toLocaleString('en-NG',{minimumFractionDigits:2})}</div>
+      `;
+      historyListEl.appendChild(stakeDiv);
+    }
+  } catch(e) {
+    console.error("History load error:", e);
+    historyListEl.innerHTML = "Error loading history.";
   }
 }
 </script>
