@@ -5,347 +5,127 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Beni-Wealth — Dashboard</title>
 
-    <!-- Poppins -->
+  <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
-  <!-- Favicons & Social preview -->
+  <!-- Favicons -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
-  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="Beni-Wealth — Earn Steadily">
-  <meta property="og:description" content="Complete simple micro-tasks, complete ptcs and blogs, complete shortlinks and earn instantly. Advertise efficiently with transparent metrics and fast payouts.">
+  <meta property="og:description" content="Complete micro-tasks, earn instantly, advertise with transparent metrics and fast payouts.">
   <meta property="og:image" content="https://res.cloudinary.com/dq7fpxfbc/image/upload/c_fill,w_1200,h_630/v1752962852/file_00000000401861f8bf6acb6d55fcf2bf_g2fcrf.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#2fe0b8">
 
   <style>
     :root{
-      /* widened container for desktop */
       --bg-1: #0b0613;
       --bg-2: #0f0820;
-      --panel: rgba(255,255,255,0.03);
-      --muted: rgba(255,255,255,0.62);
       --text: #eaf2ff;
-      --accent-a: #8446ff;
-      --accent-b: #6ce2c8;
-      --accent-grad: linear-gradient(135deg, var(--accent-a), #5b3bff 45%, var(--accent-b) 100%);
-      --glass: rgba(255,255,255,0.03);
+      --muted: rgba(255,255,255,0.62);
+      --accent-grad: linear-gradient(135deg, #8446ff, #5b3bff 45%, #6ce2c8 100%);
       --radius: 16px;
-      --container-w: 980px; /* changed from 420px so page fits desktop */
+      --container-w: 980px;
       font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
-      min-height:100%;
       background: radial-gradient(1000px 600px at 10% 10%, rgba(123,61,255,0.10), transparent),
                   radial-gradient(900px 500px at 90% 90%, rgba(47,224,184,0.06), transparent),
                   linear-gradient(180deg,var(--bg-1),var(--bg-2));
       color:var(--text);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
       padding:20px;
       display:flex;
       justify-content:center;
     }
-
-    /* phone container centered on viewport (desktop & mobile) */
     .phone {
       width:100%;
       max-width:var(--container-w);
       min-height:600px;
       border-radius:18px;
-      padding:18px 18px 100px; /* extra bottom padding to ensure content doesn't hide behind fixed nav */
+      padding:18px 18px 100px;
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       box-shadow: 0 18px 60px rgba(0,0,0,0.6);
       overflow:auto;
       position:relative;
-      margin: 20px auto;
+      margin:20px auto;
     }
-
-    .top {
-      display:flex;
-      gap:12px;
-      align-items:center;
-      margin-bottom:18px;
-    }
+    .top { display:flex; gap:12px; align-items:center; margin-bottom:18px; }
     .avatar {
-      width:56px;
-      height:56px;
-      border-radius:50%;
-      display:grid;
-      place-items:center;
-      font-weight:800;
-      font-size:18px;
-      color:#041219;
-      background: var(--accent-grad);
+      width:56px; height:56px; border-radius:50%;
+      display:grid; place-items:center;
+      font-size:18px; font-weight:800;
+      background: var(--accent-grad); color:#041219;
       box-shadow: 0 10px 34px rgba(87,52,164,0.26);
-      position:relative;
     }
     .avatar .presence {
-      position:absolute;
-      right:4px; bottom:4px;
+      position:absolute; right:4px; bottom:4px;
       width:12px; height:12px; border-radius:50%;
       background:#00ff9d; border:2px solid rgba(0,0,0,0.22);
     }
+    .greeting h2{margin:0;font-size:17px;font-weight:700;}
+    .greeting p{margin:6px 0 0; color:var(--muted); font-size:12px;}
 
-    .greeting {
-      flex:1;
-    }
-    .greeting h2{
-      margin:0;
-      font-size:17px;
-      font-weight:700;
-      letter-spacing:0.2px;
-    }
-    .greeting p{
-      margin:6px 0 0;
-      color:var(--muted);
-      font-size:12px;
-    }
+    .asset-card{margin:8px 0 16px; border-radius:12px; padding:14px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03);}
+    .asset-top{display:flex;align-items:center;justify-content:space-between;}
+    .asset-amount{font-size:28px;font-weight:800;}
+    .asset-sub{color:var(--muted); font-size:12px;}
+    .asset-approx{color:var(--muted); font-size:12px;}
 
-    /* Total assets card */
-    .asset-card{
-      margin:8px 0 16px;
-      border-radius:12px;
-      padding:14px;
-      position:relative;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.03);
-      overflow:hidden;
-    }
-    .asset-top {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-    .asset-left {
-      display:flex; flex-direction:column; gap:8px;
-    }
-    .asset-sub {
-      color:var(--muted); font-size:12px;
-    }
-    .asset-amount {
-      font-size:28px;
-      font-weight:800;
-      line-height:1;
-      letter-spacing:0.6px;
-      margin-top:6px;
-    }
-    .asset-approx { color:var(--muted); font-size:12px; margin-top:6px; }
+    .eye-btn{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);cursor:pointer;display:grid;place-items:center;}
 
-    .eye-btn{
-      width:44px; height:44px; border-radius:12px; display:grid; place-items:center;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.03);
-      cursor:pointer;
-    }
+    .pill{flex:1;padding:12px;border-radius:999px;text-align:center;font-weight:700; cursor:pointer; user-select:none;}
+    .pill.primary{background: linear-gradient(90deg, #7a5fff, #35d6b1); color:#041219;}
+    .pill.ghost{background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.04);}
 
-    /* Recharge / Withdraw */
-    .action-row{ display:flex; gap:10px; margin-top:14px; }
-    .pill {
-      flex:1;
-      padding:12px;
-      border-radius:999px;
-      text-align:center;
-      font-weight:700;
-      cursor:pointer;
-      user-select:none;
-      border:1px solid rgba(255,255,255,0.04);
-    }
-    .pill.primary{
-      background: linear-gradient(90deg, #7a5fff, #5e47ff 40%, #35d6b1 100%);
-      color:#041219;
-      box-shadow: 0 8px 30px rgba(87,52,164,0.18);
-    }
-    .pill.ghost{
-      background: transparent;
-      color:var(--muted);
-      border:1px solid rgba(255,255,255,0.05);
-    }
+    .menu{margin-top:18px;display:flex;flex-direction:column;gap:12px;}
+    .menu-item{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02);cursor:pointer;}
+    .menu-left{display:flex;gap:12px;align-items:center;}
+    .menu-icon{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,0.02);font-size:18px;}
+    .menu-text h4{margin:0;font-size:14px;color:#e7e9ff;}
+    .menu-text p{margin:4px 0 0;color:var(--muted);font-size:12px;}
 
-    /* menu list */
-    .menu {
-      margin-top:18px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-    .menu-item{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:12px 14px;
-      border-radius:12px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-      border:1px solid rgba(255,255,255,0.02);
-      cursor:pointer;
-    }
-    .menu-left{ display:flex; gap:12px; align-items:center; }
-    .menu-icon{ width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,0.02); font-size:18px; }
-    .menu-text h4{ margin:0; font-size:14px; color:#e7e9ff; text-transform:capitalize; }
-    .menu-text p{ margin:4px 0 0; color:var(--muted); font-size:12px; }
+    .logout{margin-top:20px;padding:12px;border-radius:999px;text-align:center;font-weight:700;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);cursor:pointer;}
 
-    .logout {
-      margin-top:20px;
-      padding:12px;
-      border-radius:999px;
-      text-align:center;
-      font-weight:700;
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.06);
-      color:var(--muted);
-      cursor:pointer;
-    }
-
-    /* bottom-nav fixed to viewport and centered to match .phone width */
-    .bottom-nav {
-      position: fixed;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 20px;
-      height: 74px;
-      width: calc(min(var(--container-w), 100%) - 28px);
-      max-width: var(--container-w);
-      background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-      border-radius: 38px;
-      padding: 10px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-      border: 1px solid rgba(255,255,255,0.04);
-      z-index: 999;
-      backdrop-filter: blur(6px);
-    }
-    .nav-btn{
-      width:56px;
-      text-align:center;
-      color:var(--muted);
-      font-size:11px;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:6px;
-      cursor:pointer;
-      user-select:none;
-    }
-    .nav-btn .icon-wrap{
-      width:44px;
-      height:44px;
-      border-radius:10px;
-      display:grid;
-      place-items:center;
-      background: rgba(255,255,255,0.02);
-      font-size:18px;
-    }
-    .nav-center {
-      position:relative;
-      flex:0 0 92px;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-    }
-    .center-btn {
-      width:78px;
-      height:78px;
-      border-radius:50%;
-      background: linear-gradient(135deg,#7a5fff,#35d6b1);
-      display:grid;
-      place-items:center;
-      color:#041219;
-      font-size:26px;
-      box-shadow:0 18px 60px rgba(87,52,164,0.2);
-      transform:translateY(-18px);
-      border: none;
-      cursor:pointer;
-    }
-
-    /* contact floating action button (prominent access) */
-    .chat-fab {
-      position: fixed;
-      bottom: 110px;
-      left: calc(50% + (var(--container-w) / 2) - 88px); /* align near right edge of phone on wide screens */
-      width:56px;
-      height:56px;
-      border-radius:50%;
-      display:grid;
-      place-items:center;
-      font-size:22px;
-      background: linear-gradient(135deg,#35d6b1,#5e47ff);
-      color:#041219;
-      box-shadow: 0 18px 50px rgba(87,52,164,0.18);
-      z-index: 1000;
-      text-decoration:none;
-      border: none;
-      cursor:pointer;
-    }
-    .chat-fab[aria-hidden="true"]{ display:none; }
-
-    /* overlay styles */
-    .overlay{ position:fixed; inset:0; display:none; z-index:1100; }
-    .overlay.open{ display:block; }
-    .overlay-backdrop{ position:absolute; inset:0; background: rgba(2,6,23,0.6); backdrop-filter: blur(6px); }
-    .overlay-panel{
-      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-      width: min(480px, 92%);
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.04);
-      border-radius:12px; padding:18px; box-shadow: 0 30px 80px rgba(4,6,20,0.6);
-      color:var(--text);
-    }
-    .overlay-close{ position:absolute; right:12px; top:12px; background:transparent; border:none; color:var(--muted); font-size:18px; cursor:pointer; }
-    .overlay-panel h3{ margin:0 0 12px; font-size:16px; }
-    .overlay-options{ display:flex; flex-direction:column; gap:10px; }
-    .overlay-option{ display:block; padding:12px; text-align:center; border-radius:10px; text-decoration:none; font-weight:800; }
-    .overlay-option.primary{ background: linear-gradient(90deg, #7a5fff, #35d6b1); color:#041219; }
-    .overlay-option.ghost{ background: transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted); }
-
-    /* blog-overlay id styles will reuse overlay classes above */
-
-    /* Responsive adjustments */
-    @media(max-width:980px){
-      :root{ --container-w: 420px; } /* fallback on narrow screens */
-      .chat-fab { left: auto; right: 20px; transform: none; } /* align to right on small screens */
-    }
-
-    @media(max-width:480px){
-      body{ padding:14px; }
-      .phone{ min-height:calc(100vh - 40px); padding-bottom:120px; border-radius:20px; }
-      .bottom-nav { left: 14px; right: 14px; transform: none; width: auto; max-width: calc(100% - 28px); }
-      .chat-fab { left: auto; right: 20px; transform: none; bottom: 100px; }
-    }
+    .bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;height:74px;width:calc(min(var(--container-w),100%) - 28px);background:rgba(255,255,255,0.02);border-radius:38px;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;box-shadow:0 18px 60px rgba(0,0,0,0.45);}
+    .nav-btn{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:11px;cursor:pointer;}
+    .icon-wrap{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,0.02);font-size:18px;}
+    .nav-center .center-btn{width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,#7a5fff,#35d6b1);color:#041219;font-size:26px;display:grid;place-items:center;transform:translateY(-18px);border:none;cursor:pointer;}
+    
+    .overlay{position:fixed;inset:0;display:none;z-index:1100;}
+    .overlay.open{display:block;}
+    .overlay-backdrop{position:absolute;inset:0;background:rgba(2,6,23,0.6);backdrop-filter:blur(6px);}
+    .overlay-panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,92%);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:12px;padding:18px;box-shadow:0 30px 80px rgba(4,6,20,0.6);}
+    .overlay-close{position:absolute;right:12px;top:12px;background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;}
+    .overlay-options{display:flex;flex-direction:column;gap:10px;}
+    .overlay-option{display:block;padding:12px;text-align:center;border-radius:10px;font-weight:800;text-decoration:none;color:#041219;background:linear-gradient(90deg,#7a5fff,#35d6b1);}
   </style>
+
 </head>
 <body>
   <div class="phone" role="main" aria-live="polite">
+
     <div class="top">
-      <div class="avatar" id="avatar">U
-        <span class="presence" title="online"></span>
-      </div>
+      <div class="avatar" id="avatar">U<span class="presence"></span></div>
       <div class="greeting">
         <h2 id="greeting">Hi, User</h2>
         <p id="uidline">UID: -</p>
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-        <button id="settingsBtn" title="Settings" class="eye-btn" aria-label="Settings">⚙️</button>
-      </div>
+      <button id="settingsBtn" class="eye-btn" title="Settings">⚙️</button>
     </div>
 
-    <div class="asset-card" role="region" aria-label="Total assets">
+    <div class="asset-card">
       <div class="asset-top">
-        <div class="asset-left">
+        <div>
           <div class="asset-sub">Total Assets (NGN)</div>
           <div class="asset-amount" id="balance">₦0.00</div>
           <div class="asset-approx" id="approx">≈ ₦0.00</div>
         </div>
-        <button id="eyeBtn" class="eye-btn" aria-pressed="false" title="Hide/Show balance">👁️</button>
+        <button id="eyeBtn" class="eye-btn" aria-pressed="false">👁️</button>
       </div>
 
       <div class="action-row">
@@ -354,112 +134,50 @@
       </div>
     </div>
 
-    <nav class="menu" aria-label="Main menu">
-      <div id="ordersItem" class="menu-item" role="button" tabindex="0">
-        <div class="menu-left">
-          <div class="menu-icon">📄</div>
-          <div class="menu-text"><h4>My Orders</h4><p>orders overview</p></div>
-        </div>
-        <div>›</div>
+    <nav class="menu">
+      <div id="ordersItem" class="menu-item"><div class="menu-left"><div class="menu-icon">📄</div><div class="menu-text"><h4>My Orders</h4><p>orders overview</p></div></div>›</div>
+      <div id="tasksItem" class="menu-item"><div class="menu-left"><div class="menu-icon">🔎</div><div class="menu-text"><h4>Available tasks</h4><p>market & promotions</p></div></div>›</div>
+      <div id="earningsItem" class="menu-item"><div class="menu-left"><div class="menu-icon">📈</div><div class="menu-text"><h4>Earnings Report</h4><p>performance</p></div></div>›</div>
+      <div id="referralsItem" class="menu-item"><div class="menu-left"><div class="menu-icon">👥</div><div class="menu-text"><h4>Referrals</h4><p>friends who joined through you</p></div></div>›</div>
+      <div id="contestsItem" class="menu-item"><div class="menu-left"><div class="menu-icon">🏆</div><div class="menu-text"><h4>Contests</h4><p>climb the leaderboard, earn big</p></div></div>›</div>
+      <div id="moreItem" class="menu-item" aria-haspopup="dialog">
+        <div class="menu-left"><div class="menu-icon">⋯</div><div class="menu-text"><h4>More</h4><p>extra options & links</p></div></div>›
       </div>
-
-      <div id="tasksItem" class="menu-item" role="button" tabindex="0">
-        <div class="menu-left">
-          <div class="menu-icon">🔎</div>
-          <div class="menu-text"><h4>Available tasks</h4><p>market & promotions</p></div>
-        </div>
-        <div>›</div>
-      </div>
-
-      <div id="earningsItem" class="menu-item" role="button" tabindex="0">
-        <div class="menu-left">
-          <div class="menu-icon">📈</div>
-          <div class="menu-text"><h4>Earnings Report</h4><p>performance</p></div>
-        </div>
-        <div>›</div>
-      </div>
-
-      <div id="referralsItem" class="menu-item" role="button" tabindex="0">
-        <div class="menu-left">
-          <div class="menu-icon">👥</div>
-          <div class="menu-text"><h4>Referrals</h4><p>friends who joined through you</p></div>
-        </div>
-        <div>›</div>
-      </div>
-
-       <div id="contestsItem" class="menu-item" role="button" tabindex="0">
-        <div class="menu-left">
-          <div class="menu-icon">🏆</div>
-          <div class="menu-text"><h4>Contests</h4><p>climb the leaderboard, earn big</p></div>
-        </div>
-        <div>›</div>
-      </div>
-
-      <!-- NEW: More options menu item (added right below Referrals) -->
-      <div id="moreItem" class="menu-item" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="moreOverlay">
-        <div class="menu-left">
-          <div class="menu-icon">⋯</div>
-          <div class="menu-text"><h4>More</h4><p>extra options & links</p></div>
-        </div>
-        <div>›</div>
-      </div>
-
     </nav>
 
     <button id="logoutBtn" class="logout">Log out</button>
 
-    <!-- bottom navigation (fixed) - Chat item removed -->
-    <div class="bottom-nav" role="navigation" aria-label="Main navigation">
-      <div id="navHome" class="nav-btn" title="Home">
-        <div class="icon-wrap">🏠</div>
-        <div style="font-size:11px;color:var(--muted)">Home</div>
-      </div>
-
-      <div id="navConvert" class="nav-btn" title="Shortlinks">
-        <div class="icon-wrap">🔗</div>
-        <div style="font-size:11px;color:var(--muted)">shortlinks</div>
-      </div>
-
-      <div class="nav-center">
-        <button id="navCenter" class="center-btn" title="Create">➕</button>
-      </div>
-
-      <div id="navNews" class="nav-btn" title="News">
-        <div class="icon-wrap">💬</div>
-        <div style="font-size:11px;color:var(--muted)">News</div>
-      </div>
-
-      <div id="navAssets" class="nav-btn" title="Assets">
-        <div class="icon-wrap">👤</div>
-        <div style="font-size:11px;color:var(--muted)">Assets</div>
-      </div>
+    <div class="bottom-nav">
+      <div id="navHome" class="nav-btn"><div class="icon-wrap">🏠</div>Home</div>
+      <div id="navConvert" class="nav-btn"><div class="icon-wrap">🔗</div>Shortlinks</div>
+      <div class="nav-center"><button id="navCenter" class="center-btn">➕</button></div>
+      <div id="navNews" class="nav-btn"><div class="icon-wrap">💬</div>News</div>
+      <div id="navAssets" class="nav-btn"><div class="icon-wrap">👤</div>Assets</div>
     </div>
 
-    <!-- floating contact button (redirects to contact.html) -->
-    <a id="chatFab" class="chat-fab" href="contact.html" title="Contact support" aria-label="Contact support">💬</a>
+    <a id="chatFab" class="chat-fab" href="contact.html" title="Contact support">💬</a>
 
-    <!-- Overlay for More options -->
+    <!-- MORE Overlay -->
     <div id="moreOverlay" class="overlay" aria-hidden="true">
-      <div class="overlay-backdrop" id="overlayBackdrop"></div>
-      <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
-        <button id="overlayClose" class="overlay-close" aria-label="Close">✕</button>
-        <h3 id="overlayTitle">More options</h3>
+      <div class="overlay-backdrop"></div>
+      <div class="overlay-panel">
+        <button class="overlay-close" aria-label="Close">✕</button>
+        <h3>More options</h3>
         <div class="overlay-options">
-          <a href="ptc.html" class="overlay-option primary" id="optPtc">PTC</a>
-          <a href="bet.html" class="overlay-option primary" id="optBlog">Stake</a>
-          <a href="mini-games.html" class="overlay-option primary" id="optGames">Games</a>
+          <a href="ptc.html" class="overlay-option">PTC</a>
+          <a href="bet.html" class="overlay-option">Stake</a>
+          <a href="mini-games.html" class="overlay-option">Games</a>
         </div>
       </div>
     </div>
 
+  </div>
+
   <script type="module">
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-      getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // FIREBASE config — same as yours
     const firebaseConfig = {
       apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
       authDomain: "beni-wealths.firebaseapp.com",
@@ -474,16 +192,13 @@
     const auth = getAuth();
     const db = getFirestore();
 
-    // DOM refs
     const avatarEl = document.getElementById('avatar');
     const greetingEl = document.getElementById('greeting');
     const uidLine = document.getElementById('uidline');
     const balanceEl = document.getElementById('balance');
     const approxEl = document.getElementById('approx');
     const eyeBtn = document.getElementById('eyeBtn');
-    const settingsBtn = document.getElementById('settingsBtn');
 
-    // menu & actions
     const rechargeBtn = document.getElementById('rechargeBtn');
     const withdrawBtn = document.getElementById('withdrawBtn');
     const ordersItem = document.getElementById('ordersItem');
@@ -493,17 +208,9 @@
     const contestsItem = document.getElementById('contestsItem');
     const moreItem = document.getElementById('moreItem');
     const moreOverlay = document.getElementById('moreOverlay');
-    const overlayBackdrop = document.getElementById('overlayBackdrop');
-    const overlayClose = document.getElementById('overlayClose');
+    const overlayClose = moreOverlay.querySelector('.overlay-close');
+
     const logoutBtn = document.getElementById('logoutBtn');
-
-    // blog overlay refs
-    const blogOverlay = document.getElementById('blogOverlay');
-    const blogBackdrop = document.getElementById('blogBackdrop');
-    const blogOverlayClose = document.getElementById('blogOverlayClose');
-    const optBlog = document.getElementById('optBlog'); // original link inside moreOverlay
-
-    // bottom nav
     const navHome = document.getElementById('navHome');
     const navConvert = document.getElementById('navConvert');
     const navCenter = document.getElementById('navCenter');
@@ -511,260 +218,86 @@
     const navAssets = document.getElementById('navAssets');
     const chatFab = document.getElementById('chatFab');
 
-    // utilities
-    function formatN(n){ const num = Number(n || 0); return '₦' + num.toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
-    function gen5(){ return Math.floor(10000 + Math.random()*90000).toString(); }
-    function makeHiddenKey(uid){ return `bw_balance_hidden_${uid || 'guest'}`; }
-    function getPersistedHidden(uid){ try{ return localStorage.getItem(makeHiddenKey(uid)) === '1'; }catch(e){return false;} }
-    function setPersistedHidden(uid, hidden){ try{ localStorage.setItem(makeHiddenKey(uid), hidden ? '1' : '0'); }catch(e){} }
+    function formatN(n){const num=Number(n||0);return '₦'+num.toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
-    // fallback: try balances collection/doc if users/{uid} doesn't provide balance
-    async function tryBalanceFallback(uid){
-      try{
-        const bRef = doc(db, 'balances', uid);
-        const bSnap = await getDoc(bRef);
-        if(bSnap && bSnap.exists()){
-          const bd = bSnap.data();
-          if(bd && (bd.balance !== undefined || bd.amount !== undefined)) return Number(bd.balance ?? bd.amount ?? 0);
-        }
-      }catch(e){ console.warn('balances/{uid} lookup failed', e); }
-      try{
-        const col = collection(db, 'balances');
-        const q = query(col, where('userId','==', uid));
-        const snap = await getDocs(q);
-        if(!snap.empty){ const d = snap.docs[0].data(); return Number(d.balance ?? d.amount ?? 0); }
-      }catch(e){ console.warn('balances collection query failed', e); }
-      return null;
-    }
+    function makeHiddenKey(uid){return `bw_balance_hidden_${uid||'guest'}`;}
+    function getPersistedHidden(uid){try{return localStorage.getItem(makeHiddenKey(uid))==='1';}catch{return false;}}
+    function setPersistedHidden(uid,h){try{localStorage.setItem(makeHiddenKey(uid),h?'1':'0');}catch{}}
 
-    // show/hide balance
-    function setBalanceVisibility(hidden, uid){
-      setPersistedHidden(uid, hidden);
-      eyeBtn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
-      eyeBtn.setAttribute('aria-label', hidden ? 'Show balance' : 'Hide balance');
-      eyeBtn.textContent = hidden ? '🙈' : '👁️';
+    function setBalanceVisibility(hidden,uid){
+      setPersistedHidden(uid,hidden);
+      eyeBtn.setAttribute('aria-pressed',hidden?'true':'false');
+      eyeBtn.textContent = hidden?'🙈':'👁️';
       if(hidden){
-        balanceEl.textContent = '₦••••';
-        approxEl.textContent = '≈ ₦••••';
+        balanceEl.textContent='₦••••'; approxEl.textContent='≈ ₦••••';
       } else {
-        balanceEl.textContent = balanceEl.dataset.realText || '₦0.00';
-        approxEl.textContent = approxEl.dataset.realText || `≈ ${balanceEl.dataset.realText || '₦0.00'}`;
+        balanceEl.textContent=balanceEl.dataset.realText||'₦0.00';
+        approxEl.textContent=approxEl.dataset.realText||`≈ ${balanceEl.dataset.realText||'₦0.00'}`;
       }
     }
 
-    eyeBtn.addEventListener('click', ()=>{
-      const uid = eyeBtn.dataset.uid || 'guest';
-      const hidden = getPersistedHidden(uid);
-      setBalanceVisibility(!hidden, uid);
+    eyeBtn.addEventListener('click',()=>{
+      const uid=eyeBtn.dataset.uid||'guest';
+      setBalanceVisibility(!getPersistedHidden(uid),uid);
     });
 
-    // nav / btn handlers (preserve behavior)
-    settingsBtn.addEventListener('click', ()=> window.location.href='profile.html');
-    rechargeBtn.addEventListener('click', ()=> window.location.href='recharge.html');
-    withdrawBtn.addEventListener('click', ()=> window.location.href='withdraw.html');
-    ordersItem.addEventListener('click', ()=> window.location.href='orders.html');
-    tasksItem.addEventListener('click', ()=> window.location.href='tasks.html');
-    earningsItem.addEventListener('click', ()=> window.location.href='earnings.html');
-    contestsItem.addEventListener('click', ()=> window.location.href='contests.html');
-    referralsItem.addEventListener('click', (e) => {
-      e.preventDefault();
-      const container = document.querySelector('.phone');
-      container.style.transform = 'translateY(-6px)';
-      setTimeout(()=> { container.style.transform = ''; window.location.href = 'referrals.html'; }, 240);
-     
+    moreItem.addEventListener('click',(e)=>{e.preventDefault();moreOverlay.classList.add('open');});
+    overlayClose.addEventListener('click',()=>moreOverlay.classList.remove('open'));
+    moreOverlay.querySelector('.overlay-backdrop').addEventListener('click',()=>moreOverlay.classList.remove('open'));
+
+    settingsBtn.addEventListener('click',()=>window.location.href='profile.html');
+    rechargeBtn.addEventListener('click',()=>window.location.href='recharge.html');
+    withdrawBtn.addEventListener('click',()=>window.location.href='withdraw.html');
+
+    ordersItem.addEventListener('click',()=>window.location.href='orders.html');
+    tasksItem.addEventListener('click',()=>window.location.href='tasks.html');
+    earningsItem.addEventListener('click',()=>window.location.href='earnings.html');
+    contestsItem.addEventListener('click',()=>window.location.href='contests.html');
+    referralsItem.addEventListener('click',()=>window.location.href='referrals.html');
+
+    logoutBtn.addEventListener('click',async()=>{
+      await signOut(auth).catch(()=>{});
+      window.location.href='index.html';
     });
 
-    // MORE item: show overlay with top-level options (PTC, Blog, Games)
-    function openMoreOverlay(){
-      moreOverlay.classList.add('open');
-      moreOverlay.setAttribute('aria-hidden','false');
-      document.body.style.overflow = 'hidden';
-      // focus first option for keyboard users
-      const opt = moreOverlay.querySelector('.overlay-option'); if(opt) opt.focus();
-    }
-    function closeMoreOverlay(){
-      moreOverlay.classList.remove('open');
-      moreOverlay.setAttribute('aria-hidden','true');
-      document.body.style.overflow = '';
-      moreItem.focus();
-    }
+    navHome.addEventListener('click',()=>window.location.href='catalog.html');
+    navConvert.addEventListener('click',()=>window.location.href='convert.html');
+    navCenter.addEventListener('click',()=>window.location.href='center.html');
+    navNews.addEventListener('click',()=>window.location.href='news.html');
+    navAssets.addEventListener('click',()=>window.location.href='dashboard.html');
 
-    moreItem.addEventListener('click', (e) => { e.preventDefault(); openMoreOverlay(); });
-    moreItem.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMoreOverlay(); } });
+    chatFab.addEventListener('keydown',(e)=>{if(e.key==='Enter')window.location.href='contact.html';});
 
-    overlayClose.addEventListener('click', (e)=>{ e.preventDefault(); closeMoreOverlay(); });
-    overlayBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); closeMoreOverlay(); });
-
-    // close on ESC
-    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && moreOverlay.classList.contains('open')) closeMoreOverlay(); });
-
-    // ---- NEW: Blog overlay behavior ----
-    function openBlogOverlay(){
-      // ensure more overlay is closed (we're opening nested)
-      closeMoreOverlay();
-      blogOverlay.classList.add('open');
-      blogOverlay.setAttribute('aria-hidden','false');
-      document.body.style.overflow = 'hidden';
-      // focus first blog option
-      const first = blogOverlay.querySelector('.overlay-option');
-      if(first) first.focus();
-    }
-    function closeBlogOverlay(){
-      blogOverlay.classList.remove('open');
-      blogOverlay.setAttribute('aria-hidden','true');
-      document.body.style.overflow = '';
-      // return focus to More item so keyboard users continue where they left off
-      moreItem.focus();
-    }
-
-    // intercept click on the Blog link inside More overlay and open nested overlay instead
-    if(optBlog){
-      optBlog.addEventListener('click', (e) => {
-        e.preventDefault(); // prevent immediate navigation
-        openBlogOverlay();
-      });
-      optBlog.addEventListener('keydown', (e) => {
-        if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBlogOverlay(); }
-      });
-    }
-
-    // blog overlay close handlers
-    blogOverlayClose.addEventListener('click', (e)=>{ e.preventDefault(); closeBlogOverlay(); });
-    blogBackdrop.addEventListener('click', (e)=>{ e.preventDefault(); closeBlogOverlay(); });
-
-    // close blog overlay on ESC too
-    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && blogOverlay.classList.contains('open')) closeBlogOverlay(); });
-
-    // ensure nested navigation: if a user navigates to blog option, close overlays first
-    document.getElementById('optViewBlogs').addEventListener('click', ()=> { closeBlogOverlay(); });
-    document.getElementById('optCreateBlog').addEventListener('click', ()=> { closeBlogOverlay(); });
-    document.getElementById('optEarnings').addEventListener('click', ()=> { closeBlogOverlay(); });
-
-    // LOGOUT: ensure signOut is called and user is redirected
-    logoutBtn.addEventListener('click', async () => {
-      try {
-        await signOut(auth);
-        window.location.href = 'index.html';
-      } catch (err) {
-        console.error('logout failed', err);
-        alert('Logout failed: ' + (err.message || err));
-      }
-    });
-
-    // bottom nav actions
-    navHome.addEventListener('click', ()=> window.location.href = 'catalog.html');
-    navConvert.addEventListener('click', ()=> window.location.href = 'convert.html');
-    navCenter.addEventListener('click', ()=> window.location.href = 'center.html');
-    navNews.addEventListener('click', ()=> window.location.href = 'news.html');
-    navAssets.addEventListener('click', ()=> window.location.href = 'dashboard.html');
-
-    // FAB keyboard support (the anchor already navigates on click)
-    chatFab.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter' || e.key === ' ') { window.location.href = 'contact.html'; }
-    });
-
-    // live wiring: read users/{uid} and keep balance stable
-    let userUnsub = null;
-    onAuthStateChanged(auth, async (user) => {
-      // default to guest visibility
-      eyeBtn.dataset.uid = 'guest';
-      setBalanceVisibility(getPersistedHidden('guest'), 'guest');
+    onAuthStateChanged(auth,async(user)=>{
+      eyeBtn.dataset.uid='guest';
+      setBalanceVisibility(getPersistedHidden('guest'),'guest');
 
       if(!user){
-        const demo = gen5();
-        uidLine.textContent = `UID: ${demo}`;
-        greetingEl.textContent = 'Hello, User';
-        balanceEl.dataset.realText = formatN(0);
-        approxEl.dataset.realText = `≈ ${formatN(0)}`;
-        setBalanceVisibility(getPersistedHidden('guest'), 'guest');
-        if(userUnsub){ try{ userUnsub(); }catch(e){}; userUnsub = null; }
+        uidLine.textContent='UID: -';
+        avatarEl.textContent='U';
+        balanceEl.dataset.realText=formatN(0);
+        approxEl.dataset.realText=`≈ ${formatN(0)}`;
         return;
       }
 
-      eyeBtn.dataset.uid = user.uid;
-      setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
-      uidLine.textContent = `UID: ${user.uid.slice(0,6)}`;
+      eyeBtn.dataset.uid=user.uid;
+      setBalanceVisibility(getPersistedHidden(user.uid),user.uid);
+      uidLine.textContent=`UID: ${user.uid.slice(0,6)}`;
 
-      const uRef = doc(db, 'users', user.uid);
+      const uRef=doc(db,'users',user.uid);
+      onSnapshot(uRef,async(snap)=>{
+        if(snap.exists()){
+          const d=snap.data();
+          const username=d.username||user.displayName||'User';
+          greetingEl.textContent=`Hi, ${username}`;
+          avatarEl.textContent=username.charAt(0).toUpperCase();
 
-      // teardown previous
-      if(userUnsub) { try{ userUnsub(); }catch(e){}; userUnsub = null; }
-
-      userUnsub = onSnapshot(uRef, async (snap) => {
-        try{
-          if(!snap.exists()){
-            // fallback if no user doc
-            const fb = await tryBalanceFallback(user.uid);
-            const bal = fb !== null ? fb : 0;
-            balanceEl.dataset.realText = formatN(bal);
-            approxEl.dataset.realText = `≈ ${formatN(bal)}`;
-            setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
-            greetingEl.textContent = user.displayName || 'Hi, User';
-            avatarEl.textContent = (user.displayName || user.email || 'U')[0].toUpperCase();
-            return;
-          }
-
-          const data = snap.data() || {};
-          const username = data.username || user.displayName || (user.email ? user.email.split('@')[0] : null);
-          if(username){ greetingEl.textContent = `Hi, ${username}`; avatarEl.textContent = username.charAt(0).toUpperCase(); }
-          else { greetingEl.textContent = 'Hello, User'; avatarEl.textContent = (user.email && user.email[0]) ? user.email[0].toUpperCase() : 'U'; }
-
-          // balance — prefer numeric in doc, otherwise fallback
-          const balNum = (data.balance !== undefined && data.balance !== null) ? Number(data.balance) : null;
-          if(balNum !== null && !isNaN(balNum)){
-            balanceEl.dataset.realText = formatN(balNum);
-            approxEl.dataset.realText = `≈ ${formatN(balNum)}`;
-          } else {
-            const fb = await tryBalanceFallback(user.uid);
-            const val = fb !== null ? fb : 0;
-            balanceEl.dataset.realText = formatN(val);
-            approxEl.dataset.realText = `≈ ${formatN(val)}`;
-          }
-          setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
-
-        }catch(e){
-          console.error('onSnapshot handler error', e);
-          // graceful fallback: attempt one-time read
-          try{
-            const oned = await getDoc(uRef);
-            if(oned && oned.exists()){
-              const d = oned.data()||{};
-              const bal = (d.balance !== undefined && d.balance !== null) ? Number(d.balance) : 0;
-              balanceEl.dataset.realText = formatN(bal);
-              approxEl.dataset.realText = `≈ ${formatN(bal)}`;
-              setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
-            }
-          }catch(err){
-            console.warn('fallback getDoc failed', err);
-          }
+          const bal=(d.balance!==undefined)?Number(d.balance):0;
+          balanceEl.dataset.realText=formatN(bal);
+          approxEl.dataset.realText=`≈ ${formatN(bal)}`;
+          setBalanceVisibility(getPersistedHidden(user.uid),user.uid);
         }
-      }, async (err) => {
-        console.warn('users/{uid} onSnapshot error', err);
-        // fallback one-time read
-        try{
-          const uSnap = await getDoc(uRef);
-          if(uSnap.exists()){
-            const d = uSnap.data() || {};
-            const bal = (d.balance !== undefined && d.balance !== null) ? Number(d.balance) : 0;
-            balanceEl.dataset.realText = formatN(bal);
-            approxEl.dataset.realText = `≈ ${formatN(bal)}`;
-            setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
-            greetingEl.textContent = d.username || user.displayName || 'Hi, User';
-            avatarEl.textContent = (d.username || user.displayName || 'U')[0]?.toUpperCase() || 'U';
-          } else {
-            const fb = await tryBalanceFallback(user.uid);
-            const val = fb !== null ? fb : 0;
-            balanceEl.dataset.realText = formatN(val);
-            approxEl.dataset.realText = `≈ ${formatN(val)}`;
-            setBalanceVisibility(getPersistedHidden(user.uid), user.uid);
-          }
-        }catch(e){ console.error('fallback read failed', e); }
       });
-    });
-
-    // cleanup listeners on unload
-    window.addEventListener('beforeunload', () => {
-      if(userUnsub){ try{ userUnsub(); } catch(e){}; userUnsub = null; }
     });
   </script>
 </body>
