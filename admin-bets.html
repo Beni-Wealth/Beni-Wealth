@@ -5,16 +5,37 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Beni-Wealth — Admin Submissions</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600,700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
 <style>
-  body{margin:0;padding:20px;font-family:'Poppins',Arial;background:#041018;color:#eaf2ff;}
-  h2{text-align:center;color:#2fe0b8;}
-  .container{max-width:800px;margin:auto;}
-  .submission{background:#0f1120;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);margin-bottom:14px;}
-  .submission p{margin:4px;font-size:14px;}
-  select, button{padding:8px;border-radius:8px;border:none;font-weight:600;}
-  .btn-update{background:#2fa8ff;color:#041219;cursor:pointer;margin-top:6px;}
+  body {
+    margin: 0; padding: 20px;
+    font-family: 'Poppins', Arial;
+    background: #041018; color: #eaf2ff;
+  }
+  .container {
+    max-width: 900px; margin: 0 auto;
+  }
+  h2 {
+    text-align: center; color: #2fe0b8; margin-bottom: 20px;
+  }
+  .submission {
+    background: #0f1120;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 12px;
+    margin-bottom: 14px;
+  }
+  .submission p {
+    margin: 4px; font-size: 14px;
+  }
+  select, button {
+    padding: 8px; border-radius: 8px;
+    border: none; font-weight: 600;
+  }
+  .btn-update {
+    background: #2fa8ff; color: #041219;
+    cursor: pointer; margin-top: 6px;
+  }
 </style>
 </head>
 
@@ -29,10 +50,10 @@ import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getFirestore, collection, query,
-  getDocs, doc, updateDoc
+  getDocs, doc, getDoc, runTransaction,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 🔥 Your Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
@@ -49,81 +70,122 @@ const auth = getAuth();
 const db = getFirestore();
 const subsList = document.getElementById('subsList');
 
-let currentUser = null;
-
-onAuthStateChanged(auth, async user => {
+onAuthStateChanged(auth, user => {
   if (!user) {
     subsList.textContent = "Sign in as admin to view submissions.";
     return;
   }
-  currentUser = user;
   loadSubs();
 });
 
 async function loadSubs() {
   subsList.innerHTML = "Loading…";
+  try {
+    const q = query(collection(db, 'stakes'));
+    const snapshot = await getDocs(q);
 
-  const q = query(collection(db, 'stakes'));
-  const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      subsList.textContent = "No submissions found.";
+      return;
+    }
 
-  if (snapshot.empty) {
-    subsList.textContent = "No submissions found.";
-    return;
+    subsList.innerHTML = "";
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      const id = docSnap.id;
+
+      const div = document.createElement('div');
+      div.className = "submission";
+      div.innerHTML = `
+        <p><strong>User:</strong> ${data.userId}</p>
+        <p><strong>Match:</strong> ${data.title}</p>
+        <p><strong>Choice:</strong> ${data.choice}</p>
+        <p><strong>Stake:</strong> ₦${(data.amount||0).toLocaleString('en-NG',{minimumFractionDigits:2})}</p>
+
+        <p><strong>Wallet Balance:</strong> <span id="balance_${id}">Fetching…</span></p>
+
+        <p><strong>Status:</strong>
+          <select id="status_${id}">
+            <option value="pending" ${data.status==='pending'?'selected':''}>pending</option>
+            <option value="won" ${data.status==='won'?'selected':''}>won</option>
+            <option value="lost" ${data.status==='lost'?'selected':''}>lost</option>
+          </select>
+        </p>
+
+        <button class="btn-update" data-id="${id}">Update</button>
+
+        <p><small>Won Amt: ₦${(data.wonAmount||0).toLocaleString('en-NG',{minimumFractionDigits:2})} | 
+        Credited: ${data.credited? 'Yes':'No'}</small></p>
+      `;
+
+      subsList.appendChild(div);
+
+      const userDoc = doc(db, 'users', data.userId);
+      onSnapshot(userDoc, (uSnap) => {
+        const balEl = document.getElementById(`balance_${id}`);
+        if (uSnap.exists()) {
+          const b = uSnap.data().balance || 0;
+          balEl.textContent = `₦${b.toLocaleString('en-NG',{minimumFractionDigits:2})}`;
+        } else {
+          balEl.textContent = "User not found";
+        }
+      });
+    });
+
+    document.querySelectorAll('.btn-update').forEach(btn => {
+      btn.addEventListener('click', () => updateSubmission(btn.dataset.id));
+    });
+
+  } catch (err) {
+    console.error("Load error:", err);
+    subsList.textContent = "Error loading submissions.";
   }
-
-  subsList.innerHTML = "";
-  snapshot.forEach(docSnap => {
-    const d = docSnap.data();
-    const id = docSnap.id;
-
-    const div = document.createElement('div');
-    div.className = "submission";
-    div.innerHTML = `
-      <p><strong>User:</strong> ${d.userId}</p>
-      <p><strong>Match:</strong> ${d.title}</p>
-      <p><strong>Choice:</strong> ${d.choice}</p>
-      <p><strong>Stake:</strong> ₦${d.amount?.toLocaleString('en-NG', {minimumFractionDigits:2})}</p>
-      <p><strong>Status:</strong>
-        <select id="status_${id}">
-          <option ${d.status==='pending'?'selected':''}>pending</option>
-          <option ${d.status==='won'?'selected':''}>won</option>
-          <option ${d.status==='lost'?'selected':''}>lost</option>
-        </select>
-      </p>
-      <button class="btn-update" data-id="${id}">Update</button>
-      <p><small>Won Amt: ₦${(d.wonAmount||0).toLocaleString('en-NG',{minimumFractionDigits:2})} | Credited: ${d.credited? 'Yes':'No'}</small></p>
-    `;
-    subsList.appendChild(div);
-  });
-
-  document.querySelectorAll('.btn-update').forEach(btn => {
-    btn.onclick = () => updateSubmission(btn.dataset.id);
-  });
 }
 
 async function updateSubmission(submissionId) {
-  const sel = document.getElementById(`status_${submissionId}`);
-  const newStatus = sel.value;
+  try {
+    const sel = document.getElementById(`status_${submissionId}`);
+    const newStatus = sel.value;
 
-  const subRef = doc(db, 'stakes', submissionId);
-  const subSnap = await subRef.get();
+    const stakeRef = doc(db, 'stakes', submissionId);
+    const stakeSnap = await getDoc(stakeRef);
+    if (!stakeSnap.exists()) {
+      alert("Submission not found!");
+      return;
+    }
+    const stakeData = stakeSnap.data();
+    const userRef = doc(db, 'users', stakeData.userId);
 
-  const data = subSnap.data();
-  const updates = { status: newStatus };
+    await runTransaction(db, async (transaction) => {
+      const userSnap = await transaction.get(userRef);
+      if (!userSnap.exists()) throw new Error("User not found!");
 
-  if (newStatus === "won") {
-    updates.wonAmount = data.amount * 2;
-    updates.credited = true;
-  } else if (newStatus === "lost") {
-    updates.wonAmount = 0;
-    updates.credited = false;
+      const updates = { status: newStatus };
+
+      if (newStatus === "won") {
+        const creditAmount = (stakeData.amount || 0) * 2;
+        updates.wonAmount = creditAmount;
+        updates.credited = true;
+
+        const oldBalance = userSnap.data().balance || 0;
+        transaction.update(userRef, { balance: oldBalance + creditAmount });
+
+      } else {
+        updates.wonAmount = 0;
+        updates.credited = false;
+      }
+
+      transaction.update(stakeRef, updates);
+    });
+
+    alert("Updated and wallet credited (if won)!");
+    loadSubs();
+
+  } catch (err) {
+    console.error("Transaction failed:", err);
+    alert("Update failed: " + err.message);
   }
-
-  await updateDoc(subRef, updates);
-  alert("Submission updated!");
-  loadSubs();
 }
 </script>
 </body>
 </html>
-
