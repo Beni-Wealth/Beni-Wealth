@@ -58,7 +58,6 @@
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getFirestore, collection, query,
   getDocs, doc, getDoc, runTransaction,
@@ -77,21 +76,14 @@ const firebaseConfig = {
 
 if (!getApps().length) initializeApp(firebaseConfig);
 
-const auth = getAuth();
 const db = getFirestore();
 const subsList = document.getElementById('subsList');
 
-// Listen for sort changes
-document.getElementById('sortOrder').addEventListener('change', () => {
-  loadSubs();
-});
+// load submissions immediately
+loadSubs();
 
-// Require auth
-onAuthStateChanged(auth, user => {
-  if (!user) {
-    subsList.textContent = "Sign in as admin to view submissions.";
-    return;
-  }
+// re-load when sort order changes
+document.getElementById('sortOrder').addEventListener('change', () => {
   loadSubs();
 });
 
@@ -107,13 +99,11 @@ async function loadSubs() {
       return;
     }
 
-    // Collect into array
     const allSubs = [];
     snapshot.forEach(docSnap => {
       allSubs.push({ id: docSnap.id, data: docSnap.data() });
     });
 
-    // Sort
     const sortBy = document.getElementById('sortOrder').value;
 
     if (sortBy === "uid_asc") {
@@ -121,11 +111,9 @@ async function loadSubs() {
     } else if (sortBy === "uid_desc") {
       allSubs.sort((a, b) => b.data.userId.localeCompare(a.data.userId));
     } else {
-      // Newest first (by doc ID)
       allSubs.sort((a, b) => b.id.localeCompare(a.id));
     }
 
-    // Render
     subsList.innerHTML = "";
     allSubs.forEach(item => {
       const { id, data } = item;
