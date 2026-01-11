@@ -17,7 +17,7 @@
     max-width: 900px; margin: 0 auto;
   }
   h2 {
-    text-align: center; color: #2fe0b8; margin-bottom: 20px;
+    text-align: center; color: #2fe0b8; margin-bottom: 10px;
   }
   .submission {
     background: #0f1120;
@@ -42,6 +42,17 @@
 <body>
 <div class="container">
   <h2>Admin — Manage Submissions</h2>
+
+  <!-- SORT CONTROLS -->
+  <p>
+    <strong>Sort by:</strong>
+    <select id="sortOrder" style="margin-bottom: 12px; width: 100%;">
+      <option value="newest">Newest first</option>
+      <option value="uid_asc">User ID (A → Z)</option>
+      <option value="uid_desc">User ID (Z → A)</option>
+    </select>
+  </p>
+
   <div id="subsList">Loading submissions…</div>
 </div>
 
@@ -55,7 +66,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
   projectId: "beni-wealths",
   storageBucket: "beni-wealths.appspot.com",
@@ -70,6 +81,12 @@ const auth = getAuth();
 const db = getFirestore();
 const subsList = document.getElementById('subsList');
 
+// Listen for sort changes
+document.getElementById('sortOrder').addEventListener('change', () => {
+  loadSubs();
+});
+
+// Require auth
 onAuthStateChanged(auth, user => {
   if (!user) {
     subsList.textContent = "Sign in as admin to view submissions.";
@@ -80,6 +97,7 @@ onAuthStateChanged(auth, user => {
 
 async function loadSubs() {
   subsList.innerHTML = "Loading…";
+
   try {
     const q = query(collection(db, 'stakes'));
     const snapshot = await getDocs(q);
@@ -89,10 +107,28 @@ async function loadSubs() {
       return;
     }
 
-    subsList.innerHTML = "";
+    // Collect into array
+    const allSubs = [];
     snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      const id = docSnap.id;
+      allSubs.push({ id: docSnap.id, data: docSnap.data() });
+    });
+
+    // Sort
+    const sortBy = document.getElementById('sortOrder').value;
+
+    if (sortBy === "uid_asc") {
+      allSubs.sort((a, b) => a.data.userId.localeCompare(b.data.userId));
+    } else if (sortBy === "uid_desc") {
+      allSubs.sort((a, b) => b.data.userId.localeCompare(a.data.userId));
+    } else {
+      // Newest first (by doc ID)
+      allSubs.sort((a, b) => b.id.localeCompare(a.id));
+    }
+
+    // Render
+    subsList.innerHTML = "";
+    allSubs.forEach(item => {
+      const { id, data } = item;
 
       const div = document.createElement('div');
       div.className = "submission";
@@ -114,10 +150,9 @@ async function loadSubs() {
 
         <button class="btn-update" data-id="${id}">Update</button>
 
-        <p><small>Won Amt: ₦${(data.wonAmount||0).toLocaleString('en-NG',{minimumFractionDigits:2})} | 
+        <p><small>Won Amt: ₦${(data.wonAmount||0).toLocaleString('en-NG',{minimumFractionDigits:2})} |
         Credited: ${data.credited? 'Yes':'No'}</small></p>
       `;
-
       subsList.appendChild(div);
 
       const userDoc = doc(db, 'users', data.userId);
