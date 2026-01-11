@@ -135,12 +135,12 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
-  getFirestore, collection, query, where,
-  getDocs, addDoc, updateDoc, doc, serverTimestamp, increment
+  getFirestore, collection, addDoc, serverTimestamp, query,
+  where, getDocs, updateDoc, doc, increment
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
   projectId: "beni-wealths",
   storageBucket: "beni-wealths.appspot.com",
@@ -167,16 +167,6 @@ let currentUser = null;
 let matches = [];
 let currentBalance = 0;
 
-// Reset amount & outcome when match changes
-matchSelect.addEventListener('change', () => {
-  updateOutcomeOptions();
-  stakeAmountInput.value = "";
-  checkStakeButton();
-});
-
-outcomeSelect.addEventListener('change', checkStakeButton);
-stakeAmountInput.addEventListener('input', checkStakeButton);
-
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     userBalanceEl.textContent = "Balance: Sign in to see balance";
@@ -188,9 +178,10 @@ onAuthStateChanged(auth, async (user) => {
   await loadMatches();
 });
 
+// Load user balance
 async function loadBalance() {
   try {
-    const uQ = query(collection(db, 'users'), where('__name__', '==', currentUser.uid));
+    const uQ = query(collection(db,'users'), where('__name__','==',currentUser.uid));
     const uSnap = await getDocs(uQ);
     if (!uSnap.empty) {
       const d = uSnap.docs[0].data();
@@ -203,12 +194,13 @@ async function loadBalance() {
   checkStakeButton();
 }
 
+// Load active matches
 async function loadMatches() {
   try {
-    const mQ = query(collection(db, 'matches'), where('active', '==', true));
+    const mQ = query(collection(db,'matches'), where('active','==',true));
     const mSnap = await getDocs(mQ);
 
-    matches = mSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    matches = mSnap.docs.map(d => ({ id:d.id, ...d.data() }));
     matchSelect.innerHTML = "";
     outcomeSelect.innerHTML = "";
 
@@ -222,17 +214,15 @@ async function loadMatches() {
 
     noMatchesEl.style.display = 'none';
     matchSelect.style.display = '';
-    submitStakeBtn.disabled = true;
+    submitStakeBtn.disabled = false;
 
     matches.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.id;
-      opt.textContent = m.title;
-      matchSelect.appendChild(opt);
+      const o = document.createElement('option');
+      o.value = m.id;
+      o.textContent = m.title;
+      matchSelect.appendChild(o);
     });
-
     updateOutcomeOptions();
-    checkStakeButton();
   } catch (e) {
     console.error("Matches load error:", e);
     noMatchesEl.textContent = "Error loading matches";
@@ -241,9 +231,9 @@ async function loadMatches() {
 
 function updateOutcomeOptions() {
   outcomeSelect.innerHTML = "";
-  const selected = matches.find(m => m.id === matchSelect.value);
-  if (!selected) return;
-  (selected.options || []).forEach(optVal => {
+  const sel = matches.find(m => m.id === matchSelect.value);
+  if (!sel) return;
+  (sel.options || []).forEach(optVal => {
     const o = document.createElement('option');
     o.value = optVal;
     o.textContent = optVal;
@@ -251,18 +241,10 @@ function updateOutcomeOptions() {
   });
 }
 
+stakeAmountInput.addEventListener('input', checkStakeButton);
 function checkStakeButton() {
-  const matchChosen = Boolean(matchSelect.value);
-  const outcomeChosen = Boolean(outcomeSelect.value);
   const amount = Number(stakeAmountInput.value);
-
-  submitStakeBtn.disabled = !(
-    currentUser &&
-    matchChosen &&
-    outcomeChosen &&
-    amount >= 100 &&
-    amount <= currentBalance
-  );
+  submitStakeBtn.disabled = (!currentUser || !amount || amount < 100 || amount > currentBalance);
 }
 
 submitStakeBtn.addEventListener('click', async () => {
@@ -275,18 +257,21 @@ submitStakeBtn.addEventListener('click', async () => {
     stakeMsg.textContent = "Insufficient balance!";
     return;
   }
-
+  if (!matchId || !choice || !amount || amount < 100) {
+    stakeMsg.textContent = "Fill all fields correctly (min ₦100).";
+    return;
+  }
   try {
     await updateDoc(doc(db,'users',currentUser.uid), { balance: increment(-amount) });
     await addDoc(collection(db,'stakes'), {
       userId: currentUser.uid,
       matchId,
-      title: matches.find(m => m.id === matchId)?.title || "",
+      title: matches.find(m=>m.id===matchId)?.title || "",
       choice,
       amount,
       status: "pending",
-      wonAmount: 0,
-      credited: false,
+      wonAmount:0,
+      credited:false,
       createdAt: serverTimestamp()
     });
     stakeMsg.textContent = "Stake submitted!";
@@ -301,6 +286,5 @@ submitStakeBtn.addEventListener('click', async () => {
 
 goHistoryBtn.addEventListener('click', () => window.location.href = "bet-history.html");
 </script>
-
 </body>
 </html>
