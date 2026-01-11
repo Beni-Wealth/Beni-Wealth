@@ -140,7 +140,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
   projectId: "beni-wealths",
   storageBucket: "beni-wealths.appspot.com",
@@ -177,6 +177,15 @@ onAuthStateChanged(auth, async (user) => {
   await loadBalance();
   await loadMatches();
 });
+
+// 🔹 AUTO-RESET STAKE AMOUNT WHEN MATCH CHANGES
+matchSelect.addEventListener('change', () => {
+  stakeAmountInput.value = "";
+  checkStakeButton();
+});
+
+// 🔹 CHECK STAKE BUTTON WHEN OUTCOME CHANGES
+outcomeSelect.addEventListener('change', checkStakeButton);
 
 // Load user balance
 async function loadBalance() {
@@ -244,7 +253,10 @@ function updateOutcomeOptions() {
 stakeAmountInput.addEventListener('input', checkStakeButton);
 function checkStakeButton() {
   const amount = Number(stakeAmountInput.value);
-  submitStakeBtn.disabled = (!currentUser || !amount || amount < 100 || amount > currentBalance);
+  const matchChosen = Boolean(matchSelect.value);
+  const outcomeChosen = Boolean(outcomeSelect.value);
+
+  submitStakeBtn.disabled = (!currentUser || !matchChosen || !outcomeChosen || !amount || amount < 100 || amount > currentBalance);
 }
 
 submitStakeBtn.addEventListener('click', async () => {
