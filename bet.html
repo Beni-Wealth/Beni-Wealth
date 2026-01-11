@@ -140,7 +140,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
   projectId: "beni-wealths",
   storageBucket: "beni-wealths.appspot.com",
@@ -166,6 +166,16 @@ const stakeAmountInput = document.getElementById('stakeAmount');
 let currentUser = null;
 let matches = [];
 let currentBalance = 0;
+
+// 🔹 Reset amount & outcome when match changes
+matchSelect.addEventListener('change', () => {
+  updateOutcomeOptions();
+  stakeAmountInput.value = "";
+  checkStakeButton();
+});
+
+outcomeSelect.addEventListener('change', checkStakeButton);
+stakeAmountInput.addEventListener('input', checkStakeButton);
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -214,7 +224,7 @@ async function loadMatches() {
 
     noMatchesEl.style.display = 'none';
     matchSelect.style.display = '';
-    submitStakeBtn.disabled = false;
+    submitStakeBtn.disabled = true;
 
     matches.forEach(m => {
       const o = document.createElement('option');
@@ -222,7 +232,9 @@ async function loadMatches() {
       o.textContent = m.title;
       matchSelect.appendChild(o);
     });
+
     updateOutcomeOptions();
+    checkStakeButton();
   } catch (e) {
     console.error("Matches load error:", e);
     noMatchesEl.textContent = "Error loading matches";
@@ -231,9 +243,9 @@ async function loadMatches() {
 
 function updateOutcomeOptions() {
   outcomeSelect.innerHTML = "";
-  const sel = matches.find(m => m.id === matchSelect.value);
-  if (!sel) return;
-  (sel.options || []).forEach(optVal => {
+  const selMatch = matches.find(m => m.id === matchSelect.value);
+  if (!selMatch) return;
+  selMatch.options.forEach(optVal => {
     const o = document.createElement('option');
     o.value = optVal;
     o.textContent = optVal;
@@ -241,10 +253,18 @@ function updateOutcomeOptions() {
   });
 }
 
-stakeAmountInput.addEventListener('input', checkStakeButton);
 function checkStakeButton() {
+  const matchChosen = Boolean(matchSelect.value);
+  const outcomeChosen = Boolean(outcomeSelect.value);
   const amount = Number(stakeAmountInput.value);
-  submitStakeBtn.disabled = (!currentUser || !amount || amount < 100 || amount > currentBalance);
+
+  submitStakeBtn.disabled = !(
+    currentUser &&
+    matchChosen &&
+    outcomeChosen &&
+    amount >= 100 &&
+    amount <= currentBalance
+  );
 }
 
 submitStakeBtn.addEventListener('click', async () => {
@@ -257,10 +277,7 @@ submitStakeBtn.addEventListener('click', async () => {
     stakeMsg.textContent = "Insufficient balance!";
     return;
   }
-  if (!matchId || !choice || !amount || amount < 100) {
-    stakeMsg.textContent = "Fill all fields correctly (min ₦100).";
-    return;
-  }
+
   try {
     await updateDoc(doc(db,'users',currentUser.uid), { balance: increment(-amount) });
     await addDoc(collection(db,'stakes'), {
@@ -270,8 +287,8 @@ submitStakeBtn.addEventListener('click', async () => {
       choice,
       amount,
       status: "pending",
-      wonAmount:0,
-      credited:false,
+      wonAmount: 0,
+      credited: false,
       createdAt: serverTimestamp()
     });
     stakeMsg.textContent = "Stake submitted!";
