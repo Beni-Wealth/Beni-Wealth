@@ -48,8 +48,8 @@
     <strong>Sort by:</strong>
     <select id="sortOrder" style="margin-bottom: 12px; width: 100%;">
       <option value="newest">Newest first</option>
-      <option value="uid_asc">User ID (A → Z)</option>
-      <option value="uid_desc">User ID (Z → A)</option>
+      <option value="status_asc">Status (Pending → Won → Lost)</option>
+      <option value="status_desc">Status (Lost → Won → Pending)</option>
     </select>
   </p>
 
@@ -87,6 +87,13 @@ document.getElementById('sortOrder').addEventListener('change', () => {
   loadSubs();
 });
 
+// a simple order value mapping so we can sort status strings
+const statusOrder = {
+  pending: 1,
+  won: 2,
+  lost: 3
+};
+
 async function loadSubs() {
   subsList.innerHTML = "Loading…";
 
@@ -106,11 +113,16 @@ async function loadSubs() {
 
     const sortBy = document.getElementById('sortOrder').value;
 
-    if (sortBy === "uid_asc") {
-      allSubs.sort((a, b) => a.data.userId.localeCompare(b.data.userId));
-    } else if (sortBy === "uid_desc") {
-      allSubs.sort((a, b) => b.data.userId.localeCompare(a.data.userId));
+    if (sortBy === "status_asc") {
+      allSubs.sort((a, b) => {
+        return (statusOrder[a.data.status] || 0) - (statusOrder[b.data.status] || 0);
+      });
+    } else if (sortBy === "status_desc") {
+      allSubs.sort((a, b) => {
+        return (statusOrder[b.data.status] || 0) - (statusOrder[a.data.status] || 0);
+      });
     } else {
+      // newest first by doc ID
       allSubs.sort((a, b) => b.id.localeCompare(a.id));
     }
 
