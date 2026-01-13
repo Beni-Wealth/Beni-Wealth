@@ -140,7 +140,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
   projectId: "beni-wealths",
   storageBucket: "beni-wealths.appspot.com",
@@ -178,17 +178,7 @@ onAuthStateChanged(auth, async (user) => {
   await loadMatches();
 });
 
-// 🔹 NEW: update outcome options every time match changes
-matchSelect.addEventListener('change', () => {
-  updateOutcomeOptions();
-  // also reset amount and re-check submit button
-  stakeAmountInput.value = "";
-  checkStakeButton();
-});
-
-// 🔹 BONUS: re-check submit button when outcome changes
-outcomeSelect.addEventListener('change', checkStakeButton);
-
+// Load user balance
 async function loadBalance() {
   try {
     const uQ = query(collection(db,'users'), where('__name__','==',currentUser.uid));
@@ -204,6 +194,7 @@ async function loadBalance() {
   checkStakeButton();
 }
 
+// Load active matches
 async function loadMatches() {
   try {
     const mQ = query(collection(db,'matches'), where('active','==',true));
@@ -231,7 +222,7 @@ async function loadMatches() {
       o.textContent = m.title;
       matchSelect.appendChild(o);
     });
-    updateOutcomeOptions(); // initial population
+    updateOutcomeOptions();
   } catch (e) {
     console.error("Matches load error:", e);
     noMatchesEl.textContent = "Error loading matches";
@@ -253,7 +244,7 @@ function updateOutcomeOptions() {
 stakeAmountInput.addEventListener('input', checkStakeButton);
 function checkStakeButton() {
   const amount = Number(stakeAmountInput.value);
-  submitStakeBtn.disabled = (!currentUser || !amount || amount < 100 || amount > currentBalance || !matchSelect.value || !outcomeSelect.value);
+  submitStakeBtn.disabled = (!currentUser || !amount || amount < 100 || amount > currentBalance);
 }
 
 submitStakeBtn.addEventListener('click', async () => {
