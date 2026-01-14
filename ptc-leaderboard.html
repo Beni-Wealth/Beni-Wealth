@@ -67,15 +67,12 @@
       font-weight: 700;
       color: #7a5fff;
     }
-
-    /* Top ranks highlight */
     .first { background: #ffd70033; }
     .second { background: #c0c0c033; }
     .third { background: #cd7f3233; }
     .first .rank { color: #ffd700; font-size: 18px; }
     .second .rank { color: #c0c0c0; font-size: 17px; }
     .third .rank { color: #cd7f32; font-size: 17px; }
-
     .spinner {
       display: block;
       margin: 60px auto;
@@ -99,9 +96,7 @@
 <h1>🔥 PTC Views Leaderboard</h1>
 <div id="resetTimer">Loading reset timer…</div>
 
-<div id="content">
-  <div class="spinner"></div>
-</div>
+<div id="content"><div class="spinner"></div></div>
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -115,7 +110,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fBv8yHeRjNjZk",
+  apiKey: "AIzaSyDy_L7uJeoaWXbUB-LVk_fB8yHeRjNjZk",
   authDomain: "beni-wealths.firebaseapp.com",
   projectId: "beni-wealths",
   storageBucket: "beni-wealths.appspot.com",
@@ -129,18 +124,15 @@ const db = getFirestore();
 const contentEl = document.getElementById('content');
 
 function maskUid(uid) {
-  // show first 6 chars only
   return uid ? uid.slice(0, 6) + "…" : "";
 }
 
-// calculate reset point for a 14-day cycle
 function getNextReset() {
   const now = new Date();
-  const start = new Date(2025,0,1); // fixed epoch or pick your cycle start
+  const start = new Date(2025,0,1);
   const diff = now - start;
   const cycles = Math.floor(diff / (14*24*60*60*1000));
-  const next = new Date(start.getTime() + ((cycles + 1)*14*24*60*60*1000));
-  return next;
+  return new Date(start.getTime() + ((cycles + 1)*14*24*60*60*1000));
 }
 
 function updateResetTimer() {
@@ -158,7 +150,7 @@ function updateResetTimer() {
 }
 
 updateResetTimer();
-setInterval(updateResetTimer, 60000); // update once a minute
+setInterval(updateResetTimer, 60000);
 
 async function loadLeaderboard() {
   const now = new Date();
@@ -192,9 +184,7 @@ function renderTable(list) {
   }
 
   let html = `<table class="leaderboard">
-    <thead><tr>
-      <th>#</th><th>User</th><th>PTC Views</th>
-    </tr></thead><tbody>`;
+    <thead><tr><th>#</th><th>User</th><th>PTC Views</th></tr></thead><tbody>`;
 
   list.forEach((user, i) => {
     let cls = "";
